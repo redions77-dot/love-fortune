@@ -24,10 +24,9 @@ function get일주(birthdate) {
 }
 function get년주(year) {
   const 천간index = ((year - 4) % 10 + 10) % 10;
-  const 지지index = (year % 12 + 12) % 12;
+  const 지지index = ((year - 4) % 12 + 12) % 12;
   return 천간[천간index] + 지지[지지index];
 }
-
 // 무료: 이상형만 / 유료: 연애운·결혼운·궁합
 const FREE_TYPES = ['이상형'];
 
