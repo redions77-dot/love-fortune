@@ -9,6 +9,25 @@ app.use(express.json());
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// 육십갑자 계산 함수
+const 천간 = ['甲갑','乙을','丙병','丁정','戊무','己기','庚경','辛신','壬임','癸계'];
+const 지지 = ['子자','丑축','寅인','卯묘','辰진','巳사','午오','未미','申신','酉유','戌술','亥해'];
+
+function get일주(birthdate) {
+  const 기준일 = new Date('1900-01-31');
+  const 날짜 = new Date(birthdate);
+  const 차이 = Math.floor((날짜 - 기준일) / (1000 * 60 * 60 * 24));
+  const 천간index = ((차이 % 10) + 10) % 10;
+  const 지지index = ((차이 % 12) + 12) % 12;
+  return 천간[천간index] + 지지[지지index];
+}
+
+function get년주(year) {
+  const 천간index = (year - 4) % 10;
+  const 지지index = (year - 4) % 12;
+  return 천간[천간index] + 지지[지지index];
+}
+
 // 무료: 이상형만 / 유료: 연애운·결혼운·궁합
 const FREE_TYPES = ['이상형'];
 
@@ -17,7 +36,6 @@ app.post('/api/analyze', async (req, res) => {
 
   if (!birthdate) return res.status(400).json({ error: '생년월일을 입력해주세요.' });
 
-  // 유료 기능 체크 (실제 서비스에서는 결제 검증 추가)
   if (!FREE_TYPES.includes(type) && !isPaid) {
     return res.status(402).json({ error: '유료 기능입니다.', requiresPayment: true });
   }
@@ -27,6 +45,9 @@ app.post('/api/analyze', async (req, res) => {
   const month = date.getMonth() + 1;
   const day = date.getDate();
 
+  const 일주 = get일주(birthdate);
+  const 년주 = get년주(year);
+
   const prompts = {
     이상형: `이 사람의 이상형 특징, 잘 맞는 MBTI, 잘 맞는 혈액형, 첫 만남에서 끌리는 타입을 분석해주세요.`,
     연애운: `올해 연애운 전반, 인연이 찾아오는 시기, 연애 스타일과 특징, 주의할 점을 분석해주세요.`,
@@ -34,7 +55,7 @@ app.post('/api/analyze', async (req, res) => {
     궁합: `두 사람의 궁합을 사주·MBTI·혈액형을 종합해서 분석해주세요. 잘 맞는 점, 주의할 점, 총점(100점 만점)을 알려주세요.`,
   };
 
-  const prompt = `당신은 한국의 사주·운세 전문가입니다. 아래 정보로 ${type}을 분석해주세요. 반드시 만세력 기준으로 년주·월주·일주·시주 사주 간지를 정확하게 계산하세요. 예를 들어 2009년 9월 24일 오전 6시 30분은 기축년(己丑) 계유월(癸酉) 임신일(壬申) 계묘시(癸卯)입니다. 이처럼 정확한 만세력 간지를 사용하세요.
+  const prompt = `당신은 한국의 사주·운세 전문가입니다. 아래 정보로 ${type}을 분석해주세요.
 
 [정보]
 - 이름: ${name || '미입력'}
@@ -43,6 +64,8 @@ app.post('/api/analyze', async (req, res) => {
 - 태어난 시간: ${birthtime || '미입력'}
 - MBTI: ${mbti || '미입력'}
 - 혈액형: ${blood ? blood + '형' : '미입력'}
+- 년주: ${년주}
+- 일주: ${일주}
 
 [분석 항목]
 ${prompts[type] || prompts['이상형']}
