@@ -15,7 +15,7 @@ const 지지 = ['子자','丑축','寅인','卯묘','辰진','巳사','午오','
 
 function get일주(birthdate) {
   // 갑자일 기준: 1924년 2월 15일
-  const 기준일 = new Date('1924-02-05');
+  const 기준일 = new Date('1924-02-15');
   const 날짜 = new Date(birthdate);
   const 차이 = Math.floor((날짜 - 기준일) / (1000 * 60 * 60 * 24));
   const 천간index = (차이 % 10 + 10) % 10;
