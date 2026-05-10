@@ -226,7 +226,7 @@ export default function App() {
     setShowPayment(false)
 
     try {
-      const res = await fetch('/api/analyze', {
+      const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, mbti, blood, type, isPaid: false }),
