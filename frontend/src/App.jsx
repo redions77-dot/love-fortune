@@ -405,7 +405,7 @@ export default function App() {
               <div style={s.loading}>
                 {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
                 <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>
-                  🔮 운명의 데이터 분석 중... 약 30초 소요됩니다!
+                  🔮 운명의 데이터 분석 중... 약 1분 소요됩니다!
                 </span>
               </div>
             </div>
