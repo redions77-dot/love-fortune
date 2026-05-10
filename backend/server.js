@@ -14,14 +14,14 @@ const 천간 = ['甲갑','乙을','丙병','丁정','戊무','己기','庚경','
 const 지지 = ['子자','丑축','寅인','卯묘','辰진','巳사','午오','未미','申신','酉유','戌술','亥해'];
 
 function get일주(birthdate) {
-  const 기준일 = new Date('1900-01-20');
+  // 1970년 1월 1일은 甲戌(갑술)일 - 천간4, 지지10
+  const 기준일 = new Date('1970-01-01');
   const 날짜 = new Date(birthdate);
   const 차이 = Math.floor((날짜 - 기준일) / (1000 * 60 * 60 * 24));
-  const 천간index = ((차이 % 10) + 10) % 10;
-  const 지지index = ((차이 % 12) + 12) % 12;
+  const 천간index = ((4 + 차이) % 10 + 10) % 10;
+  const 지지index = ((10 + 차이) % 12 + 12) % 12;
   return 천간[천간index] + 지지[지지index];
 }
-
 function get년주(year) {
   const 천간index = (year - 4) % 10;
   const 지지index = (year - 4) % 12;
