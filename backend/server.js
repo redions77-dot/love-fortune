@@ -4,7 +4,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 require('dotenv').config();
 
 const app = express();
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -23,8 +23,8 @@ function get일주(birthdate) {
   return 천간[천간index] + 지지[지지index];
 }
 function get년주(year) {
-  const 천간index = ((7 + 차이) % 10 + 10) % 10;
-const 지지index = ((5 + 차이) % 12 + 12) % 12;
+  const 천간index = ((year - 4) % 10 + 10) % 10;
+  const 지지index = (year % 12 + 12) % 12;
   return 천간[천간index] + 지지[지지index];
 }
 
