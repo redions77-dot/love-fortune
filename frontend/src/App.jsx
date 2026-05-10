@@ -310,6 +310,15 @@ const s = {
 }
 
 export default function App() {
+  // 앱 시작하자마자 서버 깨우기
+  useState(() => {
+    fetch('https://love-fortune.onrender.com/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ birthdate: '2000-01-01', type: '이상형', isPaid: false })
+    }).catch(() => {})
+  })
+
   const [step, setStep] = useState(0)
   const [gender, setGender] = useState('')
   const [birthdate, setBirthdate] = useState('')
@@ -405,7 +414,7 @@ export default function App() {
               <div style={s.loading}>
                 {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
                 <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>
-                  🔮 운명의 데이터 분석 중... 약 1분 소요됩니다!
+                  🔮 운명의 데이터 분석 중... 약 30초 소요됩니다!
                 </span>
               </div>
             </div>
