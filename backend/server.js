@@ -14,7 +14,7 @@ const 천간 = ['甲갑','乙을','丙병','丁정','戊무','己기','庚경','
 const 지지 = ['子자','丑축','寅인','卯묘','辰진','巳사','午오','未미','申신','酉유','戌술','亥해'];
 
 function get일주(birthdate) {
-  const 기준일 = new Date('1900-01-31');
+  const 기준일 = new Date('1900-01-20');
   const 날짜 = new Date(birthdate);
   const 차이 = Math.floor((날짜 - 기준일) / (1000 * 60 * 60 * 24));
   const 천간index = ((차이 % 10) + 10) % 10;
