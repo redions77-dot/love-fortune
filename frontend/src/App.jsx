@@ -33,13 +33,29 @@ const s = {
     cursor: 'pointer', fontSize: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s',
   }),
   genderLabel: (active) => ({ fontSize: 14, fontWeight: 600, color: active ? 'var(--color-primary-dark)' : 'var(--color-text)' }),
-  calToggle: { display: 'flex', gap: 8, marginBottom: 16 },
+  calToggle: { display: 'flex', gap: 8, marginBottom: 20 },
   calBtn: (active) => ({
     flex: 1, padding: '10px', fontSize: 13, fontWeight: active ? 600 : 400,
     border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
     borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
     color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', cursor: 'pointer', transition: 'all 0.15s',
   }),
+  // 년/월/일 숫자 입력
+  dateRow: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 },
+  dateNumInput: {
+    flex: 1, padding: '16px 8px', fontSize: 20, fontWeight: 700,
+    border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+    background: 'var(--color-surface)', color: 'var(--color-text)',
+    textAlign: 'center', boxSizing: 'border-box',
+  },
+  dateNumInputSmall: {
+    width: 70, padding: '16px 8px', fontSize: 20, fontWeight: 700,
+    border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+    background: 'var(--color-surface)', color: 'var(--color-text)',
+    textAlign: 'center', boxSizing: 'border-box', flexShrink: 0,
+  },
+  dateUnitLabel: { fontSize: 16, fontWeight: 600, color: 'var(--color-text-muted)', flexShrink: 0 },
+  datePreview: { fontSize: 14, color: 'var(--color-primary-dark)', textAlign: 'center', marginBottom: 8, fontWeight: 500 },
   dateInput: { width: '100%', padding: '14px 16px', fontSize: 16, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', boxSizing: 'border-box', marginBottom: 8 },
   unknownBtn: (active) => ({
     width: '100%', padding: '13px 16px', border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
@@ -128,7 +144,9 @@ export default function App() {
 
   const [step, setStep] = useState(0)
   const [gender, setGender] = useState('')
-  const [birthdate, setBirthdate] = useState('')
+  const [birthYear, setBirthYear] = useState('')
+  const [birthMonth, setBirthMonth] = useState('')
+  const [birthDay, setBirthDay] = useState('')
   const [isLunar, setIsLunar] = useState(false)
   const [birthtime, setBirthtime] = useState('')
   const [timeUnknown, setTimeUnknown] = useState(false)
@@ -143,9 +161,18 @@ export default function App() {
   const currentStepId = STEPS[step]
   const progress = (step / STEPS.length) * 100
 
+  // 년/월/일 → YYYY-MM-DD 형식으로 합치기
+  const birthdate = (birthYear.length === 4 && birthMonth && birthDay)
+    ? `${birthYear}-${String(birthMonth).padStart(2, '0')}-${String(birthDay).padStart(2, '0')}`
+    : ''
+
+  const birthdateValid = birthYear.length === 4
+    && Number(birthMonth) >= 1 && Number(birthMonth) <= 12
+    && Number(birthDay) >= 1 && Number(birthDay) <= 31
+
   function canGoNext() {
     if (currentStepId === 'gender') return gender !== ''
-    if (currentStepId === 'birthdate') return birthdate !== ''
+    if (currentStepId === 'birthdate') return birthdateValid
     if (currentStepId === 'birthtime') return timeUnknown || birthtime !== ''
     return true
   }
@@ -187,7 +214,8 @@ export default function App() {
   }
 
   function handleRestart() {
-    setStep(0); setGender(''); setBirthdate(''); setIsLunar(false)
+    setStep(0); setGender('')
+    setBirthYear(''); setBirthMonth(''); setBirthDay(''); setIsLunar(false)
     setBirthtime(''); setTimeUnknown(false); setMbti(''); setBlood('')
     setBaseResult(null); setPaidResult(null); setShowPayment(false)
   }
@@ -326,6 +354,7 @@ export default function App() {
         <p style={s.stepLabel}>{step + 1} / {STEPS.length}</p>
       </div>
       <div style={s.stepWrap}>
+
         {currentStepId === 'gender' && (
           <>
             <h2 style={s.stepTitle}>성별을 알려주세요</h2>
@@ -340,18 +369,62 @@ export default function App() {
             </div>
           </>
         )}
+
         {currentStepId === 'birthdate' && (
           <>
             <h2 style={s.stepTitle}>생년월일을 알려주세요</h2>
-            <p style={s.stepSub}>양력/음력 선택 후 입력해주세요</p>
+            <p style={s.stepSub}>숫자로 입력해주세요</p>
             <div style={s.calToggle}>
               <button style={s.calBtn(!isLunar)} onClick={() => setIsLunar(false)}>양력 🌞</button>
               <button style={s.calBtn(isLunar)} onClick={() => setIsLunar(true)}>음력 🌙</button>
             </div>
-            <input type="date" style={s.dateInput} value={birthdate} onChange={e => setBirthdate(e.target.value)} />
+            <div style={s.dateRow}>
+              <input
+                style={s.dateNumInput}
+                type="number"
+                placeholder="1990"
+                value={birthYear}
+                maxLength={4}
+                onChange={e => {
+                  const v = e.target.value.slice(0, 4)
+                  setBirthYear(v)
+                }}
+              />
+              <span style={s.dateUnitLabel}>년</span>
+              <input
+                style={s.dateNumInputSmall}
+                type="number"
+                placeholder="01"
+                value={birthMonth}
+                min={1} max={12}
+                onChange={e => {
+                  const v = e.target.value.slice(0, 2)
+                  setBirthMonth(v)
+                }}
+              />
+              <span style={s.dateUnitLabel}>월</span>
+              <input
+                style={s.dateNumInputSmall}
+                type="number"
+                placeholder="01"
+                value={birthDay}
+                min={1} max={31}
+                onChange={e => {
+                  const v = e.target.value.slice(0, 2)
+                  setBirthDay(v)
+                }}
+              />
+              <span style={s.dateUnitLabel}>일</span>
+            </div>
+            {birthdateValid && (
+              <p style={s.datePreview}>
+                ✓ {birthYear}년 {birthMonth}월 {birthDay}일 {isLunar ? '(음력)' : '(양력)'}
+              </p>
+            )}
             {isLunar && <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4 }}>ℹ️ 음력 날짜를 입력하면 자동으로 양력으로 변환해요</p>}
           </>
         )}
+
         {currentStepId === 'birthtime' && (
           <>
             <h2 style={s.stepTitle}>태어난 시간을 알려주세요</h2>
@@ -365,6 +438,7 @@ export default function App() {
             {timeUnknown && <button style={s.skipBtn} onClick={() => setTimeUnknown(false)}>시간 직접 입력하기</button>}
           </>
         )}
+
         {currentStepId === 'mbti' && (
           <>
             <h2 style={s.stepTitle}>MBTI를 선택해주세요</h2>
@@ -374,6 +448,7 @@ export default function App() {
             </div>
           </>
         )}
+
         {currentStepId === 'blood' && (
           <>
             <h2 style={s.stepTitle}>혈액형을 선택해주세요</h2>
@@ -383,6 +458,7 @@ export default function App() {
             </div>
           </>
         )}
+
       </div>
       <div style={s.bottomBar}>
         {step > 0 && <button style={s.backBtn} onClick={goBack}>←</button>}
