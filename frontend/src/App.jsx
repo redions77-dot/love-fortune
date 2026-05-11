@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
@@ -55,7 +55,6 @@ const s = {
   },
   dateUnitLabel: { fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)', flexShrink: 0 },
   datePreview: { fontSize: 14, color: 'var(--color-primary-dark)', textAlign: 'center', marginBottom: 8, fontWeight: 500 },
-  // 시간 입력 - 숫자 두 칸
   timeRow: { display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 },
   timeNumInput: {
     width: 70, flexShrink: 0, padding: '16px 4px', fontSize: 22, fontWeight: 700,
@@ -148,12 +147,13 @@ function Accordion({ title, content, isPaid = false, defaultOpen = false }) {
 }
 
 export default function App() {
-  useState(() => {
+  // 서버 깨우기 - useEffect로 분리 (입력값에 영향 없음)
+  useEffect(() => {
     fetch('https://love-fortune.onrender.com/api/analyze', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ birthdate: '2000-01-01', type: '기본', isPaid: false })
     }).catch(() => {})
-  })
+  }, [])
 
   const [step, setStep] = useState(0)
   const [gender, setGender] = useState('')
@@ -171,7 +171,6 @@ export default function App() {
   const [paidLoading, setPaidLoading] = useState(false)
   const [baseResult, setBaseResult] = useState(null)
   const [paidResult, setPaidResult] = useState(null)
-  const [showPayment, setShowPayment] = useState(false)
 
   const currentStepId = STEPS[step]
   const progress = (step / STEPS.length) * 100
@@ -184,7 +183,6 @@ export default function App() {
     && Number(birthMonth) >= 1 && Number(birthMonth) <= 12
     && Number(birthDay) >= 1 && Number(birthDay) <= 31
 
-  // 시간 → HH:MM 형식 변환
   const birthtime = timeUnknown ? '' : (() => {
     if (!timeHour || !timeMin) return ''
     let h = Number(timeHour)
@@ -193,7 +191,10 @@ export default function App() {
     return `${String(h).padStart(2, '0')}:${String(timeMin).padStart(2, '0')}`
   })()
 
-  const birthtimeValid = timeUnknown || (timeHour && timeMin && Number(timeHour) >= 1 && Number(timeHour) <= 12 && Number(timeMin) >= 0 && Number(timeMin) <= 59)
+  const birthtimeValid = timeUnknown
+    || (timeHour && timeMin
+      && Number(timeHour) >= 1 && Number(timeHour) <= 12
+      && Number(timeMin) >= 0 && Number(timeMin) <= 59)
 
   function canGoNext() {
     if (currentStepId === 'gender') return gender !== ''
@@ -235,7 +236,6 @@ export default function App() {
       else setPaidResult(data)
     } catch { alert('서버에 연결할 수 없습니다.') }
     setPaidLoading(false)
-    setShowPayment(false)
   }
 
   function handleRestart() {
@@ -243,7 +243,7 @@ export default function App() {
     setBirthYear(''); setBirthMonth(''); setBirthDay(''); setIsLunar(false)
     setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
     setMbti(''); setBlood('')
-    setBaseResult(null); setPaidResult(null); setShowPayment(false)
+    setBaseResult(null); setPaidResult(null)
   }
 
   if (loading || baseResult) {
@@ -404,35 +404,18 @@ export default function App() {
               <button style={s.calBtn(isLunar)} onClick={() => setIsLunar(true)}>음력 🌙</button>
             </div>
             <div style={s.dateRow}>
-              <input
-                style={s.dateNumInput}
-                type="number" inputMode="numeric"
-                placeholder="1990"
-                value={birthYear}
-                onChange={e => setBirthYear(e.target.value.slice(0, 4))}
-              />
+              <input style={s.dateNumInput} type="number" inputMode="numeric" placeholder="1990"
+                value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0, 4))} />
               <span style={s.dateUnitLabel}>년</span>
-              <input
-                style={s.dateNumInputSmall}
-                type="number" inputMode="numeric"
-                placeholder="04"
-                value={birthMonth}
-                onChange={e => setBirthMonth(e.target.value.slice(0, 2))}
-              />
+              <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="04"
+                value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0, 2))} />
               <span style={s.dateUnitLabel}>월</span>
-              <input
-                style={s.dateNumInputSmall}
-                type="number" inputMode="numeric"
-                placeholder="03"
-                value={birthDay}
-                onChange={e => setBirthDay(e.target.value.slice(0, 2))}
-              />
+              <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="03"
+                value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0, 2))} />
               <span style={s.dateUnitLabel}>일</span>
             </div>
             {birthdateValid && (
-              <p style={s.datePreview}>
-                ✓ {birthYear}년 {birthMonth}월 {birthDay}일 {isLunar ? '(음력)' : '(양력)'}
-              </p>
+              <p style={s.datePreview}>✓ {birthYear}년 {birthMonth}월 {birthDay}일 {isLunar ? '(음력)' : '(양력)'}</p>
             )}
             {isLunar && <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4 }}>ℹ️ 음력 날짜를 입력하면 자동으로 양력으로 변환해요</p>}
           </>
@@ -442,7 +425,7 @@ export default function App() {
           <>
             <h2 style={s.stepTitle}>태어난 시간을 알려주세요</h2>
             <p style={s.stepSub}>모르셔도 괜찮아요</p>
-            <button style={s.unknownBtn(timeUnknown)} onClick={() => { setTimeUnknown(true) }}>
+            <button style={s.unknownBtn(timeUnknown)} onClick={() => setTimeUnknown(true)}>
               ✓ 태어난 시간 모름
             </button>
             {!timeUnknown && (
@@ -452,21 +435,11 @@ export default function App() {
                   <button style={s.ampmBtn(timeAmPm === '오후')} onClick={() => setTimeAmPm('오후')}>오후</button>
                 </div>
                 <div style={s.timeRow}>
-                  <input
-                    style={s.timeNumInput}
-                    type="number" inputMode="numeric"
-                    placeholder="10"
-                    value={timeHour}
-                    onChange={e => setTimeHour(e.target.value.slice(0, 2))}
-                  />
+                  <input style={s.timeNumInput} type="number" inputMode="numeric" placeholder="10"
+                    value={timeHour} onChange={e => setTimeHour(e.target.value.slice(0, 2))} />
                   <span style={s.timeColon}>:</span>
-                  <input
-                    style={s.timeNumInput}
-                    type="number" inputMode="numeric"
-                    placeholder="15"
-                    value={timeMin}
-                    onChange={e => setTimeMin(e.target.value.slice(0, 2))}
-                  />
+                  <input style={s.timeNumInput} type="number" inputMode="numeric" placeholder="15"
+                    value={timeMin} onChange={e => setTimeMin(e.target.value.slice(0, 2))} />
                   <span style={s.dateUnitLabel}>분</span>
                 </div>
                 {timeHour && timeMin && (
