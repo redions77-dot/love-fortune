@@ -4,7 +4,6 @@ const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
 const STEPS = ['gender', 'birthdate', 'birthtime', 'mbti', 'blood']
 
-// 결과 텍스트를 섹션으로 파싱
 function parseSections(text) {
   const sections = []
   const parts = text.split(/===(.+?)===/)
@@ -67,14 +66,12 @@ const s = {
     borderRadius: 'var(--radius-md)', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
   }),
   resultWrap: { maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box' },
-  // 사주 표
   sajuCard: { background: '#F8F5FF', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginBottom: 12 },
   sajuTitle: { fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 12, letterSpacing: '0.05em' },
   sajuTable: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 },
   sajuCell: { textAlign: 'center', background: 'white', borderRadius: 8, padding: '10px 4px', border: '1px solid var(--color-border)' },
   sajuCellLabel: { fontSize: 10, color: 'var(--color-text-muted)', marginBottom: 4, display: 'block' },
   sajuCellValue: { fontSize: 13, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.6 },
-  // 아코디언
   accordion: { marginBottom: 8, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
   accordionHeader: (open) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -84,20 +81,17 @@ const s = {
   accordionTitle: (open) => ({ fontSize: 15, fontWeight: 700, color: open ? 'var(--color-primary-dark)' : 'var(--color-text)', flex: 1 }),
   accordionArrow: (open) => ({ fontSize: 12, color: 'var(--color-text-muted)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }),
   accordionBody: { padding: '16px 18px', fontSize: 15, lineHeight: 1.9, color: 'var(--color-text)', whiteSpace: 'pre-wrap', background: 'var(--color-surface)', borderTop: '1px solid var(--color-border)' },
-  // 990원 결제 버튼
   paySection: { background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12, textAlign: 'center' },
   paySectionTitle: { fontSize: 18, fontWeight: 700, color: 'white', marginBottom: 6 },
   paySectionSub: { fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, marginBottom: 16 },
   payList: { textAlign: 'left', marginBottom: 16 },
   payListItem: { fontSize: 13, color: 'rgba(255,255,255,0.9)', marginBottom: 4 },
   payBtn: { width: '100%', padding: '16px', fontSize: 18, fontWeight: 700, background: 'white', color: '#764ba2', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' },
-  // 유료 결과 아코디언
   paidAccordion: { marginBottom: 8, border: '2px solid var(--color-primary)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
   paidAccordionHeader: (open) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '16px 18px', cursor: 'pointer', background: open ? '#F3EEFF' : 'var(--color-surface)', transition: 'all 0.2s',
   }),
-  // 행운 아이템
   luckyCard: { background: 'linear-gradient(135deg, #FFF8E7, #FFFBEF)', border: '1px solid #FDE68A', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 },
   luckyGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 },
   luckyItem: { background: 'white', borderRadius: 8, padding: '10px 12px', border: '1px solid #FDE68A' },
@@ -109,7 +103,6 @@ const s = {
   loadingCard: { background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12 },
 }
 
-// 아코디언 컴포넌트
 function Accordion({ title, content, isPaid = false, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   const style = isPaid ? s.paidAccordion : s.accordion
@@ -199,7 +192,6 @@ export default function App() {
     setBaseResult(null); setPaidResult(null); setShowPayment(false)
   }
 
-  // 결과 화면
   if (loading || baseResult) {
     const baseSections = baseResult ? parseSections(baseResult.result) : []
     const paidSections = paidResult ? parseSections(paidResult.result) : []
@@ -209,7 +201,7 @@ export default function App() {
         <div style={s.header}>
           <span style={s.heroEmoji}>✨</span>
           <h1 style={s.heroTitle}>내가 왜 이렇게 사나 했더니 사주 때문이었다</h1>
-          <p style={s.heroSub}>사주로 보는 돈복·연애운·결혼운 · 990원
+          <p style={s.heroSub}>사주로 보는 돈복·연애운·결혼운 · 990원</p>
         </div>
         <div style={s.resultWrap}>
 
@@ -226,7 +218,6 @@ export default function App() {
 
           {baseResult && (
             <>
-              {/* 사주팔자 표 */}
               {baseResult.사주 && (
                 <div style={s.sajuCard}>
                   <p style={s.sajuTitle}>📋 나의 사주팔자</p>
@@ -251,7 +242,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* 무료 섹션 아코디언 */}
               {baseSections.length > 0
                 ? baseSections.map((sec, i) => (
                     <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
@@ -259,7 +249,6 @@ export default function App() {
                 : <Accordion title="내 사주 분석" content={baseResult.result} defaultOpen={true} />
               }
 
-              {/* 유료 결과 */}
               {paidLoading && (
                 <div style={s.loadingCard}>
                   <div style={s.loading}>
@@ -298,7 +287,6 @@ export default function App() {
                 </>
               )}
 
-              {/* 990원 결제 유도 */}
               {!paidResult && !paidLoading && (
                 <div style={s.paySection}>
                   <p style={s.paySectionTitle}>🔮 전체 사주 분석 받기</p>
@@ -326,13 +314,12 @@ export default function App() {
     )
   }
 
-  // 스텝 입력 화면
   return (
     <div style={s.app}>
       <div style={s.header}>
         <span style={s.heroEmoji}>✨</span>
         <h1 style={s.heroTitle}>내가 왜 이렇게 사나 했더니 사주 때문이었다</h1>
-        <p style={s.heroSub}>사주로 보는 돈복·연애운·결혼운 · 990원
+        <p style={s.heroSub}>사주로 보는 돈복·연애운·결혼운 · 990원</p>
       </div>
       <div style={s.progressWrap}>
         <div style={s.progressBar}><div style={s.progressFill(progress)} /></div>
