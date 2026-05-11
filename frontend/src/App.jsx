@@ -40,23 +40,37 @@ const s = {
     borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
     color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', cursor: 'pointer', transition: 'all 0.15s',
   }),
-  // 년/월/일 숫자 입력
-  dateRow: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 16 },
+  dateRow: { display: 'flex', gap: 6, alignItems: 'center', marginBottom: 16 },
   dateNumInput: {
-    flex: 1, padding: '16px 8px', fontSize: 20, fontWeight: 700,
+    width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700,
     border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
     background: 'var(--color-surface)', color: 'var(--color-text)',
     textAlign: 'center', boxSizing: 'border-box',
   },
- dateNumInputSmall: {
-  width: 56, padding: '16px 4px', fontSize: 18, fontWeight: 700,
-  border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
-  background: 'var(--color-surface)', color: 'var(--color-text)',
-  textAlign: 'center', boxSizing: 'border-box', flexShrink: 0,
-},
-dateUnitLabel: { fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)', flexShrink: 0 },
+  dateNumInputSmall: {
+    width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700,
+    border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+    background: 'var(--color-surface)', color: 'var(--color-text)',
+    textAlign: 'center', boxSizing: 'border-box',
+  },
+  dateUnitLabel: { fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)', flexShrink: 0 },
   datePreview: { fontSize: 14, color: 'var(--color-primary-dark)', textAlign: 'center', marginBottom: 8, fontWeight: 500 },
-  dateInput: { width: '100%', padding: '14px 16px', fontSize: 16, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', boxSizing: 'border-box', marginBottom: 8 },
+  // 시간 입력 - 숫자 두 칸
+  timeRow: { display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 },
+  timeNumInput: {
+    width: 70, flexShrink: 0, padding: '16px 4px', fontSize: 22, fontWeight: 700,
+    border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+    background: 'var(--color-surface)', color: 'var(--color-text)',
+    textAlign: 'center', boxSizing: 'border-box',
+  },
+  timeColon: { fontSize: 24, fontWeight: 700, color: 'var(--color-text)' },
+  ampmGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 },
+  ampmBtn: (active) => ({
+    padding: '12px', fontSize: 15, fontWeight: active ? 700 : 400,
+    border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+    borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
+    color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', cursor: 'pointer', transition: 'all 0.15s',
+  }),
   unknownBtn: (active) => ({
     width: '100%', padding: '13px 16px', border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
     borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
@@ -91,8 +105,7 @@ dateUnitLabel: { fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)'
   accordion: { marginBottom: 8, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
   accordionHeader: (open) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '16px 18px', cursor: 'pointer', background: open ? 'var(--color-primary-light)' : 'var(--color-surface)',
-    transition: 'all 0.2s',
+    padding: '16px 18px', cursor: 'pointer', background: open ? 'var(--color-primary-light)' : 'var(--color-surface)', transition: 'all 0.2s',
   }),
   accordionTitle: (open) => ({ fontSize: 15, fontWeight: 700, color: open ? 'var(--color-primary-dark)' : 'var(--color-text)', flex: 1 }),
   accordionArrow: (open) => ({ fontSize: 12, color: 'var(--color-text-muted)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }),
@@ -148,7 +161,9 @@ export default function App() {
   const [birthMonth, setBirthMonth] = useState('')
   const [birthDay, setBirthDay] = useState('')
   const [isLunar, setIsLunar] = useState(false)
-  const [birthtime, setBirthtime] = useState('')
+  const [timeHour, setTimeHour] = useState('')
+  const [timeMin, setTimeMin] = useState('')
+  const [timeAmPm, setTimeAmPm] = useState('오전')
   const [timeUnknown, setTimeUnknown] = useState(false)
   const [mbti, setMbti] = useState('')
   const [blood, setBlood] = useState('')
@@ -161,7 +176,6 @@ export default function App() {
   const currentStepId = STEPS[step]
   const progress = (step / STEPS.length) * 100
 
-  // 년/월/일 → YYYY-MM-DD 형식으로 합치기
   const birthdate = (birthYear.length === 4 && birthMonth && birthDay)
     ? `${birthYear}-${String(birthMonth).padStart(2, '0')}-${String(birthDay).padStart(2, '0')}`
     : ''
@@ -170,10 +184,21 @@ export default function App() {
     && Number(birthMonth) >= 1 && Number(birthMonth) <= 12
     && Number(birthDay) >= 1 && Number(birthDay) <= 31
 
+  // 시간 → HH:MM 형식 변환
+  const birthtime = timeUnknown ? '' : (() => {
+    if (!timeHour || !timeMin) return ''
+    let h = Number(timeHour)
+    if (timeAmPm === '오전' && h === 12) h = 0
+    if (timeAmPm === '오후' && h !== 12) h += 12
+    return `${String(h).padStart(2, '0')}:${String(timeMin).padStart(2, '0')}`
+  })()
+
+  const birthtimeValid = timeUnknown || (timeHour && timeMin && Number(timeHour) >= 1 && Number(timeHour) <= 12 && Number(timeMin) >= 0 && Number(timeMin) <= 59)
+
   function canGoNext() {
     if (currentStepId === 'gender') return gender !== ''
     if (currentStepId === 'birthdate') return birthdateValid
-    if (currentStepId === 'birthtime') return timeUnknown || birthtime !== ''
+    if (currentStepId === 'birthtime') return birthtimeValid
     return true
   }
 
@@ -189,7 +214,7 @@ export default function App() {
     try {
       const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gender, birthdate, birthtime: timeUnknown ? '' : birthtime, mbti, blood, type: '기본', isPaid: false, isLunar }),
+        body: JSON.stringify({ gender, birthdate, birthtime, mbti, blood, type: '기본', isPaid: false, isLunar }),
       })
       const data = await res.json()
       if (data.error) alert(data.error)
@@ -203,7 +228,7 @@ export default function App() {
     try {
       const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gender, birthdate, birthtime: timeUnknown ? '' : birthtime, mbti, blood, type: '전체', isPaid: true, isLunar }),
+        body: JSON.stringify({ gender, birthdate, birthtime, mbti, blood, type: '전체', isPaid: true, isLunar }),
       })
       const data = await res.json()
       if (data.error) alert(data.error)
@@ -216,7 +241,8 @@ export default function App() {
   function handleRestart() {
     setStep(0); setGender('')
     setBirthYear(''); setBirthMonth(''); setBirthDay(''); setIsLunar(false)
-    setBirthtime(''); setTimeUnknown(false); setMbti(''); setBlood('')
+    setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
+    setMbti(''); setBlood('')
     setBaseResult(null); setPaidResult(null); setShowPayment(false)
   }
 
@@ -232,7 +258,6 @@ export default function App() {
           <p style={s.heroSub}>사주로 보는 돈복·연애운·결혼운 · 990원</p>
         </div>
         <div style={s.resultWrap}>
-
           {loading && (
             <div style={s.loadingCard}>
               <div style={s.loading}>
@@ -373,7 +398,7 @@ export default function App() {
         {currentStepId === 'birthdate' && (
           <>
             <h2 style={s.stepTitle}>생년월일을 알려주세요</h2>
-            <p style={s.stepSub}>숫자로 입력해주세요</p>
+            <p style={s.stepSub}>숫자로 직접 입력해주세요</p>
             <div style={s.calToggle}>
               <button style={s.calBtn(!isLunar)} onClick={() => setIsLunar(false)}>양력 🌞</button>
               <button style={s.calBtn(isLunar)} onClick={() => setIsLunar(true)}>음력 🌙</button>
@@ -381,38 +406,26 @@ export default function App() {
             <div style={s.dateRow}>
               <input
                 style={s.dateNumInput}
-                type="number"
+                type="number" inputMode="numeric"
                 placeholder="1990"
                 value={birthYear}
-                maxLength={4}
-                onChange={e => {
-                  const v = e.target.value.slice(0, 4)
-                  setBirthYear(v)
-                }}
+                onChange={e => setBirthYear(e.target.value.slice(0, 4))}
               />
               <span style={s.dateUnitLabel}>년</span>
               <input
                 style={s.dateNumInputSmall}
-                type="number"
-                placeholder="01"
+                type="number" inputMode="numeric"
+                placeholder="04"
                 value={birthMonth}
-                min={1} max={12}
-                onChange={e => {
-                  const v = e.target.value.slice(0, 2)
-                  setBirthMonth(v)
-                }}
+                onChange={e => setBirthMonth(e.target.value.slice(0, 2))}
               />
               <span style={s.dateUnitLabel}>월</span>
               <input
                 style={s.dateNumInputSmall}
-                type="number"
-                placeholder="01"
+                type="number" inputMode="numeric"
+                placeholder="03"
                 value={birthDay}
-                min={1} max={31}
-                onChange={e => {
-                  const v = e.target.value.slice(0, 2)
-                  setBirthDay(v)
-                }}
+                onChange={e => setBirthDay(e.target.value.slice(0, 2))}
               />
               <span style={s.dateUnitLabel}>일</span>
             </div>
@@ -429,13 +442,41 @@ export default function App() {
           <>
             <h2 style={s.stepTitle}>태어난 시간을 알려주세요</h2>
             <p style={s.stepSub}>모르셔도 괜찮아요</p>
-            <button style={s.unknownBtn(timeUnknown)} onClick={() => { setTimeUnknown(true); setBirthtime('') }}>
+            <button style={s.unknownBtn(timeUnknown)} onClick={() => { setTimeUnknown(true) }}>
               ✓ 태어난 시간 모름
             </button>
             {!timeUnknown && (
-              <input type="time" style={s.dateInput} value={birthtime} onChange={e => { setBirthtime(e.target.value); setTimeUnknown(false) }} />
+              <>
+                <div style={s.ampmGrid}>
+                  <button style={s.ampmBtn(timeAmPm === '오전')} onClick={() => setTimeAmPm('오전')}>오전</button>
+                  <button style={s.ampmBtn(timeAmPm === '오후')} onClick={() => setTimeAmPm('오후')}>오후</button>
+                </div>
+                <div style={s.timeRow}>
+                  <input
+                    style={s.timeNumInput}
+                    type="number" inputMode="numeric"
+                    placeholder="10"
+                    value={timeHour}
+                    onChange={e => setTimeHour(e.target.value.slice(0, 2))}
+                  />
+                  <span style={s.timeColon}>:</span>
+                  <input
+                    style={s.timeNumInput}
+                    type="number" inputMode="numeric"
+                    placeholder="15"
+                    value={timeMin}
+                    onChange={e => setTimeMin(e.target.value.slice(0, 2))}
+                  />
+                  <span style={s.dateUnitLabel}>분</span>
+                </div>
+                {timeHour && timeMin && (
+                  <p style={s.datePreview}>✓ {timeAmPm} {timeHour}시 {timeMin}분</p>
+                )}
+              </>
             )}
-            {timeUnknown && <button style={s.skipBtn} onClick={() => setTimeUnknown(false)}>시간 직접 입력하기</button>}
+            {timeUnknown && (
+              <button style={s.skipBtn} onClick={() => setTimeUnknown(false)}>시간 직접 입력하기</button>
+            )}
           </>
         )}
 
