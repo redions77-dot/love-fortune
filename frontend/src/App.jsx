@@ -1,204 +1,408 @@
-const express = require('express');
-const cors = require('cors');
-const Anthropic = require('@anthropic-ai/sdk');
-require('dotenv').config();
+import { useState } from 'react'
 
-const app = express();
-app.use(cors({ origin: '*' }));
-app.use(express.json());
+const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
+const BLOOD_LIST = ['A', 'B', 'O', 'AB']
+const STEPS = ['gender', 'birthdate', 'birthtime', 'mbti', 'blood']
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-const 천간 = ['甲갑','乙을','丙병','丁정','戊무','己기','庚경','辛신','壬임','癸계'];
-const 지지 = ['子자','丑축','寅인','卯묘','辰진','巳사','午오','未미','申신','酉유','戌술','亥해'];
-
-const 천간오행 = {
-  '甲갑': '木', '乙을': '木', '丙병': '火', '丁정': '火',
-  '戊무': '土', '己기': '土', '庚경': '金', '辛신': '金',
-  '壬임': '水', '癸계': '水',
-};
-const 지지오행 = {
-  '子자': '水', '丑축': '土', '寅인': '木', '卯묘': '木',
-  '辰진': '土', '巳사': '火', '午오': '火', '未미': '土',
-  '申신': '金', '酉유': '金', '戌술': '土', '亥해': '水',
-};
-const 오행한글 = { '木': '목(木)', '火': '화(火)', '土': '토(土)', '金': '금(金)', '水': '수(水)' };
-const 오행행운아이템 = {
-  '木': { 색깔: '초록색, 청록색', 마스코트: '용, 토끼, 나무 모양 소품', 방향: '동쪽', 숫자: '3, 8', 아이템: '나무 소재 액세서리, 식물 키우기, 초록색 지갑', 설명: '목(木)의 기운이 필요해요. 성장과 생명력의 에너지예요.' },
-  '火': { 색깔: '빨간색, 주황색, 분홍색', 마스코트: '말, 봉황, 불꽃 모양 소품', 방향: '남쪽', 숫자: '2, 7', 아이템: '빨간 지갑, 루비·가넷 액세서리, 캔들', 설명: '화(火)의 기운이 필요해요. 열정과 밝음의 에너지예요.' },
-  '土': { 색깔: '노란색, 베이지색, 황토색', 마스코트: '소, 개, 용, 토우 인형', 방향: '중앙', 숫자: '5, 10', 아이템: '황토색 가방, 도자기 소품, 원석(황수정)', 설명: '토(土)의 기운이 필요해요. 안정과 신뢰의 에너지예요.' },
-  '金': { 색깔: '흰색, 은색, 금색, 회색', 마스코트: '호랑이, 원숭이, 금속 소품', 방향: '서쪽', 숫자: '4, 9', 아이템: '금·은 액세서리, 흰색 지갑, 메탈 소품', 설명: '금(金)의 기운이 필요해요. 결단력과 귀함의 에너지예요.' },
-  '水': { 색깔: '검정색, 진한 파란색, 남색', 마스코트: '쥐, 돼지, 물고기, 거북이', 방향: '북쪽', 숫자: '1, 6', 아이템: '검정 지갑, 사파이어·아쿠아마린 액세서리, 물고기 소품', 설명: '수(水)의 기운이 필요해요. 지혜와 흐름의 에너지예요.' },
-};
-
-function get일주(birthdate) {
-  const 기준일 = new Date('1924-02-15');
-  const 날짜 = new Date(birthdate);
-  const 차이 = Math.floor((날짜 - 기준일) / (1000 * 60 * 60 * 24));
-  return 천간[(차이 % 10 + 10) % 10] + 지지[(차이 % 12 + 12) % 12];
-}
-function get년주(year) {
-  return 천간[((year - 4) % 10 + 10) % 10] + 지지[((year - 4) % 12 + 12) % 12];
-}
-const 절기표 = [
-  { month: 1, day: 6, 월지: 1 }, { month: 2, day: 4, 월지: 2 },
-  { month: 3, day: 6, 월지: 3 }, { month: 4, day: 5, 월지: 4 },
-  { month: 5, day: 6, 월지: 5 }, { month: 6, day: 6, 월지: 6 },
-  { month: 7, day: 7, 월지: 7 }, { month: 8, day: 8, 월지: 8 },
-  { month: 9, day: 8, 월지: 9 }, { month: 10, day: 8, 월지: 10 },
-  { month: 11, day: 7, 월지: 11 }, { month: 12, day: 7, 월지: 0 },
-];
-const 월간시작표 = [2, 4, 6, 8, 0, 2, 4, 6, 8, 0];
-function get월주(year, month, day) {
-  let 월지index = 1;
-  for (const 절 of 절기표) {
-    if (month > 절.month || (month === 절.month && day >= 절.day)) 월지index = 절.월지;
+// 결과 텍스트를 섹션으로 파싱
+function parseSections(text) {
+  const sections = []
+  const parts = text.split(/===(.+?)===/)
+  for (let i = 1; i < parts.length; i += 2) {
+    sections.push({ title: parts[i].trim(), content: parts[i + 1]?.trim() || '' })
   }
-  const 년간index = ((year - 4) % 10 + 10) % 10;
-  const 월간index = (월간시작표[년간index] + (월지index - 2 + 12) % 12) % 10;
-  return 천간[월간index] + 지지[월지index];
-}
-function get시주(birthdate, birthtime) {
-  if (!birthtime) return null;
-  const [hour] = birthtime.split(':').map(Number);
-  const 시지index = Math.floor(((hour + 1) % 24) / 2);
-  const 일주str = get일주(birthdate);
-  const 일간 = 천간.indexOf(일주str.substring(0, 2));
-  const 시간index = ([0, 2, 4, 6, 8, 0, 2, 4, 6, 8][일간] + 시지index) % 10;
-  return 천간[시간index] + 지지[시지index];
-}
-function get용신(년주, 월주, 일주, 시주) {
-  const 오행카운트 = { '木': 0, '火': 0, '土': 0, '金': 0, '水': 0 };
-  [년주, 월주, 일주, 시주].filter(Boolean).forEach(기둥 => {
-    if (천간오행[기둥.substring(0, 2)]) 오행카운트[천간오행[기둥.substring(0, 2)]]++;
-    if (지지오행[기둥.substring(2, 4)]) 오행카운트[지지오행[기둥.substring(2, 4)]]++;
-  });
-  let min = Infinity, 용신오행 = '水';
-  for (const [오행, 수] of Object.entries(오행카운트)) {
-    if (수 < min) { min = 수; 용신오행 = 오행; }
-  }
-  return 용신오행;
-}
-function lunarToSolar(year, month, day) {
-  const 음력기준 = new Date('1900-01-31');
-  let 누적일 = 0;
-  for (let y = 1900; y < year; y++) 누적일 += 354;
-  누적일 += (month - 1) * 29.5 + (day - 1);
-  return new Date(음력기준.getTime() + 누적일 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return sections
 }
 
-app.post('/api/analyze', async (req, res) => {
-  const { name, gender, birthdate: rawBirthdate, birthtime, mbti, blood, type, isPaid, isLunar } = req.body;
-  if (!rawBirthdate) return res.status(400).json({ error: '생년월일을 입력해주세요.' });
+const s = {
+  app: { minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' },
+  header: { textAlign: 'center', padding: '40px 24px 24px', background: 'linear-gradient(180deg, #F3EEFF 0%, var(--color-bg) 100%)' },
+  heroEmoji: { fontSize: 44, display: 'block', marginBottom: 10 },
+  heroTitle: { fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: 'var(--color-text)', marginBottom: 6 },
+  heroSub: { fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 },
+  progressWrap: { maxWidth: 480, margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' },
+  progressBar: { height: 3, background: 'var(--color-border)', borderRadius: 99, margin: '16px 0 0', overflow: 'hidden' },
+  progressFill: (pct) => ({ height: '100%', width: `${pct}%`, background: 'var(--color-primary)', borderRadius: 99, transition: 'width 0.35s ease' }),
+  stepLabel: { fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'right', marginTop: 6, marginBottom: 8 },
+  stepWrap: { maxWidth: 480, margin: '0 auto', padding: '12px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 },
+  stepTitle: { fontSize: 20, fontWeight: 700, color: 'var(--color-text)', marginBottom: 6, fontFamily: 'var(--font-display)' },
+  stepSub: { fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 20 },
+  genderGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 },
+  genderBtn: (active) => ({
+    padding: '28px 16px', border: `2px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+    borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
+    cursor: 'pointer', fontSize: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s',
+  }),
+  genderLabel: (active) => ({ fontSize: 14, fontWeight: 600, color: active ? 'var(--color-primary-dark)' : 'var(--color-text)' }),
+  calToggle: { display: 'flex', gap: 8, marginBottom: 16 },
+  calBtn: (active) => ({
+    flex: 1, padding: '10px', fontSize: 13, fontWeight: active ? 600 : 400,
+    border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+    borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
+    color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', cursor: 'pointer', transition: 'all 0.15s',
+  }),
+  dateInput: { width: '100%', padding: '14px 16px', fontSize: 16, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', boxSizing: 'border-box', marginBottom: 8 },
+  unknownBtn: (active) => ({
+    width: '100%', padding: '13px 16px', border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+    borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
+    color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
+    fontSize: 14, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s', marginBottom: 8,
+  }),
+  chipWrap: { display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  chip: (active) => ({
+    border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`, borderRadius: 20, padding: '7px 16px', fontSize: 13, cursor: 'pointer',
+    background: active ? 'var(--color-primary-light)' : 'transparent', color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
+    fontWeight: active ? 600 : 400, transition: 'all 0.15s',
+  }),
+  skipBtn: { fontSize: 13, color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', textDecoration: 'underline', display: 'block' },
+  bottomBar: {
+    position: 'fixed', bottom: 0, background: 'var(--color-bg)', borderTop: '1px solid var(--color-border)',
+    padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%',
+    left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box',
+  },
+  backBtn: { flex: '0 0 auto', padding: '14px 20px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', fontSize: 15, cursor: 'pointer', color: 'var(--color-text)' },
+  nextBtn: (disabled) => ({
+    flex: 1, padding: '14px', fontSize: 15, fontWeight: 600,
+    background: disabled ? '#D4C8F5' : 'var(--color-primary)', color: 'white', border: 'none',
+    borderRadius: 'var(--radius-md)', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+  }),
+  resultWrap: { maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box' },
+  // 사주 표
+  sajuCard: { background: '#F8F5FF', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginBottom: 12 },
+  sajuTitle: { fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 12, letterSpacing: '0.05em' },
+  sajuTable: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 },
+  sajuCell: { textAlign: 'center', background: 'white', borderRadius: 8, padding: '10px 4px', border: '1px solid var(--color-border)' },
+  sajuCellLabel: { fontSize: 10, color: 'var(--color-text-muted)', marginBottom: 4, display: 'block' },
+  sajuCellValue: { fontSize: 13, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.6 },
+  // 아코디언
+  accordion: { marginBottom: 8, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
+  accordionHeader: (open) => ({
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '16px 18px', cursor: 'pointer', background: open ? 'var(--color-primary-light)' : 'var(--color-surface)',
+    transition: 'all 0.2s',
+  }),
+  accordionTitle: (open) => ({ fontSize: 15, fontWeight: 700, color: open ? 'var(--color-primary-dark)' : 'var(--color-text)', flex: 1 }),
+  accordionArrow: (open) => ({ fontSize: 12, color: 'var(--color-text-muted)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }),
+  accordionBody: { padding: '16px 18px', fontSize: 15, lineHeight: 1.9, color: 'var(--color-text)', whiteSpace: 'pre-wrap', background: 'var(--color-surface)', borderTop: '1px solid var(--color-border)' },
+  // 990원 결제 버튼
+  paySection: { background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12, textAlign: 'center' },
+  paySectionTitle: { fontSize: 18, fontWeight: 700, color: 'white', marginBottom: 6 },
+  paySectionSub: { fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, marginBottom: 16 },
+  payList: { textAlign: 'left', marginBottom: 16 },
+  payListItem: { fontSize: 13, color: 'rgba(255,255,255,0.9)', marginBottom: 4 },
+  payBtn: { width: '100%', padding: '16px', fontSize: 18, fontWeight: 700, background: 'white', color: '#764ba2', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' },
+  // 유료 결과 아코디언
+  paidAccordion: { marginBottom: 8, border: '2px solid var(--color-primary)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
+  paidAccordionHeader: (open) => ({
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '16px 18px', cursor: 'pointer', background: open ? '#F3EEFF' : 'var(--color-surface)', transition: 'all 0.2s',
+  }),
+  // 행운 아이템
+  luckyCard: { background: 'linear-gradient(135deg, #FFF8E7, #FFFBEF)', border: '1px solid #FDE68A', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 },
+  luckyGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 },
+  luckyItem: { background: 'white', borderRadius: 8, padding: '10px 12px', border: '1px solid #FDE68A' },
+  luckyItemLabel: { fontSize: 10, color: '#92400E', fontWeight: 600, marginBottom: 3, display: 'block' },
+  luckyItemValue: { fontSize: 13, color: '#1a1a1a', fontWeight: 500 },
+  loading: { display: 'flex', gap: 6, alignItems: 'center', padding: '20px' },
+  dot: (i) => ({ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-primary)', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }),
+  restartBtn: { width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-text-muted)', marginTop: 10 },
+  loadingCard: { background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12 },
+}
 
-  // 유료는 isPaid 확인
-  if (type === '전체' && !isPaid) {
-    return res.status(402).json({ error: '유료 기능입니다.', requiresPayment: true });
+// 아코디언 컴포넌트
+function Accordion({ title, content, isPaid = false, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
+  const style = isPaid ? s.paidAccordion : s.accordion
+  const headerStyle = isPaid ? s.paidAccordionHeader : s.accordionHeader
+  return (
+    <div style={style}>
+      <div style={headerStyle(open)} onClick={() => setOpen(o => !o)}>
+        <span style={s.accordionTitle(open)}>{title}</span>
+        <span style={s.accordionArrow(open)}>▼</span>
+      </div>
+      {open && <div style={s.accordionBody}>{content}</div>}
+    </div>
+  )
+}
+
+export default function App() {
+  useState(() => {
+    fetch('https://love-fortune.onrender.com/api/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ birthdate: '2000-01-01', type: '기본', isPaid: false })
+    }).catch(() => {})
+  })
+
+  const [step, setStep] = useState(0)
+  const [gender, setGender] = useState('')
+  const [birthdate, setBirthdate] = useState('')
+  const [isLunar, setIsLunar] = useState(false)
+  const [birthtime, setBirthtime] = useState('')
+  const [timeUnknown, setTimeUnknown] = useState(false)
+  const [mbti, setMbti] = useState('')
+  const [blood, setBlood] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [paidLoading, setPaidLoading] = useState(false)
+  const [baseResult, setBaseResult] = useState(null)
+  const [paidResult, setPaidResult] = useState(null)
+  const [showPayment, setShowPayment] = useState(false)
+
+  const currentStepId = STEPS[step]
+  const progress = (step / STEPS.length) * 100
+
+  function canGoNext() {
+    if (currentStepId === 'gender') return gender !== ''
+    if (currentStepId === 'birthdate') return birthdate !== ''
+    if (currentStepId === 'birthtime') return timeUnknown || birthtime !== ''
+    return true
   }
 
-  let birthdate = rawBirthdate;
-  if (isLunar) {
-    const [y, m, d] = rawBirthdate.split('-').map(Number);
-    birthdate = lunarToSolar(y, m, d);
+  function goNext() {
+    if (step < STEPS.length - 1) setStep(s => s + 1)
+    else handleBaseAnalyze()
   }
 
-  const date = new Date(birthdate);
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
+  function goBack() { if (step > 0) setStep(s => s - 1) }
 
-  const 년주 = get년주(year);
-  const 월주 = get월주(year, month, day);
-  const 일주 = get일주(birthdate);
-  const 시주 = get시주(birthdate, birthtime);
-  const 용신오행 = get용신(년주, 월주, 일주, 시주);
-  const 행운아이템 = 오행행운아이템[용신오행];
-  const 사주정보 = `- 년주: ${년주} / 월주: ${월주} / 일주: ${일주} / 시주: ${시주 || '미입력'}`;
-
-  // 무료 기본 분석
-  const 무료프롬프트 = `당신은 한국 최고의 사주 전문가입니다. 아래 사주를 분석해서 반드시 아래 형식 그대로 작성해주세요.
-
-[기본 정보]
-- 성별: ${gender || '미입력'} / 생년월일: ${year}년 ${month}월 ${day}일
-- 태어난 시간: ${birthtime || '미입력'}
-- MBTI: ${mbti || '미입력'} / 혈액형: ${blood ? blood + '형' : '미입력'}
-- ${사주정보}
-
-아래 섹션 제목을 반드시 그대로 유지하고, 각 섹션 사이는 빈 줄로 구분해주세요.
-제목 앞에는 === 를 붙이고 뒤에도 === 를 붙여주세요. 예: ===제목===
-
-===이 사주가 태어난 이유가 있다===
-년주·월주·일주·시주 전체를 보며 이 사람의 타고난 기질과 인생 설계도를 설명해주세요. 일간(${일주.substring(0, 2)})의 핵심 성격, 삶을 대하는 방식, 대인관계, 강점과 약점을 생생하고 따뜻하게 최소 20줄 이상 써주세요. "맞아, 나 이런 사람이야"라고 무릎을 탁 치게 만들어주세요.
-
-===돈이 나를 따라오게 하려면===
-이 사주의 재물운 핵심을 짚어주세요. 재물복이 어떤지, 돈이 들어오는 패턴, 돈을 모으는 방식, 주의할 점을 8~10줄로 써주세요. 마지막은 "더 자세한 재운 분석은 아래 990원 전체 분석에서 확인하세요 💰"로 끝내주세요.
-
-===결혼? 내 사주엔 어떤 사람이 오나===
-이 사주의 결혼운과 인연의 특징을 8~10줄로 써주세요. 어떤 스타일의 사람이 인연이 되는지, 결혼운이 어떤 편인지, 주의할 점을 써주세요. 마지막은 "결혼 시기와 배우자 특징은 아래 990원 전체 분석에서 확인하세요 💍"로 끝내주세요.
-
-마크다운 없이 일반 텍스트로만 작성해주세요. 전체 최소 5000자 이상 써주세요.`;
-
-  // 유료 전체 분석 (990원)
-  const 유료프롬프트 = `당신은 한국 최고의 사주·운세 전문가입니다. 아래 사주를 아주 깊고 풍부하게 분석해주세요.
-
-[기본 정보]
-- 이름: ${name || '미입력'} / 성별: ${gender || '미입력'}
-- 생년월일: ${year}년 ${month}월 ${day}일${isLunar ? ' (음력→양력)' : ''}
-- 태어난 시간: ${birthtime || '미입력'}
-- MBTI: ${mbti || '미입력'} / 혈액형: ${blood ? blood + '형' : '미입력'}
-- ${사주정보}
-- 용신: ${오행한글[용신오행]}
-
-[행운 아이템 정보]
-- 행운 색깔: ${행운아이템.색깔}
-- 마스코트: ${행운아이템.마스코트}
-- 행운 방향: ${행운아이템.방향}
-- 행운 숫자: ${행운아이템.숫자}
-- 추천 아이템: ${행운아이템.아이템}
-
-아래 섹션 제목을 반드시 그대로 유지하고, 제목 형식은 ===제목=== 으로 써주세요.
-
-===이 사주의 진짜 얼굴===
-사주팔자 각 기둥의 의미, 타고난 성격과 기질, 강점과 약점, 삶의 패턴을 아주 깊고 생생하게 최소 25줄 이상 분석해주세요.
-
-===돈방석에 앉거나 돈에 깔리거나===
-재물운을 아주 자세하게 분석해주세요. 재물복, 돈 버는 방식, 잘 맞는 직업군, 재물이 들어오는 시기, 2026년 재운 흐름, 돈을 잃는 패턴과 주의사항까지 최소 20줄 이상 써주세요.
-
-===내 인생에 오는 그 사람===
-연애운과 결혼운을 아주 자세하게 분석해주세요. 연애 스타일, 배우자 특징(외모·성격·직업), 결혼 적령기, 2026년 연애운 흐름, 인연이 오는 시기와 장소, 주의할 점까지 최소 20줄 이상 써주세요.
-
-===2026년, 이렇게 흘러간다===
-올해 전반적인 운세 흐름을 월별로 분석해주세요. 좋은 시기와 주의할 시기, 기회가 오는 달, 조심해야 할 달을 최소 15줄 이상 써주세요.
-
-===내 행운을 부르는 아이템===
-용신(${오행한글[용신오행]}) 기반으로 행운 색깔, 마스코트, 방향, 숫자, 추천 아이템을 구체적이고 재미있게 설명해주세요. 왜 이 아이템이 이 사주에 맞는지 원리도 설명해주세요. 최소 10줄 이상 써주세요.
-
-===이 사주로 잘 사는 법===
-이 사주가 행복하고 성공적으로 살기 위한 핵심 조언을 따뜻하게 써주세요. 최소 10줄 이상 써주세요.
-
-마크다운 없이 일반 텍스트로만 작성해주세요. 전체 최소 8000자 이상 써주세요.`;
-
-  const prompt = type === '기본' ? 무료프롬프트 : 유료프롬프트;
-
-  try {
-    const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 8192,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    res.json({
-      result: message.content[0].text,
-      type,
-      사주: { 년주, 월주, 일주, 시주: 시주 || null },
-      용신: { 오행: 용신오행, 한글: 오행한글[용신오행] },
-      행운아이템: isPaid ? 행운아이템 : null,
-    });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: '분석 중 오류가 발생했습니다.' });
+  async function handleBaseAnalyze() {
+    setLoading(true); setBaseResult(null); setPaidResult(null)
+    try {
+      const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gender, birthdate, birthtime: timeUnknown ? '' : birthtime, mbti, blood, type: '기본', isPaid: false, isLunar }),
+      })
+      const data = await res.json()
+      if (data.error) alert(data.error)
+      else setBaseResult(data)
+    } catch { alert('서버에 연결할 수 없습니다.') }
+    setLoading(false)
   }
-});
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`서버 실행 중: http://localhost:${PORT}`));
+  async function handlePaidAnalyze() {
+    setPaidLoading(true); setPaidResult(null)
+    try {
+      const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gender, birthdate, birthtime: timeUnknown ? '' : birthtime, mbti, blood, type: '전체', isPaid: true, isLunar }),
+      })
+      const data = await res.json()
+      if (data.error) alert(data.error)
+      else setPaidResult(data)
+    } catch { alert('서버에 연결할 수 없습니다.') }
+    setPaidLoading(false)
+    setShowPayment(false)
+  }
+
+  function handleRestart() {
+    setStep(0); setGender(''); setBirthdate(''); setIsLunar(false)
+    setBirthtime(''); setTimeUnknown(false); setMbti(''); setBlood('')
+    setBaseResult(null); setPaidResult(null); setShowPayment(false)
+  }
+
+  // 결과 화면
+  if (loading || baseResult) {
+    const baseSections = baseResult ? parseSections(baseResult.result) : []
+    const paidSections = paidResult ? parseSections(paidResult.result) : []
+
+    return (
+      <div style={s.app}>
+        <div style={s.header}>
+          <span style={s.heroEmoji}>✨</span>
+          <h1 style={s.heroTitle}>나의 연애·결혼 운세</h1>
+          <p style={s.heroSub}>사주 · MBTI · 혈액형으로 알아보는<br />이상형, 연애운, 결혼운</p>
+        </div>
+        <div style={s.resultWrap}>
+
+          {loading && (
+            <div style={s.loadingCard}>
+              <div style={s.loading}>
+                {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
+                <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>
+                  🔮 사주 분석 중... 약 1분 소요됩니다!
+                </span>
+              </div>
+            </div>
+          )}
+
+          {baseResult && (
+            <>
+              {/* 사주팔자 표 */}
+              {baseResult.사주 && (
+                <div style={s.sajuCard}>
+                  <p style={s.sajuTitle}>📋 나의 사주팔자</p>
+                  <div style={s.sajuTable}>
+                    {[
+                      { label: '시주(時)', value: baseResult.사주.시주 },
+                      { label: '일주(日)', value: baseResult.사주.일주 },
+                      { label: '월주(月)', value: baseResult.사주.월주 },
+                      { label: '년주(年)', value: baseResult.사주.년주 },
+                    ].map(({ label, value }) => (
+                      <div key={label} style={s.sajuCell}>
+                        <span style={s.sajuCellLabel}>{label}</span>
+                        <span style={s.sajuCellValue}>{value || '-'}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {baseResult.용신 && (
+                    <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 10, textAlign: 'center' }}>
+                      용신(用神): <strong>{baseResult.용신.한글}</strong>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* 무료 섹션 아코디언 */}
+              {baseSections.length > 0
+                ? baseSections.map((sec, i) => (
+                    <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
+                  ))
+                : <Accordion title="내 사주 분석" content={baseResult.result} defaultOpen={true} />
+              }
+
+              {/* 유료 결과 */}
+              {paidLoading && (
+                <div style={s.loadingCard}>
+                  <div style={s.loading}>
+                    {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
+                    <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>
+                      🔮 전체 분석 중... 약 1~2분 소요됩니다!
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {paidResult && (
+                <>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', textAlign: 'center', margin: '16px 0 8px' }}>
+                    ⭐ 990원 전체 분석 결과
+                  </p>
+                  {paidSections.length > 0
+                    ? paidSections.map((sec, i) => (
+                        <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />
+                      ))
+                    : <Accordion title="전체 분석" content={paidResult.result} isPaid={true} defaultOpen={true} />
+                  }
+                  {paidResult.행운아이템 && (
+                    <div style={s.luckyCard}>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: '#92400E', marginBottom: 4 }}>🍀 나의 행운 아이템</p>
+                      <p style={{ fontSize: 12, color: '#B45309' }}>{paidResult.행운아이템.설명}</p>
+                      <div style={s.luckyGrid}>
+                        <div style={s.luckyItem}><span style={s.luckyItemLabel}>🎨 행운 색깔</span><span style={s.luckyItemValue}>{paidResult.행운아이템.색깔}</span></div>
+                        <div style={s.luckyItem}><span style={s.luckyItemLabel}>🐾 마스코트</span><span style={s.luckyItemValue}>{paidResult.행운아이템.마스코트}</span></div>
+                        <div style={s.luckyItem}><span style={s.luckyItemLabel}>🧭 행운 방향</span><span style={s.luckyItemValue}>{paidResult.행운아이템.방향}</span></div>
+                        <div style={s.luckyItem}><span style={s.luckyItemLabel}>🔢 행운 숫자</span><span style={s.luckyItemValue}>{paidResult.행운아이템.숫자}</span></div>
+                        <div style={{ ...s.luckyItem, gridColumn: '1 / -1' }}><span style={s.luckyItemLabel}>🛍️ 추천 아이템</span><span style={s.luckyItemValue}>{paidResult.행운아이템.아이템}</span></div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* 990원 결제 유도 */}
+              {!paidResult && !paidLoading && (
+                <div style={s.paySection}>
+                  <p style={s.paySectionTitle}>🔮 전체 사주 분석 받기</p>
+                  <p style={s.paySectionSub}>단 990원으로 내 사주의 모든 것을 확인하세요</p>
+                  <div style={s.payList}>
+                    {['💰 재물운 · 직업운 상세 분석', '💍 연애운 · 결혼운 · 배우자 특징', '📅 2026년 월별 운세 흐름', '🍀 용신 기반 행운 아이템', '✨ 이 사주로 잘 사는 법'].map((item, i) => (
+                      <p key={i} style={s.payListItem}>✓ {item}</p>
+                    ))}
+                  </div>
+                  <button style={s.payBtn} onClick={() => {
+                    if (window.confirm('990원 결제 후 전체 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
+                      handlePaidAnalyze()
+                    }
+                  }}>
+                    990원으로 전체 보기 →
+                  </button>
+                </div>
+              )}
+
+              <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // 스텝 입력 화면
+  return (
+    <div style={s.app}>
+      <div style={s.header}>
+        <span style={s.heroEmoji}>✨</span>
+        <h1 style={s.heroTitle}>나의 연애·결혼 운세</h1>
+        <p style={s.heroSub}>사주 · MBTI · 혈액형으로 알아보는<br />이상형, 연애운, 결혼운</p>
+      </div>
+      <div style={s.progressWrap}>
+        <div style={s.progressBar}><div style={s.progressFill(progress)} /></div>
+        <p style={s.stepLabel}>{step + 1} / {STEPS.length}</p>
+      </div>
+      <div style={s.stepWrap}>
+        {currentStepId === 'gender' && (
+          <>
+            <h2 style={s.stepTitle}>성별을 알려주세요</h2>
+            <p style={s.stepSub}>사주 풀이에 사용돼요</p>
+            <div style={s.genderGrid}>
+              <button style={s.genderBtn(gender === '여성')} onClick={() => setGender('여성')}>
+                <span>♀️</span><span style={s.genderLabel(gender === '여성')}>여성</span>
+              </button>
+              <button style={s.genderBtn(gender === '남성')} onClick={() => setGender('남성')}>
+                <span>♂️</span><span style={s.genderLabel(gender === '남성')}>남성</span>
+              </button>
+            </div>
+          </>
+        )}
+        {currentStepId === 'birthdate' && (
+          <>
+            <h2 style={s.stepTitle}>생년월일을 알려주세요</h2>
+            <p style={s.stepSub}>양력/음력 선택 후 입력해주세요</p>
+            <div style={s.calToggle}>
+              <button style={s.calBtn(!isLunar)} onClick={() => setIsLunar(false)}>양력 🌞</button>
+              <button style={s.calBtn(isLunar)} onClick={() => setIsLunar(true)}>음력 🌙</button>
+            </div>
+            <input type="date" style={s.dateInput} value={birthdate} onChange={e => setBirthdate(e.target.value)} />
+            {isLunar && <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4 }}>ℹ️ 음력 날짜를 입력하면 자동으로 양력으로 변환해요</p>}
+          </>
+        )}
+        {currentStepId === 'birthtime' && (
+          <>
+            <h2 style={s.stepTitle}>태어난 시간을 알려주세요</h2>
+            <p style={s.stepSub}>모르셔도 괜찮아요</p>
+            <button style={s.unknownBtn(timeUnknown)} onClick={() => { setTimeUnknown(true); setBirthtime('') }}>
+              ✓ 태어난 시간 모름
+            </button>
+            {!timeUnknown && (
+              <input type="time" style={s.dateInput} value={birthtime} onChange={e => { setBirthtime(e.target.value); setTimeUnknown(false) }} />
+            )}
+            {timeUnknown && <button style={s.skipBtn} onClick={() => setTimeUnknown(false)}>시간 직접 입력하기</button>}
+          </>
+        )}
+        {currentStepId === 'mbti' && (
+          <>
+            <h2 style={s.stepTitle}>MBTI를 선택해주세요</h2>
+            <p style={s.stepSub}>모르시면 건너뛰어도 돼요</p>
+            <div style={s.chipWrap}>
+              {MBTI_LIST.map(m => <button key={m} style={s.chip(mbti === m)} onClick={() => setMbti(mbti === m ? '' : m)}>{m}</button>)}
+            </div>
+          </>
+        )}
+        {currentStepId === 'blood' && (
+          <>
+            <h2 style={s.stepTitle}>혈액형을 선택해주세요</h2>
+            <p style={s.stepSub}>선택하지 않아도 분석은 가능해요</p>
+            <div style={s.chipWrap}>
+              {BLOOD_LIST.map(b => <button key={b} style={s.chip(blood === b)} onClick={() => setBlood(blood === b ? '' : b)}>{b}형</button>)}
+            </div>
+          </>
+        )}
+      </div>
+      <div style={s.bottomBar}>
+        {step > 0 && <button style={s.backBtn} onClick={goBack}>←</button>}
+        <button style={s.nextBtn(!canGoNext())} onClick={goNext} disabled={!canGoNext()}>
+          {currentStepId === 'blood' ? '무료 사주 분석하기 ✨' : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음'}
+        </button>
+      </div>
+    </div>
+  )
+}
