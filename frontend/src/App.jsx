@@ -17,7 +17,7 @@ const s = {
   app: { minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' },
   header: { textAlign: 'center', padding: '40px 24px 24px', background: 'linear-gradient(180deg, #F3EEFF 0%, var(--color-bg) 100%)' },
   heroEmoji: { fontSize: 44, display: 'block', marginBottom: 10 },
-  heroTitle: { fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: 'var(--color-text)', marginBottom: 6 },
+  heroTitle: { wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: 'var(--color-text)', marginBottom: 6 },
   heroSub: { fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 },
   progressWrap: { maxWidth: 480, margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' },
   progressBar: { height: 3, background: 'var(--color-border)', borderRadius: 99, margin: '16px 0 0', overflow: 'hidden' },
@@ -108,7 +108,7 @@ const s = {
   }),
   accordionTitle: (open) => ({ fontSize: 15, fontWeight: 700, color: open ? 'var(--color-primary-dark)' : 'var(--color-text)', flex: 1 }),
   accordionArrow: (open) => ({ fontSize: 12, color: 'var(--color-text-muted)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }),
-  accordionBody: { padding: '16px 18px', fontSize: 15, lineHeight: 1.9, color: 'var(--color-text)', whiteSpace: 'pre-wrap', background: 'var(--color-surface)', borderTop: '1px solid var(--color-border)' },
+  accordionBody: { wordBreak: 'keep-all', padding: '16px 18px', fontSize: 15, lineHeight: 1.9, color: 'var(--color-text)', whiteSpace: 'pre-wrap', background: 'var(--color-surface)', borderTop: '1px solid var(--color-border)' },
   paySection: { background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12, textAlign: 'center' },
   paySectionTitle: { fontSize: 18, fontWeight: 700, color: 'white', marginBottom: 6 },
   paySectionSub: { fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, marginBottom: 16 },
@@ -404,13 +404,13 @@ export default function App() {
               <button style={s.calBtn(isLunar)} onClick={() => setIsLunar(true)}>음력 🌙</button>
             </div>
             <div style={s.dateRow}>
-              <input style={s.dateNumInput} type="number" inputMode="numeric" placeholder="1990"
+              <input style={s.dateNumInput} type="number" inputMode="numeric" placeholder="년도"
                 value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0, 4))} />
               <span style={s.dateUnitLabel}>년</span>
-              <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="04"
+              <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="월"
                 value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0, 2))} />
               <span style={s.dateUnitLabel}>월</span>
-              <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="03"
+              <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="일"
                 value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0, 2))} />
               <span style={s.dateUnitLabel}>일</span>
             </div>
