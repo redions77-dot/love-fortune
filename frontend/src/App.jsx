@@ -48,13 +48,13 @@ const s = {
     background: 'var(--color-surface)', color: 'var(--color-text)',
     textAlign: 'center', boxSizing: 'border-box',
   },
-  dateNumInputSmall: {
-    width: 70, padding: '16px 8px', fontSize: 20, fontWeight: 700,
-    border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
-    background: 'var(--color-surface)', color: 'var(--color-text)',
-    textAlign: 'center', boxSizing: 'border-box', flexShrink: 0,
-  },
-  dateUnitLabel: { fontSize: 16, fontWeight: 600, color: 'var(--color-text-muted)', flexShrink: 0 },
+ dateNumInputSmall: {
+  width: 56, padding: '16px 4px', fontSize: 18, fontWeight: 700,
+  border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+  background: 'var(--color-surface)', color: 'var(--color-text)',
+  textAlign: 'center', boxSizing: 'border-box', flexShrink: 0,
+},
+dateUnitLabel: { fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)', flexShrink: 0 },
   datePreview: { fontSize: 14, color: 'var(--color-primary-dark)', textAlign: 'center', marginBottom: 8, fontWeight: 500 },
   dateInput: { width: '100%', padding: '14px 16px', fontSize: 16, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', boxSizing: 'border-box', marginBottom: 8 },
   unknownBtn: (active) => ({
