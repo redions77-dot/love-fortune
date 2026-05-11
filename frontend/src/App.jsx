@@ -273,7 +273,8 @@ export default function App() {
             <>
               {baseResult.사주 && (
                 <div style={s.sajuCard}>
-                  <p style={s.sajuTitle}>📋 나의 사주팔자</p>
+<p style={s.sajuTitle}>📋 나의 사주팔자</p>
+<p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 8, textAlign: 'center' }}>{baseResult.생년월일 || ''}</p>
                   <div style={s.sajuTable}>
                     {[
                       { label: '시주(時)', value: baseResult.사주.시주 },
