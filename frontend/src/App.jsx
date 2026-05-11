@@ -210,7 +210,7 @@ export default function App() {
               <div style={s.loading}>
                 {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
                 <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>
-                  🔮 사주 분석 중... 약 1분 소요됩니다!
+                  🔮 당신의 사주를 열심히 읽고 있어요! 곧 놀라운 이야기를 들려드릴게요 ✨ (약 1분 소요)
                 </span>
               </div>
             </div>
@@ -254,7 +254,7 @@ export default function App() {
                   <div style={s.loading}>
                     {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
                     <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>
-                      🔮 전체 분석 중... 약 1~2분 소요됩니다!
+                      🔮 전체 사주를 아주 꼼꼼히 분석하고 있어요! 조금만 기다려주세요 💫 (약 1~2분 소요)
                     </span>
                   </div>
                 </div>
