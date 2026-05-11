@@ -208,8 +208,8 @@ export default function App() {
       <div style={s.app}>
         <div style={s.header}>
           <span style={s.heroEmoji}>✨</span>
-          <h1 style={s.heroTitle}>나의 연애·결혼 운세</h1>
-          <p style={s.heroSub}>사주 · MBTI · 혈액형으로 알아보는<br />이상형, 연애운, 결혼운</p>
+          <h1 style={s.heroTitle}>내가 왜 이렇게 사나 했더니 사주 때문이었다</h1>
+          <p style={s.heroSub}>사주로 보는 돈복·연애운·결혼운 · 990원
         </div>
         <div style={s.resultWrap}>
 
@@ -331,8 +331,8 @@ export default function App() {
     <div style={s.app}>
       <div style={s.header}>
         <span style={s.heroEmoji}>✨</span>
-        <h1 style={s.heroTitle}>나의 연애·결혼 운세</h1>
-        <p style={s.heroSub}>사주 · MBTI · 혈액형으로 알아보는<br />이상형, 연애운, 결혼운</p>
+        <h1 style={s.heroTitle}>내가 왜 이렇게 사나 했더니 사주 때문이었다</h1>
+        <p style={s.heroSub}>사주로 보는 돈복·연애운·결혼운 · 990원
       </div>
       <div style={s.progressWrap}>
         <div style={s.progressBar}><div style={s.progressFill(progress)} /></div>
