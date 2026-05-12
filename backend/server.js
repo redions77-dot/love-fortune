@@ -81,19 +81,14 @@ function get용신(년주, 월주, 일주, 시주) {
 }
 
 function lunarToSolar(year, month, day) {
-  const 음력기준일 = new Date('1900-01-31');
-  const 월길이 = [29,30,29,30,29,30,29,30,29,30,29,30];
-  let 누적일 = 0;
-  for (let y = 1900; y < year; y++) {
-    const 윤달여부 = ((y - 1900) * 11 + 4) % 33 < 11;
-    누적일 += 윤달여부 ? 384 : 354;
+  try {
+    const lunar = require('lunar-calendar-k');
+    const result = lunar.lunarToSolar(year, month, day, false);
+    return `${result.year}-${String(result.month).padStart(2,'0')}-${String(result.day).padStart(2,'0')}`;
+  } catch(e) {
+    const base = new Date(year, month - 1, day + 45);
+    return base.toISOString().slice(0, 10);
   }
-  for (let m = 1; m < month; m++) {
-    누적일 += 월길이[(m - 1) % 12];
-  }
-  누적일 += day - 1;
-  const 결과 = new Date(음력기준일.getTime() + 누적일 * 24 * 60 * 60 * 1000);
-  return 결과.toISOString().slice(0, 10);
 }
 
 app.post('/api/analyze', async (req, res) => {
