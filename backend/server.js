@@ -290,7 +290,7 @@ MBTI(${mbti || '미입력'}) 궁합도 포함해서 어떤 MBTI와 잘 맞는지
 
   try {
     const message = await anthropic.messages.create({
-   model: 'claude-sonnet-4-5-20251001',
+  model: 'claude-sonnet-4-5',
       max_tokens: 8192,
       messages: [{ role: 'user', content: prompt }],
     });
