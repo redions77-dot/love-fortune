@@ -171,16 +171,28 @@ function lunarToSolar(year, month, day) {
   };
 
   const base = lunarNewYear[year];
-  if (!base) return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+if (!base) return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 
-  const days = monthDays[year] || [29,30,29,30,29,30,29,30,29,30,29,30];
-  let offset = 0;
-  for (let m = 1; m < month; m++) offset += days[m-1];
-  offset += day - 1;
+const days = monthDays[year] || [29,30,29,30,29,30,29,30,29,30,29,30];
 
-  const result = new Date(base);
-  result.setDate(result.getDate() + offset);
-  return result.toISOString().slice(0, 10);
+// 윤달 정보 (연도별 윤달 월)
+const leapMonths = {
+  1960:6,1963:4,1966:3,1968:7,1971:5,1974:4,1976:8,1979:6,1982:4,
+  1984:10,1987:6,1990:5,1993:3,1995:8,1998:5,2001:4,2004:2,2006:7,
+  2009:5,2012:3,2014:9,2017:5,2020:4,2023:2,2025:6,
+};
+const leapMonth = leapMonths[year] || 0;
+
+let offset = 0;
+for (let m = 1; m < month; m++) {
+  offset += days[m - 1];
+  if (leapMonth === m) offset += days[m]; // 윤달 일수 추가
+}
+offset += day - 1;
+
+const result = new Date(base);
+result.setDate(result.getDate() + offset);
+return result.toISOString().slice(0, 10);
 }
 app.post('/api/analyze', async (req, res) => {
   const { name, gender, birthdate: rawBirthdate, birthtime, mbti, blood, type, isPaid, isLunar } = req.body;
