@@ -2,7 +2,14 @@ import { useEffect, useState } from 'react'
 
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
-const STEPS = ['gender', 'birthdate', 'birthtime', 'mbti', 'blood']
+const STEPS = ['gender', 'maritalStatus', 'birthdate', 'birthtime', 'mbti', 'blood']
+
+const MARITAL_OPTIONS = [
+  { value: '미혼', emoji: '💫', label: '미혼', sub: '아직 결혼 전이에요' },
+  { value: '기혼', emoji: '💍', label: '기혼', sub: '결혼해서 살고 있어요' },
+  { value: '돌싱', emoji: '🌱', label: '돌싱', sub: '이혼 후 혼자예요' },
+  { value: '돌싱2+', emoji: '🔥', label: '돌싱2+', sub: '이혼을 두 번 이상 했어요' },
+]
 
 function parseSections(text) {
   const sections = []
@@ -33,6 +40,17 @@ const s = {
     cursor: 'pointer', fontSize: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s',
   }),
   genderLabel: (active) => ({ fontSize: 14, fontWeight: 600, color: active ? 'var(--color-primary-dark)' : 'var(--color-text)' }),
+  // 결혼상태 선택 스타일
+  maritalGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 },
+  maritalBtn: (active) => ({
+    padding: '20px 12px', border: `2px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+    borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
+    cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, transition: 'all 0.15s',
+    textAlign: 'center',
+  }),
+  maritalEmoji: { fontSize: 28 },
+  maritalLabel: (active) => ({ fontSize: 15, fontWeight: 700, color: active ? 'var(--color-primary-dark)' : 'var(--color-text)' }),
+  maritalSub: (active) => ({ fontSize: 11, color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', lineHeight: 1.4 }),
   calToggle: { display: 'flex', gap: 8, marginBottom: 20 },
   calBtn: (active) => ({
     flex: 1, padding: '10px', fontSize: 13, fontWeight: active ? 600 : 400,
@@ -95,6 +113,12 @@ const s = {
     borderRadius: 'var(--radius-md)', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
   }),
   resultWrap: { maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box' },
+  // 결혼상태 뱃지 (결과 화면)
+  maritalBadge: (color) => ({
+    display: 'inline-block', padding: '4px 12px', borderRadius: 20,
+    fontSize: 12, fontWeight: 700, marginBottom: 12,
+    background: color.bg, color: color.text, border: `1px solid ${color.border}`,
+  }),
   sajuCard: { background: '#F8F5FF', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginBottom: 12 },
   sajuTitle: { fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 12, letterSpacing: '0.05em' },
   sajuTable: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 },
@@ -131,6 +155,24 @@ const s = {
   loadingCard: { background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12 },
 }
 
+// 결혼상태별 뱃지 색상
+function getMaritalBadgeColor(status) {
+  if (status === '미혼') return { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' }
+  if (status === '기혼') return { bg: '#F0FDF4', text: '#166534', border: '#BBF7D0' }
+  if (status === '돌싱') return { bg: '#FFF7ED', text: '#C2410C', border: '#FED7AA' }
+  if (status === '돌싱2+') return { bg: '#FFF1F2', text: '#BE123C', border: '#FECDD3' }
+  return { bg: '#F3F4F6', text: '#374151', border: '#D1D5DB' }
+}
+
+// 결혼상태별 분석 타입 라벨
+function getMaritalLabel(status) {
+  if (status === '미혼') return '💫 인연운 · 앞으로의 사랑'
+  if (status === '기혼') return '💍 부부운 · 지금의 관계'
+  if (status === '돌싱') return '🌱 재혼운 · 다음 인연'
+  if (status === '돌싱2+') return '🔥 재혼운 · 내 사주의 결혼 패턴'
+  return ''
+}
+
 function Accordion({ title, content, isPaid = false, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   const style = isPaid ? s.paidAccordion : s.accordion
@@ -147,7 +189,6 @@ function Accordion({ title, content, isPaid = false, defaultOpen = false }) {
 }
 
 export default function App() {
-  // 서버 깨우기 - useEffect로 분리 (입력값에 영향 없음)
   useEffect(() => {
     fetch('https://love-fortune.onrender.com/api/analyze', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -157,6 +198,7 @@ export default function App() {
 
   const [step, setStep] = useState(0)
   const [gender, setGender] = useState('')
+  const [maritalStatus, setMaritalStatus] = useState('')   // 👈 새로 추가
   const [birthYear, setBirthYear] = useState('')
   const [birthMonth, setBirthMonth] = useState('')
   const [birthDay, setBirthDay] = useState('')
@@ -198,6 +240,7 @@ export default function App() {
 
   function canGoNext() {
     if (currentStepId === 'gender') return gender !== ''
+    if (currentStepId === 'maritalStatus') return maritalStatus !== ''
     if (currentStepId === 'birthdate') return birthdateValid
     if (currentStepId === 'birthtime') return birthtimeValid
     return true
@@ -215,7 +258,7 @@ export default function App() {
     try {
       const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gender, birthdate, birthtime, mbti, blood, type: '기본', isPaid: false, isLunar }),
+        body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '기본', isPaid: false, isLunar }),
       })
       const data = await res.json()
       if (data.error) alert(data.error)
@@ -229,7 +272,7 @@ export default function App() {
     try {
       const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gender, birthdate, birthtime, mbti, blood, type: '전체', isPaid: true, isLunar }),
+        body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '전체', isPaid: true, isLunar }),
       })
       const data = await res.json()
       if (data.error) alert(data.error)
@@ -239,7 +282,7 @@ export default function App() {
   }
 
   function handleRestart() {
-    setStep(0); setGender('')
+    setStep(0); setGender(''); setMaritalStatus('')
     setBirthYear(''); setBirthMonth(''); setBirthDay(''); setIsLunar(false)
     setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
     setMbti(''); setBlood('')
@@ -258,6 +301,15 @@ export default function App() {
           <p style={s.heroSub}>사주로 보는 돈복·연애운·결혼운 · 990원</p>
         </div>
         <div style={s.resultWrap}>
+          {/* 결혼상태 뱃지 */}
+          {maritalStatus && (
+            <div style={{ textAlign: 'center', marginBottom: 4 }}>
+              <span style={s.maritalBadge(getMaritalBadgeColor(maritalStatus))}>
+                {getMaritalLabel(maritalStatus)}
+              </span>
+            </div>
+          )}
+
           {loading && (
             <div style={s.loadingCard}>
               <div style={s.loading}>
@@ -273,8 +325,8 @@ export default function App() {
             <>
               {baseResult.사주 && (
                 <div style={s.sajuCard}>
-<p style={s.sajuTitle}>📋 나의 사주팔자</p>
-<p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 8, textAlign: 'center' }}>{baseResult.생년월일 || ''}</p>
+                  <p style={s.sajuTitle}>📋 나의 사주팔자</p>
+                  <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 8, textAlign: 'center' }}>{baseResult.생년월일 || ''}</p>
                   <div style={s.sajuTable}>
                     {[
                       { label: '시주(時)', value: baseResult.사주.시주 },
@@ -392,6 +444,27 @@ export default function App() {
               <button style={s.genderBtn(gender === '남성')} onClick={() => setGender('남성')}>
                 <span>♂️</span><span style={s.genderLabel(gender === '남성')}>남성</span>
               </button>
+            </div>
+          </>
+        )}
+
+        {/* 👇 새로 추가: 결혼 상태 선택 스텝 */}
+        {currentStepId === 'maritalStatus' && (
+          <>
+            <h2 style={s.stepTitle}>결혼 상태를 알려주세요</h2>
+            <p style={s.stepSub}>상태에 맞는 맞춤 분석을 해드려요</p>
+            <div style={s.maritalGrid}>
+              {MARITAL_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  style={s.maritalBtn(maritalStatus === opt.value)}
+                  onClick={() => setMaritalStatus(opt.value)}
+                >
+                  <span style={s.maritalEmoji}>{opt.emoji}</span>
+                  <span style={s.maritalLabel(maritalStatus === opt.value)}>{opt.label}</span>
+                  <span style={s.maritalSub(maritalStatus === opt.value)}>{opt.sub}</span>
+                </button>
+              ))}
             </div>
           </>
         )}
