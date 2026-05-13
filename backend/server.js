@@ -188,6 +188,7 @@ app.post('/api/analyze', async (req, res) => {
   const marital = getMaritalFocus(maritalStatus);
 
   const basePrompt = `당신은 한국의 사주·운세 전문가입니다. 따뜻하고 공감 가는 말투로 분석해주세요.
+현재 연도는 2026년(丙午년)입니다. 운세 분석 시 반드시 2026년 기준으로 작성해주세요.
 
 [기본 정보]
 - 성별: ${gender || '미입력'}
@@ -255,6 +256,7 @@ ${marital.paidFocus}
     const c월주 = get월주(cYear, cMonth, cDay, c년주obj.천간index)
 
     const childPrompt = `당신은 한국의 사주·운세 전문가입니다. 따뜻하고 구체적인 말투로 분석해주세요.
+현재 연도는 2026년(丙午년)입니다. 운세 분석 시 반드시 2026년 기준으로 작성해주세요.
 
 [부모 정보]
 - 성별: ${gender || '미입력'}
