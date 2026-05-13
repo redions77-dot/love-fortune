@@ -73,21 +73,23 @@ const s = {
   },
   dateUnitLabel: { fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)', flexShrink: 0 },
   datePreview: { fontSize: 14, color: 'var(--color-primary-dark)', textAlign: 'center', marginBottom: 8, fontWeight: 500 },
-  timeRow: { display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 },
-  timeNumInput: {
-    width: 70, flexShrink: 0, padding: '16px 4px', fontSize: 22, fontWeight: 700,
-    border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
-    background: 'var(--color-surface)', color: 'var(--color-text)',
-    textAlign: 'center', boxSizing: 'border-box',
-  },
-  timeColon: { fontSize: 24, fontWeight: 700, color: 'var(--color-text)' },
-  ampmGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 },
+  ampmGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 },
   ampmBtn: (active) => ({
-    padding: '12px', fontSize: 15, fontWeight: active ? 700 : 400,
-    border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+    padding: '14px', fontSize: 16, fontWeight: active ? 700 : 400,
+    border: `2px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
     borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
     color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', cursor: 'pointer', transition: 'all 0.15s',
   }),
+  timeLabel: { fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 8, letterSpacing: '0.05em' },
+  timeGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 },
+  timeBtn: (active) => ({
+    padding: '12px 4px', fontSize: 15, fontWeight: active ? 700 : 400,
+    border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
+    borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
+    color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', cursor: 'pointer', transition: 'all 0.15s',
+    textAlign: 'center',
+  }),
+  minGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 },
   unknownBtn: (active) => ({
     width: '100%', padding: '13px 16px', border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
     borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
@@ -233,10 +235,7 @@ export default function App() {
     return `${String(h).padStart(2, '0')}:${String(timeMin).padStart(2, '0')}`
   })()
 
-  const birthtimeValid = timeUnknown
-    || (timeHour && timeMin
-      && Number(timeHour) >= 1 && Number(timeHour) <= 12
-      && Number(timeMin) >= 0 && Number(timeMin) <= 59)
+  const birthtimeValid = timeUnknown || (timeHour !== '' && timeMin !== '')
 
   function canGoNext() {
     if (currentStepId === 'gender') return gender !== ''
@@ -499,22 +498,31 @@ export default function App() {
           <>
             <h2 style={s.stepTitle}>태어난 시간을 알려주세요</h2>
             <p style={s.stepSub}>모르셔도 괜찮아요</p>
-            <button style={s.unknownBtn(timeUnknown)} onClick={() => setTimeUnknown(true)}>
+            <button style={s.unknownBtn(timeUnknown)} onClick={() => { setTimeUnknown(true); setTimeHour(''); setTimeMin('') }}>
               ✓ 태어난 시간 모름
             </button>
             {!timeUnknown && (
               <>
+                <p style={s.timeLabel}>오전 / 오후</p>
                 <div style={s.ampmGrid}>
-                  <button style={s.ampmBtn(timeAmPm === '오전')} onClick={() => setTimeAmPm('오전')}>오전</button>
-                  <button style={s.ampmBtn(timeAmPm === '오후')} onClick={() => setTimeAmPm('오후')}>오후</button>
+                  <button style={s.ampmBtn(timeAmPm === '오전')} onClick={() => setTimeAmPm('오전')}>🌅 오전</button>
+                  <button style={s.ampmBtn(timeAmPm === '오후')} onClick={() => setTimeAmPm('오후')}>🌇 오후</button>
                 </div>
-                <div style={s.timeRow}>
-                  <input style={s.timeNumInput} type="number" inputMode="numeric" placeholder="10"
-                    value={timeHour} onChange={e => setTimeHour(e.target.value.slice(0, 2))} />
-                  <span style={s.timeColon}>:</span>
-                  <input style={s.timeNumInput} type="number" inputMode="numeric" placeholder="15"
-                    value={timeMin} onChange={e => setTimeMin(e.target.value.slice(0, 2))} />
-                  <span style={s.dateUnitLabel}>분</span>
+                <p style={s.timeLabel}>시 선택</p>
+                <div style={s.timeGrid}>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                    <button key={h} style={s.timeBtn(timeHour === String(h))} onClick={() => setTimeHour(String(h))}>
+                      {h}시
+                    </button>
+                  ))}
+                </div>
+                <p style={s.timeLabel}>분 선택</p>
+                <div style={s.minGrid}>
+                  {['00','10','20','30','40','50'].map(m => (
+                    <button key={m} style={s.timeBtn(timeMin === m)} onClick={() => setTimeMin(m)}>
+                      {m}분
+                    </button>
+                  ))}
                 </div>
                 {timeHour && timeMin && (
                   <p style={s.datePreview}>✓ {timeAmPm} {timeHour}시 {timeMin}분</p>
@@ -522,7 +530,7 @@ export default function App() {
               </>
             )}
             {timeUnknown && (
-              <button style={s.skipBtn} onClick={() => setTimeUnknown(false)}>시간 직접 입력하기</button>
+              <button style={s.skipBtn} onClick={() => setTimeUnknown(false)}>시간 직접 선택하기</button>
             )}
           </>
         )}
