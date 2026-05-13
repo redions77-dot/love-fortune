@@ -40,13 +40,11 @@ const s = {
     cursor: 'pointer', fontSize: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s',
   }),
   genderLabel: (active) => ({ fontSize: 14, fontWeight: 600, color: active ? 'var(--color-primary-dark)' : 'var(--color-text)' }),
-  // 결혼상태 선택 스타일
   maritalGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 },
   maritalBtn: (active) => ({
     padding: '20px 12px', border: `2px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
     borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
-    cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, transition: 'all 0.15s',
-    textAlign: 'center',
+    cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, transition: 'all 0.15s', textAlign: 'center',
   }),
   maritalEmoji: { fontSize: 28 },
   maritalLabel: (active) => ({ fontSize: 15, fontWeight: 700, color: active ? 'var(--color-primary-dark)' : 'var(--color-text)' }),
@@ -62,14 +60,12 @@ const s = {
   dateNumInput: {
     width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700,
     border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
-    background: 'var(--color-surface)', color: 'var(--color-text)',
-    textAlign: 'center', boxSizing: 'border-box',
+    background: 'var(--color-surface)', color: 'var(--color-text)', textAlign: 'center', boxSizing: 'border-box',
   },
   dateNumInputSmall: {
     width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700,
     border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
-    background: 'var(--color-surface)', color: 'var(--color-text)',
-    textAlign: 'center', boxSizing: 'border-box',
+    background: 'var(--color-surface)', color: 'var(--color-text)', textAlign: 'center', boxSizing: 'border-box',
   },
   dateUnitLabel: { fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)', flexShrink: 0 },
   datePreview: { fontSize: 14, color: 'var(--color-primary-dark)', textAlign: 'center', marginBottom: 8, fontWeight: 500 },
@@ -86,15 +82,14 @@ const s = {
     padding: '12px 4px', fontSize: 15, fontWeight: active ? 700 : 400,
     border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
     borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
-    color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', cursor: 'pointer', transition: 'all 0.15s',
-    textAlign: 'center',
+    color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', cursor: 'pointer', transition: 'all 0.15s', textAlign: 'center',
   }),
   minGrid: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 },
   unknownBtn: (active) => ({
     width: '100%', padding: '13px 16px', border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
     borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
     color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
-    fontSize: 14, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s', marginBottom: 8,
+    fontSize: 14, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s', marginBottom: 16,
   }),
   chipWrap: { display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   chip: (active) => ({
@@ -115,7 +110,6 @@ const s = {
     borderRadius: 'var(--radius-md)', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
   }),
   resultWrap: { maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box' },
-  // 결혼상태 뱃지 (결과 화면)
   maritalBadge: (color) => ({
     display: 'inline-block', padding: '4px 12px', borderRadius: 20,
     fontSize: 12, fontWeight: 700, marginBottom: 12,
@@ -155,9 +149,37 @@ const s = {
   dot: (i) => ({ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-primary)', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }),
   restartBtn: { width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-text-muted)', marginTop: 10 },
   loadingCard: { background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12 },
+  // 자녀 학운
+  childSection: { background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)', border: '2px solid #6EE7B7', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12 },
+  childSectionTitle: { fontSize: 18, fontWeight: 700, color: '#065F46', marginBottom: 6 },
+  childSectionSub: { fontSize: 13, color: '#047857', lineHeight: 1.6, marginBottom: 16 },
+  childInputRow: { display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 },
+  childInput: {
+    flex: 1, padding: '12px 8px', fontSize: 16, fontWeight: 700,
+    border: '1px solid #6EE7B7', borderRadius: 'var(--radius-md)',
+    background: 'white', color: 'var(--color-text)', textAlign: 'center', boxSizing: 'border-box',
+  },
+  childInputSmall: {
+    width: 52, flexShrink: 0, padding: '12px 4px', fontSize: 16, fontWeight: 700,
+    border: '1px solid #6EE7B7', borderRadius: 'var(--radius-md)',
+    background: 'white', color: 'var(--color-text)', textAlign: 'center', boxSizing: 'border-box',
+  },
+  childGenderGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 },
+  childGenderBtn: (active) => ({
+    padding: '12px', border: `2px solid ${active ? '#059669' : '#6EE7B7'}`,
+    borderRadius: 'var(--radius-md)', background: active ? '#059669' : 'white',
+    color: active ? 'white' : '#047857', fontSize: 14, fontWeight: active ? 700 : 400,
+    cursor: 'pointer', transition: 'all 0.15s',
+  }),
+  childBtn: (disabled) => ({ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700, background: disabled ? '#A7F3D0' : '#059669', color: 'white', border: 'none', borderRadius: 'var(--radius-md)', cursor: disabled ? 'not-allowed' : 'pointer' }),
+  childAccordion: { marginBottom: 8, border: '2px solid #059669', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
+  childAccordionHeader: (open) => ({
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '16px 18px', cursor: 'pointer', background: open ? '#ECFDF5' : 'var(--color-surface)', transition: 'all 0.2s',
+  }),
+  childResultLabel: { fontSize: 13, fontWeight: 600, color: '#059669', textAlign: 'center', margin: '16px 0 8px' },
 }
 
-// 결혼상태별 뱃지 색상
 function getMaritalBadgeColor(status) {
   if (status === '미혼') return { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE' }
   if (status === '기혼') return { bg: '#F0FDF4', text: '#166534', border: '#BBF7D0' }
@@ -166,7 +188,6 @@ function getMaritalBadgeColor(status) {
   return { bg: '#F3F4F6', text: '#374151', border: '#D1D5DB' }
 }
 
-// 결혼상태별 분석 타입 라벨
 function getMaritalLabel(status) {
   if (status === '미혼') return '💫 인연운 · 앞으로의 사랑'
   if (status === '기혼') return '💍 부부운 · 지금의 관계'
@@ -175,10 +196,10 @@ function getMaritalLabel(status) {
   return ''
 }
 
-function Accordion({ title, content, isPaid = false, defaultOpen = false }) {
+function Accordion({ title, content, isPaid = false, isChild = false, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
-  const style = isPaid ? s.paidAccordion : s.accordion
-  const headerStyle = isPaid ? s.paidAccordionHeader : s.accordionHeader
+  const style = isChild ? s.childAccordion : isPaid ? s.paidAccordion : s.accordion
+  const headerStyle = isChild ? s.childAccordionHeader : isPaid ? s.paidAccordionHeader : s.accordionHeader
   return (
     <div style={style}>
       <div style={headerStyle(open)} onClick={() => setOpen(o => !o)}>
@@ -200,7 +221,7 @@ export default function App() {
 
   const [step, setStep] = useState(0)
   const [gender, setGender] = useState('')
-  const [maritalStatus, setMaritalStatus] = useState('')   // 👈 새로 추가
+  const [maritalStatus, setMaritalStatus] = useState('')
   const [birthYear, setBirthYear] = useState('')
   const [birthMonth, setBirthMonth] = useState('')
   const [birthDay, setBirthDay] = useState('')
@@ -215,6 +236,13 @@ export default function App() {
   const [paidLoading, setPaidLoading] = useState(false)
   const [baseResult, setBaseResult] = useState(null)
   const [paidResult, setPaidResult] = useState(null)
+  // 자녀 학운
+  const [childYear, setChildYear] = useState('')
+  const [childMonth, setChildMonth] = useState('')
+  const [childDay, setChildDay] = useState('')
+  const [childGender, setChildGender] = useState('')
+  const [childLoading, setChildLoading] = useState(false)
+  const [childResult, setChildResult] = useState(null)
 
   const currentStepId = STEPS[step]
   const progress = (step / STEPS.length) * 100
@@ -237,6 +265,15 @@ export default function App() {
 
   const birthtimeValid = timeUnknown || (timeHour !== '' && timeMin !== '')
 
+  const childBirthdate = (childYear.length === 4 && childMonth && childDay)
+    ? `${childYear}-${String(childMonth).padStart(2, '0')}-${String(childDay).padStart(2, '0')}`
+    : ''
+
+  const childBirthdateValid = childYear.length === 4
+    && Number(childMonth) >= 1 && Number(childMonth) <= 12
+    && Number(childDay) >= 1 && Number(childDay) <= 31
+    && childGender !== ''
+
   function canGoNext() {
     if (currentStepId === 'gender') return gender !== ''
     if (currentStepId === 'maritalStatus') return maritalStatus !== ''
@@ -253,7 +290,7 @@ export default function App() {
   function goBack() { if (step > 0) setStep(s => s - 1) }
 
   async function handleBaseAnalyze() {
-    setLoading(true); setBaseResult(null); setPaidResult(null)
+    setLoading(true); setBaseResult(null); setPaidResult(null); setChildResult(null)
     try {
       const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -280,17 +317,33 @@ export default function App() {
     setPaidLoading(false)
   }
 
+  async function handleChildAnalyze() {
+    setChildLoading(true); setChildResult(null)
+    try {
+      const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gender, birthdate, birthtime, childBirthdate, childGender, type: '자녀학운', isPaid: true, isLunar: false }),
+      })
+      const data = await res.json()
+      if (data.error) alert(data.error)
+      else setChildResult(data)
+    } catch { alert('서버에 연결할 수 없습니다.') }
+    setChildLoading(false)
+  }
+
   function handleRestart() {
     setStep(0); setGender(''); setMaritalStatus('')
     setBirthYear(''); setBirthMonth(''); setBirthDay(''); setIsLunar(false)
     setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
     setMbti(''); setBlood('')
     setBaseResult(null); setPaidResult(null)
+    setChildYear(''); setChildMonth(''); setChildDay(''); setChildGender(''); setChildResult(null)
   }
 
   if (loading || baseResult) {
     const baseSections = baseResult ? parseSections(baseResult.result) : []
     const paidSections = paidResult ? parseSections(paidResult.result) : []
+    const childSections = childResult ? parseSections(childResult.result) : []
 
     return (
       <div style={s.app}>
@@ -300,7 +353,6 @@ export default function App() {
           <p style={s.heroSub}>사주로 보는 돈복·연애운·결혼운 · 990원</p>
         </div>
         <div style={s.resultWrap}>
-          {/* 결혼상태 뱃지 */}
           {maritalStatus && (
             <div style={{ textAlign: 'center', marginBottom: 4 }}>
               <span style={s.maritalBadge(getMaritalBadgeColor(maritalStatus))}>
@@ -339,18 +391,11 @@ export default function App() {
                       </div>
                     ))}
                   </div>
-                  {baseResult.용신 && (
-                    <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 10, textAlign: 'center' }}>
-                      용신(用神): <strong>{baseResult.용신.한글}</strong>
-                    </p>
-                  )}
                 </div>
               )}
 
               {baseSections.length > 0
-                ? baseSections.map((sec, i) => (
-                    <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
-                  ))
+                ? baseSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />)
                 : <Accordion title="내 사주 분석" content={baseResult.result} defaultOpen={true} />
               }
 
@@ -359,7 +404,7 @@ export default function App() {
                   <div style={s.loading}>
                     {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
                     <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>
-                      🔮 전체 사주를 아주 꼼꼼히 분석하고 있어요! 조금만 기다려주세요 💫 (약 1~2분 소요)
+                      🔮 전체 사주를 꼼꼼히 분석하고 있어요! 💫 (약 1~2분 소요)
                     </span>
                   </div>
                 </div>
@@ -371,9 +416,7 @@ export default function App() {
                     ⭐ 990원 전체 분석 결과
                   </p>
                   {paidSections.length > 0
-                    ? paidSections.map((sec, i) => (
-                        <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />
-                      ))
+                    ? paidSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />)
                     : <Accordion title="전체 분석" content={paidResult.result} isPaid={true} defaultOpen={true} />
                   }
                   {paidResult.행운아이템 && (
@@ -409,6 +452,72 @@ export default function App() {
                     990원으로 전체 보기 →
                   </button>
                 </div>
+              )}
+
+              {/* 자녀 학운 - 본인 분석 끝나면 항상 노출 */}
+              {!childResult && !childLoading && (
+                <div style={s.childSection}>
+                  <p style={s.childSectionTitle}>📚 우리 아이 학운 분석</p>
+                  <p style={s.childSectionSub}>부모 사주와 함께 보는 자녀 학운 · 1,990원</p>
+                  <div style={{ textAlign: 'left', marginBottom: 16 }}>
+                    {['🧠 타고난 공부 머리와 재능 분야', '📖 어떤 과목에서 두각을 나타내는지', '⏰ 집중력이 높아지는 시기', '🎯 입시 운이 좋은 해', '💡 공부 잘 되는 환경 만드는 법'].map((item, i) => (
+                      <p key={i} style={{ fontSize: 13, color: '#065F46', marginBottom: 4 }}>✓ {item}</p>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 12, color: '#047857', marginBottom: 8, fontWeight: 600 }}>아이 생년월일</p>
+                  <div style={s.childInputRow}>
+                    <input style={s.childInput} type="number" inputMode="numeric" placeholder="년도"
+                      value={childYear} onChange={e => setChildYear(e.target.value.slice(0, 4))} />
+                    <span style={{ fontSize: 13, color: '#047857', flexShrink: 0 }}>년</span>
+                    <input style={s.childInputSmall} type="number" inputMode="numeric" placeholder="월"
+                      value={childMonth} onChange={e => setChildMonth(e.target.value.slice(0, 2))} />
+                    <span style={{ fontSize: 13, color: '#047857', flexShrink: 0 }}>월</span>
+                    <input style={s.childInputSmall} type="number" inputMode="numeric" placeholder="일"
+                      value={childDay} onChange={e => setChildDay(e.target.value.slice(0, 2))} />
+                    <span style={{ fontSize: 13, color: '#047857', flexShrink: 0 }}>일</span>
+                  </div>
+                  <div style={s.childGenderGrid}>
+                    <button style={s.childGenderBtn(childGender === '딸')} onClick={() => setChildGender('딸')}>👧 딸</button>
+                    <button style={s.childGenderBtn(childGender === '아들')} onClick={() => setChildGender('아들')}>👦 아들</button>
+                  </div>
+                  {childBirthdateValid && (
+                    <p style={{ fontSize: 13, color: '#059669', textAlign: 'center', marginBottom: 12, fontWeight: 500 }}>
+                      ✓ {childGender} · {childYear}년 {childMonth}월 {childDay}일
+                    </p>
+                  )}
+                  <button
+                    style={s.childBtn(!childBirthdateValid)}
+                    disabled={!childBirthdateValid}
+                    onClick={() => {
+                      if (window.confirm('1,990원 결제 후 자녀 학운 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
+                        handleChildAnalyze()
+                      }
+                    }}
+                  >
+                    1,990원으로 학운 분석받기 →
+                  </button>
+                </div>
+              )}
+
+              {childLoading && (
+                <div style={s.loadingCard}>
+                  <div style={s.loading}>
+                    {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
+                    <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>
+                      📚 아이의 사주와 학운을 꼼꼼히 분석하고 있어요! (약 1~2분 소요)
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {childResult && (
+                <>
+                  <p style={s.childResultLabel}>📚 우리 아이 학운 분석 결과</p>
+                  {childSections.length > 0
+                    ? childSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isChild={true} defaultOpen={i === 0} />)
+                    : <Accordion title="자녀 학운 분석" content={childResult.result} isChild={true} defaultOpen={true} />
+                  }
+                </>
               )}
 
               <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
@@ -447,18 +556,13 @@ export default function App() {
           </>
         )}
 
-        {/* 👇 새로 추가: 결혼 상태 선택 스텝 */}
         {currentStepId === 'maritalStatus' && (
           <>
             <h2 style={s.stepTitle}>결혼 상태를 알려주세요</h2>
             <p style={s.stepSub}>상태에 맞는 맞춤 분석을 해드려요</p>
             <div style={s.maritalGrid}>
               {MARITAL_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  style={s.maritalBtn(maritalStatus === opt.value)}
-                  onClick={() => setMaritalStatus(opt.value)}
-                >
+                <button key={opt.value} style={s.maritalBtn(maritalStatus === opt.value)} onClick={() => setMaritalStatus(opt.value)}>
                   <span style={s.maritalEmoji}>{opt.emoji}</span>
                   <span style={s.maritalLabel(maritalStatus === opt.value)}>{opt.label}</span>
                   <span style={s.maritalSub(maritalStatus === opt.value)}>{opt.sub}</span>
@@ -511,17 +615,13 @@ export default function App() {
                 <p style={s.timeLabel}>시 선택</p>
                 <div style={s.timeGrid}>
                   {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
-                    <button key={h} style={s.timeBtn(timeHour === String(h))} onClick={() => setTimeHour(String(h))}>
-                      {h}시
-                    </button>
+                    <button key={h} style={s.timeBtn(timeHour === String(h))} onClick={() => setTimeHour(String(h))}>{h}시</button>
                   ))}
                 </div>
                 <p style={s.timeLabel}>분 선택</p>
                 <div style={s.minGrid}>
                   {['00','10','20','30','40','50'].map(m => (
-                    <button key={m} style={s.timeBtn(timeMin === m)} onClick={() => setTimeMin(m)}>
-                      {m}분
-                    </button>
+                    <button key={m} style={s.timeBtn(timeMin === m)} onClick={() => setTimeMin(m)}>{m}분</button>
                   ))}
                 </div>
                 {timeHour && timeMin && (
