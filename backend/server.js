@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const Anthropic = require('@anthropic-ai/sdk');
+const KoreanLunarCalendar = require('korean-lunar-calendar');
 require('dotenv').config();
 
 const app = express();
@@ -8,6 +9,13 @@ app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
 app.use(express.json());
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// 음력→양력 변환
+function lunarToSolar(year, month, day) {
+  const calendar = new KoreanLunarCalendar();
+  calendar.setLunarDate(year, month, day, false);
+  return calendar.getSolarCalendar(); // { year, month, day }
+}
 
 // 육십갑자
 const 천간 = ['甲갑','乙을','丙병','丁정','戊무','己기','庚경','辛신','壬임','癸계'];
@@ -173,12 +181,26 @@ app.post('/api/analyze', async (req, res) => {
 
   if (!birthdate) return res.status(400).json({ error: '생년월일을 입력해주세요.' });
 
-  const date = new Date(birthdate);
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
+  const rawDate = new Date(birthdate);
+  let year = rawDate.getFullYear();
+  let month = rawDate.getMonth() + 1;
+  let day = rawDate.getDate();
 
-  const 일주obj = get일주(birthdate);
+  // 음력이면 양력으로 변환
+  if (isLunar) {
+    try {
+      const solar = lunarToSolar(year, month, day);
+      year = solar.year;
+      month = solar.month;
+      day = solar.day;
+    } catch (e) {
+      console.error('음력 변환 오류:', e);
+    }
+  }
+
+  const birthdate_solar = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+
+  const 일주obj = get일주(birthdate_solar);
   const 년주obj = get년주(year);
   const 일주 = 일주obj.간지;
   const 년주 = 년주obj.간지;
