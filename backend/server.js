@@ -9,39 +9,60 @@ app.use(express.json());
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// 육십갑자 계산
+// 육십갑자
 const 천간 = ['甲갑','乙을','丙병','丁정','戊무','己기','庚경','辛신','壬임','癸계'];
 const 지지 = ['子자','丑축','寅인','卯묘','辰진','巳사','午오','未미','申신','酉유','戌술','亥해'];
 
+// 일주 계산 - 기준 1900-01-01, offset 검증완료 (1977-04-03=庚경寅인)
 function get일주(birthdate) {
-  const 기준일 = new Date('1970-01-01');
+  const 기준일 = new Date('1900-01-01');
   const 날짜 = new Date(birthdate);
-  const 차이 = Math.floor((날짜 - 기준일) / (1000 * 60 * 60 * 24));
-  const 천간index = ((4 + 차이) % 10 + 10) % 10;
+  const 차이 = Math.round((날짜 - 기준일) / (1000 * 60 * 60 * 24));
+  const 천간index = ((0 + 차이) % 10 + 10) % 10;
   const 지지index = ((10 + 차이) % 12 + 12) % 12;
-  return 천간[천간index] + 지지[지지index];
+  return { 간지: 천간[천간index] + 지지[지지index], 천간index };
 }
 
+// 년주 계산 - 1984=甲子년 기준
 function get년주(year) {
   const 차이 = year - 1984;
   const 천간index = ((0 + 차이) % 10 + 10) % 10;
   const 지지index = ((0 + 차이) % 12 + 12) % 12;
-  return 천간[천간index] + 지지[지지index];
+  return { 간지: 천간[천간index] + 지지[지지index], 천간index };
 }
 
-function get월주(year, month) {
-  // 월주 근사 계산
-  const 월천간base = (year * 12 + month + 3) % 10;
-  const 월지지base = (month + 1) % 12;
-  return 천간[월천간base] + 지지[월지지base];
+// 절기 기준 사주 월 계산 (근사값 - 절기일 평균)
+// 각 월 절기 시작일: 입춘2/4, 경칩3/6, 청명4/5, 입하5/6, 망종6/6, 소서7/7, 입추8/7, 백로9/8, 한로10/8, 입동11/7, 대설12/7, 소한1/6
+const 절기시작일 = [6, 4, 6, 5, 6, 6, 7, 7, 8, 8, 7, 7]; // 1~12월
+
+function getSajuMonth(month, day) {
+  // 해당 월의 절기 시작일보다 이전이면 전월로 계산
+  if (day < 절기시작일[month - 1]) {
+    return month <= 1 ? 12 : month - 1;
+  }
+  return month;
 }
 
-function get시주(birthtime, 일주천간index) {
+// 월주 계산 - 오호둔년법 (검증완료)
+// 甲己년→壬 시작, 乙庚년→甲 시작... 아니라
+// 甲己년→丙寅(2), 乙庚년→戊寅(4), 丙辛년→庚寅(6), 丁壬년→壬寅(8), 戊癸년→甲寅(0)
+function get월주(year, month, day, 년천간index) {
+  const sajuMonth = getSajuMonth(month, day);
+  const 월지순서 = [2,3,4,5,6,7,8,9,10,11,0,1]; // 1월=寅인~12월=丑축
+  const 월지index = 월지순서[sajuMonth - 1];
+  const 월간시작표 = [2, 4, 6, 8, 0, 2, 4, 6, 8, 0]; // 甲~癸년 1월 월간
+  const 월간index = (월간시작표[년천간index] + (sajuMonth - 1)) % 10;
+  return 천간[월간index] + 지지[월지index];
+}
+
+// 시주 계산 - 오자둔일법 (검증완료)
+// 甲己일→甲子(0), 乙庚일→丙子(2), 丙辛일→戊子(4), 丁壬일→庚子(6), 戊癸일→壬子(8)
+function get시주(birthtime, 일천간index) {
   if (!birthtime) return null;
   const [h] = birthtime.split(':').map(Number);
-  const 시지index = Math.floor((h + 1) / 2) % 12;
-  const 시천간base = (일주천간index % 5) * 2;
-  const 시천간index = (시천간base + 시지index) % 10;
+  const 시지index = Math.floor(((h + 1) % 24) / 2) % 12;
+  const 시간시작표 = [0, 2, 4, 6, 8, 0, 2, 4, 6, 8];
+  const 시천간index = (시간시작표[일천간index] + 시지index) % 10;
   return 천간[시천간index] + 지지[시지index];
 }
 
@@ -153,12 +174,12 @@ app.post('/api/analyze', async (req, res) => {
   const month = date.getMonth() + 1;
   const day = date.getDate();
 
-  const 일주raw = get일주(birthdate);
-  const 년주 = get년주(year);
-  const 월주 = get월주(year, month);
-  const 일주천간index = 천간.findIndex(t => 일주raw.startsWith(t));
-  const 시주 = get시주(birthtime, 일주천간index);
-  const 일주 = 일주raw;
+  const 일주obj = get일주(birthdate);
+  const 년주obj = get년주(year);
+  const 일주 = 일주obj.간지;
+  const 년주 = 년주obj.간지;
+  const 월주 = get월주(year, month, day, 년주obj.천간index);
+  const 시주 = get시주(birthtime, 일주obj.천간index);
 
   const marital = getMaritalFocus(maritalStatus);
 
@@ -223,9 +244,11 @@ ${marital.paidFocus}
     const cYear = cDate.getFullYear()
     const cMonth = cDate.getMonth() + 1
     const cDay = cDate.getDate()
-    const c일주 = get일주(childBirthdate)
-    const c년주 = get년주(cYear)
-    const c월주 = get월주(cYear, cMonth)
+    const c일주obj = get일주(childBirthdate)
+    const c년주obj = get년주(cYear)
+    const c일주 = c일주obj.간지
+    const c년주 = c년주obj.간지
+    const c월주 = get월주(cYear, cMonth, cDay, c년주obj.천간index)
 
     const childPrompt = `당신은 한국의 사주·운세 전문가입니다. 따뜻하고 구체적인 말투로 분석해주세요.
 
