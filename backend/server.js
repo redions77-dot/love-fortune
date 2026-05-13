@@ -214,6 +214,84 @@ ${marital.paidFocus}
 ===이 사주로 잘 사는 법===
 이 사람이 타고난 사주를 살려서 행복하게 사는 구체적인 조언을 해주세요.`;
 
+  // 자녀학운 분석
+  if (type === '자녀학운') {
+    const { childBirthdate, childGender } = req.body
+    if (!childBirthdate) return res.status(400).json({ error: '아이 생년월일을 입력해주세요.' })
+
+    const cDate = new Date(childBirthdate)
+    const cYear = cDate.getFullYear()
+    const cMonth = cDate.getMonth() + 1
+    const cDay = cDate.getDate()
+    const c일주 = get일주(childBirthdate)
+    const c년주 = get년주(cYear)
+    const c월주 = get월주(cYear, cMonth)
+
+    const childPrompt = `당신은 한국의 사주·운세 전문가입니다. 따뜻하고 구체적인 말투로 분석해주세요.
+
+[부모 정보]
+- 성별: ${gender || '미입력'}
+- 생년월일: ${year}년 ${month}월 ${day}일
+- 태어난 시간: ${birthtime || '미입력'}
+- 년주: ${년주} / 월주: ${월주} / 일주: ${일주}
+
+[자녀 정보]
+- 성별: ${childGender}
+- 생년월일: ${cYear}년 ${cMonth}월 ${cDay}일
+- 년주: ${c년주} / 월주: ${c월주} / 일주: ${c일주}
+
+[분석 포커스 - 자녀 학운]
+부모 사주와 자녀 사주를 함께 보며 아래 항목을 분석해주세요:
+- 이 아이가 타고난 공부 머리와 지적 특성
+- 특히 두각을 나타낼 과목이나 분야 (이과/문과 성향, 예체능 등)
+- 집중력과 학습 에너지가 높아지는 시기와 나이
+- 입시 운이 좋은 해 (대략적 시기)
+- 부모와 자녀 사주의 연결고리 (부모가 어떻게 도와줄 수 있는지)
+- 이 아이가 공부를 잘 하는 환경과 방법
+
+[출력 형식]
+각 섹션은 반드시 ===섹션제목=== 형태로 구분해주세요.
+
+===타고난 공부 기질===
+내용...
+
+===재능이 빛나는 분야===
+내용...
+
+===학습 에너지가 높아지는 시기===
+내용...
+
+===입시 운 흐름===
+내용...
+
+===부모가 도와주는 법===
+내용...
+
+===공부 잘 되는 환경===
+내용...
+
+마크다운(#, *, - 등) 없이 일반 텍스트로만 작성하세요.
+각 섹션은 300~500자로 구체적이고 따뜻하게 작성해주세요.
+학부모 입장에서 실질적으로 도움이 되는 내용으로 써주세요.`
+
+    try {
+      const message = await anthropic.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: childPrompt }],
+      })
+      return res.json({
+        result: message.content[0].text,
+        type: '자녀학운',
+        childBirthdate,
+        childGender,
+      })
+    } catch (e) {
+      console.error(e)
+      return res.status(500).json({ error: '분석 중 오류가 발생했습니다.' })
+    }
+  }
+
   const fullPrompt = isPaid ? basePrompt + paidPromptExtra : basePrompt;
 
   try {
