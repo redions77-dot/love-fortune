@@ -213,7 +213,7 @@ function Accordion({ title, content, isPaid = false, isChild = false, defaultOpe
 
 export default function App() {
   useEffect(() => {
-    fetch('https://love-fortune.onrender.com/api/analyze', {
+    fetch('https://${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/analyze', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ birthdate: '2000-01-01', type: '기본', isPaid: false })
     }).catch(() => {})
@@ -292,7 +292,7 @@ export default function App() {
   async function handleBaseAnalyze() {
     setLoading(true); setBaseResult(null); setPaidResult(null); setChildResult(null)
     try {
-      const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
+      const res = await fetch('https://${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/analyze', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '기본', isPaid: false, isLunar }),
       })
@@ -306,7 +306,7 @@ export default function App() {
   async function handlePaidAnalyze() {
     setPaidLoading(true); setPaidResult(null)
     try {
-      const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
+      const res = await fetch('https://${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/analyze', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '전체', isPaid: true, isLunar }),
       })
@@ -320,7 +320,7 @@ export default function App() {
   async function handleChildAnalyze() {
     setChildLoading(true); setChildResult(null)
     try {
-      const res = await fetch('https://love-fortune.onrender.com/api/analyze', {
+      const res = await fetch('https://${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/analyze', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ gender, birthdate, birthtime, childBirthdate, childGender, type: '자녀학운', isPaid: true, isLunar: false }),
       })
