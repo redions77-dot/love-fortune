@@ -11,10 +11,9 @@ const MARITAL_OPTIONS = [
   { value: '돌싱2+', emoji: '🔥', label: '돌싱2+', sub: '이혼을 두 번 이상 했어요' },
 ]
 
-// 가족 세트 가격
 const PRICES = {
   individual: 1990,
-  member: 1500,   // 2번째 가족부터 1인당 추가
+  member: 1500,
   getTotal: (count) => count === 1 ? 1990 : 1990 + (count - 1) * 1500,
   getOriginal: (count) => count * 1990,
   getSaving: (count) => count * 1990 - (count === 1 ? 1990 : 1990 + (count - 1) * 1500),
@@ -127,7 +126,6 @@ const s = {
   sajuCell: { textAlign: 'center', background: 'white', borderRadius: 8, padding: '10px 4px', border: '1px solid var(--color-border)' },
   sajuCellLabel: { fontSize: 10, color: 'var(--color-text-muted)', marginBottom: 4, display: 'block' },
   sajuCellValue: { fontSize: 13, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.6 },
-  // 스트리밍 결과 카드
   streamCard: { background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '16px 18px', marginBottom: 8, fontSize: 15, lineHeight: 1.9, color: 'var(--color-text)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' },
   accordion: { marginBottom: 8, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
   accordionHeader: (open) => ({
@@ -151,26 +149,12 @@ const s = {
   dot: (i) => ({ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-primary)', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }),
   restartBtn: { width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-text-muted)', marginTop: 10 },
   loadingCard: { background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12 },
-  // 가격 선택 카드
-  priceCard: { background: 'var(--color-surface)', border: '2px solid var(--color-primary)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12, cursor: 'pointer', transition: 'all 0.2s' },
-  priceCardSelected: { background: 'var(--color-primary-light)', border: '2px solid var(--color-primary)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12, cursor: 'pointer' },
-  // 가족 멤버 입력
   memberCard: { background: '#F8F5FF', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: 10 },
   memberRole: { fontSize: 13, fontWeight: 700, color: 'var(--color-primary-dark)', marginBottom: 10 },
-  // 자녀 학운
   childAccordion: { marginBottom: 8, border: '2px solid #059669', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
   childAccordionHeader: (open) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '16px 18px', cursor: 'pointer', background: open ? '#ECFDF5' : 'var(--color-surface)', transition: 'all 0.2s',
-  }),
-  childTimeBtn: (active) => ({
-    padding: '10px 4px', fontSize: 14,
-    border: `1px solid ${active ? '#059669' : '#6EE7B7'}`,
-    borderRadius: 'var(--radius-md)',
-    background: active ? '#059669' : 'white',
-    color: active ? 'white' : '#047857',
-    fontWeight: active ? 700 : 400,
-    cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s',
   }),
 }
 
@@ -189,7 +173,6 @@ function Accordion({ title, content, isPaid = false, isChild = false, defaultOpe
   )
 }
 
-// 가족 멤버 입력 컴포넌트
 function MemberInput({ role, value, onChange }) {
   return (
     <div style={s.memberCard}>
@@ -217,7 +200,6 @@ function MemberInput({ role, value, onChange }) {
           }} onClick={() => onChange({ ...value, gender: g })}>{g}</button>
         ))}
       </div>
-      {/* 시간 입력 */}
       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         <button style={{
           padding: '7px 12px', fontSize: 12,
@@ -273,7 +255,6 @@ const memberBirthtime = (m) => {
 }
 
 export default function App() {
-  // Render 콜드스타트 방지 — 30초마다 ping
   useEffect(() => {
     const ping = () => fetch(`${API_URL}/ping`).catch(() => {})
     ping()
@@ -295,19 +276,17 @@ export default function App() {
   const [mbti, setMbti] = useState('')
   const [blood, setBlood] = useState('')
 
-  // 결과 상태
-  const [phase, setPhase] = useState('input') // input | streaming | done
+  const [phase, setPhase] = useState('input')
   const [sajuData, setSajuData] = useState(null)
-  const [baseText, setBaseText] = useState('')       // 무료 스트리밍 텍스트
-  const [paidText, setPaidText] = useState('')       // 유료 스트리밍 텍스트
+  const [baseText, setBaseText] = useState('')
+  const [paidText, setPaidText] = useState('')
   const [isPaidStreaming, setIsPaidStreaming] = useState(false)
   const [isBaseStreaming, setIsBaseStreaming] = useState(false)
 
-  // 가족 세트
   const [showPriceSelect, setShowPriceSelect] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState(null) // null | 1 | 2 | 3 | 4
-  const [extraMembers, setExtraMembers] = useState([]) // 추가 가족 멤버
-  const [memberResults, setMemberResults] = useState([]) // 각 멤버 결과
+  const [selectedPlan, setSelectedPlan] = useState(null)
+  const [extraMembers, setExtraMembers] = useState([])
+  const [memberResults, setMemberResults] = useState([])
 
   const abortRef = useRef(null)
 
@@ -343,8 +322,7 @@ export default function App() {
   }
   function goBack() { if (step > 0) setStep(s => s - 1) }
 
-  // SSE 스트리밍 수신
-  async function streamAnalyze({ body, onBase, onPaidStart, onPaid, onSaju, onDone, onError }) {
+  async function streamAnalyze({ body, onBase, onPaidStart, onSaju, onDone, onError }) {
     const ctrl = new AbortController()
     abortRef.current = ctrl
 
@@ -358,6 +336,7 @@ export default function App() {
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
     let buf = ''
+    let isPaidSection = false
 
     while (true) {
       const { done, value } = await reader.read()
@@ -370,13 +349,10 @@ export default function App() {
         try {
           const json = JSON.parse(line.slice(6))
           if (json.type === 'saju') onSaju?.(json)
-          else if (json.type === 'paid_start') onPaidStart?.()
+          else if (json.type === 'paid_start') { isPaidSection = true; onPaidStart?.() }
           else if (json.type === 'done') onDone?.()
           else if (json.error) onError?.(json.error)
-          else if (json.text) {
-            // paid_start 이후면 유료 텍스트, 아니면 무료
-            onBase?.(json.text)
-          }
+          else if (json.text) onBase?.(json.text, isPaidSection)
         } catch {}
       }
     }
@@ -384,69 +360,68 @@ export default function App() {
 
   async function handleFreeAnalyze() {
     setPhase('streaming')
-    setBaseText(''); setPaidText(''); setSajuData(null)
+    setBaseText('')
+    setPaidText('')
+    setSajuData(null)
     setIsBaseStreaming(true)
 
-    let isPaid = false
     try {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '기본', isPaid: false, isLunar },
         onSaju: (d) => setSajuData(d),
         onBase: (t) => setBaseText(prev => prev + t),
-        onDone: () => { setIsBaseStreaming(false); setPhase('done') },
-        onError: (e) => { alert(e); setPhase('input') },
+        onDone: () => {
+          setIsBaseStreaming(false)
+          setPhase('done')
+        },
+        onError: (e) => {
+          alert(e)
+          setPhase('input')
+          setIsBaseStreaming(false)
+        },
       })
     } catch (e) {
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
       setPhase('input')
+      setIsBaseStreaming(false)
     }
-    setIsBaseStreaming(false)
   }
 
   async function handlePaidAnalyze(plan) {
     setSelectedPlan(plan)
     setShowPriceSelect(false)
-    setPaidText(''); setIsPaidStreaming(true)
+    setPaidText('')
+    setIsPaidStreaming(true)
 
-    // 추가 멤버 수 = plan - 1
-    const addCount = plan - 1
-    const membersToAnalyze = extraMembers.slice(0, addCount)
+    const membersToAnalyze = extraMembers.slice(0, plan - 1)
 
     try {
-      // 본인 유료 분석
-      let localBase = baseText
-      let localPaid = ''
-      let isPaidSection = false
-
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '전체', isPaid: true, isLunar },
         onSaju: () => {},
-        onBase: (t) => {
-          if (!isPaidSection) setBaseText(prev => prev + t)
-          else { localPaid += t; setPaidText(prev => prev + t) }
+        onBase: (t, isPaidSection) => {
+          if (isPaidSection) setPaidText(prev => prev + t)
+          else setBaseText(prev => prev + t)
         },
-        onPaidStart: () => { isPaidSection = true },
+        onPaidStart: () => {},
         onDone: () => {},
         onError: (e) => alert(e),
       })
 
-      // 추가 가족 분석
       const results = []
       for (const member of membersToAnalyze) {
         let memberText = ''
-        const isChild = member.role?.includes('자녀')
         await streamAnalyze({
           body: {
-            gender, birthdate, birthtime,
-            childBirthdate: `${member.year}-${String(member.month).padStart(2,'0')}-${String(member.day).padStart(2,'0')}`,
-            childGender: member.gender,
-            childBirthtime: memberBirthtime(member),
-            type: isChild ? '자녀학운' : '전체',
-            isPaid: true,
             gender: member.gender,
             birthdate: `${member.year}-${String(member.month).padStart(2,'0')}-${String(member.day).padStart(2,'0')}`,
             birthtime: memberBirthtime(member),
-            maritalStatus: isChild ? undefined : member.maritalStatus,
+            childBirthdate: `${member.year}-${String(member.month).padStart(2,'0')}-${String(member.day).padStart(2,'0')}`,
+            childGender: member.gender,
+            childBirthtime: memberBirthtime(member),
+            type: '자녀학운',
+            isPaid: true,
+            isLunar: false,
           },
           onSaju: () => {},
           onBase: (t) => { memberText += t },
@@ -455,7 +430,6 @@ export default function App() {
         })
       }
       setMemberResults(results)
-
     } catch (e) {
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
     }
@@ -475,12 +449,10 @@ export default function App() {
     setIsBaseStreaming(false); setIsPaidStreaming(false)
   }
 
-  // 결과 화면
   if (phase === 'streaming' || phase === 'done') {
     const baseSections = parseSections(baseText)
     const paidSections = parseSections(paidText)
 
-    // 행운아이템 파싱
     let 행운아이템 = null
     const luckyMatch = paidText.match(/===행운 아이템===([\s\S]*?)(?====|$)/)
     if (luckyMatch) {
@@ -503,7 +475,6 @@ export default function App() {
         </div>
         <div style={s.resultWrap}>
 
-          {/* 사주팔자 카드 */}
           {sajuData?.사주 && (
             <div style={s.sajuCard}>
               <p style={s.sajuTitle}>📋 나의 사주팔자</p>
@@ -524,7 +495,6 @@ export default function App() {
             </div>
           )}
 
-          {/* 무료 결과 — 스트리밍 중이면 실시간 텍스트, 완료 후 아코디언 */}
           {isBaseStreaming && baseText && (
             <div style={s.streamCard}>{baseText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
@@ -532,12 +502,10 @@ export default function App() {
             <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
           ))}
 
-          {/* 유료 스트리밍 중 */}
           {isPaidStreaming && paidText && (
             <div style={s.streamCard}>{paidText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
 
-          {/* 유료 완료 결과 */}
           {!isPaidStreaming && paidSections.length > 0 && (
             <>
               <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', textAlign: 'center', margin: '16px 0 8px' }}>
@@ -561,7 +529,6 @@ export default function App() {
             </>
           )}
 
-          {/* 가족 추가 결과 */}
           {memberResults.map((mr, i) => (
             <div key={i}>
               <p style={{ fontSize: 13, fontWeight: 700, color: '#059669', textAlign: 'center', margin: '20px 0 8px' }}>
@@ -573,7 +540,6 @@ export default function App() {
             </div>
           ))}
 
-          {/* 가격 선택 — 무료 완료 & 유료 미구매 */}
           {phase === 'done' && !selectedPlan && !isPaidStreaming && (
             <>
               {!showPriceSelect ? (
@@ -591,7 +557,6 @@ export default function App() {
                 <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
                   <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>👨‍👩‍👧‍👦 몇 명 분석할까요?</p>
                   <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 16 }}>2번째 가족부터 1인당 1,500원 추가</p>
-
                   {[1, 2, 3, 4].map(n => {
                     const total = PRICES.getTotal(n)
                     const original = PRICES.getOriginal(n)
@@ -606,12 +571,15 @@ export default function App() {
                         background: n === 2 ? 'var(--color-primary-light)' : 'var(--color-surface)',
                         cursor: 'pointer', position: 'relative',
                       }} onClick={() => {
-                        if (n > 1) {
+                        if (n === 1) {
+                          if (window.confirm('1,990원 결제 후 전체 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
+                            handlePaidAnalyze(1)
+                          }
+                        } else {
                           const roles = ['배우자·자녀1', '배우자·자녀2', '자녀3']
                           setExtraMembers(Array.from({ length: n - 1 }, (_, i) => ({ ...emptyMember(), role: roles[i] })))
+                          setSelectedPlan(-n)
                         }
-                        if (n === 1) handlePaidAnalyze(1)
-                        else setSelectedPlan(-n) // 음수 = 멤버 입력 대기
                       }}>
                         <span style={{ fontSize: 20, marginRight: 8 }}>{emojis[n-1]}</span>
                         <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)' }}>{labels[n-1]}</span>
@@ -626,7 +594,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* 가족 멤버 정보 입력 */}
               {selectedPlan < 0 && (
                 <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
                   <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>가족 정보를 입력해주세요</p>
@@ -671,7 +638,6 @@ export default function App() {
     )
   }
 
-  // 입력 스텝 화면
   return (
     <div style={s.app}>
       <div style={s.header}>
