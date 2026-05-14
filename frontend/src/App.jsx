@@ -449,6 +449,7 @@ export default function App() {
     setIsBaseStreaming(false); setIsPaidStreaming(false)
   }
 
+  // ── 결과 화면 ──────────────────────────────────────
   if (phase === 'streaming' || phase === 'done') {
     const baseSections = parseSections(baseText)
     const paidSections = parseSections(paidText)
@@ -475,6 +476,7 @@ export default function App() {
         </div>
         <div style={s.resultWrap}>
 
+          {/* 사주팔자 카드 */}
           {sajuData?.사주 && (
             <div style={s.sajuCard}>
               <p style={s.sajuTitle}>📋 나의 사주팔자</p>
@@ -495,6 +497,7 @@ export default function App() {
             </div>
           )}
 
+          {/* 무료 결과 스트리밍 */}
           {isBaseStreaming && baseText && (
             <div style={s.streamCard}>{baseText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
@@ -502,10 +505,12 @@ export default function App() {
             <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
           ))}
 
+          {/* 유료 결과 스트리밍 */}
           {isPaidStreaming && paidText && (
             <div style={s.streamCard}>{paidText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
 
+          {/* 유료 완료 결과 */}
           {!isPaidStreaming && paidSections.length > 0 && (
             <>
               <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', textAlign: 'center', margin: '16px 0 8px' }}>
@@ -529,6 +534,7 @@ export default function App() {
             </>
           )}
 
+          {/* 가족 추가 결과 */}
           {memberResults.map((mr, i) => (
             <div key={i}>
               <p style={{ fontSize: 13, fontWeight: 700, color: '#059669', textAlign: 'center', margin: '20px 0 8px' }}>
@@ -540,20 +546,27 @@ export default function App() {
             </div>
           ))}
 
+          {/* ── 결제 섹션 ── */}
           {phase === 'done' && !selectedPlan && !isPaidStreaming && (
-            <>
-              {!showPriceSelect ? (
+            <div>
+              {/* 1단계: 전체분석 받기 버튼 */}
+              {!showPriceSelect && (
                 <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12, textAlign: 'center' }}>
                   <p style={{ fontSize: 18, fontWeight: 700, color: 'white', marginBottom: 6 }}>🔮 전체 분석 받기</p>
                   <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', marginBottom: 16, lineHeight: 1.6 }}>
                     직업운 · 투자 · 부동산 · 인간관계 · 월별운세<br/>오프라인 7만원짜리를 단돈 1,990원에
                   </p>
-                  <button style={{ width: '100%', padding: '16px', fontSize: 18, fontWeight: 700, background: 'white', color: '#764ba2', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                    onClick={() => setShowPriceSelect(true)}>
+                  <button
+                    style={{ width: '100%', padding: '16px', fontSize: 18, fontWeight: 700, background: 'white', color: '#764ba2', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                    onClick={() => setShowPriceSelect(true)}
+                  >
                     나 + 가족 분석받기 →
                   </button>
                 </div>
-              ) : (
+              )}
+
+              {/* 2단계: 인원 선택 */}
+              {showPriceSelect && (
                 <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
                   <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>👨‍👩‍👧‍👦 몇 명 분석할까요?</p>
                   <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 16 }}>2번째 가족부터 1인당 1,500원 추가</p>
@@ -593,32 +606,33 @@ export default function App() {
                   })}
                 </div>
               )}
+            </div>
+          )}
 
-              {selectedPlan < 0 && (
-                <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
-                  <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>가족 정보를 입력해주세요</p>
-                  {extraMembers.map((m, i) => (
-                    <MemberInput key={i} role={m.role || `가족 ${i+1}`} value={m}
-                      onChange={v => setExtraMembers(prev => prev.map((p, pi) => pi === i ? v : p))} />
-                  ))}
-                  <button style={{
-                    width: '100%', padding: '14px', fontSize: 16, fontWeight: 700,
-                    background: extraMembers.every(memberValid) ? 'var(--color-primary)' : '#D4C8F5',
-                    color: 'white', border: 'none', borderRadius: 'var(--radius-md)',
-                    cursor: extraMembers.every(memberValid) ? 'pointer' : 'not-allowed',
-                  }}
-                    disabled={!extraMembers.every(memberValid)}
-                    onClick={() => {
-                      const n = -selectedPlan
-                      if (window.confirm(`${PRICES.getTotal(n).toLocaleString()}원 결제 후 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)`)) {
-                        handlePaidAnalyze(n)
-                      }
-                    }}>
-                    {PRICES.getTotal(-selectedPlan).toLocaleString()}원으로 전체 분석받기 →
-                  </button>
-                </div>
-              )}
-            </>
+          {/* 3단계: 가족 정보 입력 — selectedPlan이 음수일 때 독립적으로 표시 */}
+          {selectedPlan !== null && selectedPlan < 0 && (
+            <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
+              <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>가족 정보를 입력해주세요</p>
+              {extraMembers.map((m, i) => (
+                <MemberInput key={i} role={m.role || `가족 ${i+1}`} value={m}
+                  onChange={v => setExtraMembers(prev => prev.map((p, pi) => pi === i ? v : p))} />
+              ))}
+              <button style={{
+                width: '100%', padding: '14px', fontSize: 16, fontWeight: 700,
+                background: extraMembers.every(memberValid) ? 'var(--color-primary)' : '#D4C8F5',
+                color: 'white', border: 'none', borderRadius: 'var(--radius-md)',
+                cursor: extraMembers.every(memberValid) ? 'pointer' : 'not-allowed',
+              }}
+                disabled={!extraMembers.every(memberValid)}
+                onClick={() => {
+                  const n = -selectedPlan
+                  if (window.confirm(`${PRICES.getTotal(n).toLocaleString()}원 결제 후 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)`)) {
+                    handlePaidAnalyze(n)
+                  }
+                }}>
+                {PRICES.getTotal(-selectedPlan).toLocaleString()}원으로 전체 분석받기 →
+              </button>
+            </div>
           )}
 
           {isPaidStreaming && (
@@ -638,6 +652,7 @@ export default function App() {
     )
   }
 
+  // ── 입력 스텝 화면 ──────────────────────────────────────
   return (
     <div style={s.app}>
       <div style={s.header}>
