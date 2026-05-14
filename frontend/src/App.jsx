@@ -12,11 +12,9 @@ const MARITAL_OPTIONS = [
 ]
 
 const PRICES = {
-  individual: 1990,
-  member: 1500,
-  getTotal: (count) => count === 1 ? 1990 : 1990 + (count - 1) * 1500,
+  getTotal: (count) => count === 1 ? 1990 : 1990 + (count - 1) * 1000,
   getOriginal: (count) => count * 1990,
-  getSaving: (count) => count * 1990 - (count === 1 ? 1990 : 1990 + (count - 1) * 1500),
+  getSaving: (count) => count * 1990 - (count === 1 ? 1990 : 1990 + (count - 1) * 1000),
 }
 
 function parseSections(text) {
@@ -278,8 +276,8 @@ export default function App() {
 
   const [phase, setPhase] = useState('input')
   const [sajuData, setSajuData] = useState(null)
-  const [baseText, setBaseText] = useState('')
-  const [paidText, setPaidText] = useState('')
+  const [baseText, setBaseText] = useState('')   // 무료 텍스트
+  const [paidText, setPaidText] = useState('')   // 유료 전용 텍스트 (paid_start 이후)
   const [isPaidStreaming, setIsPaidStreaming] = useState(false)
   const [isBaseStreaming, setIsBaseStreaming] = useState(false)
 
@@ -289,6 +287,8 @@ export default function App() {
   const [memberResults, setMemberResults] = useState([])
 
   const abortRef = useRef(null)
+  // paid_start 수신 여부를 ref로 관리 (state보다 즉각 반응)
+  const isPaidSectionRef = useRef(false)
 
   const currentStepId = STEPS[step]
   const progress = (step / STEPS.length) * 100
@@ -322,7 +322,8 @@ export default function App() {
   }
   function goBack() { if (step > 0) setStep(s => s - 1) }
 
-  async function streamAnalyze({ body, onBase, onPaidStart, onSaju, onDone, onError }) {
+  // SSE 스트리밍 — paid_start 기준으로 무료/유료 텍스트 분리
+  async function streamAnalyze({ body, onSaju, onBaseText, onPaidText, onDone, onError }) {
     const ctrl = new AbortController()
     abortRef.current = ctrl
 
@@ -336,7 +337,6 @@ export default function App() {
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
     let buf = ''
-    let isPaidSection = false
 
     while (true) {
       const { done, value } = await reader.read()
@@ -348,11 +348,22 @@ export default function App() {
         if (!line.startsWith('data: ')) continue
         try {
           const json = JSON.parse(line.slice(6))
-          if (json.type === 'saju') onSaju?.(json)
-          else if (json.type === 'paid_start') { isPaidSection = true; onPaidStart?.() }
-          else if (json.type === 'done') onDone?.()
-          else if (json.error) onError?.(json.error)
-          else if (json.text) onBase?.(json.text, isPaidSection)
+          if (json.type === 'saju') {
+            onSaju?.(json)
+          } else if (json.type === 'paid_start') {
+            // paid_start 수신 → 이후 텍스트는 유료로 분류
+            isPaidSectionRef.current = true
+          } else if (json.type === 'done') {
+            onDone?.()
+          } else if (json.error) {
+            onError?.(json.error)
+          } else if (json.text) {
+            if (isPaidSectionRef.current) {
+              onPaidText?.(json.text)
+            } else {
+              onBaseText?.(json.text)
+            }
+          }
         } catch {}
       }
     }
@@ -364,12 +375,14 @@ export default function App() {
     setPaidText('')
     setSajuData(null)
     setIsBaseStreaming(true)
+    isPaidSectionRef.current = false
 
     try {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '기본', isPaid: false, isLunar },
         onSaju: (d) => setSajuData(d),
-        onBase: (t) => setBaseText(prev => prev + t),
+        onBaseText: (t) => setBaseText(prev => prev + t),
+        onPaidText: () => {}, // 무료 요청에선 paid_start 안 옴
         onDone: () => {
           setIsBaseStreaming(false)
           setPhase('done')
@@ -392,6 +405,7 @@ export default function App() {
     setShowPriceSelect(false)
     setPaidText('')
     setIsPaidStreaming(true)
+    isPaidSectionRef.current = false
 
     const membersToAnalyze = extraMembers.slice(0, plan - 1)
 
@@ -399,37 +413,37 @@ export default function App() {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '전체', isPaid: true, isLunar },
         onSaju: () => {},
-        onBase: (t, isPaidSection) => {
-          if (isPaidSection) setPaidText(prev => prev + t)
-          else setBaseText(prev => prev + t)
-        },
-        onPaidStart: () => {},
+        onBaseText: (t) => setBaseText(prev => prev + t), // paid_start 전 = 무료 재전송
+        onPaidText: (t) => setPaidText(prev => prev + t), // paid_start 후 = 유료 전용
         onDone: () => {},
         onError: (e) => alert(e),
       })
 
+      // 추가 가족 분석
       const results = []
       for (const member of membersToAnalyze) {
         let memberText = ''
+        isPaidSectionRef.current = false
+        const bd = `${member.year}-${String(member.month).padStart(2,'0')}-${String(member.day).padStart(2,'0')}`
         await streamAnalyze({
           body: {
             gender: member.gender,
-            birthdate: `${member.year}-${String(member.month).padStart(2,'0')}-${String(member.day).padStart(2,'0')}`,
+            birthdate: bd,
             birthtime: memberBirthtime(member),
-            childBirthdate: `${member.year}-${String(member.month).padStart(2,'0')}-${String(member.day).padStart(2,'0')}`,
-            childGender: member.gender,
-            childBirthtime: memberBirthtime(member),
-            type: '자녀학운',
+            maritalStatus: member.maritalStatus || '미혼',
+            type: '전체',
             isPaid: true,
             isLunar: false,
           },
           onSaju: () => {},
-          onBase: (t) => { memberText += t },
-          onDone: () => results.push({ role: member.role, text: memberText }),
+          onBaseText: (t) => { memberText += t },
+          onPaidText: (t) => { memberText += t },
+          onDone: () => results.push({ role: member.role, name: member.name || member.role, text: memberText }),
           onError: (e) => alert(e),
         })
       }
       setMemberResults(results)
+
     } catch (e) {
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
     }
@@ -447,6 +461,7 @@ export default function App() {
     setShowPriceSelect(false); setSelectedPlan(null)
     setExtraMembers([]); setMemberResults([])
     setIsBaseStreaming(false); setIsPaidStreaming(false)
+    isPaidSectionRef.current = false
   }
 
   // ── 결과 화면 ──────────────────────────────────────
@@ -497,7 +512,7 @@ export default function App() {
             </div>
           )}
 
-          {/* 무료 결과 스트리밍 */}
+          {/* 무료 결과 */}
           {isBaseStreaming && baseText && (
             <div style={s.streamCard}>{baseText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
@@ -505,7 +520,7 @@ export default function App() {
             <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
           ))}
 
-          {/* 유료 결과 스트리밍 */}
+          {/* 유료 결과 스트리밍 중 */}
           {isPaidStreaming && paidText && (
             <div style={s.streamCard}>{paidText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
@@ -534,11 +549,11 @@ export default function App() {
             </>
           )}
 
-          {/* 가족 추가 결과 */}
+          {/* 가족 분석 결과 */}
           {memberResults.map((mr, i) => (
             <div key={i}>
               <p style={{ fontSize: 13, fontWeight: 700, color: '#059669', textAlign: 'center', margin: '20px 0 8px' }}>
-                👨‍👩‍👧 {mr.role} 분석 결과
+                👨‍👩‍👧 {mr.name} 분석 결과
               </p>
               {parseSections(mr.text).map((sec, j) => (
                 <Accordion key={j} title={sec.title} content={sec.content} isChild={true} defaultOpen={j === 0} />
@@ -546,15 +561,17 @@ export default function App() {
             </div>
           ))}
 
-          {/* ── 결제 섹션 ── */}
+          {/* 결제 섹션 */}
           {phase === 'done' && !selectedPlan && !isPaidStreaming && (
             <div>
-              {/* 1단계: 전체분석 받기 버튼 */}
               {!showPriceSelect && (
                 <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12, textAlign: 'center' }}>
                   <p style={{ fontSize: 18, fontWeight: 700, color: 'white', marginBottom: 6 }}>🔮 전체 분석 받기</p>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', marginBottom: 16, lineHeight: 1.6 }}>
-                    직업운 · 투자 · 부동산 · 인간관계 · 월별운세<br/>오프라인 7만원짜리를 단돈 1,990원에
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', marginBottom: 8, lineHeight: 1.6 }}>
+                    평생 재물운 · 직업운 · 투자 · 인간관계 · 월별운세
+                  </p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 16 }}>
+                    오프라인 7만원짜리를 단돈 1,990원에
                   </p>
                   <button
                     style={{ width: '100%', padding: '16px', fontSize: 18, fontWeight: 700, background: 'white', color: '#764ba2', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
@@ -565,11 +582,10 @@ export default function App() {
                 </div>
               )}
 
-              {/* 2단계: 인원 선택 */}
               {showPriceSelect && (
                 <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
                   <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>👨‍👩‍👧‍👦 몇 명 분석할까요?</p>
-                  <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 16 }}>2번째 가족부터 1인당 1,500원 추가</p>
+                  <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 16 }}>2번째 가족부터 1인당 1,000원 추가</p>
                   {[1, 2, 3, 4].map(n => {
                     const total = PRICES.getTotal(n)
                     const original = PRICES.getOriginal(n)
@@ -589,7 +605,7 @@ export default function App() {
                             handlePaidAnalyze(1)
                           }
                         } else {
-                          const roles = ['배우자·자녀1', '배우자·자녀2', '자녀3']
+                          const roles = ['가족 1', '가족 2', '가족 3']
                           setExtraMembers(Array.from({ length: n - 1 }, (_, i) => ({ ...emptyMember(), role: roles[i] })))
                           setSelectedPlan(-n)
                         }
@@ -609,12 +625,13 @@ export default function App() {
             </div>
           )}
 
-          {/* 3단계: 가족 정보 입력 — selectedPlan이 음수일 때 독립적으로 표시 */}
+          {/* 가족 정보 입력 */}
           {selectedPlan !== null && selectedPlan < 0 && (
             <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
-              <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>가족 정보를 입력해주세요</p>
+              <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>가족 정보를 입력해주세요</p>
+              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 16 }}>각 가족의 사주를 따로 분석해드려요</p>
               {extraMembers.map((m, i) => (
-                <MemberInput key={i} role={m.role || `가족 ${i+1}`} value={m}
+                <MemberInput key={i} role={`가족 ${i+1}`} value={m}
                   onChange={v => setExtraMembers(prev => prev.map((p, pi) => pi === i ? v : p))} />
               ))}
               <button style={{
