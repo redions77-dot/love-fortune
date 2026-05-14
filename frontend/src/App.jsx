@@ -154,12 +154,19 @@ const s = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '16px 18px', cursor: 'pointer', background: open ? '#ECFDF5' : 'var(--color-surface)', transition: 'all 0.2s',
   }),
+  // 궁합
+  gunghabAccordion: { marginBottom: 8, border: '2px solid #E11D48', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
+  gunghabAccordionHeader: (open) => ({
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '16px 18px', cursor: 'pointer', background: open ? '#FFF1F2' : 'var(--color-surface)', transition: 'all 0.2s',
+  }),
+  gunghabSection: { background: 'linear-gradient(135deg, #FFF1F2, #FFF5F6)', border: '2px solid #E11D48', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 },
 }
 
-function Accordion({ title, content, isPaid = false, isChild = false, defaultOpen = false }) {
+function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
-  const style = isChild ? s.childAccordion : isPaid ? s.paidAccordion : s.accordion
-  const headerStyle = isChild ? s.childAccordionHeader : isPaid ? s.paidAccordionHeader : s.accordionHeader
+  const style = isGunghab ? s.gunghabAccordion : isChild ? s.childAccordion : isPaid ? s.paidAccordion : s.accordion
+  const headerStyle = isGunghab ? s.gunghabAccordionHeader : isChild ? s.childAccordionHeader : isPaid ? s.paidAccordionHeader : s.accordionHeader
   return (
     <div style={style}>
       <div style={headerStyle(open)} onClick={() => setOpen(o => !o)}>
@@ -171,22 +178,14 @@ function Accordion({ title, content, isPaid = false, isChild = false, defaultOpe
   )
 }
 
+// 가족 멤버 입력 — 음력/양력 포함
 function MemberInput({ role, value, onChange }) {
   return (
     <div style={s.memberCard}>
       <p style={s.memberRole}>{role}</p>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-        <input style={{ ...s.dateNumInput, width: 80 }} type="number" inputMode="numeric" placeholder="년도"
-          value={value.year} onChange={e => onChange({ ...value, year: e.target.value.slice(0, 4) })} />
-        <span style={s.dateUnitLabel}>년</span>
-        <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="월"
-          value={value.month} onChange={e => onChange({ ...value, month: e.target.value.slice(0, 2) })} />
-        <span style={s.dateUnitLabel}>월</span>
-        <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="일"
-          value={value.day} onChange={e => onChange({ ...value, day: e.target.value.slice(0, 2) })} />
-        <span style={s.dateUnitLabel}>일</span>
-      </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+
+      {/* 성별 */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
         {['여성','남성'].map(g => (
           <button key={g} style={{
             flex: 1, padding: '8px', fontSize: 13,
@@ -198,20 +197,49 @@ function MemberInput({ role, value, onChange }) {
           }} onClick={() => onChange({ ...value, gender: g })}>{g}</button>
         ))}
       </div>
+
+      {/* 양력/음력 토글 */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        {[{ label: '양력 🌞', val: false }, { label: '음력 🌙', val: true }].map(({ label, val }) => (
+          <button key={label} style={{
+            flex: 1, padding: '7px', fontSize: 12,
+            border: `1px solid ${value.isLunar === val ? 'var(--color-primary)' : 'var(--color-border)'}`,
+            borderRadius: 'var(--radius-md)',
+            background: value.isLunar === val ? 'var(--color-primary-light)' : 'var(--color-surface)',
+            color: value.isLunar === val ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
+            cursor: 'pointer', fontWeight: value.isLunar === val ? 600 : 400,
+          }} onClick={() => onChange({ ...value, isLunar: val })}>{label}</button>
+        ))}
+      </div>
+
+      {/* 생년월일 */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 10, alignItems: 'center' }}>
+        <input style={{ ...s.dateNumInput, width: 80 }} type="number" inputMode="numeric" placeholder="년도"
+          value={value.year} onChange={e => onChange({ ...value, year: e.target.value.slice(0, 4) })} />
+        <span style={s.dateUnitLabel}>년</span>
+        <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="월"
+          value={value.month} onChange={e => onChange({ ...value, month: e.target.value.slice(0, 2) })} />
+        <span style={s.dateUnitLabel}>월</span>
+        <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="일"
+          value={value.day} onChange={e => onChange({ ...value, day: e.target.value.slice(0, 2) })} />
+        <span style={s.dateUnitLabel}>일</span>
+      </div>
+
+      {/* 시간 */}
       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         <button style={{
-          padding: '7px 12px', fontSize: 12,
+          padding: '7px 10px', fontSize: 12,
           border: `1px solid ${value.timeUnknown ? 'var(--color-primary)' : 'var(--color-border)'}`,
           borderRadius: 'var(--radius-md)',
           background: value.timeUnknown ? 'var(--color-primary-light)' : 'var(--color-surface)',
           color: value.timeUnknown ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
-          cursor: 'pointer', whiteSpace: 'nowrap',
+          cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 11,
         }} onClick={() => onChange({ ...value, timeUnknown: true, timeHour: '', timeMin: '' })}>
           시간 모름
         </button>
         {['오전','오후'].map(ap => (
           <button key={ap} style={{
-            padding: '7px 10px', fontSize: 12,
+            padding: '7px 8px', fontSize: 11,
             border: `1px solid ${!value.timeUnknown && value.timeAmPm === ap ? 'var(--color-primary)' : 'var(--color-border)'}`,
             borderRadius: 'var(--radius-md)',
             background: !value.timeUnknown && value.timeAmPm === ap ? 'var(--color-primary-light)' : 'var(--color-surface)',
@@ -220,30 +248,56 @@ function MemberInput({ role, value, onChange }) {
           }} onClick={() => onChange({ ...value, timeAmPm: ap, timeUnknown: false })}>{ap}</button>
         ))}
         <select style={{
-          flex: 1, padding: '7px', fontSize: 12, border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-md)', background: 'var(--color-surface)',
-          color: 'var(--color-text)', cursor: 'pointer',
+          flex: 1, padding: '7px', fontSize: 11, border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer',
         }} value={value.timeHour} onChange={e => onChange({ ...value, timeHour: e.target.value, timeUnknown: false })}
           disabled={value.timeUnknown}>
           <option value="">시</option>
           {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => <option key={h} value={String(h)}>{h}시</option>)}
         </select>
         <select style={{
-          flex: 1, padding: '7px', fontSize: 12, border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-md)', background: 'var(--color-surface)',
-          color: 'var(--color-text)', cursor: 'pointer',
+          flex: 1, padding: '7px', fontSize: 11, border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer',
         }} value={value.timeMin} onChange={e => onChange({ ...value, timeMin: e.target.value, timeUnknown: false })}
           disabled={value.timeUnknown}>
           <option value="">분</option>
           {['00','10','20','30','40','50'].map(m => <option key={m} value={m}>{m}분</option>)}
         </select>
       </div>
+
+      {/* 결혼 상태 (성인용) */}
+      {value.showMarital && (
+        <div style={{ marginTop: 8 }}>
+          <p style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 6 }}>결혼 상태</p>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {['미혼','기혼','돌싱'].map(ms => (
+              <button key={ms} style={{
+                padding: '6px 12px', fontSize: 12,
+                border: `1px solid ${value.maritalStatus === ms ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                borderRadius: 20,
+                background: value.maritalStatus === ms ? 'var(--color-primary-light)' : 'var(--color-surface)',
+                color: value.maritalStatus === ms ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
+                cursor: 'pointer',
+              }} onClick={() => onChange({ ...value, maritalStatus: ms })}>{ms}</button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-const emptyMember = () => ({ year: '', month: '', day: '', gender: '', timeHour: '', timeMin: '', timeAmPm: '오전', timeUnknown: false })
-const memberValid = (m) => m.year.length === 4 && Number(m.month) >= 1 && Number(m.month) <= 12 && Number(m.day) >= 1 && m.gender !== '' && (m.timeUnknown || (m.timeHour !== '' && m.timeMin !== ''))
+const emptyMember = () => ({
+  year: '', month: '', day: '', gender: '',
+  timeHour: '', timeMin: '', timeAmPm: '오전', timeUnknown: false,
+  isLunar: false, maritalStatus: '미혼', showMarital: true,
+})
+
+const memberValid = (m) =>
+  m.year.length === 4 && Number(m.month) >= 1 && Number(m.month) <= 12 &&
+  Number(m.day) >= 1 && m.gender !== '' &&
+  (m.timeUnknown || (m.timeHour !== '' && m.timeMin !== ''))
+
 const memberBirthtime = (m) => {
   if (m.timeUnknown || !m.timeHour || !m.timeMin) return ''
   let h = Number(m.timeHour)
@@ -276,8 +330,8 @@ export default function App() {
 
   const [phase, setPhase] = useState('input')
   const [sajuData, setSajuData] = useState(null)
-  const [baseText, setBaseText] = useState('')   // 무료 텍스트
-  const [paidText, setPaidText] = useState('')   // 유료 전용 텍스트 (paid_start 이후)
+  const [baseText, setBaseText] = useState('')
+  const [paidText, setPaidText] = useState('')
   const [isPaidStreaming, setIsPaidStreaming] = useState(false)
   const [isBaseStreaming, setIsBaseStreaming] = useState(false)
 
@@ -286,8 +340,10 @@ export default function App() {
   const [extraMembers, setExtraMembers] = useState([])
   const [memberResults, setMemberResults] = useState([])
 
+  // 궁합
+  const [gunghabResults, setGunghabResults] = useState([]) // [{memberIdx, text, streaming}]
+
   const abortRef = useRef(null)
-  // paid_start 수신 여부를 ref로 관리 (state보다 즉각 반응)
   const isPaidSectionRef = useRef(false)
 
   const currentStepId = STEPS[step]
@@ -322,7 +378,6 @@ export default function App() {
   }
   function goBack() { if (step > 0) setStep(s => s - 1) }
 
-  // SSE 스트리밍 — paid_start 기준으로 무료/유료 텍스트 분리
   async function streamAnalyze({ body, onSaju, onBaseText, onPaidText, onDone, onError }) {
     const ctrl = new AbortController()
     abortRef.current = ctrl
@@ -348,21 +403,13 @@ export default function App() {
         if (!line.startsWith('data: ')) continue
         try {
           const json = JSON.parse(line.slice(6))
-          if (json.type === 'saju') {
-            onSaju?.(json)
-          } else if (json.type === 'paid_start') {
-            // paid_start 수신 → 이후 텍스트는 유료로 분류
-            isPaidSectionRef.current = true
-          } else if (json.type === 'done') {
-            onDone?.()
-          } else if (json.error) {
-            onError?.(json.error)
-          } else if (json.text) {
-            if (isPaidSectionRef.current) {
-              onPaidText?.(json.text)
-            } else {
-              onBaseText?.(json.text)
-            }
+          if (json.type === 'saju') onSaju?.(json)
+          else if (json.type === 'paid_start') isPaidSectionRef.current = true
+          else if (json.type === 'done') onDone?.()
+          else if (json.error) onError?.(json.error)
+          else if (json.text) {
+            if (isPaidSectionRef.current) onPaidText?.(json.text)
+            else onBaseText?.(json.text)
           }
         } catch {}
       }
@@ -371,9 +418,7 @@ export default function App() {
 
   async function handleFreeAnalyze() {
     setPhase('streaming')
-    setBaseText('')
-    setPaidText('')
-    setSajuData(null)
+    setBaseText(''); setPaidText(''); setSajuData(null)
     setIsBaseStreaming(true)
     isPaidSectionRef.current = false
 
@@ -382,29 +427,20 @@ export default function App() {
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '기본', isPaid: false, isLunar },
         onSaju: (d) => setSajuData(d),
         onBaseText: (t) => setBaseText(prev => prev + t),
-        onPaidText: () => {}, // 무료 요청에선 paid_start 안 옴
-        onDone: () => {
-          setIsBaseStreaming(false)
-          setPhase('done')
-        },
-        onError: (e) => {
-          alert(e)
-          setPhase('input')
-          setIsBaseStreaming(false)
-        },
+        onPaidText: () => {},
+        onDone: () => { setIsBaseStreaming(false); setPhase('done') },
+        onError: (e) => { alert(e); setPhase('input'); setIsBaseStreaming(false) },
       })
     } catch (e) {
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
-      setPhase('input')
-      setIsBaseStreaming(false)
+      setPhase('input'); setIsBaseStreaming(false)
     }
   }
 
   async function handlePaidAnalyze(plan) {
     setSelectedPlan(plan)
     setShowPriceSelect(false)
-    setPaidText('')
-    setIsPaidStreaming(true)
+    setPaidText(''); setIsPaidStreaming(true)
     isPaidSectionRef.current = false
 
     const membersToAnalyze = extraMembers.slice(0, plan - 1)
@@ -413,13 +449,12 @@ export default function App() {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '전체', isPaid: true, isLunar },
         onSaju: () => {},
-        onBaseText: (t) => setBaseText(prev => prev + t), // paid_start 전 = 무료 재전송
-        onPaidText: (t) => setPaidText(prev => prev + t), // paid_start 후 = 유료 전용
+        onBaseText: (t) => setBaseText(prev => prev + t),
+        onPaidText: (t) => setPaidText(prev => prev + t),
         onDone: () => {},
         onError: (e) => alert(e),
       })
 
-      // 추가 가족 분석
       const results = []
       for (const member of membersToAnalyze) {
         let memberText = ''
@@ -433,21 +468,82 @@ export default function App() {
             maritalStatus: member.maritalStatus || '미혼',
             type: '전체',
             isPaid: true,
-            isLunar: false,
+            isLunar: member.isLunar || false,
           },
           onSaju: () => {},
           onBaseText: (t) => { memberText += t },
           onPaidText: (t) => { memberText += t },
-          onDone: () => results.push({ role: member.role, name: member.name || member.role, text: memberText }),
+          onDone: () => results.push({ role: `가족 ${results.length + 1}`, text: memberText, birthdate: bd, gender: member.gender, birthtime: memberBirthtime(member), isLunar: member.isLunar }),
           onError: (e) => alert(e),
         })
       }
       setMemberResults(results)
-
     } catch (e) {
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
     }
     setIsPaidStreaming(false)
+  }
+
+  // 궁합 분석
+  async function handleGunghab(memberIdx) {
+    const member = memberResults[memberIdx]
+    if (!member) return
+
+    setGunghabResults(prev => [...prev, { memberIdx, text: '', streaming: true }])
+    isPaidSectionRef.current = false
+
+    let gunghabText = ''
+
+    try {
+      const ctrl = new AbortController()
+      const res = await fetch(`${API_URL}/api/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gender, birthdate, birthtime, isLunar,
+          partnerGender: member.gender,
+          partnerBirthdate: member.birthdate,
+          partnerBirthtime: member.birthtime || '',
+          partnerIsLunar: member.isLunar || false,
+          type: '궁합',
+          isPaid: true,
+        }),
+        signal: ctrl.signal,
+      })
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split('\n')
+        buf = lines.pop()
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const json = JSON.parse(line.slice(6))
+            if (json.text) {
+              gunghabText += json.text
+              setGunghabResults(prev => prev.map(g =>
+                g.memberIdx === memberIdx ? { ...g, text: gunghabText } : g
+              ))
+            } else if (json.type === 'done') {
+              setGunghabResults(prev => prev.map(g =>
+                g.memberIdx === memberIdx ? { ...g, streaming: false } : g
+              ))
+            }
+          } catch {}
+        }
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') alert('궁합 분석 중 오류가 발생했습니다.')
+      setGunghabResults(prev => prev.map(g =>
+        g.memberIdx === memberIdx ? { ...g, streaming: false } : g
+      ))
+    }
   }
 
   function handleRestart() {
@@ -459,7 +555,7 @@ export default function App() {
     setPhase('input'); setSajuData(null)
     setBaseText(''); setPaidText('')
     setShowPriceSelect(false); setSelectedPlan(null)
-    setExtraMembers([]); setMemberResults([])
+    setExtraMembers([]); setMemberResults([]); setGunghabResults([])
     setIsBaseStreaming(false); setIsPaidStreaming(false)
     isPaidSectionRef.current = false
   }
@@ -491,7 +587,6 @@ export default function App() {
         </div>
         <div style={s.resultWrap}>
 
-          {/* 사주팔자 카드 */}
           {sajuData?.사주 && (
             <div style={s.sajuCard}>
               <p style={s.sajuTitle}>📋 나의 사주팔자</p>
@@ -512,7 +607,6 @@ export default function App() {
             </div>
           )}
 
-          {/* 무료 결과 */}
           {isBaseStreaming && baseText && (
             <div style={s.streamCard}>{baseText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
@@ -520,12 +614,10 @@ export default function App() {
             <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
           ))}
 
-          {/* 유료 결과 스트리밍 중 */}
           {isPaidStreaming && paidText && (
             <div style={s.streamCard}>{paidText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
 
-          {/* 유료 완료 결과 */}
           {!isPaidStreaming && paidSections.length > 0 && (
             <>
               <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', textAlign: 'center', margin: '16px 0 8px' }}>
@@ -549,17 +641,62 @@ export default function App() {
             </>
           )}
 
-          {/* 가족 분석 결과 */}
-          {memberResults.map((mr, i) => (
-            <div key={i}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: '#059669', textAlign: 'center', margin: '20px 0 8px' }}>
-                👨‍👩‍👧 {mr.name} 분석 결과
-              </p>
-              {parseSections(mr.text).map((sec, j) => (
-                <Accordion key={j} title={sec.title} content={sec.content} isChild={true} defaultOpen={j === 0} />
-              ))}
-            </div>
-          ))}
+          {/* 가족 분석 결과 + 궁합 버튼 */}
+          {memberResults.map((mr, i) => {
+            const gunghabResult = gunghabResults.find(g => g.memberIdx === i)
+            const gunghabSections = gunghabResult ? parseSections(gunghabResult.text) : []
+            const alreadyGunghab = !!gunghabResult
+
+            return (
+              <div key={i}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: '#059669', textAlign: 'center', margin: '20px 0 8px' }}>
+                  👨‍👩‍👧 {mr.role} 분석 결과
+                </p>
+                {parseSections(mr.text).map((sec, j) => (
+                  <Accordion key={j} title={sec.title} content={sec.content} isChild={true} defaultOpen={j === 0} />
+                ))}
+
+                {/* 궁합 버튼 — 가족 분석 완료 후 노출 */}
+                {!isPaidStreaming && !alreadyGunghab && (
+                  <div style={s.gunghabSection}>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: '#E11D48', marginBottom: 4 }}>💕 두 사람 궁합 보기</p>
+                    <p style={{ fontSize: 13, color: '#9F1239', marginBottom: 12, lineHeight: 1.6 }}>
+                      성격 궁합 · 돈 궁합 · 결혼 궁합 · 궁합 점수<br/>
+                      <span style={{ fontSize: 12, color: '#BE123C' }}>단 1,000원 추가</span>
+                    </p>
+                    <button style={{
+                      width: '100%', padding: '14px', fontSize: 15, fontWeight: 700,
+                      background: '#E11D48', color: 'white', border: 'none',
+                      borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                    }} onClick={() => {
+                      if (window.confirm('1,000원 추가 결제 후 궁합 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
+                        handleGunghab(i)
+                      }
+                    }}>
+                      💕 궁합 분석받기 (1,000원) →
+                    </button>
+                  </div>
+                )}
+
+                {/* 궁합 스트리밍 */}
+                {gunghabResult?.streaming && gunghabResult.text && (
+                  <div style={s.streamCard}>{gunghabResult.text}<span style={{ opacity: 0.4 }}>▌</span></div>
+                )}
+
+                {/* 궁합 완료 */}
+                {gunghabResult && !gunghabResult.streaming && gunghabSections.length > 0 && (
+                  <>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#E11D48', textAlign: 'center', margin: '16px 0 8px' }}>
+                      💕 궁합 분석 결과
+                    </p>
+                    {gunghabSections.map((sec, j) => (
+                      <Accordion key={j} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={j === 0} />
+                    ))}
+                  </>
+                )}
+              </div>
+            )
+          })}
 
           {/* 결제 섹션 */}
           {phase === 'done' && !selectedPlan && !isPaidStreaming && (
@@ -568,15 +705,13 @@ export default function App() {
                 <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12, textAlign: 'center' }}>
                   <p style={{ fontSize: 18, fontWeight: 700, color: 'white', marginBottom: 6 }}>🔮 전체 분석 받기</p>
                   <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', marginBottom: 8, lineHeight: 1.6 }}>
-                    평생 재물운 · 직업운 · 투자 · 인간관계 · 월별운세
+                    인생 재운 흐름 · 직업운 · 투자 · 인간관계 · 월별운세
                   </p>
                   <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 16 }}>
                     오프라인 7만원짜리를 단돈 1,990원에
                   </p>
-                  <button
-                    style={{ width: '100%', padding: '16px', fontSize: 18, fontWeight: 700, background: 'white', color: '#764ba2', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                    onClick={() => setShowPriceSelect(true)}
-                  >
+                  <button style={{ width: '100%', padding: '16px', fontSize: 18, fontWeight: 700, background: 'white', color: '#764ba2', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                    onClick={() => setShowPriceSelect(true)}>
                     나 + 가족 분석받기 →
                   </button>
                 </div>
@@ -585,7 +720,7 @@ export default function App() {
               {showPriceSelect && (
                 <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
                   <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>👨‍👩‍👧‍👦 몇 명 분석할까요?</p>
-                  <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 16 }}>2번째 가족부터 1인당 1,000원 추가</p>
+                  <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 16 }}>2번째 가족부터 1인당 1,000원 추가 · 궁합은 나중에 따로 추가 가능</p>
                   {[1, 2, 3, 4].map(n => {
                     const total = PRICES.getTotal(n)
                     const original = PRICES.getOriginal(n)
@@ -605,8 +740,7 @@ export default function App() {
                             handlePaidAnalyze(1)
                           }
                         } else {
-                          const roles = ['가족 1', '가족 2', '가족 3']
-                          setExtraMembers(Array.from({ length: n - 1 }, (_, i) => ({ ...emptyMember(), role: roles[i] })))
+                          setExtraMembers(Array.from({ length: n - 1 }, () => emptyMember()))
                           setSelectedPlan(-n)
                         }
                       }}>
