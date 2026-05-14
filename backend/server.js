@@ -10,6 +10,13 @@ app.use(express.json());
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// 모델 설정
+const MODEL_FREE = 'claude-haiku-4-5-20251001';   // 무료: 빠르고 저렴
+const MODEL_PAID = 'claude-sonnet-4-5-20250929';   // 유료: 품질 좋고 적당히 빠름
+
+// Render 콜드스타트 방지 keepalive
+app.get('/ping', (req, res) => res.json({ ok: true }));
+
 // 음력→양력 변환
 function lunarToSolar(year, month, day) {
   const calendar = new KoreanLunarCalendar();
@@ -62,7 +69,6 @@ function get시주(birthtime, 일천간index) {
   return 천간[시천간index] + 지지[시지index];
 }
 
-// 시주 지지 → 투자/거주 방향
 function get시지라벨(시주) {
   if (!시주) return null;
   const 지지한자 = 시주.replace(/[가-힣]/g, '').slice(-1);
@@ -83,17 +89,14 @@ function get시지라벨(시주) {
   return map[지지한자] || null;
 }
 
-// 결혼상태별 포커스 — 무료/유료 완전 분리
 function getMaritalFocus(maritalStatus) {
   switch (maritalStatus) {
     case '미혼':
       return {
         label: '미혼',
-        // 무료: 인연의 느낌과 분위기 중심
         focus: `===인연운===
 이 사람은 미혼입니다. (400~500자, 자연스러운 문장으로)
 어떤 시기에 인연이 찾아오는지, 어떤 스타일의 사람과 잘 맞는지, 어떤 상황에서 만날 가능성이 높은지, 연애할 때 이 사람만의 특징을 설레고 따뜻한 말투로 써주세요.`,
-        // 유료: 사주 구조 근거 + 결혼 타이밍 + 패턴 분석 — 무료 내용 반복 금지
         paidFocus: `===인연운 심화===
 무료에서 쓴 인연의 분위기·스타일 설명은 반복하지 마세요.
 이번엔 다른 각도로 분석해주세요. (500~600자)
@@ -102,11 +105,9 @@ function getMaritalFocus(maritalStatus) {
     case '기혼':
       return {
         label: '기혼',
-        // 무료: 지금 부부 사이의 분위기와 흐름
         focus: `===부부운===
 이 사람은 기혼입니다. (400~500자, 자연스러운 문장으로)
 지금 부부 사이의 전반적인 분위기, 배우자와 잘 맞는 점과 갈등이 생기기 쉬운 부분, 2026년 부부 관계의 흐름을 현실적이고 따뜻하게 써주세요.`,
-        // 유료: 사주 구조 근거 + 배우자 복 + 가정운 — 무료 내용 반복 금지
         paidFocus: `===부부운 심화===
 무료에서 쓴 부부 분위기·갈등 패턴 설명은 반복하지 마세요.
 이번엔 다른 각도로 분석해주세요. (500~600자)
@@ -145,10 +146,43 @@ function getMaritalFocus(maritalStatus) {
   }
 }
 
+const 공통규칙 = `작성 규칙 (반드시 지킬 것):
+1. 쉬운 말 사용 — 어려운 한자 용어 금지. 예: "인성" → "나를 도와주는 기운", "비겁" → "나와 비슷한 기운의 사람들", "식신" → "타고난 재능과 표현력"
+2. 숫자 목록(1. 2. 3.)이나 하이픈(-) 나열 형식 금지 — 자연스러운 문장으로
+3. 마크다운 기호(**, ##, * 등) 사용 금지
+4. 각 섹션은 두 문단 구성 — 첫 문단: 공감 가는 설명 / 둘째 문단: 사주 근거를 쉬운 말로
+5. 인터넷 유행어·밈은 전체 응답에서 최대 2개`;
+
+// ─────────────────────────────────────────
+// 스트리밍 유틸 — SSE로 텍스트 청크 전송
+// ─────────────────────────────────────────
+async function streamToClient(res, prompt, model, maxTokens = 4000) {
+  const stream = await anthropic.messages.stream({
+    model,
+    max_tokens: maxTokens,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  for await (const chunk of stream) {
+    if (chunk.type === 'content_block_delta' && chunk.delta?.text) {
+      res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
+    }
+  }
+}
+
+// ─────────────────────────────────────────
+// 메인 분석 API — SSE 스트리밍
+// ─────────────────────────────────────────
 app.post('/api/analyze', async (req, res) => {
   const { gender, birthdate, birthtime, mbti, blood, type, isPaid, isLunar, maritalStatus } = req.body;
 
   if (!birthdate) return res.status(400).json({ error: '생년월일을 입력해주세요.' });
+
+  // SSE 헤더 설정
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
 
   const rawDate = new Date(birthdate);
   let year = rawDate.getFullYear();
@@ -173,29 +207,21 @@ app.post('/api/analyze', async (req, res) => {
   const 시지힌트 = get시지라벨(시주);
 
   const 투자거주힌트 = 시지힌트
-    ? `시주 지지 기반 힌트 (이 내용을 투자 섹션에 자연스럽게 녹여주세요):
+    ? `시주 지지 기반 힌트 (투자 섹션에 자연스럽게 녹여주세요):
   - 투자에 유리한 방향: ${시지힌트.투자}
   - 실거주에 좋은 환경: ${시지힌트.거주}`
     : `시주 정보 없음 — 일주 지지 기준으로 투자/거주 방향을 분석해주세요.`;
 
-  // ─────────────────────────────────────────
-  // 공통 시스템 지시
-  // ─────────────────────────────────────────
-  const 공통규칙 = `작성 규칙 (반드시 지킬 것):
-1. 쉬운 말 사용 — 어려운 한자 용어는 쓰지 말고 쉬운 말로 대체. 예: "인성" → "나를 도와주는 기운", "비겁" → "나와 비슷한 기운의 사람들", "식신" → "타고난 재능과 표현력", "편관" → "나를 이끄는 강한 기운"
-2. 숫자 목록(1. 2. 3.)이나 하이픈(-) 나열 형식 금지 — 자연스러운 문장으로 풀어 쓸 것
-3. 마크다운 기호(**, ##, * 등) 사용 금지
-4. 각 섹션은 두 문단으로 구성 — 첫 문단: 공감 가는 설명, 둘째 문단: 사주 근거를 쉬운 말로
-5. 인터넷 유행어·밈은 전체 응답에서 최대 2개`;
+  // 사주 정보를 먼저 전송 (스트리밍 시작 전)
+  const sajuData = { 년주, 월주, 일주, 시주: 시주 || '-' };
+  res.write(`data: ${JSON.stringify({
+    type: 'saju',
+    사주: sajuData,
+    생년월일: `${year}년 ${month}월 ${day}일${isLunar ? ' (음력→양력)' : ''}`,
+    maritalStatus,
+  })}\n\n`);
 
-  // ─────────────────────────────────────────
-  // 무료 프롬프트 — 4섹션
-  // ─────────────────────────────────────────
-  const basePrompt = `당신은 한국의 사주·명리학 전문가입니다.
-쉽고 따뜻한 말투로, 읽는 사람이 "맞아, 이게 나야"라고 느낄 수 있게 분석해주세요.
-현재 연도는 2026년(丙午년)입니다.
-
-[기본 정보]
+  const infoBlock = `[기본 정보]
 - 성별: ${gender || '미입력'}
 - 생년월일: ${year}년 ${month}월 ${day}일 ${isLunar ? '(음력→양력)' : '(양력)'}
 - 태어난 시간: ${birthtime || '미입력'}
@@ -204,7 +230,73 @@ app.post('/api/analyze', async (req, res) => {
 - 결혼 상태: ${marital.label}
 
 [사주팔자]
-- 년주: ${년주} / 월주: ${월주} / 일주: ${일주} / 시주: ${시주 || '미입력'}
+- 년주: ${년주} / 월주: ${월주} / 일주: ${일주} / 시주: ${시주 || '미입력'}`;
+
+  // ── 자녀 학운 ──────────────────────────────
+  if (type === '자녀학운') {
+    const { childBirthdate, childGender, childBirthtime } = req.body;
+    if (!childBirthdate) {
+      res.write(`data: ${JSON.stringify({ error: '아이 생년월일을 입력해주세요.' })}\n\n`);
+      return res.end();
+    }
+
+    const cDate = new Date(childBirthdate);
+    const cYear = cDate.getFullYear();
+    const cMonth = cDate.getMonth() + 1;
+    const cDay = cDate.getDate();
+    const c일주obj = get일주(childBirthdate);
+    const c년주obj = get년주(cYear);
+    const c일주 = c일주obj.간지;
+    const c년주 = c년주obj.간지;
+    const c월주 = get월주(cYear, cMonth, cDay, c년주obj.천간index);
+    const c시주 = get시주(childBirthtime, c일주obj.천간index);
+
+    const childPrompt = `당신은 한국의 사주·명리학 전문가입니다.
+학부모 입장에서 실질적으로 도움이 되도록 쉽고 따뜻하게 분석해주세요.
+어려운 한자어 대신 쉬운 말을 사용하세요.
+현재 연도는 2026년입니다.
+
+[부모] 성별: ${gender || '미입력'} / 생년월일: ${year}년 ${month}월 ${day}일 / 년주: ${년주} / 월주: ${월주} / 일주: ${일주}
+[자녀] 성별: ${childGender} / 생년월일: ${cYear}년 ${cMonth}월 ${cDay}일 / 년주: ${c년주} / 월주: ${c월주} / 일주: ${c일주} / 시주: ${c시주 || '미입력'}
+
+${공통규칙}
+
+아래 6개 섹션을 ===섹션제목=== 형태로 구분해서 작성하세요. 각 섹션 300~500자.
+
+===타고난 공부 기질===
+이 아이가 타고난 학습 특성, 흥미를 느끼는 방향, 집중력 패턴을 구체적으로 설명해주세요.
+
+===재능이 빛나는 분야===
+이과/문과 성향, 예체능 적성 등 두각을 나타낼 분야와 그 사주 근거를 설명해주세요.
+
+===학습 에너지가 높아지는 시기===
+집중력과 학습 에너지가 높아지는 나이대와 그때 어떻게 공부하면 효과적인지 설명해주세요.
+
+===입시 운 흐름===
+입시 운이 좋은 해와 주의할 시기, 2026년 현재 이 아이의 학습 흐름을 설명해주세요.
+
+===부모가 도와주는 법===
+부모와 자녀 사주를 연결해서, 어떤 방식의 지원이 효과적이고 어떤 건 역효과가 나는지 설명해주세요.
+
+===공부 잘 되는 환경===
+이 아이에게 맞는 공부 환경, 시간대, 방법을 집에서 바로 적용할 수 있는 실용적인 조언으로 써주세요.`;
+
+    try {
+      await streamToClient(res, childPrompt, MODEL_PAID, 5000);
+      res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+    } catch (e) {
+      console.error(e);
+      res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
+    }
+    return res.end();
+  }
+
+  // ── 무료 분석 ──────────────────────────────
+  const basePrompt = `당신은 한국의 사주·명리학 전문가입니다.
+쉽고 따뜻한 말투로, 읽는 사람이 "맞아, 이게 나야"라고 느낄 수 있게 분석해주세요.
+현재 연도는 2026년(丙午년)입니다.
+
+${infoBlock}
 
 ${공통규칙}
 
@@ -223,24 +315,12 @@ ${공통규칙}
 
 ${marital.focus}`;
 
-  // ─────────────────────────────────────────
-  // 유료 전용 프롬프트 — 무료와 완전 분리된 6섹션
-  // 무료에서 나온 내용(사주 기운, 재물운 기본, 학운, 인연/부부운 기본)은 다루지 않음
-  // ─────────────────────────────────────────
+  // ── 유료 전용 프롬프트 ──────────────────────
   const paidOnlyPrompt = `당신은 한국의 사주·명리학 전문가입니다.
 쉽고 따뜻한 말투로 분석해주세요.
 현재 연도는 2026년(丙午년)입니다.
 
-[기본 정보]
-- 성별: ${gender || '미입력'}
-- 생년월일: ${year}년 ${month}월 ${day}일
-- 태어난 시간: ${birthtime || '미입력'}
-- MBTI: ${mbti || '미입력'}
-- 혈액형: ${blood ? blood + '형' : '미입력'}
-- 결혼 상태: ${marital.label}
-
-[사주팔자]
-- 년주: ${년주} / 월주: ${월주} / 일주: ${일주} / 시주: ${시주 || '미입력'}
+${infoBlock}
 
 ${공통규칙}
 
@@ -269,7 +349,7 @@ ${marital.paidFocus}
 
 ===2026년 월별 운세===
 1월부터 12월까지 각 달을 한 줄씩 작성하세요.
-형식: 1월: (내용) 줄바꿈 2월: (내용) ... 식으로.
+형식: 1월: (내용) 줄바꿈 2월: (내용)
 
 ===행운 아이템===
 이 사주 기운에 맞는 행운 아이템. 아래 형식으로만 작성 (다른 텍스트 없이):
@@ -278,131 +358,23 @@ ${marital.paidFocus}
 ===이 사주로 잘 사는 법===
 (400~500자) 첫 문단: 이 사주의 진짜 강점과 그것을 살리는 삶의 방향을 따뜻하게 이야기하세요. 두 번째 문단: 조심해야 할 것과 지금 당장 실천할 수 있는 구체적 행동 조언을 주세요.`;
 
-  // ─────────────────────────────────────────
-  // 자녀 학운
-  // ─────────────────────────────────────────
-  if (type === '자녀학운') {
-    const { childBirthdate, childGender } = req.body;
-    if (!childBirthdate) return res.status(400).json({ error: '아이 생년월일을 입력해주세요.' });
-
-    const cDate = new Date(childBirthdate);
-    const cYear = cDate.getFullYear();
-    const cMonth = cDate.getMonth() + 1;
-    const cDay = cDate.getDate();
-    const c일주obj = get일주(childBirthdate);
-    const c년주obj = get년주(cYear);
-    const c일주 = c일주obj.간지;
-    const c년주 = c년주obj.간지;
-    const c월주 = get월주(cYear, cMonth, cDay, c년주obj.천간index);
-
-    const childPrompt = `당신은 한국의 사주·명리학 전문가입니다.
-학부모 입장에서 실질적으로 도움이 되도록 쉽고 따뜻하게 분석해주세요.
-어려운 한자어 대신 쉬운 말을 사용하세요.
-현재 연도는 2026년입니다.
-
-[부모] 성별: ${gender || '미입력'} / 생년월일: ${year}년 ${month}월 ${day}일 / 년주: ${년주} / 월주: ${월주} / 일주: ${일주}
-[자녀] 성별: ${childGender} / 생년월일: ${cYear}년 ${cMonth}월 ${cDay}일 / 년주: ${c년주} / 월주: ${c월주} / 일주: ${c일주}
-
-${공통규칙}
-
-아래 6개 섹션을 ===섹션제목=== 형태로 구분해서 작성하세요. 각 섹션 300~500자.
-
-===타고난 공부 기질===
-이 아이가 타고난 학습 특성, 흥미를 느끼는 방향, 집중력 패턴을 구체적으로 설명해주세요.
-
-===재능이 빛나는 분야===
-이과/문과 성향, 예체능 적성 등 두각을 나타낼 분야와 그 사주 근거를 설명해주세요.
-
-===학습 에너지가 높아지는 시기===
-집중력과 학습 에너지가 높아지는 나이대와 그때 어떻게 공부하면 효과적인지 설명해주세요.
-
-===입시 운 흐름===
-입시 운이 좋은 해와 주의할 시기, 2026년 현재 이 아이의 학습 흐름을 설명해주세요.
-
-===부모가 도와주는 법===
-부모와 자녀 사주를 연결해서, 어떤 방식의 지원이 효과적이고 어떤 건 역효과가 나는지 설명해주세요.
-
-===공부 잘 되는 환경===
-이 아이에게 맞는 공부 환경, 시간대, 방법을 집에서 바로 적용할 수 있는 실용적인 조언으로 써주세요.`;
-
-    try {
-      const message = await anthropic.messages.create({
-        model: 'claude-opus-4-5',
-        max_tokens: 8000,
-        messages: [{ role: 'user', content: childPrompt }],
-      });
-      return res.json({ result: message.content[0].text, type: '자녀학운', childBirthdate, childGender });
-    } catch (e) {
-      console.error(e);
-      return res.status(500).json({ error: '분석 중 오류가 발생했습니다.' });
-    }
-  }
-
-  // ─────────────────────────────────────────
-  // 기본/유료 분석
-  // ─────────────────────────────────────────
   try {
-    let resultText = '';
-
     if (!isPaid) {
-      // 무료: basePrompt 단독 호출
-      const message = await anthropic.messages.create({
-        model: 'claude-opus-4-5',
-        max_tokens: 4000,
-        messages: [{ role: 'user', content: basePrompt }],
-      });
-      resultText = message.content[0].text;
-
+      // 무료: haiku 스트리밍
+      await streamToClient(res, basePrompt, MODEL_FREE, 3000);
     } else {
-      // 유료: 무료 4섹션 + 유료 전용 6섹션을 별도 호출 후 합산
-      // → 각각 충분한 토큰 확보, 내용 중복 완전 차단
-      const [baseMsg, paidMsg] = await Promise.all([
-        anthropic.messages.create({
-          model: 'claude-opus-4-5',
-          max_tokens: 4000,
-          messages: [{ role: 'user', content: basePrompt }],
-        }),
-        anthropic.messages.create({
-          model: 'claude-opus-4-5',
-          max_tokens: 6000,
-          messages: [{ role: 'user', content: paidOnlyPrompt }],
-        }),
-      ]);
-      resultText = baseMsg.content[0].text + '\n\n' + paidMsg.content[0].text;
+      // 유료: 무료 먼저 스트리밍 → 구분자 → 유료 스트리밍
+      await streamToClient(res, basePrompt, MODEL_PAID, 4000);
+      res.write(`data: ${JSON.stringify({ type: 'paid_start' })}\n\n`);
+      await streamToClient(res, paidOnlyPrompt, MODEL_PAID, 6000);
     }
-
-    const sajuData = { 년주, 월주, 일주, 시주: 시주 || '-' };
-
-    // 행운아이템 파싱
-    let 행운아이템 = null;
-    if (isPaid) {
-      const luckyMatch = resultText.match(/===행운 아이템===([\s\S]*?)(?====|$)/);
-      if (luckyMatch) {
-        const t = luckyMatch[1];
-        행운아이템 = {
-          설명: '사주 기운에 맞는 나만의 행운 아이템이에요',
-          색깔: t.match(/색깔[:\s]+([^\n/]+)/)?.[1]?.trim() || '',
-          마스코트: t.match(/마스코트[:\s]+([^\n/]+)/)?.[1]?.trim() || '',
-          방향: t.match(/방향[:\s]+([^\n/]+)/)?.[1]?.trim() || '',
-          숫자: t.match(/숫자[:\s]+([^\n/]+)/)?.[1]?.trim() || '',
-          아이템: t.match(/아이템[:\s]+([^\n/]+)/)?.[1]?.trim() || '',
-        };
-      }
-    }
-
-    res.json({
-      result: resultText,
-      type,
-      사주: sajuData,
-      생년월일: `${year}년 ${month}월 ${day}일${isLunar ? ' (음력→양력)' : ''}`,
-      maritalStatus,
-      ...(행운아이템 && { 행운아이템 }),
-    });
-
+    res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: '분석 중 오류가 발생했습니다.' });
+    res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
   }
+
+  res.end();
 });
 
 const PORT = process.env.PORT || 4000;
