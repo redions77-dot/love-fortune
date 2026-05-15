@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef } from 'react'
 
+// ── 상수 ──────────────────────────────────────────────
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
 const STEPS = ['gender', 'maritalStatus', 'birthdate', 'birthtime', 'mbti', 'blood']
+const API_URL = 'https://love-fortune.onrender.com'
 
 const MARITAL_OPTIONS = [
   { value: '미혼', emoji: '💫', label: '미혼', sub: '아직 결혼 전이에요' },
@@ -11,10 +13,12 @@ const MARITAL_OPTIONS = [
   { value: '돌싱2+', emoji: '🔥', label: '돌싱2+', sub: '이혼을 두 번 이상 했어요' },
 ]
 
-const PRICES = {
-  getTotal: (count) => count === 1 ? 1990 : 1990 + (count - 1) * 1000,
-  getOriginal: (count) => count * 1990,
-  getSaving: (count) => count * 1990 - (count === 1 ? 1990 : 1990 + (count - 1) * 1000),
+// 가격 설정
+const PRICE = {
+  original: 9900,
+  sale: 3900,
+  extra: 1900, // 가족 추가 1인당
+  gunghab: 1900,
 }
 
 function parseSections(text) {
@@ -26,18 +30,75 @@ function parseSections(text) {
   return sections
 }
 
-const API_URL = 'https://love-fortune.onrender.com'
+// 자정까지 남은 시간 계산
+function getMidnightCountdown() {
+  const now = new Date()
+  const midnight = new Date()
+  midnight.setHours(24, 0, 0, 0)
+  const diff = midnight - now
+  const h = Math.floor(diff / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  const s = Math.floor((diff % 60000) / 1000)
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+}
 
+// ── 스타일 ────────────────────────────────────────────
 const s = {
   app: { minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column' },
-  header: { textAlign: 'center', padding: '40px 24px 24px', background: 'linear-gradient(180deg, #F3EEFF 0%, var(--color-bg) 100%)' },
-  heroEmoji: { fontSize: 44, display: 'block', marginBottom: 10 },
-  heroTitle: { wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: 'var(--color-text)', marginBottom: 6 },
-  heroSub: { fontSize: 13, color: 'var(--color-text-muted)', lineHeight: 1.6 },
+
+  // 랜딩
+  landing: { minHeight: '100vh', display: 'flex', flexDirection: 'column' },
+  landingHero: {
+    textAlign: 'center', padding: '48px 24px 32px',
+    background: 'linear-gradient(160deg, #F3EEFF 0%, #FFF5FB 50%, #EEF4FF 100%)',
+  },
+  landingEmoji: { fontSize: 52, display: 'block', marginBottom: 12 },
+  landingTitle: {
+    wordBreak: 'keep-all', fontSize: 26, fontWeight: 800,
+    color: '#1a1a2e', marginBottom: 8, lineHeight: 1.3,
+    fontFamily: 'var(--font-display)',
+  },
+  landingSub: { fontSize: 14, color: '#666', lineHeight: 1.7, marginBottom: 24 },
+
+  // 타이머 배너
+  timerBanner: {
+    background: 'linear-gradient(90deg, #7C3AED, #DB2777)',
+    color: 'white', textAlign: 'center', padding: '10px 16px',
+    fontSize: 13, fontWeight: 600,
+  },
+  timerNum: { fontSize: 16, fontWeight: 800, letterSpacing: 2, marginLeft: 8 },
+
+  // 카드 그리드
+  cardGrid: { maxWidth: 480, margin: '0 auto', padding: '20px 16px 40px', width: '100%', boxSizing: 'border-box' },
+  cardGridTitle: { fontSize: 13, color: '#888', textAlign: 'center', marginBottom: 16, fontWeight: 600, letterSpacing: '0.05em' },
+  grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 },
+
+  serviceCard: (color) => ({
+    background: color.bg, border: `1.5px solid ${color.border}`,
+    borderRadius: 16, padding: '20px 16px', cursor: 'pointer',
+    transition: 'all 0.2s', textAlign: 'center',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+  }),
+  serviceEmoji: { fontSize: 32, display: 'block', marginBottom: 8 },
+  serviceLabel: (color) => ({ fontSize: 15, fontWeight: 700, color: color.text, marginBottom: 4, display: 'block' }),
+  serviceSub: { fontSize: 11, color: '#888', lineHeight: 1.5, display: 'block' },
+  servicePrice: (color) => ({ fontSize: 12, fontWeight: 700, color: color.accent, marginTop: 8, display: 'block' }),
+
+  // 무료 배지
+  freeBadge: {
+    display: 'inline-block', background: '#10B981', color: 'white',
+    fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, marginBottom: 6,
+  },
+
+  // 입력 스텝
+  header: { textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #F3EEFF 0%, var(--color-bg) 100%)' },
+  heroEmoji: { fontSize: 36, display: 'block', marginBottom: 8 },
+  heroTitle: { wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 },
+  heroSub: { fontSize: 12, color: 'var(--color-text-muted)' },
   progressWrap: { maxWidth: 480, margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' },
-  progressBar: { height: 3, background: 'var(--color-border)', borderRadius: 99, margin: '16px 0 0', overflow: 'hidden' },
+  progressBar: { height: 3, background: 'var(--color-border)', borderRadius: 99, margin: '12px 0 0', overflow: 'hidden' },
   progressFill: (pct) => ({ height: '100%', width: `${pct}%`, background: 'var(--color-primary)', borderRadius: 99, transition: 'width 0.35s ease' }),
-  stepLabel: { fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'right', marginTop: 6, marginBottom: 8 },
+  stepLabel: { fontSize: 11, color: 'var(--color-text-muted)', textAlign: 'right', marginTop: 4, marginBottom: 8 },
   stepWrap: { maxWidth: 480, margin: '0 auto', padding: '12px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 },
   stepTitle: { fontSize: 20, fontWeight: 700, color: 'var(--color-text)', marginBottom: 6, fontFamily: 'var(--font-display)' },
   stepSub: { fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 20 },
@@ -57,14 +118,14 @@ const s = {
   maritalEmoji: { fontSize: 28 },
   maritalLabel: (active) => ({ fontSize: 15, fontWeight: 700, color: active ? 'var(--color-primary-dark)' : 'var(--color-text)' }),
   maritalSub: (active) => ({ fontSize: 11, color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', lineHeight: 1.4 }),
-  calToggle: { display: 'flex', gap: 8, marginBottom: 20 },
+  calToggle: { display: 'flex', gap: 8, marginBottom: 16 },
   calBtn: (active) => ({
     flex: 1, padding: '10px', fontSize: 13, fontWeight: active ? 600 : 400,
     border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
     borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
     color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', cursor: 'pointer', transition: 'all 0.15s',
   }),
-  dateRow: { display: 'flex', gap: 6, alignItems: 'center', marginBottom: 16 },
+  dateRow: { display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 },
   dateNumInput: {
     width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700,
     border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)',
@@ -76,8 +137,8 @@ const s = {
     background: 'var(--color-surface)', color: 'var(--color-text)', textAlign: 'center', boxSizing: 'border-box',
   },
   dateUnitLabel: { fontSize: 14, fontWeight: 600, color: 'var(--color-text-muted)', flexShrink: 0 },
-  datePreview: { fontSize: 14, color: 'var(--color-primary-dark)', textAlign: 'center', marginBottom: 8, fontWeight: 500 },
-  ampmGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 20 },
+  datePreview: { fontSize: 13, color: 'var(--color-primary-dark)', textAlign: 'center', marginBottom: 8, fontWeight: 500 },
+  ampmGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 },
   ampmBtn: (active) => ({
     padding: '14px', fontSize: 16, fontWeight: active ? 700 : 400,
     border: `2px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
@@ -85,7 +146,7 @@ const s = {
     color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', cursor: 'pointer', transition: 'all 0.15s',
   }),
   timeLabel: { fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 8, letterSpacing: '0.05em' },
-  timeGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 },
+  timeGrid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 },
   timeBtn: (active) => ({
     padding: '12px 4px', fontSize: 15, fontWeight: active ? 700 : 400,
     border: `1px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
@@ -117,6 +178,8 @@ const s = {
     background: disabled ? '#D4C8F5' : 'var(--color-primary)', color: 'white', border: 'none',
     borderRadius: 'var(--radius-md)', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
   }),
+
+  // 결과
   resultWrap: { maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box' },
   sajuCard: { background: '#F8F5FF', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '16px 20px', marginBottom: 12 },
   sajuTitle: { fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 12, letterSpacing: '0.05em' },
@@ -147,20 +210,53 @@ const s = {
   dot: (i) => ({ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-primary)', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }),
   restartBtn: { width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer', color: 'var(--color-text-muted)', marginTop: 10 },
   loadingCard: { background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12 },
+
+  // 가족 멤버 입력
   memberCard: { background: '#F8F5FF', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '16px', marginBottom: 10 },
   memberRole: { fontSize: 13, fontWeight: 700, color: 'var(--color-primary-dark)', marginBottom: 10 },
-  childAccordion: { marginBottom: 8, border: '2px solid #059669', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
-  childAccordionHeader: (open) => ({
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '16px 18px', cursor: 'pointer', background: open ? '#ECFDF5' : 'var(--color-surface)', transition: 'all 0.2s',
+
+  // 결제 배너
+  payBanner: {
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12, textAlign: 'center',
+  },
+  payOriginal: { fontSize: 13, color: 'rgba(255,255,255,0.6)', textDecoration: 'line-through', marginBottom: 2 },
+  payPrice: { fontSize: 32, fontWeight: 800, color: 'white', marginBottom: 4 },
+  payDiscount: { fontSize: 12, color: '#FDE68A', marginBottom: 16 },
+  payBtn: {
+    width: '100%', padding: '16px', fontSize: 17, fontWeight: 700,
+    background: 'white', color: '#764ba2', border: 'none',
+    borderRadius: 'var(--radius-md)', cursor: 'pointer',
+  },
+
+  // 가족 결제 선택
+  familyOption: (selected) => ({
+    width: '100%', padding: '14px 16px', marginBottom: 8, textAlign: 'left',
+    border: `2px solid ${selected ? 'var(--color-primary)' : 'var(--color-border)'}`,
+    borderRadius: 'var(--radius-md)',
+    background: selected ? 'var(--color-primary-light)' : 'var(--color-surface)',
+    cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   }),
+
   // 궁합
   gunghabAccordion: { marginBottom: 8, border: '2px solid #E11D48', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
   gunghabAccordionHeader: (open) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '16px 18px', cursor: 'pointer', background: open ? '#FFF1F2' : 'var(--color-surface)', transition: 'all 0.2s',
   }),
-  gunghabSection: { background: 'linear-gradient(135deg, #FFF1F2, #FFF5F6)', border: '2px solid #E11D48', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 },
+  childAccordion: { marginBottom: 8, border: '2px solid #059669', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
+  childAccordionHeader: (open) => ({
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '16px 18px', cursor: 'pointer', background: open ? '#ECFDF5' : 'var(--color-surface)', transition: 'all 0.2s',
+  }),
+}
+
+// 서비스 카드 색상
+const CARD_COLORS = {
+  saju:    { bg: '#F8F5FF', border: '#DDD6FE', text: '#4C1D95', accent: '#7C3AED' },
+  gunghab: { bg: '#FFF1F2', border: '#FECDD3', text: '#9F1239', accent: '#E11D48' },
+  family:  { bg: '#F0FDF4', border: '#BBF7D0', text: '#14532D', accent: '#059669' },
+  child:   { bg: '#FFF7ED', border: '#FED7AA', text: '#7C2D12', accent: '#EA580C' },
 }
 
 function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, defaultOpen = false }) {
@@ -178,13 +274,11 @@ function Accordion({ title, content, isPaid = false, isChild = false, isGunghab 
   )
 }
 
-// 가족 멤버 입력 — 음력/양력 포함
+// 가족 멤버 입력 컴포넌트
 function MemberInput({ role, value, onChange }) {
   return (
     <div style={s.memberCard}>
       <p style={s.memberRole}>{role}</p>
-
-      {/* 성별 */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
         {['여성','남성'].map(g => (
           <button key={g} style={{
@@ -197,8 +291,6 @@ function MemberInput({ role, value, onChange }) {
           }} onClick={() => onChange({ ...value, gender: g })}>{g}</button>
         ))}
       </div>
-
-      {/* 양력/음력 토글 */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
         {[{ label: '양력 🌞', val: false }, { label: '음력 🌙', val: true }].map(({ label, val }) => (
           <button key={label} style={{
@@ -207,12 +299,10 @@ function MemberInput({ role, value, onChange }) {
             borderRadius: 'var(--radius-md)',
             background: value.isLunar === val ? 'var(--color-primary-light)' : 'var(--color-surface)',
             color: value.isLunar === val ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
-            cursor: 'pointer', fontWeight: value.isLunar === val ? 600 : 400,
+            cursor: 'pointer',
           }} onClick={() => onChange({ ...value, isLunar: val })}>{label}</button>
         ))}
       </div>
-
-      {/* 생년월일 */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 10, alignItems: 'center' }}>
         <input style={{ ...s.dateNumInput, width: 80 }} type="number" inputMode="numeric" placeholder="년도"
           value={value.year} onChange={e => onChange({ ...value, year: e.target.value.slice(0, 4) })} />
@@ -224,19 +314,15 @@ function MemberInput({ role, value, onChange }) {
           value={value.day} onChange={e => onChange({ ...value, day: e.target.value.slice(0, 2) })} />
         <span style={s.dateUnitLabel}>일</span>
       </div>
-
-      {/* 시간 */}
       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         <button style={{
-          padding: '7px 10px', fontSize: 12,
+          padding: '7px 10px', fontSize: 11,
           border: `1px solid ${value.timeUnknown ? 'var(--color-primary)' : 'var(--color-border)'}`,
           borderRadius: 'var(--radius-md)',
           background: value.timeUnknown ? 'var(--color-primary-light)' : 'var(--color-surface)',
           color: value.timeUnknown ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
-          cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 11,
-        }} onClick={() => onChange({ ...value, timeUnknown: true, timeHour: '', timeMin: '' })}>
-          시간 모름
-        </button>
+          cursor: 'pointer', whiteSpace: 'nowrap',
+        }} onClick={() => onChange({ ...value, timeUnknown: true, timeHour: '', timeMin: '' })}>시간 모름</button>
         {['오전','오후'].map(ap => (
           <button key={ap} style={{
             padding: '7px 8px', fontSize: 11,
@@ -247,57 +333,35 @@ function MemberInput({ role, value, onChange }) {
             cursor: 'pointer',
           }} onClick={() => onChange({ ...value, timeAmPm: ap, timeUnknown: false })}>{ap}</button>
         ))}
-        <select style={{
-          flex: 1, padding: '7px', fontSize: 11, border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer',
-        }} value={value.timeHour} onChange={e => onChange({ ...value, timeHour: e.target.value, timeUnknown: false })}
-          disabled={value.timeUnknown}>
+        <select style={{ flex: 1, padding: '7px', fontSize: 11, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer' }}
+          value={value.timeHour} onChange={e => onChange({ ...value, timeHour: e.target.value, timeUnknown: false })} disabled={value.timeUnknown}>
           <option value="">시</option>
           {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => <option key={h} value={String(h)}>{h}시</option>)}
         </select>
-        <select style={{
-          flex: 1, padding: '7px', fontSize: 11, border: '1px solid var(--color-border)',
-          borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer',
-        }} value={value.timeMin} onChange={e => onChange({ ...value, timeMin: e.target.value, timeUnknown: false })}
-          disabled={value.timeUnknown}>
+        <select style={{ flex: 1, padding: '7px', fontSize: 11, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer' }}
+          value={value.timeMin} onChange={e => onChange({ ...value, timeMin: e.target.value, timeUnknown: false })} disabled={value.timeUnknown}>
           <option value="">분</option>
           {['00','10','20','30','40','50'].map(m => <option key={m} value={m}>{m}분</option>)}
         </select>
       </div>
-
-      {/* 결혼 상태 (성인용) */}
-      {value.showMarital && (
-        <div style={{ marginTop: 8 }}>
-          <p style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 6 }}>결혼 상태</p>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {['미혼','기혼','돌싱'].map(ms => (
-              <button key={ms} style={{
-                padding: '6px 12px', fontSize: 12,
-                border: `1px solid ${value.maritalStatus === ms ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                borderRadius: 20,
-                background: value.maritalStatus === ms ? 'var(--color-primary-light)' : 'var(--color-surface)',
-                color: value.maritalStatus === ms ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
-                cursor: 'pointer',
-              }} onClick={() => onChange({ ...value, maritalStatus: ms })}>{ms}</button>
-            ))}
-          </div>
-        </div>
-      )}
+      <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {['미혼','기혼','돌싱'].map(ms => (
+          <button key={ms} style={{
+            padding: '5px 12px', fontSize: 11,
+            border: `1px solid ${value.maritalStatus === ms ? 'var(--color-primary)' : 'var(--color-border)'}`,
+            borderRadius: 20,
+            background: value.maritalStatus === ms ? 'var(--color-primary-light)' : 'var(--color-surface)',
+            color: value.maritalStatus === ms ? 'var(--color-primary-dark)' : 'var(--color-text-muted)',
+            cursor: 'pointer',
+          }} onClick={() => onChange({ ...value, maritalStatus: ms })}>{ms}</button>
+        ))}
+      </div>
     </div>
   )
 }
 
-const emptyMember = () => ({
-  year: '', month: '', day: '', gender: '',
-  timeHour: '', timeMin: '', timeAmPm: '오전', timeUnknown: false,
-  isLunar: false, maritalStatus: '미혼', showMarital: true,
-})
-
-const memberValid = (m) =>
-  m.year.length === 4 && Number(m.month) >= 1 && Number(m.month) <= 12 &&
-  Number(m.day) >= 1 && m.gender !== '' &&
-  (m.timeUnknown || (m.timeHour !== '' && m.timeMin !== ''))
-
+const emptyMember = () => ({ year: '', month: '', day: '', gender: '', timeHour: '', timeMin: '', timeAmPm: '오전', timeUnknown: false, isLunar: false, maritalStatus: '미혼' })
+const memberValid = (m) => m.year.length === 4 && Number(m.month) >= 1 && Number(m.month) <= 12 && Number(m.day) >= 1 && m.gender !== '' && (m.timeUnknown || (m.timeHour !== '' && m.timeMin !== ''))
 const memberBirthtime = (m) => {
   if (m.timeUnknown || !m.timeHour || !m.timeMin) return ''
   let h = Number(m.timeHour)
@@ -307,6 +371,7 @@ const memberBirthtime = (m) => {
 }
 
 export default function App() {
+  // ping
   useEffect(() => {
     const ping = () => fetch(`${API_URL}/ping`).catch(() => {})
     ping()
@@ -314,6 +379,19 @@ export default function App() {
     return () => clearInterval(id)
   }, [])
 
+  // 타이머
+  const [countdown, setCountdown] = useState(getMidnightCountdown())
+  useEffect(() => {
+    const id = setInterval(() => setCountdown(getMidnightCountdown()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  // ── 앱 상태 ──
+  // screen: 'landing' | 'input' | 'result' | 'family_input' | 'gunghab_input' | 'child_input'
+  const [screen, setScreen] = useState('landing')
+  const [serviceType, setServiceType] = useState(null) // 'saju' | 'family' | 'gunghab' | 'child'
+
+  // 입력 상태
   const [step, setStep] = useState(0)
   const [gender, setGender] = useState('')
   const [maritalStatus, setMaritalStatus] = useState('')
@@ -328,20 +406,19 @@ export default function App() {
   const [mbti, setMbti] = useState('')
   const [blood, setBlood] = useState('')
 
+  // 결과 상태
   const [phase, setPhase] = useState('input')
   const [sajuData, setSajuData] = useState(null)
   const [baseText, setBaseText] = useState('')
   const [paidText, setPaidText] = useState('')
   const [isPaidStreaming, setIsPaidStreaming] = useState(false)
   const [isBaseStreaming, setIsBaseStreaming] = useState(false)
-
-  const [showPriceSelect, setShowPriceSelect] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [extraMembers, setExtraMembers] = useState([])
   const [memberResults, setMemberResults] = useState([])
-
-  // 궁합
-  const [gunghabResults, setGunghabResults] = useState([]) // [{memberIdx, text, streaming}]
+  const [gunghabResults, setGunghabResults] = useState([])
+  const [showFamilyInput, setShowFamilyInput] = useState(false)
+  const [showPlanSelect, setShowPlanSelect] = useState(false)
 
   const abortRef = useRef(null)
   const isPaidSectionRef = useRef(false)
@@ -350,11 +427,8 @@ export default function App() {
   const progress = (step / STEPS.length) * 100
 
   const birthdate = (birthYear.length === 4 && birthMonth && birthDay)
-    ? `${birthYear}-${String(birthMonth).padStart(2, '0')}-${String(birthDay).padStart(2, '0')}`
-    : ''
-  const birthdateValid = birthYear.length === 4
-    && Number(birthMonth) >= 1 && Number(birthMonth) <= 12
-    && Number(birthDay) >= 1 && Number(birthDay) <= 31
+    ? `${birthYear}-${String(birthMonth).padStart(2,'0')}-${String(birthDay).padStart(2,'0')}` : ''
+  const birthdateValid = birthYear.length === 4 && Number(birthMonth) >= 1 && Number(birthMonth) <= 12 && Number(birthDay) >= 1 && Number(birthDay) <= 31
   const birthtime = timeUnknown ? '' : (() => {
     if (!timeHour || !timeMin) return ''
     let h = Number(timeHour)
@@ -376,29 +450,27 @@ export default function App() {
     if (step < STEPS.length - 1) setStep(s => s + 1)
     else handleFreeAnalyze()
   }
-  function goBack() { if (step > 0) setStep(s => s - 1) }
+  function goBack() {
+    if (step > 0) setStep(s => s - 1)
+    else setScreen('landing')
+  }
 
+  // SSE 스트리밍
   async function streamAnalyze({ body, onSaju, onBaseText, onPaidText, onDone, onError }) {
     const ctrl = new AbortController()
     abortRef.current = ctrl
-
     const res = await fetch(`${API_URL}/api/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: ctrl.signal,
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body), signal: ctrl.signal,
     })
-
     const reader = res.body.getReader()
     const decoder = new TextDecoder()
     let buf = ''
-
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
       buf += decoder.decode(value, { stream: true })
-      const lines = buf.split('\n')
-      buf = lines.pop()
+      const lines = buf.split('\n'); buf = lines.pop()
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue
         try {
@@ -417,11 +489,8 @@ export default function App() {
   }
 
   async function handleFreeAnalyze() {
-    setPhase('streaming')
-    setBaseText(''); setPaidText(''); setSajuData(null)
-    setIsBaseStreaming(true)
-    isPaidSectionRef.current = false
-
+    setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null)
+    setIsBaseStreaming(true); isPaidSectionRef.current = false; setScreen('result')
     try {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '기본', isPaid: false, isLunar },
@@ -437,39 +506,25 @@ export default function App() {
     }
   }
 
-  async function handlePaidAnalyze(plan) {
-    setSelectedPlan(plan)
-    setShowPriceSelect(false)
-    setPaidText(''); setIsPaidStreaming(true)
+  async function handlePaidAnalyze(members = []) {
+    setPaidText(''); setIsPaidStreaming(true); setShowFamilyInput(false); setShowPlanSelect(false)
     isPaidSectionRef.current = false
-
-    const membersToAnalyze = extraMembers.slice(0, plan - 1)
-
     try {
+      // 본인 유료 분석
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '전체', isPaid: true, isLunar },
         onSaju: () => {},
         onBaseText: (t) => setBaseText(prev => prev + t),
         onPaidText: (t) => setPaidText(prev => prev + t),
-        onDone: () => {},
-        onError: (e) => alert(e),
+        onDone: () => {}, onError: (e) => alert(e),
       })
-
+      // 가족 분석
       const results = []
-      for (const member of membersToAnalyze) {
-        let memberText = ''
-        isPaidSectionRef.current = false
+      for (const member of members) {
+        let memberText = ''; isPaidSectionRef.current = false
         const bd = `${member.year}-${String(member.month).padStart(2,'0')}-${String(member.day).padStart(2,'0')}`
         await streamAnalyze({
-          body: {
-            gender: member.gender,
-            birthdate: bd,
-            birthtime: memberBirthtime(member),
-            maritalStatus: member.maritalStatus || '미혼',
-            type: '전체',
-            isPaid: true,
-            isLunar: member.isLunar || false,
-          },
+          body: { gender: member.gender, birthdate: bd, birthtime: memberBirthtime(member), maritalStatus: member.maritalStatus || '미혼', type: '전체', isPaid: true, isLunar: member.isLunar || false },
           onSaju: () => {},
           onBaseText: (t) => { memberText += t },
           onPaidText: (t) => { memberText += t },
@@ -484,84 +539,272 @@ export default function App() {
     setIsPaidStreaming(false)
   }
 
-  // 궁합 분석
   async function handleGunghab(memberIdx) {
     const member = memberResults[memberIdx]
     if (!member) return
-
     setGunghabResults(prev => [...prev, { memberIdx, text: '', streaming: true }])
-    isPaidSectionRef.current = false
-
     let gunghabText = ''
-
     try {
       const ctrl = new AbortController()
       const res = await fetch(`${API_URL}/api/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          gender, birthdate, birthtime, isLunar,
-          partnerGender: member.gender,
-          partnerBirthdate: member.birthdate,
-          partnerBirthtime: member.birthtime || '',
-          partnerIsLunar: member.isLunar || false,
-          type: '궁합',
-          isPaid: true,
-        }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gender, birthdate, birthtime, isLunar, partnerGender: member.gender, partnerBirthdate: member.birthdate, partnerBirthtime: member.birthtime || '', partnerIsLunar: member.isLunar || false, type: '궁합', isPaid: true }),
         signal: ctrl.signal,
       })
-
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let buf = ''
-
+      const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''
       while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buf += decoder.decode(value, { stream: true })
-        const lines = buf.split('\n')
-        buf = lines.pop()
+        const { done, value } = await reader.read(); if (done) break
+        buf += decoder.decode(value, { stream: true }); const lines = buf.split('\n'); buf = lines.pop()
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
           try {
             const json = JSON.parse(line.slice(6))
-            if (json.text) {
-              gunghabText += json.text
-              setGunghabResults(prev => prev.map(g =>
-                g.memberIdx === memberIdx ? { ...g, text: gunghabText } : g
-              ))
-            } else if (json.type === 'done') {
-              setGunghabResults(prev => prev.map(g =>
-                g.memberIdx === memberIdx ? { ...g, streaming: false } : g
-              ))
-            }
+            if (json.text) { gunghabText += json.text; setGunghabResults(prev => prev.map(g => g.memberIdx === memberIdx ? { ...g, text: gunghabText } : g)) }
+            else if (json.type === 'done') setGunghabResults(prev => prev.map(g => g.memberIdx === memberIdx ? { ...g, streaming: false } : g))
           } catch {}
         }
       }
     } catch (e) {
-      if (e.name !== 'AbortError') alert('궁합 분석 중 오류가 발생했습니다.')
-      setGunghabResults(prev => prev.map(g =>
-        g.memberIdx === memberIdx ? { ...g, streaming: false } : g
-      ))
+      setGunghabResults(prev => prev.map(g => g.memberIdx === memberIdx ? { ...g, streaming: false } : g))
     }
   }
 
   function handleRestart() {
     abortRef.current?.abort()
-    setStep(0); setGender(''); setMaritalStatus('')
-    setBirthYear(''); setBirthMonth(''); setBirthDay(''); setIsLunar(false)
-    setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
+    setScreen('landing'); setServiceType(null); setStep(0)
+    setGender(''); setMaritalStatus(''); setBirthYear(''); setBirthMonth(''); setBirthDay('')
+    setIsLunar(false); setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
     setMbti(''); setBlood('')
-    setPhase('input'); setSajuData(null)
-    setBaseText(''); setPaidText('')
-    setShowPriceSelect(false); setSelectedPlan(null)
-    setExtraMembers([]); setMemberResults([]); setGunghabResults([])
-    setIsBaseStreaming(false); setIsPaidStreaming(false)
+    setPhase('input'); setSajuData(null); setBaseText(''); setPaidText('')
+    setSelectedPlan(null); setExtraMembers([]); setMemberResults([]); setGunghabResults([])
+    setIsBaseStreaming(false); setIsPaidStreaming(false); setShowFamilyInput(false); setShowPlanSelect(false)
     isPaidSectionRef.current = false
   }
 
-  // ── 결과 화면 ──────────────────────────────────────
-  if (phase === 'streaming' || phase === 'done') {
+  // ── 총 결제 금액 계산 ──
+  function getTotalPrice(memberCount) {
+    return PRICE.sale + (memberCount > 0 ? memberCount * PRICE.extra : 0)
+  }
+
+  // ──────────────────────────────────────────────────
+  // 화면 1: 랜딩 페이지
+  // ──────────────────────────────────────────────────
+  if (screen === 'landing') {
+    return (
+      <div style={s.landing}>
+        {/* 타이머 배너 */}
+        <div style={s.timerBanner}>
+          🔥 오늘 자정까지 할인
+          <span style={s.timerNum}>{countdown}</span>
+        </div>
+
+        {/* 히어로 */}
+        <div style={s.landingHero}>
+          <span style={s.landingEmoji}>✨</span>
+          <h1 style={s.landingTitle}>내가 왜 이렇게 사나 했더니<br/>사주 때문이었다</h1>
+          <p style={s.landingSub}>
+            무료로 먼저 확인하세요<br/>
+            <span style={{ color: '#7C3AED', fontWeight: 700 }}>오프라인 7만원짜리</span>를 단돈 <span style={{ color: '#7C3AED', fontWeight: 700 }}>3,900원</span>에
+          </p>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#FEF3C7', padding: '8px 16px', borderRadius: 20, fontSize: 13, color: '#92400E', fontWeight: 600 }}>
+            <span>⏰</span>
+            <span>정가 <span style={{ textDecoration: 'line-through' }}>9,900원</span> → 오늘만 3,900원</span>
+          </div>
+        </div>
+
+        {/* 서비스 카드 */}
+        <div style={s.cardGrid}>
+          <p style={s.cardGridTitle}>무엇이 궁금하세요?</p>
+          <div style={s.grid2}>
+            {/* 나의 사주 */}
+            <button style={s.serviceCard(CARD_COLORS.saju)} onClick={() => { setServiceType('saju'); setScreen('input') }}>
+              <span style={s.freeBadge}>무료 맛보기</span>
+              <span style={s.serviceEmoji}>🔮</span>
+              <span style={s.serviceLabel(CARD_COLORS.saju)}>나의 사주</span>
+              <span style={s.serviceSub}>돈·직업·연애<br/>내 팔자가 정해놨다</span>
+              <span style={s.servicePrice(CARD_COLORS.saju)}>3,900원</span>
+            </button>
+
+            {/* 궁합 */}
+            <button style={s.serviceCard(CARD_COLORS.gunghab)} onClick={() => { setServiceType('gunghab'); setScreen('input') }}>
+              <span style={s.serviceEmoji}>💕</span>
+              <span style={s.serviceLabel(CARD_COLORS.gunghab)}>궁합</span>
+              <span style={s.serviceSub}>우리 잘 맞는지<br/>사주로 확인</span>
+              <span style={s.servicePrice(CARD_COLORS.gunghab)}>3,900원</span>
+            </button>
+          </div>
+
+          <div style={s.grid2}>
+            {/* 가족 세트 */}
+            <button style={s.serviceCard(CARD_COLORS.family)} onClick={() => { setServiceType('family'); setScreen('input') }}>
+              <span style={s.freeBadge}>무료 맛보기</span>
+              <span style={s.serviceEmoji}>👨‍👩‍👧</span>
+              <span style={s.serviceLabel(CARD_COLORS.family)}>가족 세트</span>
+              <span style={s.serviceSub}>가족 모두의 사주<br/>한 번에 저렴하게</span>
+              <span style={s.servicePrice(CARD_COLORS.family)}>3,900원~</span>
+            </button>
+
+            {/* 자녀 진로 */}
+            <button style={s.serviceCard(CARD_COLORS.child)} onClick={() => { setServiceType('child'); setScreen('input') }}>
+              <span style={s.serviceEmoji}>🌱</span>
+              <span style={s.serviceLabel(CARD_COLORS.child)}>자녀 천명</span>
+              <span style={s.serviceSub}>아이의 타고난 재능<br/>진로를 미리 확인</span>
+              <span style={s.servicePrice(CARD_COLORS.child)}>3,900원</span>
+            </button>
+          </div>
+
+          {/* 신뢰 지표 */}
+          <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid var(--color-border)', marginTop: 8 }}>
+            <p style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>이미 많은 분들이 확인했어요</p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
+              {[['⭐','만족도 94%'],['🔒','안전한 결제'],['⚡','즉시 확인']].map(([e,t]) => (
+                <div key={t} style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 20 }}>{e}</div>
+                  <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{t}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ──────────────────────────────────────────────────
+  // 화면 2: 입력 스텝
+  // ──────────────────────────────────────────────────
+  if (screen === 'input') {
+    const serviceNames = { saju: '나의 사주', family: '가족 세트', gunghab: '궁합', child: '자녀 천명' }
+    return (
+      <div style={s.app}>
+        <div style={s.header}>
+          <span style={s.heroEmoji}>✨</span>
+          <h1 style={s.heroTitle}>{serviceNames[serviceType] || '사주 분석'}</h1>
+          <p style={s.heroSub}>생년월일을 입력하면 무료로 먼저 확인해드려요</p>
+        </div>
+        <div style={s.progressWrap}>
+          <div style={s.progressBar}><div style={s.progressFill(progress)} /></div>
+          <p style={s.stepLabel}>{step + 1} / {STEPS.length}</p>
+        </div>
+        <div style={s.stepWrap}>
+
+          {currentStepId === 'gender' && (
+            <>
+              <h2 style={s.stepTitle}>성별을 알려주세요</h2>
+              <p style={s.stepSub}>사주 풀이에 사용돼요</p>
+              <div style={s.genderGrid}>
+                <button style={s.genderBtn(gender === '여성')} onClick={() => setGender('여성')}>
+                  <span>♀️</span><span style={s.genderLabel(gender === '여성')}>여성</span>
+                </button>
+                <button style={s.genderBtn(gender === '남성')} onClick={() => setGender('남성')}>
+                  <span>♂️</span><span style={s.genderLabel(gender === '남성')}>남성</span>
+                </button>
+              </div>
+            </>
+          )}
+
+          {currentStepId === 'maritalStatus' && (
+            <>
+              <h2 style={s.stepTitle}>결혼 상태를 알려주세요</h2>
+              <p style={s.stepSub}>상태에 맞는 맞춤 분석을 해드려요</p>
+              <div style={s.maritalGrid}>
+                {MARITAL_OPTIONS.map(opt => (
+                  <button key={opt.value} style={s.maritalBtn(maritalStatus === opt.value)} onClick={() => setMaritalStatus(opt.value)}>
+                    <span style={s.maritalEmoji}>{opt.emoji}</span>
+                    <span style={s.maritalLabel(maritalStatus === opt.value)}>{opt.label}</span>
+                    <span style={s.maritalSub(maritalStatus === opt.value)}>{opt.sub}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {currentStepId === 'birthdate' && (
+            <>
+              <h2 style={s.stepTitle}>생년월일을 알려주세요</h2>
+              <p style={s.stepSub}>숫자로 직접 입력해주세요</p>
+              <div style={s.calToggle}>
+                <button style={s.calBtn(!isLunar)} onClick={() => setIsLunar(false)}>양력 🌞</button>
+                <button style={s.calBtn(isLunar)} onClick={() => setIsLunar(true)}>음력 🌙</button>
+              </div>
+              <div style={s.dateRow}>
+                <input style={s.dateNumInput} type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0, 4))} />
+                <span style={s.dateUnitLabel}>년</span>
+                <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0, 2))} />
+                <span style={s.dateUnitLabel}>월</span>
+                <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0, 2))} />
+                <span style={s.dateUnitLabel}>일</span>
+              </div>
+              {birthdateValid && <p style={s.datePreview}>✓ {birthYear}년 {birthMonth}월 {birthDay}일 {isLunar ? '(음력)' : '(양력)'}</p>}
+            </>
+          )}
+
+          {currentStepId === 'birthtime' && (
+            <>
+              <h2 style={s.stepTitle}>태어난 시간을 알려주세요</h2>
+              <p style={s.stepSub}>모르셔도 괜찮아요</p>
+              <button style={s.unknownBtn(timeUnknown)} onClick={() => { setTimeUnknown(true); setTimeHour(''); setTimeMin('') }}>✓ 태어난 시간 모름</button>
+              {!timeUnknown && (
+                <>
+                  <p style={s.timeLabel}>오전 / 오후</p>
+                  <div style={s.ampmGrid}>
+                    <button style={s.ampmBtn(timeAmPm === '오전')} onClick={() => setTimeAmPm('오전')}>🌅 오전</button>
+                    <button style={s.ampmBtn(timeAmPm === '오후')} onClick={() => setTimeAmPm('오후')}>🌇 오후</button>
+                  </div>
+                  <p style={s.timeLabel}>시 선택</p>
+                  <div style={s.timeGrid}>
+                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                      <button key={h} style={s.timeBtn(timeHour === String(h))} onClick={() => setTimeHour(String(h))}>{h}시</button>
+                    ))}
+                  </div>
+                  <p style={s.timeLabel}>분 선택</p>
+                  <div style={s.minGrid}>
+                    {['00','10','20','30','40','50'].map(m => (
+                      <button key={m} style={s.timeBtn(timeMin === m)} onClick={() => setTimeMin(m)}>{m}분</button>
+                    ))}
+                  </div>
+                  {timeHour && timeMin && <p style={s.datePreview}>✓ {timeAmPm} {timeHour}시 {timeMin}분</p>}
+                </>
+              )}
+              {timeUnknown && <button style={s.skipBtn} onClick={() => setTimeUnknown(false)}>시간 직접 선택하기</button>}
+            </>
+          )}
+
+          {currentStepId === 'mbti' && (
+            <>
+              <h2 style={s.stepTitle}>MBTI를 선택해주세요</h2>
+              <p style={s.stepSub}>모르시면 건너뛰어도 돼요</p>
+              <div style={s.chipWrap}>
+                {MBTI_LIST.map(m => <button key={m} style={s.chip(mbti === m)} onClick={() => setMbti(mbti === m ? '' : m)}>{m}</button>)}
+              </div>
+            </>
+          )}
+
+          {currentStepId === 'blood' && (
+            <>
+              <h2 style={s.stepTitle}>혈액형을 선택해주세요</h2>
+              <p style={s.stepSub}>선택하지 않아도 분석은 가능해요</p>
+              <div style={s.chipWrap}>
+                {BLOOD_LIST.map(b => <button key={b} style={s.chip(blood === b)} onClick={() => setBlood(blood === b ? '' : b)}>{b}형</button>)}
+              </div>
+            </>
+          )}
+
+        </div>
+        <div style={s.bottomBar}>
+          <button style={s.backBtn} onClick={goBack}>←</button>
+          <button style={s.nextBtn(!canGoNext())} onClick={goNext} disabled={!canGoNext()}>
+            {currentStepId === 'blood' ? '무료 사주 분석하기 ✨' : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ──────────────────────────────────────────────────
+  // 화면 3: 결과
+  // ──────────────────────────────────────────────────
+  if (screen === 'result') {
     const baseSections = parseSections(baseText)
     const paidSections = parseSections(paidText)
 
@@ -580,13 +823,16 @@ export default function App() {
 
     return (
       <div style={s.app}>
-        <div style={s.header}>
-          <span style={s.heroEmoji}>✨</span>
-          <h1 style={s.heroTitle}>내가 왜 이렇게 사나 했더니 사주 때문이었다</h1>
-          <p style={s.heroSub}>사주로 보는 돈복·연애운·결혼운</p>
-        </div>
+        {/* 타이머 배너 (결과 화면에도) */}
+        {phase === 'done' && !selectedPlan && (
+          <div style={s.timerBanner}>
+            🔥 오늘 자정까지 할인 &nbsp;
+            <span style={s.timerNum}>{countdown}</span>
+          </div>
+        )}
         <div style={s.resultWrap}>
 
+          {/* 사주팔자 카드 */}
           {sajuData?.사주 && (
             <div style={s.sajuCard}>
               <p style={s.sajuTitle}>📋 나의 사주팔자</p>
@@ -607,6 +853,7 @@ export default function App() {
             </div>
           )}
 
+          {/* 무료 결과 */}
           {isBaseStreaming && baseText && (
             <div style={s.streamCard}>{baseText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
@@ -614,15 +861,15 @@ export default function App() {
             <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
           ))}
 
+          {/* 유료 스트리밍 */}
           {isPaidStreaming && paidText && (
             <div style={s.streamCard}>{paidText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
 
+          {/* 유료 완료 */}
           {!isPaidStreaming && paidSections.length > 0 && (
             <>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', textAlign: 'center', margin: '16px 0 8px' }}>
-                ⭐ 전체 분석 결과
-              </p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', textAlign: 'center', margin: '16px 0 8px' }}>⭐ 전체 분석 결과</p>
               {paidSections.map((sec, i) => (
                 <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />
               ))}
@@ -645,8 +892,6 @@ export default function App() {
           {memberResults.map((mr, i) => {
             const gunghabResult = gunghabResults.find(g => g.memberIdx === i)
             const gunghabSections = gunghabResult ? parseSections(gunghabResult.text) : []
-            const alreadyGunghab = !!gunghabResult
-
             return (
               <div key={i}>
                 <p style={{ fontSize: 13, fontWeight: 700, color: '#059669', textAlign: 'center', margin: '20px 0 8px' }}>
@@ -655,40 +900,25 @@ export default function App() {
                 {parseSections(mr.text).map((sec, j) => (
                   <Accordion key={j} title={sec.title} content={sec.content} isChild={true} defaultOpen={j === 0} />
                 ))}
-
-                {/* 궁합 버튼 — 가족 분석 완료 후 노출 */}
-                {!isPaidStreaming && !alreadyGunghab && (
-                  <div style={s.gunghabSection}>
+                {!isPaidStreaming && !gunghabResult && (
+                  <div style={{ background: 'linear-gradient(135deg, #FFF1F2, #FFF5F6)', border: '2px solid #E11D48', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12, textAlign: 'center' }}>
                     <p style={{ fontSize: 15, fontWeight: 700, color: '#E11D48', marginBottom: 4 }}>💕 두 사람 궁합 보기</p>
                     <p style={{ fontSize: 13, color: '#9F1239', marginBottom: 12, lineHeight: 1.6 }}>
                       성격 궁합 · 돈 궁합 · 결혼 궁합 · 궁합 점수<br/>
-                      <span style={{ fontSize: 12, color: '#BE123C' }}>단 1,000원 추가</span>
+                      <span style={{ fontSize: 12 }}>단 <span style={{ fontWeight: 700 }}>1,900원</span> 추가</span>
                     </p>
-                    <button style={{
-                      width: '100%', padding: '14px', fontSize: 15, fontWeight: 700,
-                      background: '#E11D48', color: 'white', border: 'none',
-                      borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                    }} onClick={() => {
-                      if (window.confirm('1,000원 추가 결제 후 궁합 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
-                        handleGunghab(i)
-                      }
-                    }}>
-                      💕 궁합 분석받기 (1,000원) →
+                    <button style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 700, background: '#E11D48', color: 'white', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
+                      onClick={() => { if (window.confirm('1,900원 추가 결제 후 궁합 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) handleGunghab(i) }}>
+                      💕 궁합 분석받기 (1,900원) →
                     </button>
                   </div>
                 )}
-
-                {/* 궁합 스트리밍 */}
                 {gunghabResult?.streaming && gunghabResult.text && (
                   <div style={s.streamCard}>{gunghabResult.text}<span style={{ opacity: 0.4 }}>▌</span></div>
                 )}
-
-                {/* 궁합 완료 */}
                 {gunghabResult && !gunghabResult.streaming && gunghabSections.length > 0 && (
                   <>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: '#E11D48', textAlign: 'center', margin: '16px 0 8px' }}>
-                      💕 궁합 분석 결과
-                    </p>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#E11D48', textAlign: 'center', margin: '16px 0 8px' }}>💕 궁합 분석 결과</p>
                     {gunghabSections.map((sec, j) => (
                       <Accordion key={j} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={j === 0} />
                     ))}
@@ -698,101 +928,96 @@ export default function App() {
             )
           })}
 
-          {/* 결제 섹션 */}
+          {/* 결제 섹션 — 무료 완료 후 */}
           {phase === 'done' && !selectedPlan && !isPaidStreaming && (
-            <div>
-              {!showPriceSelect && (
-                <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 'var(--radius-md)', padding: '24px 20px', marginBottom: 12, textAlign: 'center' }}>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: 'white', marginBottom: 6 }}>🔮 전체 분석 받기</p>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', marginBottom: 8, lineHeight: 1.6 }}>
-                    인생 재운 흐름 · 직업운 · 투자 · 인간관계 · 월별운세
-                  </p>
-                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 16 }}>
-                    오프라인 7만원짜리를 단돈 1,990원에
-                  </p>
-                  <button style={{ width: '100%', padding: '16px', fontSize: 18, fontWeight: 700, background: 'white', color: '#764ba2', border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
-                    onClick={() => setShowPriceSelect(true)}>
-                    나 + 가족 분석받기 →
+            <>
+              {/* 플랜 선택 안 했을 때 */}
+              {!showPlanSelect && !showFamilyInput && (
+                <div style={s.payBanner}>
+                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 8 }}>🔮 전체 분석 받기</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>인생 재운 · 직업운 · 투자 · 인간관계 · 월별운세</p>
+                  <div style={s.payOriginal}>정가 9,900원</div>
+                  <div style={s.payPrice}>3,900원</div>
+                  <div style={s.payDiscount}>⏰ 오늘 자정까지 할인 {countdown}</div>
+                  <button style={s.payBtn} onClick={() => setShowPlanSelect(true)}>
+                    지금 전체 분석 받기 →
+                  </button>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 8 }}>가족 추가 시 1인당 1,900원만 더</p>
+                </div>
+              )}
+
+              {/* 플랜 선택 */}
+              {showPlanSelect && !showFamilyInput && (
+                <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
+                  <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>👨‍👩‍👧‍👦 몇 명 분석할까요?</p>
+                  <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 16 }}>가족 추가 시 1인당 1,900원 · 궁합은 나중에 따로 추가 가능</p>
+                  {[
+                    { n: 0, label: '나 혼자', emoji: '👤', price: 3900 },
+                    { n: 1, label: '나 + 가족 1명', emoji: '👫', price: 5800, badge: '인기' },
+                    { n: 2, label: '나 + 가족 2명', emoji: '👨‍👩‍👦', price: 7700 },
+                    { n: 3, label: '나 + 가족 3명', emoji: '👨‍👩‍👧‍👦', price: 9600 },
+                  ].map(({ n, label, emoji, price, badge }) => (
+                    <button key={n} style={s.familyOption(false)} onClick={() => {
+                      if (n === 0) {
+                        if (window.confirm(`3,900원 결제 후 전체 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)`)) {
+                          setSelectedPlan(0); handlePaidAnalyze([])
+                        }
+                      } else {
+                        setExtraMembers(Array.from({ length: n }, () => emptyMember()))
+                        setShowFamilyInput(true); setShowPlanSelect(false)
+                        setSelectedPlan(n)
+                      }
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 20 }}>{emoji}</span>
+                        <div>
+                          <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{label}</p>
+                          {badge && <span style={{ fontSize: 10, background: 'var(--color-primary)', color: 'white', padding: '1px 6px', borderRadius: 10 }}>{badge}</span>}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        {n > 0 && <p style={{ fontSize: 11, color: '#059669', margin: 0 }}>({(n * 1990).toLocaleString()}원 절약)</p>}
+                        <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary-dark)', margin: 0 }}>{price.toLocaleString()}원</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* 가족 정보 입력 */}
+              {showFamilyInput && (
+                <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
+                  <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>가족 정보를 입력해주세요</p>
+                  <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 16 }}>각 가족의 사주를 따로 분석해드려요</p>
+                  {extraMembers.map((m, i) => (
+                    <MemberInput key={i} role={`가족 ${i+1}`} value={m}
+                      onChange={v => setExtraMembers(prev => prev.map((p, pi) => pi === i ? v : p))} />
+                  ))}
+                  <button style={{
+                    width: '100%', padding: '14px', fontSize: 16, fontWeight: 700,
+                    background: extraMembers.every(memberValid) ? 'var(--color-primary)' : '#D4C8F5',
+                    color: 'white', border: 'none', borderRadius: 'var(--radius-md)',
+                    cursor: extraMembers.every(memberValid) ? 'pointer' : 'not-allowed',
+                  }}
+                    disabled={!extraMembers.every(memberValid)}
+                    onClick={() => {
+                      const total = getTotalPrice(extraMembers.length)
+                      if (window.confirm(`${total.toLocaleString()}원 결제 후 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)`)) {
+                        handlePaidAnalyze(extraMembers)
+                      }
+                    }}>
+                    {getTotalPrice(extraMembers.length).toLocaleString()}원으로 전체 분석받기 →
                   </button>
                 </div>
               )}
-
-              {showPriceSelect && (
-                <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
-                  <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>👨‍👩‍👧‍👦 몇 명 분석할까요?</p>
-                  <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 16 }}>2번째 가족부터 1인당 1,000원 추가 · 궁합은 나중에 따로 추가 가능</p>
-                  {[1, 2, 3, 4].map(n => {
-                    const total = PRICES.getTotal(n)
-                    const original = PRICES.getOriginal(n)
-                    const saving = PRICES.getSaving(n)
-                    const labels = ['나 혼자', '나 + 1명 (배우자·자녀)', '나 + 2명 (가족 3인)', '나 + 3명 (가족 4인)']
-                    const emojis = ['👤', '👫', '👨‍👩‍👦', '👨‍👩‍👧‍👦']
-                    return (
-                      <button key={n} style={{
-                        width: '100%', padding: '14px 16px', marginBottom: 8, textAlign: 'left',
-                        border: `2px solid ${n === 2 ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                        borderRadius: 'var(--radius-md)',
-                        background: n === 2 ? 'var(--color-primary-light)' : 'var(--color-surface)',
-                        cursor: 'pointer', position: 'relative',
-                      }} onClick={() => {
-                        if (n === 1) {
-                          if (window.confirm('1,990원 결제 후 전체 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
-                            handlePaidAnalyze(1)
-                          }
-                        } else {
-                          setExtraMembers(Array.from({ length: n - 1 }, () => emptyMember()))
-                          setSelectedPlan(-n)
-                        }
-                      }}>
-                        <span style={{ fontSize: 20, marginRight: 8 }}>{emojis[n-1]}</span>
-                        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)' }}>{labels[n-1]}</span>
-                        <span style={{ float: 'right' }}>
-                          {saving > 0 && <span style={{ fontSize: 11, color: '#059669', marginRight: 6 }}>({original.toLocaleString()}원 → )</span>}
-                          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary-dark)' }}>{total.toLocaleString()}원</span>
-                        </span>
-                        {n === 2 && <span style={{ position: 'absolute', top: -8, right: 12, background: 'var(--color-primary)', color: 'white', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>인기</span>}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 가족 정보 입력 */}
-          {selectedPlan !== null && selectedPlan < 0 && (
-            <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
-              <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>가족 정보를 입력해주세요</p>
-              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 16 }}>각 가족의 사주를 따로 분석해드려요</p>
-              {extraMembers.map((m, i) => (
-                <MemberInput key={i} role={`가족 ${i+1}`} value={m}
-                  onChange={v => setExtraMembers(prev => prev.map((p, pi) => pi === i ? v : p))} />
-              ))}
-              <button style={{
-                width: '100%', padding: '14px', fontSize: 16, fontWeight: 700,
-                background: extraMembers.every(memberValid) ? 'var(--color-primary)' : '#D4C8F5',
-                color: 'white', border: 'none', borderRadius: 'var(--radius-md)',
-                cursor: extraMembers.every(memberValid) ? 'pointer' : 'not-allowed',
-              }}
-                disabled={!extraMembers.every(memberValid)}
-                onClick={() => {
-                  const n = -selectedPlan
-                  if (window.confirm(`${PRICES.getTotal(n).toLocaleString()}원 결제 후 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)`)) {
-                    handlePaidAnalyze(n)
-                  }
-                }}>
-                {PRICES.getTotal(-selectedPlan).toLocaleString()}원으로 전체 분석받기 →
-              </button>
-            </div>
+            </>
           )}
 
           {isPaidStreaming && (
             <div style={s.loadingCard}>
               <div style={s.loading}>
                 {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
-                <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>
-                  🔮 전체 사주를 분석하고 있어요...
-                </span>
+                <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>🔮 전체 사주를 분석하고 있어요...</span>
               </div>
             </div>
           )}
@@ -803,141 +1028,5 @@ export default function App() {
     )
   }
 
-  // ── 입력 스텝 화면 ──────────────────────────────────────
-  return (
-    <div style={s.app}>
-      <div style={s.header}>
-        <span style={s.heroEmoji}>✨</span>
-        <h1 style={s.heroTitle}>내가 왜 이렇게 사나 했더니 사주 때문이었다</h1>
-        <p style={s.heroSub}>오프라인 7만원짜리 사주를 단돈 1,990원에</p>
-      </div>
-      <div style={s.progressWrap}>
-        <div style={s.progressBar}><div style={s.progressFill(progress)} /></div>
-        <p style={s.stepLabel}>{step + 1} / {STEPS.length}</p>
-      </div>
-      <div style={s.stepWrap}>
-
-        {currentStepId === 'gender' && (
-          <>
-            <h2 style={s.stepTitle}>성별을 알려주세요</h2>
-            <p style={s.stepSub}>사주 풀이에 사용돼요</p>
-            <div style={s.genderGrid}>
-              <button style={s.genderBtn(gender === '여성')} onClick={() => setGender('여성')}>
-                <span>♀️</span><span style={s.genderLabel(gender === '여성')}>여성</span>
-              </button>
-              <button style={s.genderBtn(gender === '남성')} onClick={() => setGender('남성')}>
-                <span>♂️</span><span style={s.genderLabel(gender === '남성')}>남성</span>
-              </button>
-            </div>
-          </>
-        )}
-
-        {currentStepId === 'maritalStatus' && (
-          <>
-            <h2 style={s.stepTitle}>결혼 상태를 알려주세요</h2>
-            <p style={s.stepSub}>상태에 맞는 맞춤 분석을 해드려요</p>
-            <div style={s.maritalGrid}>
-              {MARITAL_OPTIONS.map(opt => (
-                <button key={opt.value} style={s.maritalBtn(maritalStatus === opt.value)} onClick={() => setMaritalStatus(opt.value)}>
-                  <span style={s.maritalEmoji}>{opt.emoji}</span>
-                  <span style={s.maritalLabel(maritalStatus === opt.value)}>{opt.label}</span>
-                  <span style={s.maritalSub(maritalStatus === opt.value)}>{opt.sub}</span>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {currentStepId === 'birthdate' && (
-          <>
-            <h2 style={s.stepTitle}>생년월일을 알려주세요</h2>
-            <p style={s.stepSub}>숫자로 직접 입력해주세요</p>
-            <div style={s.calToggle}>
-              <button style={s.calBtn(!isLunar)} onClick={() => setIsLunar(false)}>양력 🌞</button>
-              <button style={s.calBtn(isLunar)} onClick={() => setIsLunar(true)}>음력 🌙</button>
-            </div>
-            <div style={s.dateRow}>
-              <input style={s.dateNumInput} type="number" inputMode="numeric" placeholder="년도"
-                value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0, 4))} />
-              <span style={s.dateUnitLabel}>년</span>
-              <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="월"
-                value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0, 2))} />
-              <span style={s.dateUnitLabel}>월</span>
-              <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="일"
-                value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0, 2))} />
-              <span style={s.dateUnitLabel}>일</span>
-            </div>
-            {birthdateValid && (
-              <p style={s.datePreview}>✓ {birthYear}년 {birthMonth}월 {birthDay}일 {isLunar ? '(음력)' : '(양력)'}</p>
-            )}
-            {isLunar && <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 4 }}>ℹ️ 음력 날짜를 입력하면 자동으로 양력으로 변환해요</p>}
-          </>
-        )}
-
-        {currentStepId === 'birthtime' && (
-          <>
-            <h2 style={s.stepTitle}>태어난 시간을 알려주세요</h2>
-            <p style={s.stepSub}>모르셔도 괜찮아요</p>
-            <button style={s.unknownBtn(timeUnknown)} onClick={() => { setTimeUnknown(true); setTimeHour(''); setTimeMin('') }}>
-              ✓ 태어난 시간 모름
-            </button>
-            {!timeUnknown && (
-              <>
-                <p style={s.timeLabel}>오전 / 오후</p>
-                <div style={s.ampmGrid}>
-                  <button style={s.ampmBtn(timeAmPm === '오전')} onClick={() => setTimeAmPm('오전')}>🌅 오전</button>
-                  <button style={s.ampmBtn(timeAmPm === '오후')} onClick={() => setTimeAmPm('오후')}>🌇 오후</button>
-                </div>
-                <p style={s.timeLabel}>시 선택</p>
-                <div style={s.timeGrid}>
-                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
-                    <button key={h} style={s.timeBtn(timeHour === String(h))} onClick={() => setTimeHour(String(h))}>{h}시</button>
-                  ))}
-                </div>
-                <p style={s.timeLabel}>분 선택</p>
-                <div style={s.minGrid}>
-                  {['00','10','20','30','40','50'].map(m => (
-                    <button key={m} style={s.timeBtn(timeMin === m)} onClick={() => setTimeMin(m)}>{m}분</button>
-                  ))}
-                </div>
-                {timeHour && timeMin && (
-                  <p style={s.datePreview}>✓ {timeAmPm} {timeHour}시 {timeMin}분</p>
-                )}
-              </>
-            )}
-            {timeUnknown && (
-              <button style={s.skipBtn} onClick={() => setTimeUnknown(false)}>시간 직접 선택하기</button>
-            )}
-          </>
-        )}
-
-        {currentStepId === 'mbti' && (
-          <>
-            <h2 style={s.stepTitle}>MBTI를 선택해주세요</h2>
-            <p style={s.stepSub}>모르시면 건너뛰어도 돼요</p>
-            <div style={s.chipWrap}>
-              {MBTI_LIST.map(m => <button key={m} style={s.chip(mbti === m)} onClick={() => setMbti(mbti === m ? '' : m)}>{m}</button>)}
-            </div>
-          </>
-        )}
-
-        {currentStepId === 'blood' && (
-          <>
-            <h2 style={s.stepTitle}>혈액형을 선택해주세요</h2>
-            <p style={s.stepSub}>선택하지 않아도 분석은 가능해요</p>
-            <div style={s.chipWrap}>
-              {BLOOD_LIST.map(b => <button key={b} style={s.chip(blood === b)} onClick={() => setBlood(blood === b ? '' : b)}>{b}형</button>)}
-            </div>
-          </>
-        )}
-
-      </div>
-      <div style={s.bottomBar}>
-        {step > 0 && <button style={s.backBtn} onClick={goBack}>←</button>}
-        <button style={s.nextBtn(!canGoNext())} onClick={goNext} disabled={!canGoNext()}>
-          {currentStepId === 'blood' ? '무료 사주 분석하기 ✨' : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음'}
-        </button>
-      </div>
-    </div>
-  )
+  return null
 }
