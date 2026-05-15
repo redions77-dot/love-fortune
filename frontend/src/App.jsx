@@ -861,7 +861,7 @@ export default function App() {
           {isBaseStreaming && baseText && (
             <div style={s.streamCard}>{baseText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
-          {!isBaseStreaming && baseSections.filter(sec => sec.title !== '__행운미리보기__').map((sec, i) => (
+          {!isBaseStreaming && baseSections.filter(sec => !sec.title.includes('행운미리보기')).map((sec, i) => (
             <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
           ))}
           {/* 행운 아이템 미리보기 — 무료에서 색깔만 공개 */}
