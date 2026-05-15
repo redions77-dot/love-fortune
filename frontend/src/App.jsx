@@ -491,9 +491,11 @@ export default function App() {
   async function handleFreeAnalyze() {
     setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null)
     setIsBaseStreaming(true); isPaidSectionRef.current = false; setScreen('result')
+    // 자녀 천명은 전용 type으로 분기
+    const apiType = serviceType === 'child' ? '자녀천명' : '기본'
     try {
       await streamAnalyze({
-        body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '기본', isPaid: false, isLunar },
+        body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: false, isLunar },
         onSaju: (d) => setSajuData(d),
         onBaseText: (t) => setBaseText(prev => prev + t),
         onPaidText: () => {},
@@ -509,10 +511,12 @@ export default function App() {
   async function handlePaidAnalyze(members = []) {
     setPaidText(''); setIsPaidStreaming(true); setShowFamilyInput(false); setShowPlanSelect(false)
     isPaidSectionRef.current = false
+    // 자녀 천명 유료도 전용 type으로 분기
+    const apiType = serviceType === 'child' ? '자녀천명' : '전체'
     try {
       // 본인 유료 분석
       await streamAnalyze({
-        body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '전체', isPaid: true, isLunar },
+        body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: true, isLunar },
         onSaju: () => {},
         onBaseText: (t) => setBaseText(prev => prev + t),
         onPaidText: (t) => setPaidText(prev => prev + t),
