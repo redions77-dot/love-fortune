@@ -861,12 +861,12 @@ export default function App() {
           {isBaseStreaming && baseText && (
             <div style={s.streamCard}>{baseText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
-          {!isBaseStreaming && baseSections.filter(sec => sec.title !== '행운 아이템 미리보기').map((sec, i) => (
+          {!isBaseStreaming && baseSections.filter(sec => sec.title !== '__행운미리보기__').map((sec, i) => (
             <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
           ))}
           {/* 행운 아이템 미리보기 — 무료에서 색깔만 공개 */}
           {!isBaseStreaming && !paidSections.length && (() => {
-            const luckySec = baseSections.find(sec => sec.title === '행운 아이템 미리보기')
+            const luckySec = baseSections.find(sec => sec.title === '__행운미리보기__')
             const colorMatch = luckySec?.content?.match(/색깔[:\s]+([^
 ]+)/)
             const color = colorMatch?.[1]?.trim()
@@ -880,16 +880,16 @@ export default function App() {
                     <span style={s.luckyItemValue}>{color}</span>
                   </div>
                   {[['🐾','마스코트'],['🧭','행운 방향'],['🔢','행운 숫자']].map(([emoji, label]) => (
-                    <div key={label} style={{ ...s.luckyItem, position: 'relative', overflow: 'hidden' }}>
+                    <div key={label} style={{ ...s.luckyItem, position: 'relative' }}>
                       <span style={s.luckyItemLabel}>{emoji} {label}</span>
-                      <span style={{ fontSize: 13, color: '#C4B5FD', filter: 'blur(4px)', userSelect: 'none' }}>████████</span>
-                      <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 16 }}>🔒</span>
+                      <div style={{ height: 20, background: 'repeating-linear-gradient(90deg, #DDD6FE 0px, #DDD6FE 8px, transparent 8px, transparent 12px)', borderRadius: 4, marginTop: 2 }} />
+                      <span style={{ position: 'absolute', bottom: 8, right: 8, fontSize: 14 }}>🔒</span>
                     </div>
                   ))}
-                  <div style={{ ...s.luckyItem, gridColumn: '1 / -1', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ ...s.luckyItem, gridColumn: '1 / -1', position: 'relative' }}>
                     <span style={s.luckyItemLabel}>🛍️ 추천 아이템</span>
-                    <span style={{ fontSize: 13, color: '#C4B5FD', filter: 'blur(4px)', userSelect: 'none' }}>████████████████</span>
-                    <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 16 }}>🔒</span>
+                    <div style={{ height: 20, background: 'repeating-linear-gradient(90deg, #DDD6FE 0px, #DDD6FE 8px, transparent 8px, transparent 12px)', borderRadius: 4, marginTop: 2 }} />
+                    <span style={{ position: 'absolute', bottom: 8, right: 8, fontSize: 14 }}>🔒</span>
                   </div>
                 </div>
                 <p style={{ fontSize: 12, color: '#92400E', textAlign: 'center', marginTop: 10, fontWeight: 600 }}>🔒 마스코트·방향·숫자·추천 아이템은 전체 분석에서 확인하세요</p>
@@ -943,16 +943,16 @@ export default function App() {
                     </div>
                     {/* 나머지 🔒 블랭크 */}
                     {[['🐾','마스코트'],['🧭','행운 방향'],['🔢','행운 숫자']].map(([emoji, label]) => (
-                      <div key={label} style={{ ...s.luckyItem, position: 'relative', overflow: 'hidden' }}>
+                      <div key={label} style={{ ...s.luckyItem, position: 'relative' }}>
                         <span style={s.luckyItemLabel}>{emoji} {label}</span>
-                        <span style={{ fontSize: 13, color: '#C4B5FD', filter: 'blur(4px)', userSelect: 'none' }}>████████</span>
-                        <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 16 }}>🔒</span>
+                        <div style={{ height: 20, background: 'repeating-linear-gradient(90deg, #DDD6FE 0px, #DDD6FE 8px, transparent 8px, transparent 12px)', borderRadius: 4, marginTop: 2 }} />
+                        <span style={{ position: 'absolute', bottom: 8, right: 8, fontSize: 14 }}>🔒</span>
                       </div>
                     ))}
-                    <div style={{ ...s.luckyItem, gridColumn: '1 / -1', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ ...s.luckyItem, gridColumn: '1 / -1', position: 'relative' }}>
                       <span style={s.luckyItemLabel}>🛍️ 추천 아이템</span>
-                      <span style={{ fontSize: 13, color: '#C4B5FD', filter: 'blur(4px)', userSelect: 'none' }}>████████████████</span>
-                      <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 16 }}>🔒</span>
+                      <div style={{ height: 20, background: 'repeating-linear-gradient(90deg, #DDD6FE 0px, #DDD6FE 8px, transparent 8px, transparent 12px)', borderRadius: 4, marginTop: 2 }} />
+                      <span style={{ position: 'absolute', bottom: 8, right: 8, fontSize: 14 }}>🔒</span>
                     </div>
                   </div>
                   <p style={{ fontSize: 12, color: '#92400E', textAlign: 'center', marginTop: 12, fontWeight: 600 }}>🔒 마스코트·방향·숫자·추천 아이템은 전체 분석에서 확인하세요</p>
