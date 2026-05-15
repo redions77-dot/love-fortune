@@ -387,9 +387,8 @@ export default function App() {
   }, [])
 
   // ── 앱 상태 ──
-  // screen: 'landing' | 'input' | 'result' | 'family_input' | 'gunghab_input' | 'child_input'
   const [screen, setScreen] = useState('landing')
-  const [serviceType, setServiceType] = useState(null) // 'saju' | 'family' | 'gunghab' | 'child'
+  const [serviceType, setServiceType] = useState(null)
 
   // 입력 상태
   const [step, setStep] = useState(0)
@@ -491,7 +490,6 @@ export default function App() {
   async function handleFreeAnalyze() {
     setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null)
     setIsBaseStreaming(true); isPaidSectionRef.current = false; setScreen('result')
-    // 자녀 천명은 전용 type으로 분기
     const apiType = serviceType === 'child' ? '자녀천명' : '기본'
     try {
       await streamAnalyze({
@@ -511,10 +509,8 @@ export default function App() {
   async function handlePaidAnalyze(members = []) {
     setPaidText(''); setIsPaidStreaming(true); setShowFamilyInput(false); setShowPlanSelect(false)
     isPaidSectionRef.current = false
-    // 자녀 천명 유료도 전용 type으로 분기
     const apiType = serviceType === 'child' ? '자녀천명' : '전체'
     try {
-      // 본인 유료 분석
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: true, isLunar },
         onSaju: () => {},
@@ -522,7 +518,6 @@ export default function App() {
         onPaidText: (t) => setPaidText(prev => prev + t),
         onDone: () => {}, onError: (e) => alert(e),
       })
-      // 가족 분석
       const results = []
       for (const member of members) {
         let memberText = ''; isPaidSectionRef.current = false
@@ -585,7 +580,6 @@ export default function App() {
     isPaidSectionRef.current = false
   }
 
-  // ── 총 결제 금액 계산 ──
   function getTotalPrice(memberCount) {
     return PRICE.sale + (memberCount > 0 ? memberCount * PRICE.extra : 0)
   }
@@ -596,13 +590,10 @@ export default function App() {
   if (screen === 'landing') {
     return (
       <div style={s.landing}>
-        {/* 타이머 배너 */}
         <div style={s.timerBanner}>
           🔥 오늘 자정까지 할인
           <span style={s.timerNum}>{countdown}</span>
         </div>
-
-        {/* 히어로 */}
         <div style={s.landingHero}>
           <span style={s.landingEmoji}>✨</span>
           <h1 style={s.landingTitle}>내가 왜 이렇게 사나 했더니<br/>사주 때문이었다</h1>
@@ -615,12 +606,9 @@ export default function App() {
             <span>정가 <span style={{ textDecoration: 'line-through' }}>9,900원</span> → 오늘만 3,900원</span>
           </div>
         </div>
-
-        {/* 서비스 카드 */}
         <div style={s.cardGrid}>
           <p style={s.cardGridTitle}>무엇이 궁금하세요?</p>
           <div style={s.grid2}>
-            {/* 나의 사주 */}
             <button style={s.serviceCard(CARD_COLORS.saju)} onClick={() => { setServiceType('saju'); setScreen('input') }}>
               <span style={s.freeBadge}>무료 맛보기</span>
               <span style={s.serviceEmoji}>🔮</span>
@@ -628,8 +616,6 @@ export default function App() {
               <span style={s.serviceSub}>돈·직업·연애<br/>내 팔자가 정해놨다</span>
               <span style={s.servicePrice(CARD_COLORS.saju)}>3,900원</span>
             </button>
-
-            {/* 궁합 */}
             <button style={s.serviceCard(CARD_COLORS.gunghab)} onClick={() => { setServiceType('gunghab'); setScreen('input') }}>
               <span style={s.serviceEmoji}>💕</span>
               <span style={s.serviceLabel(CARD_COLORS.gunghab)}>궁합</span>
@@ -637,9 +623,7 @@ export default function App() {
               <span style={s.servicePrice(CARD_COLORS.gunghab)}>3,900원</span>
             </button>
           </div>
-
           <div style={s.grid2}>
-            {/* 가족 세트 */}
             <button style={s.serviceCard(CARD_COLORS.family)} onClick={() => { setServiceType('family'); setScreen('input') }}>
               <span style={s.freeBadge}>무료 맛보기</span>
               <span style={s.serviceEmoji}>👨‍👩‍👧</span>
@@ -647,8 +631,6 @@ export default function App() {
               <span style={s.serviceSub}>가족 모두의 사주<br/>한 번에 저렴하게</span>
               <span style={s.servicePrice(CARD_COLORS.family)}>3,900원~</span>
             </button>
-
-            {/* 자녀 진로 */}
             <button style={s.serviceCard(CARD_COLORS.child)} onClick={() => { setServiceType('child'); setScreen('input') }}>
               <span style={s.serviceEmoji}>🌱</span>
               <span style={s.serviceLabel(CARD_COLORS.child)}>자녀 천명</span>
@@ -656,8 +638,6 @@ export default function App() {
               <span style={s.servicePrice(CARD_COLORS.child)}>3,900원</span>
             </button>
           </div>
-
-          {/* 신뢰 지표 */}
           <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid var(--color-border)', marginTop: 8 }}>
             <p style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>이미 많은 분들이 확인했어요</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
@@ -827,7 +807,6 @@ export default function App() {
 
     return (
       <div style={s.app}>
-        {/* 타이머 배너 (결과 화면에도) */}
         {phase === 'done' && (selectedPlan === null || selectedPlan > 0) && (
           <div style={s.timerBanner}>
             🔥 오늘 자정까지 할인 &nbsp;
@@ -857,18 +836,20 @@ export default function App() {
             </div>
           )}
 
-          {/* 무료 결과 */}
+          {/* 무료 결과 스트리밍 중 */}
           {isBaseStreaming && baseText && (
             <div style={s.streamCard}>{baseText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
+
+          {/* 무료 결과 완료 — 행운미리보기 제외하고 아코디언 */}
           {!isBaseStreaming && baseSections.filter(sec => !sec.title.includes('행운미리보기')).map((sec, i) => (
             <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
           ))}
+
           {/* 행운 아이템 미리보기 — 무료에서 색깔만 공개 */}
           {!isBaseStreaming && !paidSections.length && (() => {
-            const luckySec = baseSections.find(sec => sec.title === '__행운미리보기__')
-            const colorMatch = luckySec?.content?.match(/색깔[:\s]+([^
-]+)/)
+            const luckySec = baseSections.find(sec => sec.title.includes('행운미리보기'))
+            const colorMatch = luckySec?.content?.match(/색깔[:\s]+([^\n]+)/)
             const color = colorMatch?.[1]?.trim()
             if (!color) return null
             return (
@@ -907,11 +888,8 @@ export default function App() {
             <>
               <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', textAlign: 'center', margin: '16px 0 8px' }}>⭐ 전체 분석 결과</p>
               {paidSections.map((sec, i) => {
-                // 이 사주로 잘 사는 법 — 두 번째 문단 블랭크 처리
                 if (sec.title === '이 사주로 잘 사는 법') {
-                  const paragraphs = sec.content.split(/
-
-+/)
+                  const paragraphs = sec.content.split(/\n\n+/)
                   const firstPara = paragraphs[0] || ''
                   return (
                     <Accordion key={i} title={sec.title} isPaid={true} defaultOpen={i === 0} content={
@@ -936,12 +914,10 @@ export default function App() {
                 <div style={s.luckyCard}>
                   <p style={{ fontSize: 15, fontWeight: 700, color: '#92400E', marginBottom: 4 }}>🍀 나의 행운 아이템</p>
                   <div style={s.luckyGrid}>
-                    {/* 색깔만 공개 */}
                     <div style={s.luckyItem}>
                       <span style={s.luckyItemLabel}>🎨 행운 색깔</span>
                       <span style={s.luckyItemValue}>{행운아이템.색깔}</span>
                     </div>
-                    {/* 나머지 🔒 블랭크 */}
                     {[['🐾','마스코트'],['🧭','행운 방향'],['🔢','행운 숫자']].map(([emoji, label]) => (
                       <div key={label} style={{ ...s.luckyItem, position: 'relative' }}>
                         <span style={s.luckyItemLabel}>{emoji} {label}</span>
@@ -1001,10 +977,9 @@ export default function App() {
             )
           })}
 
-          {/* 결제 섹션 — 무료 완료 후 */}
+          {/* 결제 섹션 */}
           {phase === 'done' && (selectedPlan === null || selectedPlan > 0) && !isPaidStreaming && (
             <>
-              {/* 플랜 선택 안 했을 때 */}
               {!showPlanSelect && !showFamilyInput && (
                 <div style={s.payBanner}>
                   <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 8 }}>🔮 전체 분석 받기</p>
@@ -1019,7 +994,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* 플랜 선택 */}
               {showPlanSelect && !showFamilyInput && (
                 <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
                   <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>👨‍👩‍👧‍👦 몇 명 분석할까요?</p>
@@ -1057,7 +1031,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* 가족 정보 입력 */}
               {showFamilyInput && (
                 <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '20px', marginBottom: 12 }}>
                   <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>가족 정보를 입력해주세요</p>
