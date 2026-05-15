@@ -861,9 +861,41 @@ export default function App() {
           {isBaseStreaming && baseText && (
             <div style={s.streamCard}>{baseText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
-          {!isBaseStreaming && baseSections.map((sec, i) => (
+          {!isBaseStreaming && baseSections.filter(sec => sec.title !== '행운 아이템 미리보기').map((sec, i) => (
             <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
           ))}
+          {/* 행운 아이템 미리보기 — 무료에서 색깔만 공개 */}
+          {!isBaseStreaming && !paidSections.length && (() => {
+            const luckySec = baseSections.find(sec => sec.title === '행운 아이템 미리보기')
+            const colorMatch = luckySec?.content?.match(/색깔[:\s]+([^
+]+)/)
+            const color = colorMatch?.[1]?.trim()
+            if (!color) return null
+            return (
+              <div style={s.luckyCard}>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#92400E', marginBottom: 4 }}>🍀 나의 행운 아이템</p>
+                <div style={s.luckyGrid}>
+                  <div style={s.luckyItem}>
+                    <span style={s.luckyItemLabel}>🎨 행운 색깔</span>
+                    <span style={s.luckyItemValue}>{color}</span>
+                  </div>
+                  {[['🐾','마스코트'],['🧭','행운 방향'],['🔢','행운 숫자']].map(([emoji, label]) => (
+                    <div key={label} style={{ ...s.luckyItem, position: 'relative', overflow: 'hidden' }}>
+                      <span style={s.luckyItemLabel}>{emoji} {label}</span>
+                      <span style={{ fontSize: 13, color: '#C4B5FD', filter: 'blur(4px)', userSelect: 'none' }}>████████</span>
+                      <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 16 }}>🔒</span>
+                    </div>
+                  ))}
+                  <div style={{ ...s.luckyItem, gridColumn: '1 / -1', position: 'relative', overflow: 'hidden' }}>
+                    <span style={s.luckyItemLabel}>🛍️ 추천 아이템</span>
+                    <span style={{ fontSize: 13, color: '#C4B5FD', filter: 'blur(4px)', userSelect: 'none' }}>████████████████</span>
+                    <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 16 }}>🔒</span>
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: '#92400E', textAlign: 'center', marginTop: 10, fontWeight: 600 }}>🔒 마스코트·방향·숫자·추천 아이템은 전체 분석에서 확인하세요</p>
+              </div>
+            )
+          })()}
 
           {/* 유료 스트리밍 */}
           {isPaidStreaming && paidText && (
