@@ -428,7 +428,7 @@ export default function App() {
           <div style={{ ...s.grid2, gridTemplateColumns: '1fr' }}>
             <button style={s.serviceCard(CARD_COLORS.child)} onClick={() => { setServiceType('child'); setScreen('input') }}>
               <span style={s.serviceEmoji}>🌱</span>
-              <span style={s.serviceLabel(CARD_COLORS.child)}>자녀 천명</span>
+              <span style={s.serviceLabel(CARD_COLORS.child)}>내 아이 괜찮을까</span>
               <span style={s.serviceSub}>아이의 타고난 재능·진로를 미리 확인</span>
               <span style={s.servicePrice(CARD_COLORS.child)}>1,900원</span>
             </button>
@@ -451,7 +451,7 @@ export default function App() {
 
   // ── 입력 ──
   if (screen === 'input') {
-    const serviceNames = { saju: '나의 사주', gunghab: '궁합', child: '자녀 천명' }
+    const serviceNames = { saju: '나의 사주', gunghab: '궁합', child: '내 아이 괜찮을까' }
     return (
       <div style={s.app}>
         <div style={s.header}>
