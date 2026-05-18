@@ -664,8 +664,23 @@ export default function App() {
           {/* 결제 배너 — 단순화 */}
           {phase === 'done' && !isPaid && !isPaidStreaming && (
             <div style={s.payBanner}>
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 8 }}>🔮 전체 분석 받기</p>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 12 }}>인생 재운 · 직업운 · 투자 · 인간관계 · 월별운세</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: 'white', marginBottom: 16 }}>🔮 1,900원으로 이걸 다 볼 수 있어요</p>
+              <div style={{ textAlign: 'left', marginBottom: 20, display: 'inline-block' }}>
+                {[
+                  '인생 재운 흐름 (20대~말년)',
+                  '직업운 · 커리어 방향',
+                  '투자 · 부동산 전략',
+                  '인간관계 · 사람운',
+                  '월별 운세 12개월',
+                  '행운 아이템',
+                  '이 사주로 잘 사는 법',
+                ].map((item) => (
+                  <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <span style={{ color: '#FDE68A', fontWeight: 700, fontSize: 14 }}>✓</span>
+                    <span style={{ color: 'white', fontSize: 14 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
               <div style={s.payPrice}>1,900원</div>
               <div style={s.payDiscount}>⏰ 오늘 자정까지 {countdown}</div>
               <button style={s.payBtn} onClick={() => {
