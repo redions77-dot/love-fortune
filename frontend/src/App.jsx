@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 // ── 상수 ──────────────────────────────────────────────
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
-const STEPS = ['gender', 'maritalStatus', 'birthdate', 'birthtime', 'mbti', 'blood']
+const STEPS = ['gender', 'birthdate', 'birthtime', 'mbti', 'blood']
 const API_URL = 'https://love-fortune.onrender.com'
 
 const MARITAL_OPTIONS = [
@@ -350,7 +350,6 @@ export default function App() {
 
   function canGoNext() {
     if (currentStepId === 'gender') return gender !== ''
-    if (currentStepId === 'maritalStatus') return maritalStatus !== ''
     if (currentStepId === 'birthdate') return birthdateValid
     if (currentStepId === 'birthtime') return birthtimeValid
     return true
@@ -737,21 +736,6 @@ export default function App() {
                 <button style={s.genderBtn(gender === '남성')} onClick={() => setGender('남성')}>
                   <span>♂️</span><span style={s.genderLabel(gender === '남성')}>남성</span>
                 </button>
-              </div>
-            </>
-          )}
-          {currentStepId === 'maritalStatus' && (
-            <>
-              <h2 style={s.stepTitle}>결혼 상태를 알려주세요</h2>
-              <p style={s.stepSub}>상태에 맞는 맞춤 분석을 해드려요</p>
-              <div style={s.maritalGrid}>
-                {MARITAL_OPTIONS.map(opt => (
-                  <button key={opt.value} style={s.maritalBtn(maritalStatus === opt.value)} onClick={() => setMaritalStatus(opt.value)}>
-                    <span style={s.maritalEmoji}>{opt.emoji}</span>
-                    <span style={s.maritalLabel(maritalStatus === opt.value)}>{opt.label}</span>
-                    <span style={s.maritalSub(maritalStatus === opt.value)}>{opt.sub}</span>
-                  </button>
-                ))}
               </div>
             </>
           )}
