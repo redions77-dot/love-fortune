@@ -258,11 +258,14 @@ app.post('/api/analyze', async (req, res) => {
 
   // ── 궁합 ──────────────────────────────────────────
   if (type === '궁합') {
-    const { partnerBirthdate, partnerGender, partnerBirthtime, partnerIsLunar } = req.body;
+const { partnerBirthdate, partnerGender, partnerBirthtime, partnerIsLunar, myName, partnerName } = req.body;
     if (!partnerBirthdate) {
       res.write(`data: ${JSON.stringify({ error: '상대방 생년월일을 입력해주세요.' })}\n\n`);
       return res.end();
     }
+
+    const nameA = myName || 'A'
+    const nameB = partnerName || 'B'
 
     const pSaju = calcSaju(partnerBirthdate, partnerBirthtime, partnerIsLunar);
 
@@ -270,29 +273,39 @@ app.post('/api/analyze', async (req, res) => {
 두 사람의 궁합을 쉽고 솔직하게 분석해주세요.
 ${공통규칙}
 
-[A (나)]
+[${nameA} (나)]
 - 성별: ${gender || '미입력'} / 생년월일: ${year}년 ${month}월 ${day}일 (${2026 - year}세)
 - 년주: ${년주} / 월주: ${월주} / 일주: ${일주} / 시주: ${시주 || '미입력'}
 
-[B (상대방)]
+[${nameB} (상대방)]
 - 성별: ${partnerGender || '미입력'} / 생년월일: ${pSaju.year}년 ${pSaju.month}월 ${pSaju.day}일 (${2026 - pSaju.year}세)
 - 년주: ${pSaju.년주} / 월주: ${pSaju.월주} / 일주: ${pSaju.일주} / 시주: ${pSaju.시주 || '미입력'}
 
-두 사람을 "A"와 "B"로 구분해서 표현하세요. 호칭으로 나이 추측 금지.
+두 사람을 "${nameA}님"과 "${nameB}님"으로 구분해서 표현하세요. 호칭으로 나이 추측 금지.
 아래 4개 섹션을 ===섹션제목=== 형태로 작성하세요.
 
 ===성격 궁합===
-(300~400자) 두 사람 성격이 어떻게 만나는지 솔직하게. 잘 맞는 부분과 실제 갈등이 생길 수 있는 지점을 모두 써주세요.
+(500~600자) 두 사람 성격이 어떻게 만나는지 솔직하게.
+첫 문단: ${nameA}님과 ${nameB}님 각자의 사주 기질을 먼저 짚고, 둘이 만났을 때 시너지가 나는 부분을 구체적으로.
+두 번째 문단: 실제 갈등이 생길 수 있는 지점과 이유. 어떤 상황에서 부딪히는지 사주 근거로 설명해주세요.
+마지막 줄: 이 성격 조합을 한 마디로 표현하는 키워드.
 
 ===돈 궁합===
-(300~400자) 함께하면 재물이 늘어나는 구조인지 줄어드는 구조인지. 각자의 재물 스타일이 만났을 때 시너지가 나는지. 함께 돈을 모으려면 어떤 방식이 맞는지.
+(500~600자) 함께하면 재물이 늘어나는 구조인지 솔직하게.
+첫 문단: ${nameA}님과 ${nameB}님 각자의 재물 스타일과 돈을 대하는 방식의 차이.
+두 번째 문단: 함께 돈을 모으려면 어떤 역할 분담이 맞는지, 조심해야 할 돈 관련 패턴.
+마지막 줄: 이 두 사람이 부자가 되려면 반드시 해야 할 한 가지.
 
 ===결혼 궁합===
-(300~400자) 이 두 사람이 함께 살면 서로에게 도움이 되는 사주인지 솔직하게. 결혼 후 관계 흐름, 조심해야 할 시기나 패턴.
+(500~600자) 이 두 사람이 함께 살면 어떤 그림이 펼쳐지는지 솔직하게.
+첫 문단: 결혼 초반 분위기, 서로에게 도움이 되는 부분과 긴장이 생기는 부분.
+두 번째 문단: 결혼 후 5~10년 사이 조심해야 할 시기나 패턴, 위기를 넘기는 방법.
+마지막 줄: 이 두 사람이 오래 함께하려면 반드시 기억해야 할 한 문장.
 
 ===궁합 총평===
-(200~300자) 이 두 사람의 궁합을 한 마디로 표현하고, 궁합 점수를 100점 만점으로 표현하세요 (예: 74점). 그 이유와 잘 살기 위한 핵심 조언 한 문장.`;
-
+(300~400자) 이 두 사람의 궁합을 종합 평가해주세요.
+첫 문단: 궁합 점수를 100점 만점으로 표현하고 (예: 74점), 이 점수의 이유를 사주 근거로 설명.
+두 번째 문단: ${nameA}님과 ${nameB}님이 함께 잘 살기 위한 핵심 조언 2가지를 구체적으로.`;
     try {
       await streamToClient(res, prompt, MODEL_PAID, 4000);
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
