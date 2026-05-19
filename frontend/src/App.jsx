@@ -403,7 +403,7 @@ export default function App() {
     const apiType = serviceType === 'child' ? '자녀천명' : '기본'
     try {
       await streamAnalyze({
-        body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: false, isLunar },
+        body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: false, isLunar, userName: myName },
         onSaju: (d) => setSajuData(d),
         onBaseText: (t) => setBaseText(prev => prev + t),
         onPaidText: () => {},
@@ -422,7 +422,7 @@ export default function App() {
     const apiType = serviceType === 'child' ? '자녀천명' : '전체'
     try {
       await streamAnalyze({
-        body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: true, isLunar },
+        body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: true, isLunar, userName: myName },
         onSaju: () => {},
         onBaseText: (t) => setBaseText(prev => prev + t),
         onPaidText: (t) => setPaidText(prev => prev + t),
@@ -722,6 +722,14 @@ export default function App() {
             <>
               <h2 style={s.stepTitle}>성별을 알려주세요</h2>
               <p style={s.stepSub}>사주 풀이에 사용돼요</p>
+              <div style={{ marginBottom: 16 }}>
+                <p style={s.timeLabel}>이름 (선택)</p>
+                <input
+                  style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', boxSizing: 'border-box', outline: 'none' }}
+                  type="text" placeholder="이름을 입력해주세요"
+                  value={myName} onChange={e => setMyName(e.target.value)}
+                />
+              </div>
               <div style={s.genderGrid}>
                 <button style={s.genderBtn(gender === '여성')} onClick={() => setGender('여성')}>
                   <span>♀️</span><span style={s.genderLabel(gender === '여성')}>여성</span>
