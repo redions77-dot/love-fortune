@@ -272,6 +272,20 @@ export default function App() {
   const [isBaseStreaming, setIsBaseStreaming] = useState(false)
   const [isPaid, setIsPaid] = useState(false)
 
+  // 궁합 전용 상태
+  const [gunghabStep, setGunghabStep] = useState(1) // 1=나, 2=상대방
+  const [partnerGender, setPartnerGender] = useState('')
+  const [partnerBirthYear, setPartnerBirthYear] = useState('')
+  const [partnerBirthMonth, setPartnerBirthMonth] = useState('')
+  const [partnerBirthDay, setPartnerBirthDay] = useState('')
+  const [partnerIsLunar, setPartnerIsLunar] = useState(false)
+  const [partnerTimeHour, setPartnerTimeHour] = useState('')
+  const [partnerTimeMin, setPartnerTimeMin] = useState('')
+  const [partnerTimeAmPm, setPartnerTimeAmPm] = useState('오전')
+  const [partnerTimeUnknown, setPartnerTimeUnknown] = useState(false)
+  const [gunghabText, setGunghabText] = useState('')
+  const [isGunghabStreaming, setIsGunghabStreaming] = useState(false)
+
   const abortRef = useRef(null)
   const isPaidSectionRef = useRef(false)
 
@@ -385,11 +399,218 @@ export default function App() {
     setMbti(''); setBlood('')
     setPhase('input'); setSajuData(null); setBaseText(''); setPaidText('')
     setIsBaseStreaming(false); setIsPaidStreaming(false); setIsPaid(false)
+    // 궁합 초기화
+    setGunghabStep(1); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
+    setPartnerIsLunar(false); setPartnerTimeHour(''); setPartnerTimeMin(''); setPartnerTimeAmPm('오전'); setPartnerTimeUnknown(false)
+    setGunghabText(''); setIsGunghabStreaming(false)
     isPaidSectionRef.current = false
   }
 
-  // ── 랜딩 ──
-  if (screen === 'landing') {
+  // 궁합 분석 함수
+  const partnerBirthdate = (partnerBirthYear.length === 4 && partnerBirthMonth && partnerBirthDay)
+    ? `${partnerBirthYear}-${String(partnerBirthMonth).padStart(2,'0')}-${String(partnerBirthDay).padStart(2,'0')}` : ''
+  const partnerBirthtime = partnerTimeUnknown ? '' : (() => {
+    if (!partnerTimeHour || !partnerTimeMin) return ''
+    let h = Number(partnerTimeHour)
+    if (partnerTimeAmPm === '오전' && h === 12) h = 0
+    if (partnerTimeAmPm === '오후' && h !== 12) h += 12
+    return `${String(h).padStart(2,'0')}:${String(partnerTimeMin).padStart(2,'0')}`
+  })()
+  const partnerBirthdateValid = partnerBirthYear.length === 4 && Number(partnerBirthMonth) >= 1 && Number(partnerBirthMonth) <= 12 && Number(partnerBirthDay) >= 1 && Number(partnerBirthDay) <= 31
+  const partnerBirthtimeValid = partnerTimeUnknown || (partnerTimeHour !== '' && partnerTimeMin !== '')
+
+  async function handleGunghabAnalyze() {
+    setGunghabText(''); setIsGunghabStreaming(true); setScreen('result')
+    try {
+      const ctrl = new AbortController()
+      abortRef.current = ctrl
+      const res = await fetch(`${API_URL}/api/analyze`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gender, birthdate, birthtime, isLunar,
+          partnerGender, partnerBirthdate, partnerBirthtime, partnerIsLunar,
+          type: '궁합', isPaid: true,
+        }),
+        signal: ctrl.signal,
+      })
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split('\n'); buf = lines.pop()
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const json = JSON.parse(line.slice(6))
+            if (json.text) setGunghabText(prev => prev + json.text)
+            else if (json.type === 'done') { }
+          } catch {}
+        }
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
+    }
+    setIsGunghabStreaming(false)
+  }
+
+  // ── 궁합 입력 화면 ──
+  if (screen === 'gunghab_input') {
+    const isStep1 = gunghabStep === 1
+    const myBirthdateValid = birthYear.length === 4 && Number(birthMonth) >= 1 && Number(birthMonth) <= 12 && Number(birthDay) >= 1
+    const myBirthtimeValid = timeUnknown || (timeHour !== '' && timeMin !== '')
+    const canStep1Next = gender !== '' && myBirthdateValid && myBirthtimeValid
+    const canStep2Next = partnerGender !== '' && partnerBirthdateValid && partnerBirthtimeValid
+
+    const renderDateInputs = (
+      year, setYear, month, setMonth, day, setDay,
+      lunar, setLunar, hour, setHour, min, setMin,
+      ampm, setAmpm, unknown, setUnknown
+    ) => (
+      <>
+        <div style={s.calToggle}>
+          <button style={s.calBtn(!lunar)} onClick={() => setLunar(false)}>양력 🌞</button>
+          <button style={s.calBtn(lunar)} onClick={() => setLunar(true)}>음력 🌙</button>
+        </div>
+        <div style={s.dateRow}>
+          <input style={s.dateNumInput} type="number" inputMode="numeric" placeholder="년도" value={year} onChange={e => setYear(e.target.value.slice(0,4))} />
+          <span style={s.dateUnitLabel}>년</span>
+          <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="월" value={month} onChange={e => setMonth(e.target.value.slice(0,2))} />
+          <span style={s.dateUnitLabel}>월</span>
+          <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="일" value={day} onChange={e => setDay(e.target.value.slice(0,2))} />
+          <span style={s.dateUnitLabel}>일</span>
+        </div>
+        <button style={s.unknownBtn(unknown)} onClick={() => { setUnknown(true); setHour(''); setMin('') }}>✓ 태어난 시간 모름</button>
+        {!unknown && (
+          <>
+            <p style={s.timeLabel}>오전 / 오후</p>
+            <div style={s.ampmGrid}>
+              <button style={s.ampmBtn(ampm === '오전')} onClick={() => setAmpm('오전')}>🌅 오전</button>
+              <button style={s.ampmBtn(ampm === '오후')} onClick={() => setAmpm('오후')}>🌇 오후</button>
+            </div>
+            <p style={s.timeLabel}>시 선택</p>
+            <div style={s.timeGrid}>
+              {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                <button key={h} style={s.timeBtn(hour === String(h))} onClick={() => setHour(String(h))}>{h}시</button>
+              ))}
+            </div>
+            <p style={s.timeLabel}>분 선택</p>
+            <div style={s.minGrid}>
+              {['00','10','20','30','40','50'].map(m => (
+                <button key={m} style={s.timeBtn(min === m)} onClick={() => setMin(m)}>{m}분</button>
+              ))}
+            </div>
+          </>
+        )}
+        {unknown && <button style={s.skipBtn} onClick={() => setUnknown(false)}>시간 직접 선택하기</button>}
+      </>
+    )
+
+    return (
+      <div style={s.app}>
+        <div style={s.header}>
+          <span style={s.heroEmoji}>💕</span>
+          <h1 style={s.heroTitle}>궁합 분석</h1>
+          <p style={s.heroSub}>{isStep1 ? '먼저 내 정보를 입력해주세요' : '이제 상대방 정보를 입력해주세요'}</p>
+        </div>
+        <div style={s.progressWrap}>
+          <div style={s.progressBar}><div style={s.progressFill(isStep1 ? 50 : 100)} /></div>
+          <p style={s.stepLabel}>{isStep1 ? '1' : '2'} / 2</p>
+        </div>
+        <div style={s.stepWrap}>
+          {isStep1 ? (
+            <>
+              <h2 style={s.stepTitle}>나의 정보</h2>
+              <p style={s.stepSub}>내 성별부터 알려주세요</p>
+              <div style={s.genderGrid}>
+                <button style={s.genderBtn(gender === '여성')} onClick={() => setGender('여성')}>
+                  <span>♀️</span><span style={s.genderLabel(gender === '여성')}>여성</span>
+                </button>
+                <button style={s.genderBtn(gender === '남성')} onClick={() => setGender('남성')}>
+                  <span>♂️</span><span style={s.genderLabel(gender === '남성')}>남성</span>
+                </button>
+              </div>
+              <h2 style={{ ...s.stepTitle, marginTop: 20 }}>내 생년월일 · 시간</h2>
+              {renderDateInputs(
+                birthYear, setBirthYear, birthMonth, setBirthMonth, birthDay, setBirthDay,
+                isLunar, setIsLunar, timeHour, setTimeHour, timeMin, setTimeMin,
+                timeAmPm, setTimeAmPm, timeUnknown, setTimeUnknown
+              )}
+            </>
+          ) : (
+            <>
+              <h2 style={s.stepTitle}>상대방 정보</h2>
+              <p style={s.stepSub}>상대방 성별을 알려주세요</p>
+              <div style={s.genderGrid}>
+                <button style={s.genderBtn(partnerGender === '여성')} onClick={() => setPartnerGender('여성')}>
+                  <span>♀️</span><span style={s.genderLabel(partnerGender === '여성')}>여성</span>
+                </button>
+                <button style={s.genderBtn(partnerGender === '남성')} onClick={() => setPartnerGender('남성')}>
+                  <span>♂️</span><span style={s.genderLabel(partnerGender === '남성')}>남성</span>
+                </button>
+              </div>
+              <h2 style={{ ...s.stepTitle, marginTop: 20 }}>상대방 생년월일 · 시간</h2>
+              {renderDateInputs(
+                partnerBirthYear, setPartnerBirthYear, partnerBirthMonth, setPartnerBirthMonth, partnerBirthDay, setPartnerBirthDay,
+                partnerIsLunar, setPartnerIsLunar, partnerTimeHour, setPartnerTimeHour, partnerTimeMin, setPartnerTimeMin,
+                partnerTimeAmPm, setPartnerTimeAmPm, partnerTimeUnknown, setPartnerTimeUnknown
+              )}
+            </>
+          )}
+        </div>
+        <div style={s.bottomBar}>
+          <button style={s.backBtn} onClick={() => {
+            if (isStep1) setScreen('landing')
+            else setGunghabStep(1)
+          }}>←</button>
+          <button style={s.nextBtn(isStep1 ? !canStep1Next : !canStep2Next)}
+            disabled={isStep1 ? !canStep1Next : !canStep2Next}
+            onClick={() => {
+              if (isStep1) setGunghabStep(2)
+              else {
+                if (window.confirm('1,900원 결제 후 궁합 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
+                  handleGunghabAnalyze()
+                }
+              }
+            }}>
+            {isStep1 ? '다음 — 상대방 정보 입력' : '💕 궁합 분석받기 (1,900원)'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── 궁합 결과 화면 ──
+  if (screen === 'result' && serviceType === 'gunghab') {
+    const gunghabSections = parseSections(gunghabText)
+    return (
+      <div style={s.app}>
+        <div style={s.resultWrap}>
+          <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
+            <span style={{ fontSize: 36 }}>💕</span>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)', marginTop: 8 }}>두 사람의 궁합 분석</h2>
+          </div>
+          {isGunghabStreaming && gunghabText && (
+            <div style={s.streamCard}>{gunghabText}<span style={{ opacity: 0.4 }}>▌</span></div>
+          )}
+          {isGunghabStreaming && !gunghabText && (
+            <div style={s.loadingCard}>
+              <div style={s.loading}>
+                {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
+                <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>💕 두 사람의 궁합을 분석하고 있어요...</span>
+              </div>
+            </div>
+          )}
+          {!isGunghabStreaming && gunghabSections.map((sec, i) => (
+            <Accordion key={i} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={i === 0} />
+          ))}
+          <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
+        </div>
+      </div>
+    )
+  }
     return (
       <div style={s.landing}>
         <div style={s.timerBanner}>
@@ -418,7 +639,7 @@ export default function App() {
               <span style={s.serviceSub}>돈·직업·연애<br/>내 팔자가 정해놨다</span>
               <span style={s.servicePrice(CARD_COLORS.saju)}>1,900원</span>
             </button>
-            <button style={s.serviceCard(CARD_COLORS.gunghab)} onClick={() => { setServiceType('gunghab'); setScreen('input') }}>
+            <button style={s.serviceCard(CARD_COLORS.gunghab)} onClick={() => { setServiceType('gunghab'); setGunghabStep(1); setScreen('gunghab_input') }}>
               <span style={s.serviceEmoji}>💕</span>
               <span style={s.serviceLabel(CARD_COLORS.gunghab)}>궁합</span>
               <span style={s.serviceSub}>우리 잘 맞는지<br/>사주로 확인</span>
