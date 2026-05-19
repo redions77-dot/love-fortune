@@ -233,7 +233,7 @@ function calcSaju(birthdate, birthtime, isLunar) {
 }
 
 app.post('/api/analyze', async (req, res) => {
-  const { gender, birthdate, birthtime, mbti, blood, type, isPaid, isLunar, maritalStatus } = req.body;
+  const { gender, birthdate, birthtime, mbti, blood, type, isPaid, isLunar, maritalStatus, userName } = req.body;
 
   if (!birthdate) return res.status(400).json({ error: '생년월일을 입력해주세요.' });
 
