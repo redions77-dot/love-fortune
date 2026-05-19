@@ -793,7 +793,7 @@ export default function App() {
   }
 
   // ── 결과 ──
-  if (screen === 'result') {
+ if (screen === 'result' && serviceType !== 'gunghab') {
     const baseSections = parseSections(baseText)
     const paidSections = parseSections(paidText)
 
