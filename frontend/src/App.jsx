@@ -220,6 +220,48 @@ const CARD_COLORS = {
   child:   { bg: '#FFF7ED', border: '#FED7AA', text: '#7C2D12', accent: '#EA580C' },
 }
 
+function DateInputs({ year, setYear, month, setMonth, day, setDay, lunar, setLunar, hour, setHour, min, setMin, ampm, setAmpm, unknown, setUnknown }) {
+  return (
+    <>
+      <div style={s.calToggle}>
+        <button style={s.calBtn(!lunar)} onClick={() => setLunar(false)}>양력 🌞</button>
+        <button style={s.calBtn(lunar)} onClick={() => setLunar(true)}>음력 🌙</button>
+      </div>
+      <div style={s.dateRow}>
+        <input style={s.dateNumInput} type="number" inputMode="numeric" placeholder="년도" value={year} onChange={e => setYear(e.target.value.slice(0,4))} />
+        <span style={s.dateUnitLabel}>년</span>
+        <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="월" value={month} onChange={e => setMonth(e.target.value.slice(0,2))} />
+        <span style={s.dateUnitLabel}>월</span>
+        <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="일" value={day} onChange={e => setDay(e.target.value.slice(0,2))} />
+        <span style={s.dateUnitLabel}>일</span>
+      </div>
+      <button style={s.unknownBtn(unknown)} onClick={() => { setUnknown(true); setHour(''); setMin('') }}>✓ 태어난 시간 모름</button>
+      {!unknown && (
+        <>
+          <p style={s.timeLabel}>오전 / 오후</p>
+          <div style={s.ampmGrid}>
+            <button style={s.ampmBtn(ampm === '오전')} onClick={() => setAmpm('오전')}>🌅 오전</button>
+            <button style={s.ampmBtn(ampm === '오후')} onClick={() => setAmpm('오후')}>🌇 오후</button>
+          </div>
+          <p style={s.timeLabel}>시 선택</p>
+          <div style={s.timeGrid}>
+            {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+              <button key={h} style={s.timeBtn(hour === String(h))} onClick={() => setHour(String(h))}>{h}시</button>
+            ))}
+          </div>
+          <p style={s.timeLabel}>분 선택</p>
+          <div style={s.minGrid}>
+            {['00','10','20','30','40','50'].map(m => (
+              <button key={m} style={s.timeBtn(min === m)} onClick={() => setMin(m)}>{m}분</button>
+            ))}
+          </div>
+        </>
+      )}
+      {unknown && <button style={s.skipBtn} onClick={() => setUnknown(false)}>시간 직접 선택하기</button>}
+    </>
+  )
+}
+
 function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   const style = isGunghab ? s.gunghabAccordion : isChild ? s.childAccordion : isPaid ? s.paidAccordion : s.accordion
@@ -464,49 +506,7 @@ export default function App() {
     const canStep1Next = gender !== '' && myBirthdateValid && myBirthtimeValid
     const canStep2Next = partnerGender !== '' && partnerBirthdateValid && partnerBirthtimeValid
 
-    const renderDateInputs = (
-      year, setYear, month, setMonth, day, setDay,
-      lunar, setLunar, hour, setHour, min, setMin,
-      ampm, setAmpm, unknown, setUnknown
-    ) => (
-      <>
-        <div style={s.calToggle}>
-          <button style={s.calBtn(!lunar)} onClick={() => setLunar(false)}>양력 🌞</button>
-          <button style={s.calBtn(lunar)} onClick={() => setLunar(true)}>음력 🌙</button>
-        </div>
-        <div style={s.dateRow}>
-          <input style={s.dateNumInput} type="number" inputMode="numeric" placeholder="년도" value={year} onChange={e => setYear(e.target.value.slice(0,4))} />
-          <span style={s.dateUnitLabel}>년</span>
-          <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="월" value={month} onChange={e => setMonth(e.target.value.slice(0,2))} />
-          <span style={s.dateUnitLabel}>월</span>
-          <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="일" value={day} onChange={e => setDay(e.target.value.slice(0,2))} />
-          <span style={s.dateUnitLabel}>일</span>
-        </div>
-        <button style={s.unknownBtn(unknown)} onClick={() => { setUnknown(true); setHour(''); setMin('') }}>✓ 태어난 시간 모름</button>
-        {!unknown && (
-          <>
-            <p style={s.timeLabel}>오전 / 오후</p>
-            <div style={s.ampmGrid}>
-              <button style={s.ampmBtn(ampm === '오전')} onClick={() => setAmpm('오전')}>🌅 오전</button>
-              <button style={s.ampmBtn(ampm === '오후')} onClick={() => setAmpm('오후')}>🌇 오후</button>
-            </div>
-            <p style={s.timeLabel}>시 선택</p>
-            <div style={s.timeGrid}>
-              {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
-                <button key={h} style={s.timeBtn(hour === String(h))} onClick={() => setHour(String(h))}>{h}시</button>
-              ))}
-            </div>
-            <p style={s.timeLabel}>분 선택</p>
-            <div style={s.minGrid}>
-              {['00','10','20','30','40','50'].map(m => (
-                <button key={m} style={s.timeBtn(min === m)} onClick={() => setMin(m)}>{m}분</button>
-              ))}
-            </div>
-          </>
-        )}
-        {unknown && <button style={s.skipBtn} onClick={() => setUnknown(false)}>시간 직접 선택하기</button>}
-      </>
-    )
+
 
     return (
       <div style={s.app}>
@@ -533,11 +533,16 @@ export default function App() {
                 </button>
               </div>
               <h2 style={{ ...s.stepTitle, marginTop: 20 }}>내 생년월일 · 시간</h2>
-              {renderDateInputs(
-                birthYear, setBirthYear, birthMonth, setBirthMonth, birthDay, setBirthDay,
-                isLunar, setIsLunar, timeHour, setTimeHour, timeMin, setTimeMin,
-                timeAmPm, setTimeAmPm, timeUnknown, setTimeUnknown
-              )}
+              <DateInputs
+                year={birthYear} setYear={setBirthYear}
+                month={birthMonth} setMonth={setBirthMonth}
+                day={birthDay} setDay={setBirthDay}
+                lunar={isLunar} setLunar={setIsLunar}
+                hour={timeHour} setHour={setTimeHour}
+                min={timeMin} setMin={setTimeMin}
+                ampm={timeAmPm} setAmpm={setTimeAmPm}
+                unknown={timeUnknown} setUnknown={setTimeUnknown}
+              />
             </>
           ) : (
             <>
@@ -552,11 +557,16 @@ export default function App() {
                 </button>
               </div>
               <h2 style={{ ...s.stepTitle, marginTop: 20 }}>상대방 생년월일 · 시간</h2>
-              {renderDateInputs(
-                partnerBirthYear, setPartnerBirthYear, partnerBirthMonth, setPartnerBirthMonth, partnerBirthDay, setPartnerBirthDay,
-                partnerIsLunar, setPartnerIsLunar, partnerTimeHour, setPartnerTimeHour, partnerTimeMin, setPartnerTimeMin,
-                partnerTimeAmPm, setPartnerTimeAmPm, partnerTimeUnknown, setPartnerTimeUnknown
-              )}
+              <DateInputs
+                year={partnerBirthYear} setYear={setPartnerBirthYear}
+                month={partnerBirthMonth} setMonth={setPartnerBirthMonth}
+                day={partnerBirthDay} setDay={setPartnerBirthDay}
+                lunar={partnerIsLunar} setLunar={setPartnerIsLunar}
+                hour={partnerTimeHour} setHour={setPartnerTimeHour}
+                min={partnerTimeMin} setMin={setPartnerTimeMin}
+                ampm={partnerTimeAmPm} setAmpm={setPartnerTimeAmPm}
+                unknown={partnerTimeUnknown} setUnknown={setPartnerTimeUnknown}
+              />
             </>
           )}
         </div>
