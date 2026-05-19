@@ -261,7 +261,9 @@ app.post('/api/analyze', async (req, res) => {
     ageGroup: getAgeGroup(year),
   })}\n\n`);
 
-  const infoBlock = `[기본 정보]
+ const userName = req.body.userName || '당신'
+    const infoBlock = `[기본 정보]
+- 이름: ${userName}
 - 성별: ${gender || '미입력'}
 - 생년월일: ${year}년 ${month}월 ${day}일 (현재 ${2026 - year}세)
 - 태어난 시간: ${birthtime || '미입력'}
