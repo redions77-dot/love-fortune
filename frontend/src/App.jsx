@@ -531,7 +531,7 @@ export default function App() {
               <div style={{ marginBottom: 16 }}>
                 <p style={s.timeLabel}>이름 (선택)</p>
                 <input
-                  style={{ ...s.dateNumInput, width: '100%', fontSize: 15, textAlign: 'left', padding: '14px 16px' }}
+                  style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', boxSizing: 'border-box', outline: 'none' }}
                   type="text" placeholder="내 이름을 입력해주세요"
                   value={myName} onChange={e => setMyName(e.target.value)}
                 />
@@ -563,7 +563,7 @@ export default function App() {
               <div style={{ marginBottom: 16 }}>
                 <p style={s.timeLabel}>상대방 이름 (선택)</p>
                 <input
-                  style={{ ...s.dateNumInput, width: '100%', fontSize: 15, textAlign: 'left', padding: '14px 16px' }}
+                  style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', boxSizing: 'border-box', outline: 'none' }}
                   type="text" placeholder="상대방 이름을 입력해주세요"
                   value={partnerName} onChange={e => setPartnerName(e.target.value)}
                 />
