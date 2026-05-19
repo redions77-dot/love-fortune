@@ -621,6 +621,9 @@ export default function App() {
       </div>
     )
   }
+
+  // ── 랜딩 ──
+  if (screen === 'landing') {
     return (
       <div style={s.landing}>
         <div style={s.timerBanner}>
