@@ -910,9 +910,19 @@ export default function App() {
           {/* 결제 배너 — 단순화 */}
           {phase === 'done' && !isPaid && !isPaidStreaming && (
             <div style={s.payBanner}>
-              <p style={{ fontSize: 15, fontWeight: 700, color: 'white', marginBottom: 16 }}>🔮 1,900원으로 이걸 다 볼 수 있어요</p>
+<p style={{ fontSize: 15, fontWeight: 700, color: 'white', marginBottom: 16 }}>
+  {serviceType === 'child' ? '🌱 1,900원으로 이걸 다 볼 수 있어요' : '🔮 1,900원으로 이걸 다 볼 수 있어요'}
+</p>
               <div style={{ textAlign: 'left', marginBottom: 20, display: 'inline-block' }}>
-                {[
+                {(serviceType === 'child' ? [
+                  '타고난 기질 · 성격 심층 분석',
+                  '학습 스타일 · 공부가 잘 되는 환경',
+                  '재능의 씨앗 · 빛나는 분야',
+                  '진로 방향 · 어울리는 직업군',
+                  '부모와의 관계 · 키우는 법',
+                  '아이가 힘든 순간 · 극복법',
+                  '이 사주로 잘 크는 법',
+                ] : [
                   '인생 재운 흐름 (20대~말년)',
                   '직업운 · 커리어 방향',
                   '투자 · 부동산 전략',
@@ -920,7 +930,7 @@ export default function App() {
                   '월별 운세 12개월',
                   '행운 아이템',
                   '이 사주로 잘 사는 법',
-                ].map((item) => (
+                ]).map((item) => (
                   <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <span style={{ color: '#FDE68A', fontWeight: 700, fontSize: 14 }}>✓</span>
                     <span style={{ color: 'white', fontSize: 14 }}>{item}</span>
