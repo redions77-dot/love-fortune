@@ -182,18 +182,31 @@ const 공통규칙 = `작성 규칙 (반드시 지킬 것):
 12. 유행어·밈: 전체에서 최대 1개`;
 
 async function streamToClient(res, prompt, model, maxTokens = 4000) {
-  const stream = await anthropic.messages.stream({
-    model,
-    max_tokens: maxTokens,
-    messages: [{ role: 'user', content: prompt }],
-  });
-  for await (const chunk of stream) {
-    if (chunk.type === 'content_block_delta' && chunk.delta?.text) {
-      res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
+  const maxRetries = 3;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const stream = await anthropic.messages.stream({
+        model,
+        max_tokens: maxTokens,
+        messages: [{ role: 'user', content: prompt }],
+      });
+      for await (const chunk of stream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta?.text) {
+          res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
+        }
+      }
+      return;
+    } catch (e) {
+      const isOverloaded = e?.error?.error?.type === 'overloaded_error' || e?.status === 529;
+      if (isOverloaded && attempt < maxRetries) {
+        const delay = attempt * 3000;
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw e;
     }
   }
 }
-
 // 사주 계산 공통 함수
 function calcSaju(birthdate, birthtime, isLunar) {
   const rawDate = new Date(birthdate);
