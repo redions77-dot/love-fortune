@@ -325,6 +325,8 @@ export default function App() {
   const [partnerTimeMin, setPartnerTimeMin] = useState('')
   const [partnerTimeAmPm, setPartnerTimeAmPm] = useState('오전')
   const [partnerTimeUnknown, setPartnerTimeUnknown] = useState(false)
+  const [myName, setMyName] = useState('')
+  const [partnerName, setPartnerName] = useState('')
   const [gunghabText, setGunghabText] = useState('')
   const [isGunghabStreaming, setIsGunghabStreaming] = useState(false)
 
@@ -444,6 +446,7 @@ export default function App() {
     // 궁합 초기화
     setGunghabStep(1); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
     setPartnerIsLunar(false); setPartnerTimeHour(''); setPartnerTimeMin(''); setPartnerTimeAmPm('오전'); setPartnerTimeUnknown(false)
+    setMyName(''); setPartnerName('')
     setGunghabText(''); setIsGunghabStreaming(false)
     isPaidSectionRef.current = false
   }
@@ -471,6 +474,7 @@ export default function App() {
         body: JSON.stringify({
           gender, birthdate, birthtime, isLunar,
           partnerGender, partnerBirthdate, partnerBirthtime, partnerIsLunar,
+          myName: myName || 'A', partnerName: partnerName || 'B',
           type: '궁합', isPaid: true,
         }),
         signal: ctrl.signal,
@@ -524,6 +528,14 @@ export default function App() {
             <>
               <h2 style={s.stepTitle}>나의 정보</h2>
               <p style={s.stepSub}>내 성별부터 알려주세요</p>
+              <div style={{ marginBottom: 16 }}>
+                <p style={s.timeLabel}>이름 (선택)</p>
+                <input
+                  style={{ ...s.dateNumInput, width: '100%', fontSize: 15, textAlign: 'left', padding: '14px 16px' }}
+                  type="text" placeholder="내 이름을 입력해주세요"
+                  value={myName} onChange={e => setMyName(e.target.value)}
+                />
+              </div>
               <div style={s.genderGrid}>
                 <button style={s.genderBtn(gender === '여성')} onClick={() => setGender('여성')}>
                   <span>♀️</span><span style={s.genderLabel(gender === '여성')}>여성</span>
@@ -548,6 +560,14 @@ export default function App() {
             <>
               <h2 style={s.stepTitle}>상대방 정보</h2>
               <p style={s.stepSub}>상대방 성별을 알려주세요</p>
+              <div style={{ marginBottom: 16 }}>
+                <p style={s.timeLabel}>상대방 이름 (선택)</p>
+                <input
+                  style={{ ...s.dateNumInput, width: '100%', fontSize: 15, textAlign: 'left', padding: '14px 16px' }}
+                  type="text" placeholder="상대방 이름을 입력해주세요"
+                  value={partnerName} onChange={e => setPartnerName(e.target.value)}
+                />
+              </div>
               <div style={s.genderGrid}>
                 <button style={s.genderBtn(partnerGender === '여성')} onClick={() => setPartnerGender('여성')}>
                   <span>♀️</span><span style={s.genderLabel(partnerGender === '여성')}>여성</span>
