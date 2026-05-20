@@ -765,49 +765,11 @@ export default function App() {
           </div>
         </div>
       </div>
- 
-        {/* 서비스 카드 */}
-        <div style={s.cardGrid}>
-          <p style={s.cardGridTitle}>무엇이 궁금하세요?</p>
-          <div style={s.grid2}>
-            <button style={s.serviceCard(CARD_COLORS.saju)} onClick={() => { setServiceType('saju'); setScreen('input') }}>
-              <span style={s.freeBadge}>무료 맛보기</span>
-              <span style={s.serviceEmoji}>🔮</span>
-              <span style={s.serviceLabel(CARD_COLORS.saju)}>나의 사주</span>
-              <span style={s.serviceSub}>돈·직업·연애<br/>내 팔자가 정해놨다</span>
-              <span style={s.servicePrice(CARD_COLORS.saju)}>1,900원</span>
-            </button>
-            <button style={s.serviceCard(CARD_COLORS.gunghab)} onClick={() => { setServiceType('gunghab'); setGunghabStep(1); setScreen('gunghab_input') }}>
-              <span style={s.serviceEmoji}>💕</span>
-              <span style={s.serviceLabel(CARD_COLORS.gunghab)}>궁합</span>
-              <span style={s.serviceSub}>우리 잘 맞는지<br/>사주로 확인</span>
-              <span style={s.servicePrice(CARD_COLORS.gunghab)}>1,900원</span>
-            </button>
-          </div>
-          <div style={{ ...s.grid2, gridTemplateColumns: '1fr' }}>
-            <button style={s.serviceCard(CARD_COLORS.child)} onClick={() => { setServiceType('child'); setScreen('input') }}>
-              <span style={s.serviceEmoji}>🌱</span>
-              <span style={s.serviceLabel(CARD_COLORS.child)}>내 아이 괜찮을까</span>
-              <span style={s.serviceSub}>아이의 타고난 재능·진로를 미리 확인</span>
-              <span style={s.servicePrice(CARD_COLORS.child)}>1,900원</span>
-            </button>
-          </div>
-          <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid var(--color-border)', marginTop: 8 }}>
-            <p style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>이미 많은 분들이 확인했어요</p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
-              {[['⭐','만족도 94%'],['🔒','안전한 결제'],['⚡','즉시 확인']].map(([e,t]) => (
-                <div key={t} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 20 }}>{e}</div>
-                  <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{t}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
-)
+    )
   }
-
+ 
+     
   // ── 입력 ──
   if (screen === 'input') {
     const serviceNames = { saju: '나의 사주', gunghab: '궁합', child: '내 아이 괜찮을까' }
