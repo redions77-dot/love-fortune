@@ -313,7 +313,7 @@ export default function App() {
   const [isPaidStreaming, setIsPaidStreaming] = useState(false)
   const [isBaseStreaming, setIsBaseStreaming] = useState(false)
   const [isPaid, setIsPaid] = useState(false)
-
+  const [openCheongan, setOpenCheongan] = useState(null)
   // 궁합 전용 상태
   const [gunghabStep, setGunghabStep] = useState(1) // 1=나, 2=상대방
   const [partnerGender, setPartnerGender] = useState('')
