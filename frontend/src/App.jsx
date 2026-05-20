@@ -655,7 +655,6 @@ export default function App() {
       { key: '임수', emoji: '🌊', title: '壬 임수', sub: '넓고 유연하게 흐르는 큰 강', good: '새로운 정보가 들어오는 곳, 판을 키울 수 있는 환경', bad: '변화 없이 고여있는 조직, 외부와 단절된 폐쇄적인 곳' },
       { key: '계수', emoji: '🌧️', title: '癸 계수', sub: '깊은 곳에서 솟아오르는 지하수', good: '혼자 생각할 시간이 있는 환경, 깊이가 인정받는 자리', bad: '시끄럽고 감정 소모 심한 곳, 내면을 무시하는 환경' },
     ]
-    const [openCheongan, setOpenCheongan] = useState(null)
 
     return (
       <div style={s.landing}>
