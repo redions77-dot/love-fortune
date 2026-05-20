@@ -641,26 +641,92 @@ export default function App() {
     )
   }
 
-  // ── 랜딩 ──
+ // ── 랜딩 ──
   if (screen === 'landing') {
+    const CHEONGAN = [
+      { key: '갑목', emoji: '🌳', title: '甲 갑목', sub: '거대한 나무 · 위로 뻗는 힘', good: '비전 있는 조직, 의미 있는 일', bad: '"시키는 대로만 해"가 반복되는 곳' },
+      { key: '을목', emoji: '🌿', title: '乙 을목', sub: '끈질긴 덩굴 · 섬세한 생명력', good: '섬세한 소통, 존중받는 분위기', bad: '거친 말투, 무례한 태도' },
+      { key: '병화', emoji: '☀️', title: '丙 병화', sub: '하늘의 태양 · 퍼져나가는 에너지', good: '반응 오는 무대, 소통이 활발한 곳', bad: '아무 반응 없는 냉랭한 분위기' },
+      { key: '정화', emoji: '🕯️', title: '丁 정화', sub: '촛불, 별빛 · 집중의 힘', good: '몰입할 수 있는 조용한 환경', bad: '끊임없이 분산되는 산만한 상황' },
+      { key: '무토', emoji: '⛰️', title: '戊 무토', sub: '큰 산 · 품는 존재', good: '자신의 중심을 지킬 수 있는 구조', bad: '자기 없이 헌신만 요구받는 환경' },
+      { key: '기토', emoji: '🌾', title: '己 기토', sub: '비옥한 땅 · 예측 가능한 안정', good: '예측 가능하고 체계적인 환경', bad: '자기 능력을 발휘 못 하는 자리' },
+      { key: '경금', emoji: '🪨', title: '庚 경금', sub: '단단한 바위, 원석 · 원칙의 힘', good: '원칙이 지켜지는 조직, 공정한 평가', bad: '기준 없이 감으로만 굴러가는 곳' },
+      { key: '신금', emoji: '💎', title: '辛 신금', sub: '정제된 보석 · 예리한 감각', good: '자신의 가치를 인정받는 세련된 환경', bad: '잘 낮은 분위기, 무시당하는 상황' },
+      { key: '임수', emoji: '🌊', title: '壬 임수', sub: '도도한 강, 바다 · 정보의 흐름', good: '변화와 전략이 통하는 유연한 조직', bad: '고인물 조직, 새 아이디어가 막히는 곳' },
+      { key: '계수', emoji: '🌧️', title: '癸 계수', sub: '이슬비, 지하수 · 깊은 내면의 힘', good: '깊이 생각할 수 있는 조용한 환경', bad: '항상 밝고 적극적이길 강요받는 곳' },
+    ]
+    const [openCheongan, setOpenCheongan] = useState(null)
+
     return (
       <div style={s.landing}>
+        {/* 타이머 */}
         <div style={s.timerBanner}>
           🔥 오늘 자정까지 할인
           <span style={s.timerNum}>{countdown}</span>
         </div>
+
+        {/* 훅 */}
         <div style={s.landingHero}>
           <span style={s.landingEmoji}>✨</span>
-          <h1 style={s.landingTitle}>내가 왜 이렇게 사나 했더니<br/>사주 때문이었다</h1>
+          <h1 style={s.landingTitle}>왜 나만 열심히 해도<br/>안 풀릴까?</h1>
           <p style={s.landingSub}>
-            무료로 먼저 확인하세요<br/>
-            전체 분석은 단돈 <span style={{ color: '#7C3AED', fontWeight: 700 }}>1,900원</span>
+            의지가 약한 게 아니에요.<br/>
+            <span style={{ fontWeight: 700, color: '#7C3AED' }}>환경이 안 맞은 거예요.</span>
           </p>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#FEF3C7', padding: '8px 16px', borderRadius: 20, fontSize: 13, color: '#92400E', fontWeight: 600 }}>
             <span>⏰</span>
             <span>오늘만 <span style={{ fontWeight: 800 }}>1,900원</span></span>
           </div>
         </div>
+
+        {/* 공감 섹션 */}
+        <div style={{ background: '#F8F5FF', padding: '24px 20px', margin: '0', borderBottom: '1px solid #E9D5FF' }}>
+          <div style={{ maxWidth: 480, margin: '0 auto' }}>
+            <p style={{ fontSize: 15, lineHeight: 2, color: '#3B1F6E', wordBreak: 'keep-all', textAlign: 'center' }}>
+              선인장을 냉동실에 넣으면 어떻게 될까요?<br/>
+              얼어죽겠죠. 근데 그게 선인장 잘못인가요?<br/><br/>
+              <span style={{ fontWeight: 700 }}>문제는 환경이에요.</span><br/>
+              사주팔자는 결국 이 질문에서 시작해요.<br/>
+              <span style={{ color: '#7C3AED', fontWeight: 700 }}>나는 어떤 씨앗인지,<br/>어떤 땅에서 자라는 씨앗인지.</span>
+            </p>
+          </div>
+        </div>
+
+        {/* 천간 카드 */}
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 8px', width: '100%', boxSizing: 'border-box' }}>
+          <p style={{ fontSize: 13, color: '#888', textAlign: 'center', marginBottom: 16, fontWeight: 600, letterSpacing: '0.05em' }}>
+            나는 어떤 씨앗일까? — 일간(日干)으로 확인하세요
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {CHEONGAN.map((c) => (
+              <div key={c.key}
+                onClick={() => setOpenCheongan(openCheongan === c.key ? null : c.key)}
+                style={{
+                  background: openCheongan === c.key ? '#F3EEFF' : 'white',
+                  border: `1.5px solid ${openCheongan === c.key ? '#7C3AED' : '#E5E7EB'}`,
+                  borderRadius: 14, padding: '14px 12px', cursor: 'pointer',
+                  transition: 'all 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                  <span style={{ fontSize: 22 }}>{c.emoji}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: openCheongan === c.key ? '#5B21B6' : '#1a1a2e' }}>{c.title}</span>
+                </div>
+                <p style={{ fontSize: 11, color: '#666', lineHeight: 1.5, margin: 0 }}>{c.sub}</p>
+                {openCheongan === c.key && (
+                  <div style={{ marginTop: 10, borderTop: '1px solid #DDD6FE', paddingTop: 10 }}>
+                    <p style={{ fontSize: 11, color: '#059669', fontWeight: 600, marginBottom: 4 }}>✅ {c.good}</p>
+                    <p style={{ fontSize: 11, color: '#DC2626', fontWeight: 600 }}>❌ {c.bad}</p>
+                    <p style={{ fontSize: 11, color: '#7C3AED', marginTop: 8, fontWeight: 500 }}>
+                      🔒 내 일간이 뭔지 모른다면? 사주 분석에서 확인하세요
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 서비스 카드 */}
         <div style={s.cardGrid}>
           <p style={s.cardGridTitle}>무엇이 궁금하세요?</p>
           <div style={s.grid2}>
