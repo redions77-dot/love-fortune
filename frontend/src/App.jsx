@@ -765,8 +765,7 @@ export default function App() {
           </div>
         </div>
       </div>
-    )
-  }
+ 
         {/* 서비스 카드 */}
         <div style={s.cardGrid}>
           <p style={s.cardGridTitle}>무엇이 궁금하세요?</p>
@@ -806,7 +805,7 @@ export default function App() {
           </div>
         </div>
       </div>
-    )
+)
   }
 
   // ── 입력 ──
