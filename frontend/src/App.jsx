@@ -792,10 +792,10 @@ export default function App() {
         </div>
         <div style={s.landingHero}>
           <span style={s.landingEmoji}>✨</span>
-          <h1 style={s.landingTitle}>왜 나만 열심히 해도<br/>안 풀릴까?</h1>
+          <h1 style={s.landingTitle}>나는 죽어라 했는데,<br/>쟤는 왜 얻어걸려도 잘될까</h1>
           <p style={s.landingSub}>
-            의지가 약한 게 아니에요.<br/>
-            <span style={{ fontWeight: 700, color: '#7C3AED' }}>방향이 안 맞은 거예요.</span>
+            방향이 달랐던 거예요.<br/>
+            <span style={{ fontWeight: 700, color: '#7C3AED' }}>사주가 알려줄게요.</span>
           </p>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#FEF3C7', padding: '8px 16px', borderRadius: 20, fontSize: 13, color: '#92400E', fontWeight: 600 }}>
             <span>⏰</span>
