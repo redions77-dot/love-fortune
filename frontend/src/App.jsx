@@ -752,6 +752,15 @@ export default function App() {
               <span style={s.servicePrice(CARD_COLORS.child)}>1,900원</span>
             </button>
           </div>
+<div style={{ ...s.grid2, gridTemplateColumns: '1fr' }}>
+  <button style={s.serviceCard(CARD_COLORS.노후)} onClick={() => { setServiceType('노후'); setScreen('input') }}>
+    <span style={s.serviceEmoji}>🌅</span>
+    <span style={s.serviceLabel(CARD_COLORS.노후)}>나의 노후는 괜찮을까</span>
+    <span style={s.serviceSub}>말년 재물·건강·황혼 인연을 미리 확인</span>
+    <span style={s.servicePrice(CARD_COLORS.노후)}>1,900원</span>
+  </button>
+</div>
+          
           <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid var(--color-border)', marginTop: 8 }}>
             <p style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>이미 많은 분들이 확인했어요</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
