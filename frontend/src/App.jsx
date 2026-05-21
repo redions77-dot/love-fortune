@@ -1011,7 +1011,6 @@ export default function App() {
   '행운 아이템',
   '이 사주로 잘 사는 법',
 ].map((item) => (
-
                   <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <span style={{ color: '#FDE68A', fontWeight: 700, fontSize: 14 }}>✓</span>
                     <span style={{ color: 'white', fontSize: 14 }}>{item}</span>
