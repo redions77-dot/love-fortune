@@ -987,7 +987,7 @@ export default function App() {
 <p style={{ fontSize: 15, fontWeight: 700, color: 'white', marginBottom: 16 }}>
   {serviceType === 'child' ? '🌱 1,900원으로 이걸 다 볼 수 있어요' : serviceType === '노후' ? '🌅 1,900원으로 이걸 다 볼 수 있어요' : '🔮 1,900원으로 이걸 다 볼 수 있어요'}
 </p>
-              <div style={{ textAlign: 'left', marginBottom: 20, display: 'inline-block' }}>
+              <div style={{ textAlign: 'left', marginBottom: 20 }}>
                {serviceType === 'child' ? [
   '타고난 기질 · 성격 심층 분석',
   '학습 스타일 · 공부가 잘 되는 환경',
