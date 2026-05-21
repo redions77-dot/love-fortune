@@ -1,4 +1,4 @@
-  import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 // ── 상수 ──────────────────────────────────────────────
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
@@ -13,7 +13,6 @@ const MARITAL_OPTIONS = [
   { value: '돌싱2+', emoji: '🔥', label: '돌싱2+', sub: '이혼을 두 번 이상 했어요' },
 ]
 
-// 가격 설정 — 전체 1,900원으로 단순화
 const PRICE = 1900
 
 function parseSections(text) {
@@ -91,15 +90,6 @@ const s = {
     cursor: 'pointer', fontSize: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s',
   }),
   genderLabel: (active) => ({ fontSize: 14, fontWeight: 600, color: active ? 'var(--color-primary-dark)' : 'var(--color-text)' }),
-  maritalGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 },
-  maritalBtn: (active) => ({
-    padding: '20px 12px', border: `2px solid ${active ? 'var(--color-primary)' : 'var(--color-border)'}`,
-    borderRadius: 'var(--radius-md)', background: active ? 'var(--color-primary-light)' : 'var(--color-surface)',
-    cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, transition: 'all 0.15s', textAlign: 'center',
-  }),
-  maritalEmoji: { fontSize: 28 },
-  maritalLabel: (active) => ({ fontSize: 15, fontWeight: 700, color: active ? 'var(--color-primary-dark)' : 'var(--color-text)' }),
-  maritalSub: (active) => ({ fontSize: 11, color: active ? 'var(--color-primary-dark)' : 'var(--color-text-muted)', lineHeight: 1.4 }),
   calToggle: { display: 'flex', gap: 8, marginBottom: 16 },
   calBtn: (active) => ({
     flex: 1, padding: '10px', fontSize: 13, fontWeight: active ? 600 : 400,
@@ -212,6 +202,11 @@ const s = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '16px 18px', cursor: 'pointer', background: open ? '#ECFDF5' : 'var(--color-surface)', transition: 'all 0.2s',
   }),
+  gililAccordion: { marginBottom: 8, border: '2px solid #D97706', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
+  gililAccordionHeader: (open) => ({
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '16px 18px', cursor: 'pointer', background: open ? '#FFFBEB' : 'var(--color-surface)', transition: 'all 0.2s',
+  }),
 }
 
 const CARD_COLORS = {
@@ -219,6 +214,7 @@ const CARD_COLORS = {
   gunghab: { bg: '#FFF1F2', border: '#FECDD3', text: '#9F1239', accent: '#E11D48' },
   child:   { bg: '#FFF7ED', border: '#FED7AA', text: '#7C2D12', accent: '#EA580C' },
   노후:   { bg: '#F0F9FF', border: '#BAE6FD', text: '#0C4A6E', accent: '#0284C7' },
+  길일:   { bg: '#FFFBEB', border: '#FDE68A', text: '#78350F', accent: '#D97706' },
 }
 
 function DateInputs({ year, setYear, month, setMonth, day, setDay, lunar, setLunar, hour, setHour, min, setMin, ampm, setAmpm, unknown, setUnknown }) {
@@ -263,10 +259,10 @@ function DateInputs({ year, setYear, month, setMonth, day, setDay, lunar, setLun
   )
 }
 
-function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, defaultOpen = false }) {
+function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, isGilil = false, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
-  const style = isGunghab ? s.gunghabAccordion : isChild ? s.childAccordion : isPaid ? s.paidAccordion : s.accordion
-  const headerStyle = isGunghab ? s.gunghabAccordionHeader : isChild ? s.childAccordionHeader : isPaid ? s.paidAccordionHeader : s.accordionHeader
+  const style = isGunghab ? s.gunghabAccordion : isChild ? s.childAccordion : isGilil ? s.gililAccordion : isPaid ? s.paidAccordion : s.accordion
+  const headerStyle = isGunghab ? s.gunghabAccordionHeader : isChild ? s.childAccordionHeader : isGilil ? s.gililAccordionHeader : isPaid ? s.paidAccordionHeader : s.accordionHeader
   return (
     <div style={style}>
       <div style={headerStyle(open)} onClick={() => setOpen(o => !o)}>
@@ -316,7 +312,7 @@ export default function App() {
   const [isPaid, setIsPaid] = useState(false)
   const [openCheongan, setOpenCheongan] = useState(null)
   // 궁합 전용 상태
-  const [gunghabStep, setGunghabStep] = useState(1) // 1=나, 2=상대방
+  const [gunghabStep, setGunghabStep] = useState(1)
   const [partnerGender, setPartnerGender] = useState('')
   const [partnerBirthYear, setPartnerBirthYear] = useState('')
   const [partnerBirthMonth, setPartnerBirthMonth] = useState('')
@@ -330,6 +326,10 @@ export default function App() {
   const [partnerName, setPartnerName] = useState('')
   const [gunghabText, setGunghabText] = useState('')
   const [isGunghabStreaming, setIsGunghabStreaming] = useState(false)
+  // 길일 전용 상태
+  const [gilil목적, setGilil목적] = useState('')
+  const [gililText, setGililText] = useState('')
+  const [isGililStreaming, setIsGililStreaming] = useState(false)
 
   const abortRef = useRef(null)
   const isPaidSectionRef = useRef(false)
@@ -443,15 +443,14 @@ export default function App() {
     setMbti(''); setBlood('')
     setPhase('input'); setSajuData(null); setBaseText(''); setPaidText('')
     setIsBaseStreaming(false); setIsPaidStreaming(false); setIsPaid(false)
-    // 궁합 초기화
     setGunghabStep(1); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
     setPartnerIsLunar(false); setPartnerTimeHour(''); setPartnerTimeMin(''); setPartnerTimeAmPm('오전'); setPartnerTimeUnknown(false)
     setMyName(''); setPartnerName('')
     setGunghabText(''); setIsGunghabStreaming(false)
+    setGilil목적(''); setGililText(''); setIsGililStreaming(false)
     isPaidSectionRef.current = false
   }
 
-  // 궁합 분석 함수
   const partnerBirthdate = (partnerBirthYear.length === 4 && partnerBirthMonth && partnerBirthDay)
     ? `${partnerBirthYear}-${String(partnerBirthMonth).padStart(2,'0')}-${String(partnerBirthDay).padStart(2,'0')}` : ''
   const partnerBirthtime = partnerTimeUnknown ? '' : (() => {
@@ -492,7 +491,6 @@ export default function App() {
           try {
             const json = JSON.parse(line.slice(6))
             if (json.text) setGunghabText(prev => prev + json.text)
-            else if (json.type === 'done') { }
           } catch {}
         }
       }
@@ -502,6 +500,137 @@ export default function App() {
     setIsGunghabStreaming(false)
   }
 
+  async function handleGililAnalyze() {
+    setGililText(''); setIsGililStreaming(true); setScreen('gilil_result')
+    try {
+      const ctrl = new AbortController()
+      abortRef.current = ctrl
+      const res = await fetch(`${API_URL}/api/analyze`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gender, birthdate, birthtime, isLunar,
+          목적: gilil목적, type: '길일', isPaid: true,
+        }),
+        signal: ctrl.signal,
+      })
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split('\n'); buf = lines.pop()
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const json = JSON.parse(line.slice(6))
+            if (json.text) setGililText(prev => prev + json.text)
+          } catch {}
+        }
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
+    }
+    setIsGililStreaming(false)
+  }
+
+  // ── 길일 입력 화면 ──
+  if (screen === 'gilil_input') {
+    const 목적목록 = [
+      { value: '이사', emoji: '🏠' },
+      { value: '계약', emoji: '📝' },
+      { value: '개업', emoji: '🎊' },
+      { value: '결혼', emoji: '💍' },
+      { value: '수술', emoji: '🏥' },
+      { value: '시험', emoji: '📚' },
+    ]
+    const canNext = gilil목적 !== '' && birthdateValid
+    return (
+      <div style={s.app}>
+        <div style={s.header}>
+          <span style={s.heroEmoji}>📅</span>
+          <h1 style={s.heroTitle}>길일 추천</h1>
+          <p style={s.heroSub}>내 사주와 맞는 좋은 날을 찾아드려요</p>
+        </div>
+        <div style={s.stepWrap}>
+          <h2 style={s.stepTitle}>어떤 날을 찾고 계세요?</h2>
+          <p style={s.stepSub}>목적을 선택해주세요</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 24 }}>
+            {목적목록.map(({ value, emoji }) => (
+              <button key={value}
+                style={{
+                  padding: '16px 8px', border: `2px solid ${gilil목적 === value ? '#D97706' : 'var(--color-border)'}`,
+                  borderRadius: 'var(--radius-md)', background: gilil목적 === value ? '#FFFBEB' : 'var(--color-surface)',
+                  cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s',
+                }}
+                onClick={() => setGilil목적(value)}>
+                <div style={{ fontSize: 24, marginBottom: 4 }}>{emoji}</div>
+                <div style={{ fontSize: 13, fontWeight: gilil목적 === value ? 700 : 400, color: gilil목적 === value ? '#78350F' : 'var(--color-text)' }}>{value}</div>
+              </button>
+            ))}
+          </div>
+          <h2 style={s.stepTitle}>생년월일을 알려주세요</h2>
+          <p style={s.stepSub}>내 사주를 기준으로 길일을 찾아드려요</p>
+          <div style={s.calToggle}>
+            <button style={s.calBtn(!isLunar)} onClick={() => setIsLunar(false)}>양력 🌞</button>
+            <button style={s.calBtn(isLunar)} onClick={() => setIsLunar(true)}>음력 🌙</button>
+          </div>
+          <div style={s.dateRow}>
+            <input style={s.dateNumInput} type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0,4))} />
+            <span style={s.dateUnitLabel}>년</span>
+            <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0,2))} />
+            <span style={s.dateUnitLabel}>월</span>
+            <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0,2))} />
+            <span style={s.dateUnitLabel}>일</span>
+          </div>
+          {birthdateValid && <p style={s.datePreview}>✓ {birthYear}년 {birthMonth}월 {birthDay}일</p>}
+        </div>
+        <div style={s.bottomBar}>
+          <button style={s.backBtn} onClick={() => setScreen('landing')}>←</button>
+          <button style={s.nextBtn(!canNext)} disabled={!canNext}
+            onClick={() => {
+              if (window.confirm('9,900원 결제 후 길일 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
+                handleGililAnalyze()
+              }
+            }}>
+            📅 길일 찾기 (9,900원)
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── 길일 결과 화면 ──
+  if (screen === 'gilil_result') {
+    const gililSections = parseSections(gililText)
+    return (
+      <div style={s.app}>
+        <div style={s.resultWrap}>
+          <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
+            <span style={{ fontSize: 36 }}>📅</span>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)', marginTop: 8 }}>{gilil목적} 길일 추천</h2>
+          </div>
+          {isGililStreaming && gililText && (
+            <div style={s.streamCard}>{gililText}<span style={{ opacity: 0.4 }}>▌</span></div>
+          )}
+          {isGililStreaming && !gililText && (
+            <div style={s.loadingCard}>
+              <div style={s.loading}>
+                {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
+                <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>📅 길일을 찾고 있어요...</span>
+              </div>
+            </div>
+          )}
+          {!isGililStreaming && gililSections.map((sec, i) => (
+            <Accordion key={i} title={sec.title} content={sec.content} isGilil={true} defaultOpen={i === 0} />
+          ))}
+          <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
+        </div>
+      </div>
+    )
+  }
+
   // ── 궁합 입력 화면 ──
   if (screen === 'gunghab_input') {
     const isStep1 = gunghabStep === 1
@@ -509,8 +638,6 @@ export default function App() {
     const myBirthtimeValid = timeUnknown || (timeHour !== '' && timeMin !== '')
     const canStep1Next = gender !== '' && myBirthdateValid && myBirthtimeValid
     const canStep2Next = partnerGender !== '' && partnerBirthdateValid && partnerBirthtimeValid
-
-
 
     return (
       <div style={s.app}>
@@ -642,7 +769,7 @@ export default function App() {
     )
   }
 
-// ── 랜딩 ──
+  // ── 랜딩 ──
   if (screen === 'landing') {
     const CHEONGAN = [
       { key: '갑목', emoji: '🌳', title: '甲 갑목', sub: '하늘을 향해 곧게 자라는 나무', good: '목표가 뚜렷한 곳, 내가 왜 하는지 보이는 일', bad: '이유 없이 "그냥 해"가 반복되는 환경' },
@@ -659,13 +786,10 @@ export default function App() {
 
     return (
       <div style={s.landing}>
-        {/* 타이머 */}
         <div style={s.timerBanner}>
           🔥 오늘 자정까지 할인
           <span style={s.timerNum}>{countdown}</span>
         </div>
-
-        {/* 훅 */}
         <div style={s.landingHero}>
           <span style={s.landingEmoji}>✨</span>
           <h1 style={s.landingTitle}>왜 나만 열심히 해도<br/>안 풀릴까?</h1>
@@ -678,8 +802,6 @@ export default function App() {
             <span>오늘만 <span style={{ fontWeight: 800 }}>1,900원</span></span>
           </div>
         </div>
-
-        {/* 공감 섹션 */}
         <div style={{ background: '#F8F5FF', padding: '28px 20px', margin: '0', borderBottom: '1px solid #E9D5FF' }}>
           <div style={{ maxWidth: 480, margin: '0 auto' }}>
             <p style={{ fontSize: 15, lineHeight: 2.1, color: '#3B1F6E', wordBreak: 'keep-all', textAlign: 'center' }}>
@@ -691,8 +813,6 @@ export default function App() {
             </p>
           </div>
         </div>
-
-        {/* 천간 카드 */}
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 8px', width: '100%', boxSizing: 'border-box' }}>
           <p style={{ fontSize: 13, color: '#888', textAlign: 'center', marginBottom: 16, fontWeight: 600, letterSpacing: '0.05em' }}>
             나는 어떤 기운일까? — 일간(日干)으로 확인하세요
@@ -725,8 +845,6 @@ export default function App() {
             ))}
           </div>
         </div>
-
-        {/* 서비스 카드 */}
         <div style={s.cardGrid}>
           <p style={s.cardGridTitle}>무엇이 궁금하세요?</p>
           <div style={s.grid2}>
@@ -756,9 +874,16 @@ export default function App() {
               <span style={s.serviceLabel(CARD_COLORS.노후)}>나의 노후는 괜찮을까</span>
               <span style={s.serviceSub}>말년 재물·건강·황혼 인연을 미리 확인</span>
               <span style={s.servicePrice(CARD_COLORS.노후)}>1,900원</span>
-             </button>
+            </button>
           </div>
-          
+          <div style={{ ...s.grid2, gridTemplateColumns: '1fr' }}>
+            <button style={s.serviceCard(CARD_COLORS.길일)} onClick={() => { setServiceType('길일'); setScreen('gilil_input') }}>
+              <span style={s.serviceEmoji}>📅</span>
+              <span style={s.serviceLabel(CARD_COLORS.길일)}>오늘, 이 날짜 괜찮을까?</span>
+              <span style={s.serviceSub}>이사·계약·개업·결혼·수술 — 내 사주와 맞는 길일 추천</span>
+              <span style={s.servicePrice(CARD_COLORS.길일)}>9,900원</span>
+            </button>
+          </div>
           <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid var(--color-border)', marginTop: 8 }}>
             <p style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>이미 많은 분들이 확인했어요</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
@@ -774,11 +899,10 @@ export default function App() {
       </div>
     )
   }
- 
-     
+
   // ── 입력 ──
   if (screen === 'input') {
-    const serviceNames = { saju: '나의 사주', gunghab: '궁합', child: '내 아이 괜찮을까' }
+    const serviceNames = { saju: '나의 사주', gunghab: '궁합', child: '내 아이 괜찮을까', 노후: '나의 노후는 괜찮을까' }
     return (
       <div style={s.app}>
         <div style={s.header}>
@@ -896,15 +1020,6 @@ export default function App() {
     const baseSections = parseSections(baseText)
     const paidSections = parseSections(paidText)
 
-    let 행운아이템 = null
-    const luckyMatch = paidText.match(/===행운 아이템===([\s\S]*?)(?====|$)/)
-    if (luckyMatch) {
-      const t = luckyMatch[1]
-      행운아이템 = {
-        색깔: t.match(/색깔[:\s]+([^\n/]+)/)?.[1]?.trim() || '',
-      }
-    }
-
     return (
       <div style={s.app}>
         {phase === 'done' && !isPaid && (
@@ -981,7 +1096,6 @@ export default function App() {
             </>
           )}
 
-        {/* 결제 배너 — 단순화 */}
           {phase === 'done' && !isPaid && !isPaidStreaming && (
             <div style={s.payBanner}>
               <p style={{ fontSize: 15, fontWeight: 700, color: 'white', marginBottom: 16 }}>
@@ -1032,6 +1146,7 @@ export default function App() {
               </button>
             </div>
           )}
+
           {isPaidStreaming && (
             <div style={s.loadingCard}>
               <div style={s.loading}>
