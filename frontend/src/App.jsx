@@ -744,15 +744,13 @@ export default function App() {
               <span style={s.servicePrice(CARD_COLORS.gunghab)}>1,900원</span>
             </button>
           </div>
-          <div style={{ ...s.grid2, gridTemplateColumns: '1fr' }}>
+          <div style={s.grid2}>
             <button style={s.serviceCard(CARD_COLORS.child)} onClick={() => { setServiceType('child'); setScreen('input') }}>
               <span style={s.serviceEmoji}>🌱</span>
               <span style={s.serviceLabel(CARD_COLORS.child)}>내 아이 괜찮을까</span>
               <span style={s.serviceSub}>아이의 타고난 재능·진로를 미리 확인</span>
               <span style={s.servicePrice(CARD_COLORS.child)}>1,900원</span>
             </button>
-          </div>
-          <div style={{ ...s.grid2, gridTemplateColumns: '1fr' }}>
             <button style={s.serviceCard(CARD_COLORS.노후)} onClick={() => { setServiceType('노후'); setScreen('input') }}>
               <span style={s.serviceEmoji}>🌅</span>
               <span style={s.serviceLabel(CARD_COLORS.노후)}>나의 노후는 괜찮을까</span>
