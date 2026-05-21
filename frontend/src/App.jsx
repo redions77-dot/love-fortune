@@ -218,6 +218,7 @@ const CARD_COLORS = {
   saju:    { bg: '#F8F5FF', border: '#DDD6FE', text: '#4C1D95', accent: '#7C3AED' },
   gunghab: { bg: '#FFF1F2', border: '#FECDD3', text: '#9F1239', accent: '#E11D48' },
   child:   { bg: '#FFF7ED', border: '#FED7AA', text: '#7C2D12', accent: '#EA580C' },
+  노후:   { bg: '#F0F9FF', border: '#BAE6FD', text: '#0C4A6E', accent: '#0284C7' },
 }
 
 function DateInputs({ year, setYear, month, setMonth, day, setDay, lunar, setLunar, hour, setHour, min, setMin, ampm, setAmpm, unknown, setUnknown }) {
