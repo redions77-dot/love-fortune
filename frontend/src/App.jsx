@@ -400,7 +400,7 @@ export default function App() {
   async function handleFreeAnalyze() {
     setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null)
     setIsBaseStreaming(true); isPaidSectionRef.current = false; setScreen('result')
-    const apiType = serviceType === 'child' ? '자녀천명' : '기본'
+    const apiType = serviceType === 'child' ? '자녀천명' : serviceType === '노후' ? '노후' : '기본'
     try {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: false, isLunar, userName: myName },
@@ -419,7 +419,7 @@ export default function App() {
   async function handlePaidAnalyze() {
     setPaidText(''); setIsPaidStreaming(true)
     isPaidSectionRef.current = false
-    const apiType = serviceType === 'child' ? '자녀천명' : '전체'
+    const apiType = serviceType === 'child' ? '자녀천명' : serviceType === '노후' ? '노후' : '전체'
     try {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: true, isLunar, userName: myName },
