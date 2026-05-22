@@ -896,6 +896,22 @@ export default function App() {
             </div>
           </div>
         </div>
+        {/* 사업자 정보 푸터 */}
+        <div style={{
+          borderTop: '1px solid #E5E7EB',
+          padding: '20px 20px 40px',
+          background: '#FAFAFA',
+        }}>
+          <div style={{ maxWidth: 480, margin: '0 auto', fontSize: 11, color: '#9CA3AF', lineHeight: 2 }}>
+            <p style={{ fontWeight: 600, color: '#6B7280', marginBottom: 4 }}>봄결</p>
+            <p>대표자: 손영주</p>
+            <p>사업자등록번호: 219-17-02825</p>
+            <p>사업장 주소: 경기도 남양주시 별내3로 332, 701호 -V133호(별내동, 스카이프라자)</p>
+            <p>전화: 010-9772-1987</p>
+            <p>이메일: redions77@naver.com</p>
+            <p style={{ marginTop: 8 }}>© 2026 봄결. All rights reserved.</p>
+          </div>
+        </div>
       </div>
     )
   }
