@@ -1092,114 +1092,142 @@ export default function App() {
     )
   }
 
-  // ── 입력 ──
+// ── 입력 ──
   if (screen === 'input') {
     const serviceNames = { saju: '나의 사주', gunghab: '궁합', child: '내 아이 괜찮을까', 노후: '나의 노후는 괜찮을까' }
+    const serviceChar = { saju: '命', gunghab: '合', child: '子', 노후: '老' }
     return (
-      <div style={s.app}>
-        <div style={s.header}>
-          <span style={s.heroEmoji}>✨</span>
-          <h1 style={s.heroTitle}>{serviceNames[serviceType] || '사주 분석'}</h1>
-          <p style={s.heroSub}>생년월일을 입력하면 무료로 먼저 확인해드려요</p>
+      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+        {/* 헤더 */}
+        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
+          <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>
+            {serviceChar[serviceType] || '命'}
+          </div>
+          <h1 style={{ wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>
+            {serviceNames[serviceType] || '사주 분석'}
+          </h1>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>생년월일을 입력하면 무료로 먼저 확인해드려요</p>
         </div>
-        <div style={s.progressWrap}>
-          <div style={s.progressBar}><div style={s.progressFill(progress)} /></div>
-          <p style={s.stepLabel}>{step + 1} / {STEPS.length}</p>
+
+        {/* 프로그레스 */}
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 99, margin: '14px 0 0', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${progress}%`, background: '#C9A84C', borderRadius: 99, transition: 'width 0.35s ease' }} />
+          </div>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'right', marginTop: 4, marginBottom: 8 }}>{step + 1} / {STEPS.length}</p>
         </div>
-        <div style={s.stepWrap}>
+
+        {/* 스텝 내용 */}
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
           {currentStepId === 'gender' && (
             <>
-              <h2 style={s.stepTitle}>성별을 알려주세요</h2>
-              <p style={s.stepSub}>사주 풀이에 사용돼요</p>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>성별을 알려주세요</h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>사주 풀이에 사용돼요</p>
               <div style={{ marginBottom: 16 }}>
-                <p style={s.timeLabel}>이름 (선택)</p>
+                <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>이름 (선택)</p>
                 <input
-                  style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', boxSizing: 'border-box', outline: 'none' }}
+                  style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box', outline: 'none' }}
                   type="text" placeholder="이름을 입력해주세요"
                   value={myName} onChange={e => setMyName(e.target.value)}
                 />
               </div>
-              <div style={s.genderGrid}>
-                <button style={s.genderBtn(gender === '여성')} onClick={() => setGender('여성')}>
-                  <span>♀️</span><span style={s.genderLabel(gender === '여성')}>여성</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
+                <button style={{
+                  padding: '28px 16px', border: `2px solid ${gender === '여성' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`,
+                  borderRadius: 10, background: gender === '여성' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',
+                  cursor: 'pointer', fontSize: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s',
+                }} onClick={() => setGender('여성')}>
+                  <span>♀️</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: gender === '여성' ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>여성</span>
                 </button>
-                <button style={s.genderBtn(gender === '남성')} onClick={() => setGender('남성')}>
-                  <span>♂️</span><span style={s.genderLabel(gender === '남성')}>남성</span>
+                <button style={{
+                  padding: '28px 16px', border: `2px solid ${gender === '남성' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`,
+                  borderRadius: 10, background: gender === '남성' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',
+                  cursor: 'pointer', fontSize: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s',
+                }} onClick={() => setGender('남성')}>
+                  <span>♂️</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: gender === '남성' ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>남성</span>
                 </button>
               </div>
             </>
           )}
           {currentStepId === 'birthdate' && (
             <>
-              <h2 style={s.stepTitle}>생년월일을 알려주세요</h2>
-              <p style={s.stepSub}>숫자로 직접 입력해주세요</p>
-              <div style={s.calToggle}>
-                <button style={s.calBtn(!isLunar)} onClick={() => setIsLunar(false)}>양력 🌞</button>
-                <button style={s.calBtn(isLunar)} onClick={() => setIsLunar(true)}>음력 🌙</button>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>생년월일을 알려주세요</h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>숫자로 직접 입력해주세요</p>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: !isLunar ? 600 : 400, border: `1px solid ${!isLunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: !isLunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: !isLunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setIsLunar(false)}>양력 🌞</button>
+                <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: isLunar ? 600 : 400, border: `1px solid ${isLunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: isLunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: isLunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setIsLunar(true)}>음력 🌙</button>
               </div>
-              <div style={s.dateRow}>
-                <input style={s.dateNumInput} type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0, 4))} />
-                <span style={s.dateUnitLabel}>년</span>
-                <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0, 2))} />
-                <span style={s.dateUnitLabel}>월</span>
-                <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0, 2))} />
-                <span style={s.dateUnitLabel}>일</span>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 }}>
+                <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0, 4))} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>년</span>
+                <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0, 2))} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>월</span>
+                <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0, 2))} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>일</span>
               </div>
-              {birthdateValid && <p style={s.datePreview}>✓ {birthYear}년 {birthMonth}월 {birthDay}일 {isLunar ? '(음력)' : '(양력)'}</p>}
+              {birthdateValid && <p style={{ fontSize: 13, color: '#C9A84C', textAlign: 'center', marginBottom: 8, fontWeight: 600 }}>✓ {birthYear}년 {birthMonth}월 {birthDay}일 {isLunar ? '(음력)' : '(양력)'}</p>}
             </>
           )}
           {currentStepId === 'birthtime' && (
             <>
-              <h2 style={s.stepTitle}>태어난 시간을 알려주세요</h2>
-              <p style={s.stepSub}>모르셔도 괜찮아요</p>
-              <button style={s.unknownBtn(timeUnknown)} onClick={() => { setTimeUnknown(true); setTimeHour(''); setTimeMin('') }}>✓ 태어난 시간 모름</button>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>태어난 시간을 알려주세요</h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>모르셔도 괜찮아요</p>
+              <button style={{ width: '100%', padding: '13px 16px', border: `1px solid ${timeUnknown ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: timeUnknown ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeUnknown ? '#C9A84C' : 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: timeUnknown ? 600 : 400, cursor: 'pointer', textAlign: 'center', marginBottom: 16 }} onClick={() => { setTimeUnknown(true); setTimeHour(''); setTimeMin('') }}>✓ 태어난 시간 모름</button>
               {!timeUnknown && (
                 <>
-                  <p style={s.timeLabel}>오전 / 오후</p>
-                  <div style={s.ampmGrid}>
-                    <button style={s.ampmBtn(timeAmPm === '오전')} onClick={() => setTimeAmPm('오전')}>🌅 오전</button>
-                    <button style={s.ampmBtn(timeAmPm === '오후')} onClick={() => setTimeAmPm('오후')}>🌇 오후</button>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>오전 / 오후</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+                    <button style={{ padding: '14px', fontSize: 15, fontWeight: timeAmPm === '오전' ? 700 : 400, border: `2px solid ${timeAmPm === '오전' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: timeAmPm === '오전' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeAmPm === '오전' ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setTimeAmPm('오전')}>🌅 오전</button>
+                    <button style={{ padding: '14px', fontSize: 15, fontWeight: timeAmPm === '오후' ? 700 : 400, border: `2px solid ${timeAmPm === '오후' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: timeAmPm === '오후' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeAmPm === '오후' ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setTimeAmPm('오후')}>🌇 오후</button>
                   </div>
-                  <p style={s.timeLabel}>시 선택</p>
-                  <div style={s.timeGrid}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>시 선택</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
                     {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
-                      <button key={h} style={s.timeBtn(timeHour === String(h))} onClick={() => setTimeHour(String(h))}>{h}시</button>
+                      <button key={h} style={{ padding: '12px 4px', fontSize: 14, fontWeight: timeHour === String(h) ? 700 : 400, border: `1px solid ${timeHour === String(h) ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 10, background: timeHour === String(h) ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeHour === String(h) ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', textAlign: 'center' }} onClick={() => setTimeHour(String(h))}>{h}시</button>
                     ))}
                   </div>
-                  <p style={s.timeLabel}>분 선택</p>
-                  <div style={s.minGrid}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>분 선택</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
                     {['00','10','20','30','40','50'].map(m => (
-                      <button key={m} style={s.timeBtn(timeMin === m)} onClick={() => setTimeMin(m)}>{m}분</button>
+                      <button key={m} style={{ padding: '12px 4px', fontSize: 14, fontWeight: timeMin === m ? 700 : 400, border: `1px solid ${timeMin === m ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 10, background: timeMin === m ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeMin === m ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', textAlign: 'center' }} onClick={() => setTimeMin(m)}>{m}분</button>
                     ))}
                   </div>
-                  {timeHour && timeMin && <p style={s.datePreview}>✓ {timeAmPm} {timeHour}시 {timeMin}분</p>}
+                  {timeHour && timeMin && <p style={{ fontSize: 13, color: '#C9A84C', textAlign: 'center', marginBottom: 8, fontWeight: 600 }}>✓ {timeAmPm} {timeHour}시 {timeMin}분</p>}
                 </>
               )}
-              {timeUnknown && <button style={s.skipBtn} onClick={() => setTimeUnknown(false)}>시간 직접 선택하기</button>}
+              {timeUnknown && <button style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', textDecoration: 'underline', display: 'block' }} onClick={() => setTimeUnknown(false)}>시간 직접 선택하기</button>}
             </>
           )}
           {currentStepId === 'mbti' && (
             <>
-              <h2 style={s.stepTitle}>MBTI를 선택해주세요</h2>
-              <p style={s.stepSub}>모르시면 건너뛰어도 돼요</p>
-              <div style={s.chipWrap}>
-                {MBTI_LIST.map(m => <button key={m} style={s.chip(mbti === m)} onClick={() => setMbti(mbti === m ? '' : m)}>{m}</button>)}
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>MBTI를 선택해주세요</h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>모르시면 건너뛰어도 돼요</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                {MBTI_LIST.map(m => (
+                  <button key={m} style={{ border: `1px solid ${mbti === m ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 20, padding: '7px 16px', fontSize: 13, cursor: 'pointer', background: mbti === m ? 'rgba(201,168,76,0.1)' : 'transparent', color: mbti === m ? '#C9A84C' : 'rgba(255,255,255,0.4)', fontWeight: mbti === m ? 600 : 400 }} onClick={() => setMbti(mbti === m ? '' : m)}>{m}</button>
+                ))}
               </div>
             </>
           )}
           {currentStepId === 'blood' && (
             <>
-              <h2 style={s.stepTitle}>혈액형을 선택해주세요</h2>
-              <p style={s.stepSub}>선택하지 않아도 분석은 가능해요</p>
-              <div style={s.chipWrap}>
-                {BLOOD_LIST.map(b => <button key={b} style={s.chip(blood === b)} onClick={() => setBlood(blood === b ? '' : b)}>{b}형</button>)}
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>혈액형을 선택해주세요</h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>선택하지 않아도 분석은 가능해요</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                {BLOOD_LIST.map(b => (
+                  <button key={b} style={{ border: `1px solid ${blood === b ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 20, padding: '7px 16px', fontSize: 13, cursor: 'pointer', background: blood === b ? 'rgba(201,168,76,0.1)' : 'transparent', color: blood === b ? '#C9A84C' : 'rgba(255,255,255,0.4)', fontWeight: blood === b ? 600 : 400 }} onClick={() => setBlood(blood === b ? '' : b)}>{b}형</button>
+                ))}
               </div>
             </>
           )}
         </div>
-        <div style={s.bottomBar}>
-          <button style={s.backBtn} onClick={goBack}>←</button>
-          <button style={s.nextBtn(!canGoNext())} onClick={goNext} disabled={!canGoNext()}>
+
+        {/* 하단 버튼 */}
+        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box' }}>
+          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={goBack}>←</button>
+          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: !canGoNext() ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: !canGoNext() ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: !canGoNext() ? 'not-allowed' : 'pointer', letterSpacing: '0.03em' }} onClick={goNext} disabled={!canGoNext()}>
             {currentStepId === 'blood' ? '무료 사주 분석하기 ✨' : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음'}
           </button>
         </div>
@@ -1213,85 +1241,94 @@ export default function App() {
     const paidSections = parseSections(paidText)
 
     return (
-      <div style={s.app}>
+      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
         {phase === 'done' && !isPaid && (
           <div style={s.timerBanner}>
             🔥 오늘 자정까지 할인 &nbsp;
             <span style={s.timerNum}>{countdown}</span>
           </div>
         )}
-        <div style={s.resultWrap}>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box', width: '100%' }}>
+
+          {/* 사주팔자 카드 */}
           {sajuData?.사주 && (
-            <div style={s.sajuCard}>
-              <p style={s.sajuTitle}>📋 나의 사주팔자</p>
-              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 8, textAlign: 'center' }}>{sajuData.생년월일}</p>
-              <div style={s.sajuTable}>
+            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 20px', marginBottom: 12 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#C9A84C', marginBottom: 12, letterSpacing: '0.1em' }}>나의 사주팔자</p>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 10, textAlign: 'center' }}>{sajuData.생년월일}</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                 {[
                   { label: '시주(時)', value: sajuData.사주.시주 },
                   { label: '일주(日)', value: sajuData.사주.일주 },
                   { label: '월주(月)', value: sajuData.사주.월주 },
                   { label: '년주(年)', value: sajuData.사주.년주 },
                 ].map(({ label, value }) => (
-                  <div key={label} style={s.sajuCell}>
-                    <span style={s.sajuCellLabel}>{label}</span>
-                    <span style={s.sajuCellValue}>{value || '-'}</span>
+                  <div key={label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 4px', border: '1px solid rgba(201,168,76,0.15)' }}>
+                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginBottom: 4, display: 'block' }}>{label}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.6 }}>{value || '-'}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
+          {/* 스트리밍 */}
           {isBaseStreaming && baseText && (
-            <div style={s.streamCard}>{baseText}<span style={{ opacity: 0.4 }}>▌</span></div>
+            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{baseText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
 
+          {/* 무료 결과 아코디언 */}
           {!isBaseStreaming && baseSections.filter(sec => !sec.title.includes('행운미리보기')).map((sec, i) => (
             <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
           ))}
 
+          {/* 행운 미리보기 */}
           {!isBaseStreaming && !paidSections.length && (() => {
             const luckySec = baseSections.find(sec => sec.title.includes('행운미리보기'))
             const colorMatch = luckySec?.content?.match(/색깔[:\s]+([^\n]+)/)
             const color = colorMatch?.[1]?.trim()
             if (!color) return null
             return (
-              <div style={s.luckyCard}>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#92400E', marginBottom: 4 }}>🍀 나의 행운 아이템</p>
-                <div style={s.luckyGrid}>
-                  <div style={s.luckyItem}>
-                    <span style={s.luckyItemLabel}>🎨 행운 색깔</span>
-                    <span style={s.luckyItemValue}>{color}</span>
+              <div style={{ background: 'linear-gradient(135deg, #0D1B3E, #1B2A4A)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 12, padding: '20px', marginBottom: 12 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 12, fontFamily: 'var(--font-display)' }}>나의 행운 아이템</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 12px', border: '1px solid rgba(201,168,76,0.15)' }}>
+                    <span style={{ fontSize: 10, color: '#C9A84C', fontWeight: 600, marginBottom: 3, display: 'block' }}>행운 색깔</span>
+                    <span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 500 }}>{color}</span>
                   </div>
-                  {[['🐾','마스코트'],['🧭','행운 방향'],['🔢','행운 숫자']].map(([emoji, label]) => (
-                    <div key={label} style={{ ...s.luckyItem, position: 'relative' }}>
-                      <span style={s.luckyItemLabel}>{emoji} {label}</span>
-                      <div style={{ height: 20, background: 'repeating-linear-gradient(90deg, #DDD6FE 0px, #DDD6FE 8px, transparent 8px, transparent 12px)', borderRadius: 4, marginTop: 2 }} />
-                      <span style={{ position: 'absolute', bottom: 8, right: 8, fontSize: 14 }}>🔒</span>
+                  {[['마스코트'],['행운 방향'],['행운 숫자']].map(([label]) => (
+                    <div key={label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 12px', border: '1px solid rgba(201,168,76,0.15)', position: 'relative' }}>
+                      <span style={{ fontSize: 10, color: '#C9A84C', fontWeight: 600, marginBottom: 3, display: 'block' }}>{label}</span>
+                      <div style={{ height: 16, background: 'rgba(201,168,76,0.1)', borderRadius: 4, marginTop: 2 }} />
+                      <span style={{ position: 'absolute', bottom: 8, right: 8, fontSize: 12 }}>🔒</span>
                     </div>
                   ))}
                 </div>
-                <p style={{ fontSize: 12, color: '#92400E', textAlign: 'center', marginTop: 10, fontWeight: 600 }}>🔒 마스코트·방향·숫자는 전체 분석에서 확인하세요</p>
+                <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', textAlign: 'center', marginTop: 12, fontWeight: 600 }}>🔒 마스코트·방향·숫자는 전체 분석에서 확인하세요</p>
               </div>
             )
           })()}
 
+          {/* 유료 스트리밍 */}
           {isPaidStreaming && paidText && (
-            <div style={s.streamCard}>{paidText}<span style={{ opacity: 0.4 }}>▌</span></div>
+            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{paidText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
 
+          {/* 유료 결과 */}
           {!isPaidStreaming && paidSections.length > 0 && (
             <>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', textAlign: 'center', margin: '16px 0 8px' }}>⭐ 전체 분석 결과</p>
+              <p style={{ fontSize: 12, fontWeight: 600, color: '#C9A84C', textAlign: 'center', margin: '16px 0 8px', letterSpacing: '0.08em' }}>✦ 전체 분석 결과 ✦</p>
               {paidSections.map((sec, i) => (
                 <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />
               ))}
             </>
           )}
 
+          {/* 결제 배너 */}
           {phase === 'done' && !isPaid && !isPaidStreaming && (
-            <div style={s.payBanner}>
-              <p style={{ fontSize: 15, fontWeight: 700, color: 'white', marginBottom: 16 }}>
-                {serviceType === 'child' ? '🌱 1,900원으로 이걸 다 볼 수 있어요' : serviceType === '노후' ? '🌅 1,900원으로 이걸 다 볼 수 있어요' : '🔮 1,900원으로 이걸 다 볼 수 있어요'}
+            <div style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', borderRadius: 12, padding: '28px 20px', marginBottom: 12, textAlign: 'center', border: '1px solid rgba(201,168,76,0.3)' }}>
+              <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 16 }}>FULL ANALYSIS</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 16, fontFamily: 'var(--font-display)', wordBreak: 'keep-all' }}>
+                {serviceType === 'child' ? '아이의 타고난 운명을 전부 확인하세요' : serviceType === '노후' ? '당신의 노후를 미리 준비하세요' : '내 사주의 모든 것을 확인하세요'}
               </p>
               <div style={{ textAlign: 'left', marginBottom: 20 }}>
                 {(serviceType === 'child' ? [
@@ -1301,7 +1338,6 @@ export default function App() {
                   '진로 방향 · 어울리는 직업군',
                   '부모와의 관계 · 키우는 법',
                   '아이가 힘든 순간 · 극복법',
-                  '이 아이가 빛나는 조건',
                   '이 사주로 잘 크는 법',
                 ] : serviceType === '노후' ? [
                   '노후 재물 심화 분석',
@@ -1310,7 +1346,6 @@ export default function App() {
                   '노후 투자 · 부동산',
                   '인간관계 · 사람운',
                   '월별 운세 12개월',
-                  '행운 아이템',
                   '노후를 빛나게 하는 법',
                 ] : [
                   '인생 재운 흐름 (20대~말년)',
@@ -1318,18 +1353,18 @@ export default function App() {
                   '투자 · 부동산 전략',
                   '인간관계 · 사람운',
                   '월별 운세 12개월',
-                  '행운 아이템',
+                  '행운 아이템 전체',
                   '이 사주로 잘 사는 법',
                 ]).map((item) => (
-                  <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <span style={{ color: '#FDE68A', fontWeight: 700, fontSize: 14 }}>✓</span>
-                    <span style={{ color: 'white', fontSize: 14 }}>{item}</span>
+                  <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                    <span style={{ color: '#C9A84C', fontWeight: 700, fontSize: 12 }}>✦</span>
+                    <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14 }}>{item}</span>
                   </div>
                 ))}
               </div>
-              <div style={s.payPrice}>1,900원</div>
-              <div style={s.payDiscount}>⏰ 오늘 자정까지 {countdown}</div>
-              <button style={s.payBtn} onClick={() => {
+              <div style={{ fontSize: 38, fontWeight: 800, color: '#C9A84C', marginBottom: 4, fontFamily: 'var(--font-display)' }}>1,900원</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 16 }}>⏰ 오늘 자정까지 {countdown}</div>
+              <button style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em' }} onClick={() => {
                 if (window.confirm('1,900원 결제 후 전체 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
                   handlePaidAnalyze()
                 }
@@ -1339,16 +1374,17 @@ export default function App() {
             </div>
           )}
 
+          {/* 로딩 */}
           {isPaidStreaming && (
-            <div style={s.loadingCard}>
-              <div style={s.loading}>
-                {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
-                <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>🔮 전체 사주를 분석하고 있어요...</span>
+            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '4px 0' }}>
+                {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
+                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>전체 사주를 분석하고 있어요...</span>
               </div>
             </div>
           )}
 
-          <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
+          <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.3)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
         </div>
       </div>
     )
