@@ -43,10 +43,10 @@ const s = {
     background: 'linear-gradient(160deg, #1B2A4A 0%, #243557 60%, #1B2A4A 100%)',
   },
   landingEmoji: { fontSize: 48, display: 'block', marginBottom: 14 },
-  landingTitle: {
-    wordBreak: 'keep-all', fontSize: 26, fontWeight: 800,
-    color: '#FFFFFF', marginBottom: 10, lineHeight: 1.35,
-    fontFamily: 'var(--font-display)',
+ landingTitle: {
+    wordBreak: 'keep-all', fontSize: 30, fontWeight: 800,
+    color: '#FFFFFF', marginBottom: 10, lineHeight: 1.4,
+    fontFamily: 'var(--font-display)', letterSpacing: '-0.02em',
   },
   landingSub: { fontSize: 14, color: 'rgba(255,255,255,0.65)', lineHeight: 1.8, marginBottom: 24 },
   timerBanner: {
