@@ -831,7 +831,7 @@ export default function App() {
         </div>
 
         {/* 천간 섹션 */}
-        <div style={{ background: '#F0EBE0', borderTop: '1px solid rgba(201,168,76,0.3)', borderBottom: '1px solid rgba(201,168,76,0.3)' }}>
+        <div style={{ background: '#F0EBE0', borderTop: '2px solid rgba(201,168,76,0.5)', borderBottom: '2px solid rgba(201,168,76,0.5)' }}>
           <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 16px 24px', width: '100%', boxSizing: 'border-box' }}>
             <p style={{ fontSize: 12, color: '#8A7E6E', textAlign: 'center', marginBottom: 16, fontWeight: 600, letterSpacing: '0.08em' }}>
               나는 어떤 기운일까? — 일간(日干)으로 확인하세요
