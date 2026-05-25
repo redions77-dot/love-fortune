@@ -798,7 +798,13 @@ export default function App() {
         {/* 히어로 + 북극성 — 네이비로 통합 */}
         <div style={{ background: 'linear-gradient(180deg, #1B2A4A 0%, #243557 100%)', paddingBottom: 40 }}>
           <div style={s.landingHero}>
-            <span style={s.landingEmoji}>✨</span>
+       <div style={{ marginBottom: 16 }}>
+            <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M26 4L28.8 20.2L44 22L28.8 24.8L26 48L23.2 24.8L8 22L23.2 20.2L26 4Z" fill="#C9A84C"/>
+              <path d="M42 6L43.2 12.8L50 14L43.2 15.2L42 22L40.8 15.2L34 14L40.8 12.8L42 6Z" fill="rgba(201,168,76,0.6)"/>
+              <path d="M10 8L11 13L16 14L11 15L10 20L9 15L4 14L9 13L10 8Z" fill="rgba(201,168,76,0.4)"/>
+            </svg>
+          </div>
             <h1 style={s.landingTitle}>나는 죽어라 했는데,<br/>쟤는 왜 얻어걸려도 잘될까</h1>
             <p style={s.landingSub}>
               방향이 달랐던 거예요.<br/>
