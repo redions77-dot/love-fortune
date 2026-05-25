@@ -1,21 +1,21 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --color-bg: #FDF8F3;
-  --color-surface: #FFFFFF;
-  --color-border: rgba(0,0,0,0.08);
-  --color-border-strong: rgba(0,0,0,0.15);
-  --color-primary: #8B5CF6;
-  --color-primary-dark: #6D28D9;
-  --color-primary-light: #EDE9FE;
-  --color-text: #1C1917;
-  --color-text-muted: #78716C;
-  --color-accent: #F59E0B;
+  --color-bg: #F5F0E8;
+  --color-surface: #FDFAF5;
+  --color-border: rgba(180,160,110,0.2);
+  --color-border-strong: rgba(180,160,110,0.4);
+  --color-primary: #1B2A4A;
+  --color-primary-dark: #0F1E36;
+  --color-primary-light: #E8EDF5;
+  --color-text: #1B1B1B;
+  --color-text-muted: #7A6E5F;
+  --color-accent: #C9A84C;
   --font-display: 'Nanum Myeongjo', serif;
   --font-body: 'Pretendard', -apple-system, sans-serif;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
 }
 
 body {
@@ -46,7 +46,7 @@ select {
 }
 
 input:focus, select:focus {
-  border-color: var(--color-primary);
+  border-color: var(--color-accent);
 }
 
 @keyframes fadeIn {
