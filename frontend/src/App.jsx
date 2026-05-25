@@ -796,7 +796,7 @@ export default function App() {
         </div>
 
         {/* 히어로 + 북극성 — 네이비로 통합 */}
-<div style={{ position: 'relative', overflow: 'hidden', paddingBottom: 40 }}>
+<div style={{ position: 'relative', overflow: 'hidden', paddingBottom: 0 }}>
           {/* 우주 배경 */}
           <div style={{
             position: 'absolute', inset: 0,
@@ -910,17 +910,25 @@ export default function App() {
             </div>
           </div>
 
-          {/* 골드 구분선 */}
-          <div style={{ width: 40, height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)', margin: '32px auto' }} />
+{/* 골드 구분선 */}
+          <div style={{ width: 60, height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.6), transparent)', margin: '32px auto' }} />
 
-          <div style={{ position: 'relative', maxWidth: 480, margin: '0 auto', padding: '0 24px' }}>
-            <p style={{ fontSize: 15, lineHeight: 2.2, color: 'rgba(255,255,255,0.65)', wordBreak: 'keep-all', textAlign: 'center' }}>
+          <div style={{ position: 'relative', maxWidth: 480, margin: '0 auto', padding: '0 24px 48px' }}>
+            {/* 인용 따옴표 */}
+            <p style={{ fontSize: 36, color: 'rgba(201,168,76,0.3)', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 8, textAlign: 'center' }}>"</p>
+            <p style={{ fontSize: 18, lineHeight: 1.75, color: 'rgba(255,255,255,0.7)', wordBreak: 'keep-all', textAlign: 'center', fontFamily: 'var(--font-display)' }}>
               북극성을 보러 가고 싶은데<br/>
-              남쪽으로 달리고 있다면 어떻게 될까요?<br/><br/>
-              아무리 열심히 달려도 안 보여요.<br/>
-              <span style={{ fontWeight: 700, color: '#FFFFFF' }}>노력이 부족한 게 아니에요.<br/>방향이 틀린 거예요.</span><br/><br/>
-              <span style={{ color: '#C9A84C', fontWeight: 700 }}>사주팔자는 내 북극성이<br/>어느 쪽에 있는지 알려주는 지도예요.</span>
+              남쪽으로 달리고 있다면?
             </p>
+            <div style={{ width: 30, height: 1, background: 'rgba(201,168,76,0.3)', margin: '20px auto' }}/>
+            <p style={{ fontSize: 18, lineHeight: 1.75, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', textAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
+              노력이 부족한 게 아니에요.<br/>방향이 틀린 거예요.
+            </p>
+            <div style={{ width: 30, height: 1, background: 'rgba(201,168,76,0.3)', margin: '20px auto' }}/>
+            <p style={{ fontSize: 17, lineHeight: 1.75, color: '#C9A84C', wordBreak: 'keep-all', textAlign: 'center', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
+              사주팔자는 내 북극성이<br/>어느 쪽에 있는지 알려주는 지도예요.
+            </p>
+            <p style={{ fontSize: 36, color: 'rgba(201,168,76,0.3)', fontFamily: 'Georgia, serif', lineHeight: 1, marginTop: 8, textAlign: 'center' }}>"</p>
           </div>
         </div>
 
