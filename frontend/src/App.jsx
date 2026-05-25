@@ -213,11 +213,11 @@ const s = {
 }
 
 const CARD_COLORS = {
-  saju:    { bg: '#F8F5FF', border: '#DDD6FE', text: '#4C1D95', accent: '#7C3AED' },
-  gunghab: { bg: '#FFF1F2', border: '#FECDD3', text: '#9F1239', accent: '#E11D48' },
-  child:   { bg: '#FFF7ED', border: '#FED7AA', text: '#7C2D12', accent: '#EA580C' },
-  노후:   { bg: '#F0F9FF', border: '#BAE6FD', text: '#0C4A6E', accent: '#0284C7' },
-  길일:   { bg: '#FFFBEB', border: '#FDE68A', text: '#78350F', accent: '#D97706' },
+  saju:    { bg: '#EEF0F6', border: '#C5CEDF', text: '#1B2A4A', accent: '#C9A84C' },
+  gunghab: { bg: '#F7EDEF', border: '#E8C4CC', text: '#6B1229', accent: '#9B1D3A' },
+  child:   { bg: '#EDF4F0', border: '#B8D9C8', text: '#1B4A33', accent: '#2D7A52' },
+  노후:   { bg: '#EEF3F7', border: '#BDD0DF', text: '#1B3A5A', accent: '#2D6A9B' },
+  길일:   { bg: '#F5EDD6', border: '#DFC88A', text: '#5A3D0A', accent: '#C9A84C' },
 }
 
 function DateInputs({ year, setYear, month, setMonth, day, setDay, lunar, setLunar, hour, setHour, min, setMin, ampm, setAmpm, unknown, setUnknown }) {
