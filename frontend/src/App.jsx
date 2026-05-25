@@ -932,29 +932,32 @@ export default function App() {
           </div>
         </div>
 
-        {/* 천간 섹션 */}
-        <div style={{ background: '#F0EBE0', borderTop: '2px solid rgba(201,168,76,0.5)', borderBottom: '2px solid rgba(201,168,76,0.5)' }}>
-          <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 16px 24px', width: '100%', boxSizing: 'border-box' }}>
-            <p style={{ fontSize: 12, color: '#8A7E6E', textAlign: 'center', marginBottom: 16, fontWeight: 600, letterSpacing: '0.08em' }}>
-              나는 어떤 기운일까? — 일간(日干)으로 확인하세요
+   {/* 천간 섹션 */}
+        <div style={{ background: '#0D1B3E', borderTop: '1px solid rgba(201,168,76,0.3)', borderBottom: '1px solid rgba(201,168,76,0.3)' }}>
+          <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 28px', width: '100%', boxSizing: 'border-box' }}>
+            <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', marginBottom: 4, fontWeight: 600, letterSpacing: '0.12em' }}>
+              YOUR ENERGY
+            </p>
+            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginBottom: 20, fontWeight: 700, fontFamily: 'var(--font-display)' }}>
+              나는 어떤 기운일까? — 일간(日干)
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {CHEONGAN.map((c) => (
                 <div key={c.key}
                   onClick={() => setOpenCheongan(openCheongan === c.key ? null : c.key)}
                   style={{
-                    background: openCheongan === c.key ? '#1B2A4A' : '#FDFAF5',
-                    border: `1px solid ${openCheongan === c.key ? '#C9A84C' : 'rgba(201,168,76,0.3)'}`,
+                    background: openCheongan === c.key ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${openCheongan === c.key ? 'rgba(201,168,76,0.7)' : 'rgba(201,168,76,0.15)'}`,
                     borderRadius: 10, padding: '14px 12px', cursor: 'pointer',
-                    transition: 'all 0.2s', boxShadow: '0 1px 4px rgba(27,42,74,0.06)',
+                    transition: 'all 0.2s', boxShadow: openCheongan === c.key ? '0 0 16px rgba(201,168,76,0.1)' : 'none',
                   }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                     <span style={{ fontSize: 20 }}>{c.emoji}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: openCheongan === c.key ? '#C9A84C' : '#1B2A4A' }}>{c.title}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: openCheongan === c.key ? '#C9A84C' : 'rgba(255,255,255,0.85)', fontFamily: 'var(--font-display)' }}>{c.title}</span>
                   </div>
-                  <p style={{ fontSize: 11, color: openCheongan === c.key ? 'rgba(255,255,255,0.55)' : '#8A7E6E', lineHeight: 1.5, margin: 0 }}>{c.sub}</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, margin: 0 }}>{c.sub}</p>
                   {openCheongan === c.key && (
-                    <div style={{ marginTop: 10, borderTop: '1px solid rgba(201,168,76,0.25)', paddingTop: 10 }}>
+                    <div style={{ marginTop: 10, borderTop: '1px solid rgba(201,168,76,0.2)', paddingTop: 10 }}>
                       <p style={{ fontSize: 11, color: '#4ADE80', fontWeight: 600, marginBottom: 4 }}>✅ {c.good}</p>
                       <p style={{ fontSize: 11, color: '#F87171', fontWeight: 600 }}>❌ {c.bad}</p>
                       <p style={{ fontSize: 11, color: '#C9A84C', marginTop: 8, fontWeight: 500 }}>
@@ -969,53 +972,78 @@ export default function App() {
         </div>
 
         {/* 서비스 카드 */}
-        <div style={{ background: '#F5F0E8' }}>
-          <div style={s.cardGrid}>
-            <p style={{ ...s.cardGridTitle, paddingTop: 8 }}>무엇이 궁금하세요?</p>
+        <div style={{ background: '#0A1628' }}>
+          <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 48px', width: '100%', boxSizing: 'border-box' }}>
+            <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', marginBottom: 4, fontWeight: 600, letterSpacing: '0.12em' }}>
+              SERVICES
+            </p>
+            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginBottom: 20, fontWeight: 700, fontFamily: 'var(--font-display)' }}>
+              무엇이 궁금하세요?
+            </p>
             <div style={s.grid2}>
-              <button style={s.serviceCard(CARD_COLORS.saju)} onClick={() => { setServiceType('saju'); setScreen('input') }}>
-                <span style={s.freeBadge}>무료 맛보기</span>
-                <span style={s.serviceEmoji}>🔮</span>
-                <span style={s.serviceLabel(CARD_COLORS.saju)}>나의 사주</span>
-                <span style={s.serviceSub}>돈·직업·연애<br/>내 팔자가 정해놨다</span>
-                <span style={s.servicePrice(CARD_COLORS.saju)}>1,900원</span>
+              <button style={{
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,168,76,0.25)',
+                borderRadius: 12, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+                transition: 'all 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
+              }} onClick={() => { setServiceType('saju'); setScreen('input') }}>
+                <span style={{ display: 'inline-block', background: '#1B2A4A', color: '#C9A84C', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, marginBottom: 8, border: '1px solid rgba(201,168,76,0.4)' }}>무료 맛보기</span>
+                <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>🔮</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 4, display: 'block', fontFamily: 'var(--font-display)' }}>나의 사주</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, display: 'block' }}>돈·직업·연애<br/>내 팔자가 정해놨다</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 10, display: 'block' }}>1,900원</span>
               </button>
-              <button style={s.serviceCard(CARD_COLORS.gunghab)} onClick={() => { setServiceType('gunghab'); setGunghabStep(1); setScreen('gunghab_input') }}>
-                <span style={s.serviceEmoji}>💕</span>
-                <span style={s.serviceLabel(CARD_COLORS.gunghab)}>궁합</span>
-                <span style={s.serviceSub}>우리 잘 맞는지<br/>사주로 확인</span>
-                <span style={s.servicePrice(CARD_COLORS.gunghab)}>1,900원</span>
+              <button style={{
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(155,29,58,0.4)',
+                borderRadius: 12, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+                transition: 'all 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
+              }} onClick={() => { setServiceType('gunghab'); setGunghabStep(1); setScreen('gunghab_input') }}>
+                <span style={{ fontSize: 28, display: 'block', marginBottom: 8, marginTop: 26 }}>💕</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 4, display: 'block', fontFamily: 'var(--font-display)' }}>궁합</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, display: 'block' }}>우리 잘 맞는지<br/>사주로 확인</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 10, display: 'block' }}>1,900원</span>
               </button>
             </div>
             <div style={s.grid2}>
-              <button style={s.serviceCard(CARD_COLORS.child)} onClick={() => { setServiceType('child'); setScreen('input') }}>
-                <span style={s.serviceEmoji}>🌱</span>
-                <span style={s.serviceLabel(CARD_COLORS.child)}>내 아이 괜찮을까</span>
-                <span style={s.serviceSub}>아이의 타고난 재능·진로를 미리 확인</span>
-                <span style={s.servicePrice(CARD_COLORS.child)}>1,900원</span>
+              <button style={{
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(45,122,82,0.4)',
+                borderRadius: 12, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+                transition: 'all 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
+              }} onClick={() => { setServiceType('child'); setScreen('input') }}>
+                <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>🌱</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 4, display: 'block', fontFamily: 'var(--font-display)' }}>내 아이 괜찮을까</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, display: 'block' }}>아이의 타고난 재능·진로를 미리 확인</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 10, display: 'block' }}>1,900원</span>
               </button>
-              <button style={s.serviceCard(CARD_COLORS.노후)} onClick={() => { setServiceType('노후'); setScreen('input') }}>
-                <span style={s.serviceEmoji}>🌅</span>
-                <span style={s.serviceLabel(CARD_COLORS.노후)}>나의 노후는 괜찮을까</span>
-                <span style={s.serviceSub}>말년 재물·건강·황혼 인연을 미리 확인</span>
-                <span style={s.servicePrice(CARD_COLORS.노후)}>1,900원</span>
+              <button style={{
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(45,106,155,0.4)',
+                borderRadius: 12, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+                transition: 'all 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
+              }} onClick={() => { setServiceType('노후'); setScreen('input') }}>
+                <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>🌅</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 4, display: 'block', fontFamily: 'var(--font-display)' }}>나의 노후는 괜찮을까</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, display: 'block' }}>말년 재물·건강·황혼 인연을 미리 확인</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 10, display: 'block' }}>1,900원</span>
               </button>
             </div>
-            <div style={{ ...s.grid2, gridTemplateColumns: '1fr' }}>
-              <button style={s.serviceCard(CARD_COLORS.길일)} onClick={() => { setServiceType('길일'); setScreen('gilil_input') }}>
-                <span style={s.serviceEmoji}>📅</span>
-                <span style={s.serviceLabel(CARD_COLORS.길일)}>오늘, 이 날짜 괜찮을까?</span>
-                <span style={s.serviceSub}>이사·계약·개업·결혼·수술 — 내 사주와 맞는 길일 추천</span>
-                <span style={s.servicePrice(CARD_COLORS.길일)}>9,900원</span>
+            <div style={{ marginBottom: 12 }}>
+              <button style={{
+                width: '100%', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.4)',
+                borderRadius: 12, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+                transition: 'all 0.2s', boxShadow: '0 0 20px rgba(201,168,76,0.05)',
+              }} onClick={() => { setServiceType('길일'); setScreen('gilil_input') }}>
+                <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>📅</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 4, display: 'block', fontFamily: 'var(--font-display)' }}>오늘, 이 날짜 괜찮을까?</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, display: 'block' }}>이사·계약·개업·결혼·수술 — 내 사주와 맞는 길일 추천</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 10, display: 'block' }}>9,900원</span>
               </button>
             </div>
-            <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.2)', marginTop: 8 }}>
-              <p style={{ fontSize: 12, color: '#8A7E6E', marginBottom: 12 }}>이미 많은 분들이 확인했어요</p>
+            <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.15)', marginTop: 8 }}>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 12 }}>이미 많은 분들이 확인했어요</p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 24 }}>
                 {[['⭐','만족도 94%'],['🔒','안전한 결제'],['⚡','즉시 확인']].map(([e,t]) => (
                   <div key={t} style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 20 }}>{e}</div>
-                    <div style={{ fontSize: 11, color: '#8A7E6E', marginTop: 4, fontWeight: 500 }}>{t}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 4, fontWeight: 500 }}>{t}</div>
                   </div>
                 ))}
               </div>
