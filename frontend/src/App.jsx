@@ -796,71 +796,125 @@ export default function App() {
         </div>
 
         {/* 히어로 + 북극성 — 네이비로 통합 */}
-<div style={{ background: 'linear-gradient(180deg, #1B2A4A 0%, #243557 100%)', paddingBottom: 40 }}>
+<div style={{ position: 'relative', overflow: 'hidden', paddingBottom: 40 }}>
+          {/* 우주 배경 */}
           <div style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(ellipse at 20% 50%, #0D1B3E 0%, #050D1F 40%, #000510 100%)',
+          }}/>
+          {/* 은하수 레이어 */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(ellipse at 70% 30%, rgba(100,140,255,0.12) 0%, transparent 60%), radial-gradient(ellipse at 30% 80%, rgba(180,100,255,0.08) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(201,168,76,0.04) 0%, transparent 70%)',
+          }}/>
+          {/* 별빛 파티클 */}
+          {[...Array(30)].map((_, i) => (
+            <div key={i} style={{
+              position: 'absolute',
+              width: i % 5 === 0 ? 2 : 1,
+              height: i % 5 === 0 ? 2 : 1,
+              borderRadius: '50%',
+              background: i % 7 === 0 ? '#C9A84C' : 'white',
+              opacity: Math.random() * 0.6 + 0.2,
+              top: `${(i * 37) % 100}%`,
+              left: `${(i * 53) % 100}%`,
+            }}/>
+          ))}
+
+          <div style={{
+            position: 'relative',
             ...s.landingHero,
             margin: '20px 16px 0',
             borderRadius: 16,
-            border: '1px solid rgba(201,168,76,0.7)',
-            outline: '3px solid rgba(201,168,76,0.25)',
-            outlineOffset: '4px',
-            boxShadow: '0 0 0 1px rgba(201,168,76,0.15), inset 0 0 40px rgba(27,42,74,0.3)',
+            border: '1px solid rgba(201,168,76,0.5)',
+            outline: '3px solid rgba(201,168,76,0.15)',
+            outlineOffset: '5px',
+            background: 'rgba(5,13,31,0.6)',
+            backdropFilter: 'blur(8px)',
+            boxShadow: '0 0 60px rgba(100,140,255,0.1), inset 0 0 40px rgba(0,5,16,0.5)',
           }}>
-            {/* 몽환적 별 SVG */}
-            <div style={{ marginBottom: 20 }}>
-              <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M32 2L33.5 29.5L32 62L30.5 29.5L32 2Z" fill="url(#g1)" strokeWidth="0"/>
-                <path d="M2 32L29.5 30.5L62 32L29.5 33.5L2 32Z" fill="url(#g2)" strokeWidth="0"/>
-                <path d="M32 2L34 28L62 32L34 36L32 62L30 36L2 32L30 28L32 2Z" fill="url(#g3)" opacity="0.6"/>
-                <circle cx="32" cy="32" r="3" fill="#E8C96A" opacity="0.9"/>
-                <circle cx="32" cy="32" r="8" fill="url(#glow)" opacity="0.3"/>
-                <path d="M14 14L18 30L14 46" stroke="rgba(201,168,76,0.3)" strokeWidth="0.5"/>
-                <path d="M50 14L46 30L50 46" stroke="rgba(201,168,76,0.3)" strokeWidth="0.5"/>
+            {/* 몽환적 별 */}
+            <div style={{ marginBottom: 20, position: 'relative' }}>
+              <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                  <linearGradient id="g1" x1="32" y1="2" x2="32" y2="62" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#E8C96A"/>
-                    <stop offset="50%" stopColor="#C9A84C"/>
-                    <stop offset="100%" stopColor="#E8C96A"/>
-                  </linearGradient>
-                  <linearGradient id="g2" x1="2" y1="32" x2="62" y2="32" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#E8C96A"/>
-                    <stop offset="50%" stopColor="#C9A84C"/>
-                    <stop offset="100%" stopColor="#E8C96A"/>
-                  </linearGradient>
-                  <linearGradient id="g3" x1="32" y1="2" x2="32" y2="62" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#F5E090"/>
-                    <stop offset="100%" stopColor="#C9A84C"/>
-                  </linearGradient>
-                  <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#E8C96A"/>
-                    <stop offset="100%" stopColor="transparent"/>
+                  <radialGradient id="glowBig" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#C9A84C" stopOpacity="0.4"/>
+                    <stop offset="100%" stopColor="#C9A84C" stopOpacity="0"/>
                   </radialGradient>
+                  <radialGradient id="glowBlue" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#6B8FFF" stopOpacity="0.3"/>
+                    <stop offset="100%" stopColor="#6B8FFF" stopOpacity="0"/>
+                  </radialGradient>
+                  <linearGradient id="starV" x1="40" y1="0" x2="40" y2="80" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#F5E090"/>
+                    <stop offset="45%" stopColor="#C9A84C"/>
+                    <stop offset="55%" stopColor="#C9A84C"/>
+                    <stop offset="100%" stopColor="#F5E090"/>
+                  </linearGradient>
+                  <linearGradient id="starH" x1="0" y1="40" x2="80" y2="40" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#F5E090"/>
+                    <stop offset="45%" stopColor="#C9A84C"/>
+                    <stop offset="55%" stopColor="#C9A84C"/>
+                    <stop offset="100%" stopColor="#F5E090"/>
+                  </linearGradient>
+                  <filter id="blur1">
+                    <feGaussianBlur stdDeviation="3"/>
+                  </filter>
+                  <filter id="blur2">
+                    <feGaussianBlur stdDeviation="6"/>
+                  </filter>
                 </defs>
+                {/* 글로우 레이어 */}
+                <ellipse cx="40" cy="40" rx="30" ry="30" fill="url(#glowBig)"/>
+                <ellipse cx="40" cy="40" rx="20" ry="20" fill="url(#glowBlue)"/>
+                {/* 별 광채 - 블러 */}
+                <path d="M40 2L41 37L40 78L39 37L40 2Z" fill="#E8C96A" filter="url(#blur1)" opacity="0.5"/>
+                <path d="M2 40L37 39L78 40L37 41L2 40Z" fill="#E8C96A" filter="url(#blur1)" opacity="0.5"/>
+                {/* 별 본체 - 세로 */}
+                <path d="M40 4L41.2 37L40 76L38.8 37L40 4Z" fill="url(#starV)"/>
+                {/* 별 본체 - 가로 */}
+                <path d="M4 40L37 38.8L76 40L37 41.2L4 40Z" fill="url(#starH)"/>
+                {/* 대각선 */}
+                <path d="M14 14L37.5 37.5L14 14Z" stroke="rgba(201,168,76,0.4)" strokeWidth="0.8"/>
+                <path d="M66 14L42.5 37.5" stroke="rgba(201,168,76,0.4)" strokeWidth="0.8"/>
+                <path d="M14 66L37.5 42.5" stroke="rgba(201,168,76,0.4)" strokeWidth="0.8"/>
+                <path d="M66 66L42.5 42.5" stroke="rgba(201,168,76,0.4)" strokeWidth="0.8"/>
+                {/* 중심 */}
+                <circle cx="40" cy="40" r="2.5" fill="#FFF8DC"/>
+                <circle cx="40" cy="40" r="5" fill="#E8C96A" opacity="0.4"/>
+                {/* 작은 보조 별 */}
+                <path d="M62 18L62.5 21.5L66 22L62.5 22.5L62 26L61.5 22.5L58 22L61.5 21.5L62 18Z" fill="rgba(201,168,76,0.7)"/>
+                <path d="M18 56L18.4 58.6L21 59L18.4 59.4L18 62L17.6 59.4L15 59L17.6 58.6L18 56Z" fill="rgba(201,168,76,0.5)"/>
               </svg>
             </div>
 
             <h1 style={{
-              wordBreak: 'keep-all', fontSize: 32, fontWeight: 800,
-              color: '#FFFFFF', marginBottom: 12, lineHeight: 1.3,
-              fontFamily: 'var(--font-display)', letterSpacing: '-0.02em',
-              textShadow: '0 2px 20px rgba(0,0,0,0.3)',
+              wordBreak: 'keep-all',
+              fontSize: 34,
+              fontWeight: 800,
+              color: '#FFFFFF',
+              marginBottom: 12,
+              lineHeight: 1.25,
+              fontFamily: 'var(--font-display)',
+              letterSpacing: '-0.02em',
+              textShadow: '0 0 40px rgba(100,140,255,0.4), 0 2px 20px rgba(0,0,0,0.8)',
             }}>나는 죽어라 했는데,<br/>쟤는 왜 얻어걸려도 잘될까</h1>
 
-            <p style={s.landingSub}>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, marginBottom: 24 }}>
               방향이 달랐던 거예요.<br/>
-              <span style={{ fontWeight: 700, color: '#C9A84C' }}>사주가 알려줄게요.</span>
+              <span style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15 }}>사주가 알려줄게요.</span>
             </p>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', padding: '8px 20px', borderRadius: 20, fontSize: 13, color: '#C9A84C', fontWeight: 600 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.5)', padding: '9px 22px', borderRadius: 20, fontSize: 13, color: '#C9A84C', fontWeight: 600, backdropFilter: 'blur(4px)' }}>
               <span>⏰</span>
               <span>오늘만 <span style={{ fontWeight: 800 }}>1,900원</span></span>
             </div>
           </div>
 
           {/* 골드 구분선 */}
-          <div style={{ width: 40, height: 1, background: 'rgba(201,168,76,0.4)', margin: '0 auto 32px' }} />
+          <div style={{ width: 40, height: 1, background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.5), transparent)', margin: '32px auto' }} />
 
-          <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 24px' }}>
-            <p style={{ fontSize: 15, lineHeight: 2.2, color: 'rgba(255,255,255,0.7)', wordBreak: 'keep-all', textAlign: 'center' }}>
+          <div style={{ position: 'relative', maxWidth: 480, margin: '0 auto', padding: '0 24px' }}>
+            <p style={{ fontSize: 15, lineHeight: 2.2, color: 'rgba(255,255,255,0.65)', wordBreak: 'keep-all', textAlign: 'center' }}>
               북극성을 보러 가고 싶은데<br/>
               남쪽으로 달리고 있다면 어떻게 될까요?<br/><br/>
               아무리 열심히 달려도 안 보여요.<br/>
