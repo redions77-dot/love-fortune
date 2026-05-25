@@ -772,7 +772,7 @@ export default function App() {
     )
   }
 
-  // ── 랜딩 ──
+// ── 랜딩 ──
   if (screen === 'landing') {
     const CHEONGAN = [
       { key: '갑목', emoji: '🌳', title: '甲 갑목', sub: '하늘을 향해 곧게 자라는 나무', good: '목표가 뚜렷한 곳, 내가 왜 하는지 보이는 일', bad: '이유 없이 "그냥 해"가 반복되는 환경' },
@@ -798,26 +798,28 @@ export default function App() {
           <h1 style={s.landingTitle}>나는 죽어라 했는데,<br/>쟤는 왜 얻어걸려도 잘될까</h1>
           <p style={s.landingSub}>
             방향이 달랐던 거예요.<br/>
-            <span style={{ fontWeight: 700, color: '#7C3AED' }}>사주가 알려줄게요.</span>
+            <span style={{ fontWeight: 700, color: '#C9A84C' }}>사주가 알려줄게요.</span>
           </p>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#FEF3C7', padding: '8px 16px', borderRadius: 20, fontSize: 13, color: '#92400E', fontWeight: 600 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)', padding: '8px 16px', borderRadius: 20, fontSize: 13, color: '#C9A84C', fontWeight: 600 }}>
             <span>⏰</span>
             <span>오늘만 <span style={{ fontWeight: 800 }}>1,900원</span></span>
           </div>
         </div>
-        <div style={{ background: '#F8F5FF', padding: '28px 20px', margin: '0', borderBottom: '1px solid #E9D5FF' }}>
+
+        <div style={{ background: '#1B2A4A', padding: '32px 20px', borderBottom: '1px solid rgba(201,168,76,0.2)' }}>
           <div style={{ maxWidth: 480, margin: '0 auto' }}>
-            <p style={{ fontSize: 15, lineHeight: 2.1, color: '#3B1F6E', wordBreak: 'keep-all', textAlign: 'center' }}>
+            <p style={{ fontSize: 15, lineHeight: 2.2, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all', textAlign: 'center' }}>
               북극성을 보러 가고 싶은데<br/>
               남쪽으로 달리고 있다면 어떻게 될까요?<br/><br/>
               아무리 열심히 달려도 안 보여요.<br/>
-              <span style={{ fontWeight: 700 }}>노력이 부족한 게 아니에요.<br/>방향이 틀린 거예요.</span><br/><br/>
-              <span style={{ color: '#7C3AED', fontWeight: 700 }}>사주팔자는 내 북극성이<br/>어느 쪽에 있는지 알려주는 지도예요.</span>
+              <span style={{ fontWeight: 700, color: '#FFFFFF' }}>노력이 부족한 게 아니에요.<br/>방향이 틀린 거예요.</span><br/><br/>
+              <span style={{ color: '#C9A84C', fontWeight: 700 }}>사주팔자는 내 북극성이<br/>어느 쪽에 있는지 알려주는 지도예요.</span>
             </p>
           </div>
         </div>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 8px', width: '100%', boxSizing: 'border-box' }}>
-          <p style={{ fontSize: 13, color: '#888', textAlign: 'center', marginBottom: 16, fontWeight: 600, letterSpacing: '0.05em' }}>
+
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 16px 8px', width: '100%', boxSizing: 'border-box' }}>
+          <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textAlign: 'center', marginBottom: 16, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             나는 어떤 기운일까? — 일간(日干)으로 확인하세요
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -825,21 +827,21 @@ export default function App() {
               <div key={c.key}
                 onClick={() => setOpenCheongan(openCheongan === c.key ? null : c.key)}
                 style={{
-                  background: openCheongan === c.key ? '#F3EEFF' : 'white',
-                  border: `1.5px solid ${openCheongan === c.key ? '#7C3AED' : '#E5E7EB'}`,
-                  borderRadius: 14, padding: '14px 12px', cursor: 'pointer',
-                  transition: 'all 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                  background: openCheongan === c.key ? '#1B2A4A' : 'var(--color-surface)',
+                  border: `1.5px solid ${openCheongan === c.key ? '#C9A84C' : 'rgba(180,160,110,0.25)'}`,
+                  borderRadius: 12, padding: '14px 12px', cursor: 'pointer',
+                  transition: 'all 0.2s', boxShadow: '0 1px 6px rgba(27,42,74,0.08)',
                 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                   <span style={{ fontSize: 22 }}>{c.emoji}</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: openCheongan === c.key ? '#5B21B6' : '#1a1a2e' }}>{c.title}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: openCheongan === c.key ? '#C9A84C' : '#1B2A4A' }}>{c.title}</span>
                 </div>
-                <p style={{ fontSize: 11, color: '#666', lineHeight: 1.5, margin: 0 }}>{c.sub}</p>
+                <p style={{ fontSize: 11, color: openCheongan === c.key ? 'rgba(255,255,255,0.6)' : '#8A7E6E', lineHeight: 1.5, margin: 0 }}>{c.sub}</p>
                 {openCheongan === c.key && (
-                  <div style={{ marginTop: 10, borderTop: '1px solid #DDD6FE', paddingTop: 10 }}>
-                    <p style={{ fontSize: 11, color: '#059669', fontWeight: 600, marginBottom: 4 }}>✅ {c.good}</p>
-                    <p style={{ fontSize: 11, color: '#DC2626', fontWeight: 600 }}>❌ {c.bad}</p>
-                    <p style={{ fontSize: 11, color: '#7C3AED', marginTop: 8, fontWeight: 500 }}>
+                  <div style={{ marginTop: 10, borderTop: '1px solid rgba(201,168,76,0.3)', paddingTop: 10 }}>
+                    <p style={{ fontSize: 11, color: '#4ADE80', fontWeight: 600, marginBottom: 4 }}>✅ {c.good}</p>
+                    <p style={{ fontSize: 11, color: '#F87171', fontWeight: 600 }}>❌ {c.bad}</p>
+                    <p style={{ fontSize: 11, color: '#C9A84C', marginTop: 8, fontWeight: 500 }}>
                       🔒 내 일간이 뭔지 모른다면? 사주 분석에서 확인하세요
                     </p>
                   </div>
@@ -848,6 +850,7 @@ export default function App() {
             ))}
           </div>
         </div>
+
         <div style={s.cardGrid}>
           <p style={s.cardGridTitle}>무엇이 궁금하세요?</p>
           <div style={s.grid2}>
@@ -888,25 +891,28 @@ export default function App() {
             </button>
           </div>
           <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid var(--color-border)', marginTop: 8 }}>
-            <p style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>이미 많은 분들이 확인했어요</p>
+            <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 8 }}>이미 많은 분들이 확인했어요</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
               {[['⭐','만족도 94%'],['🔒','안전한 결제'],['⚡','즉시 확인']].map(([e,t]) => (
                 <div key={t} style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 20 }}>{e}</div>
-                  <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{t}</div>
+                  <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>{t}</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
-        {/* 사업자 정보 푸터 */}
+      </div>
+    )
+  }
+{/* 사업자 정보 푸터 */}
         <div style={{
-          borderTop: '1px solid #E5E7EB',
-          padding: '20px 20px 40px',
-          background: '#FAFAFA',
+          borderTop: '1px solid rgba(201,168,76,0.2)',
+          padding: '24px 20px 40px',
+          background: '#0F1E36',
         }}>
-          <div style={{ maxWidth: 480, margin: '0 auto', fontSize: 11, color: '#9CA3AF', lineHeight: 2 }}>
-            <p style={{ fontWeight: 600, color: '#6B7280', marginBottom: 4 }}>봄결</p>
+          <div style={{ maxWidth: 480, margin: '0 auto', fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 2 }}>
+            <p style={{ fontWeight: 600, color: '#C9A84C', marginBottom: 4 }}>봄결</p>
             <p>대표자: 손영주</p>
             <p>사업자등록번호: 219-17-02825</p>
             <p>사업장 주소: 경기도 남양주시 별내3로 332, 701호 -V133호(별내동, 스카이프라자)</p>
@@ -915,7 +921,7 @@ export default function App() {
             <p style={{ marginTop: 8 }}>© 2026 봄결. All rights reserved.</p>
           </div>
         </div>
-      </div>
+   
     )
   }
 
