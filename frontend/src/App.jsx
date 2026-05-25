@@ -789,26 +789,32 @@ export default function App() {
 
     return (
       <div style={s.landing}>
+        {/* 타이머 배너 */}
         <div style={s.timerBanner}>
           🔥 오늘 자정까지 할인
           <span style={s.timerNum}>{countdown}</span>
         </div>
-        <div style={s.landingHero}>
-          <span style={s.landingEmoji}>✨</span>
-          <h1 style={s.landingTitle}>나는 죽어라 했는데,<br/>쟤는 왜 얻어걸려도 잘될까</h1>
-          <p style={s.landingSub}>
-            방향이 달랐던 거예요.<br/>
-            <span style={{ fontWeight: 700, color: '#C9A84C' }}>사주가 알려줄게요.</span>
-          </p>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)', padding: '8px 16px', borderRadius: 20, fontSize: 13, color: '#C9A84C', fontWeight: 600 }}>
-            <span>⏰</span>
-            <span>오늘만 <span style={{ fontWeight: 800 }}>1,900원</span></span>
-          </div>
-        </div>
 
-        <div style={{ background: '#1B2A4A', padding: '32px 20px', borderBottom: '1px solid rgba(201,168,76,0.2)' }}>
-          <div style={{ maxWidth: 480, margin: '0 auto' }}>
-            <p style={{ fontSize: 15, lineHeight: 2.2, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all', textAlign: 'center' }}>
+        {/* 히어로 + 북극성 — 네이비로 통합 */}
+        <div style={{ background: 'linear-gradient(180deg, #1B2A4A 0%, #243557 100%)', paddingBottom: 40 }}>
+          <div style={s.landingHero}>
+            <span style={s.landingEmoji}>✨</span>
+            <h1 style={s.landingTitle}>나는 죽어라 했는데,<br/>쟤는 왜 얻어걸려도 잘될까</h1>
+            <p style={s.landingSub}>
+              방향이 달랐던 거예요.<br/>
+              <span style={{ fontWeight: 700, color: '#C9A84C' }}>사주가 알려줄게요.</span>
+            </p>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.5)', padding: '8px 20px', borderRadius: 20, fontSize: 13, color: '#C9A84C', fontWeight: 600 }}>
+              <span>⏰</span>
+              <span>오늘만 <span style={{ fontWeight: 800 }}>1,900원</span></span>
+            </div>
+          </div>
+
+          {/* 골드 구분선 */}
+          <div style={{ width: 40, height: 1, background: 'rgba(201,168,76,0.4)', margin: '0 auto 32px' }} />
+
+          <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 24px' }}>
+            <p style={{ fontSize: 15, lineHeight: 2.2, color: 'rgba(255,255,255,0.7)', wordBreak: 'keep-all', textAlign: 'center' }}>
               북극성을 보러 가고 싶은데<br/>
               남쪽으로 달리고 있다면 어떻게 될까요?<br/><br/>
               아무리 열심히 달려도 안 보여요.<br/>
@@ -818,95 +824,102 @@ export default function App() {
           </div>
         </div>
 
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 16px 8px', width: '100%', boxSizing: 'border-box' }}>
-          <p style={{ fontSize: 12, color: 'var(--color-text-muted)', textAlign: 'center', marginBottom: 16, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            나는 어떤 기운일까? — 일간(日干)으로 확인하세요
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {CHEONGAN.map((c) => (
-              <div key={c.key}
-                onClick={() => setOpenCheongan(openCheongan === c.key ? null : c.key)}
-                style={{
-                  background: openCheongan === c.key ? '#1B2A4A' : 'var(--color-surface)',
-                  border: `1.5px solid ${openCheongan === c.key ? '#C9A84C' : 'rgba(180,160,110,0.25)'}`,
-                  borderRadius: 12, padding: '14px 12px', cursor: 'pointer',
-                  transition: 'all 0.2s', boxShadow: '0 1px 6px rgba(27,42,74,0.08)',
-                }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                  <span style={{ fontSize: 22 }}>{c.emoji}</span>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: openCheongan === c.key ? '#C9A84C' : '#1B2A4A' }}>{c.title}</span>
-                </div>
-                <p style={{ fontSize: 11, color: openCheongan === c.key ? 'rgba(255,255,255,0.6)' : '#8A7E6E', lineHeight: 1.5, margin: 0 }}>{c.sub}</p>
-                {openCheongan === c.key && (
-                  <div style={{ marginTop: 10, borderTop: '1px solid rgba(201,168,76,0.3)', paddingTop: 10 }}>
-                    <p style={{ fontSize: 11, color: '#4ADE80', fontWeight: 600, marginBottom: 4 }}>✅ {c.good}</p>
-                    <p style={{ fontSize: 11, color: '#F87171', fontWeight: 600 }}>❌ {c.bad}</p>
-                    <p style={{ fontSize: 11, color: '#C9A84C', marginTop: 8, fontWeight: 500 }}>
-                      🔒 내 일간이 뭔지 모른다면? 사주 분석에서 확인하세요
-                    </p>
+        {/* 천간 섹션 */}
+        <div style={{ background: '#F0EBE0', borderTop: '1px solid rgba(201,168,76,0.3)', borderBottom: '1px solid rgba(201,168,76,0.3)' }}>
+          <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 16px 24px', width: '100%', boxSizing: 'border-box' }}>
+            <p style={{ fontSize: 12, color: '#8A7E6E', textAlign: 'center', marginBottom: 16, fontWeight: 600, letterSpacing: '0.08em' }}>
+              나는 어떤 기운일까? — 일간(日干)으로 확인하세요
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {CHEONGAN.map((c) => (
+                <div key={c.key}
+                  onClick={() => setOpenCheongan(openCheongan === c.key ? null : c.key)}
+                  style={{
+                    background: openCheongan === c.key ? '#1B2A4A' : '#FDFAF5',
+                    border: `1px solid ${openCheongan === c.key ? '#C9A84C' : 'rgba(201,168,76,0.3)'}`,
+                    borderRadius: 10, padding: '14px 12px', cursor: 'pointer',
+                    transition: 'all 0.2s', boxShadow: '0 1px 4px rgba(27,42,74,0.06)',
+                  }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <span style={{ fontSize: 20 }}>{c.emoji}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: openCheongan === c.key ? '#C9A84C' : '#1B2A4A' }}>{c.title}</span>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={s.cardGrid}>
-          <p style={s.cardGridTitle}>무엇이 궁금하세요?</p>
-          <div style={s.grid2}>
-            <button style={s.serviceCard(CARD_COLORS.saju)} onClick={() => { setServiceType('saju'); setScreen('input') }}>
-              <span style={s.freeBadge}>무료 맛보기</span>
-              <span style={s.serviceEmoji}>🔮</span>
-              <span style={s.serviceLabel(CARD_COLORS.saju)}>나의 사주</span>
-              <span style={s.serviceSub}>돈·직업·연애<br/>내 팔자가 정해놨다</span>
-              <span style={s.servicePrice(CARD_COLORS.saju)}>1,900원</span>
-            </button>
-            <button style={s.serviceCard(CARD_COLORS.gunghab)} onClick={() => { setServiceType('gunghab'); setGunghabStep(1); setScreen('gunghab_input') }}>
-              <span style={s.serviceEmoji}>💕</span>
-              <span style={s.serviceLabel(CARD_COLORS.gunghab)}>궁합</span>
-              <span style={s.serviceSub}>우리 잘 맞는지<br/>사주로 확인</span>
-              <span style={s.servicePrice(CARD_COLORS.gunghab)}>1,900원</span>
-            </button>
-          </div>
-          <div style={s.grid2}>
-            <button style={s.serviceCard(CARD_COLORS.child)} onClick={() => { setServiceType('child'); setScreen('input') }}>
-              <span style={s.serviceEmoji}>🌱</span>
-              <span style={s.serviceLabel(CARD_COLORS.child)}>내 아이 괜찮을까</span>
-              <span style={s.serviceSub}>아이의 타고난 재능·진로를 미리 확인</span>
-              <span style={s.servicePrice(CARD_COLORS.child)}>1,900원</span>
-            </button>
-            <button style={s.serviceCard(CARD_COLORS.노후)} onClick={() => { setServiceType('노후'); setScreen('input') }}>
-              <span style={s.serviceEmoji}>🌅</span>
-              <span style={s.serviceLabel(CARD_COLORS.노후)}>나의 노후는 괜찮을까</span>
-              <span style={s.serviceSub}>말년 재물·건강·황혼 인연을 미리 확인</span>
-              <span style={s.servicePrice(CARD_COLORS.노후)}>1,900원</span>
-            </button>
-          </div>
-          <div style={{ ...s.grid2, gridTemplateColumns: '1fr' }}>
-            <button style={s.serviceCard(CARD_COLORS.길일)} onClick={() => { setServiceType('길일'); setScreen('gilil_input') }}>
-              <span style={s.serviceEmoji}>📅</span>
-              <span style={s.serviceLabel(CARD_COLORS.길일)}>오늘, 이 날짜 괜찮을까?</span>
-              <span style={s.serviceSub}>이사·계약·개업·결혼·수술 — 내 사주와 맞는 길일 추천</span>
-              <span style={s.servicePrice(CARD_COLORS.길일)}>9,900원</span>
-            </button>
-          </div>
-          <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid var(--color-border)', marginTop: 8 }}>
-            <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 8 }}>이미 많은 분들이 확인했어요</p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
-              {[['⭐','만족도 94%'],['🔒','안전한 결제'],['⚡','즉시 확인']].map(([e,t]) => (
-                <div key={t} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 20 }}>{e}</div>
-                  <div style={{ fontSize: 11, color: 'var(--color-text-muted)', marginTop: 2 }}>{t}</div>
+                  <p style={{ fontSize: 11, color: openCheongan === c.key ? 'rgba(255,255,255,0.55)' : '#8A7E6E', lineHeight: 1.5, margin: 0 }}>{c.sub}</p>
+                  {openCheongan === c.key && (
+                    <div style={{ marginTop: 10, borderTop: '1px solid rgba(201,168,76,0.25)', paddingTop: 10 }}>
+                      <p style={{ fontSize: 11, color: '#4ADE80', fontWeight: 600, marginBottom: 4 }}>✅ {c.good}</p>
+                      <p style={{ fontSize: 11, color: '#F87171', fontWeight: 600 }}>❌ {c.bad}</p>
+                      <p style={{ fontSize: 11, color: '#C9A84C', marginTop: 8, fontWeight: 500 }}>
+                        🔒 내 일간이 뭔지 모른다면? 사주 분석에서 확인하세요
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </div>
-       
-   {/* 사업자 정보 푸터 */}
+        </div>
+
+        {/* 서비스 카드 */}
+        <div style={{ background: '#F5F0E8' }}>
+          <div style={s.cardGrid}>
+            <p style={{ ...s.cardGridTitle, paddingTop: 8 }}>무엇이 궁금하세요?</p>
+            <div style={s.grid2}>
+              <button style={s.serviceCard(CARD_COLORS.saju)} onClick={() => { setServiceType('saju'); setScreen('input') }}>
+                <span style={s.freeBadge}>무료 맛보기</span>
+                <span style={s.serviceEmoji}>🔮</span>
+                <span style={s.serviceLabel(CARD_COLORS.saju)}>나의 사주</span>
+                <span style={s.serviceSub}>돈·직업·연애<br/>내 팔자가 정해놨다</span>
+                <span style={s.servicePrice(CARD_COLORS.saju)}>1,900원</span>
+              </button>
+              <button style={s.serviceCard(CARD_COLORS.gunghab)} onClick={() => { setServiceType('gunghab'); setGunghabStep(1); setScreen('gunghab_input') }}>
+                <span style={s.serviceEmoji}>💕</span>
+                <span style={s.serviceLabel(CARD_COLORS.gunghab)}>궁합</span>
+                <span style={s.serviceSub}>우리 잘 맞는지<br/>사주로 확인</span>
+                <span style={s.servicePrice(CARD_COLORS.gunghab)}>1,900원</span>
+              </button>
+            </div>
+            <div style={s.grid2}>
+              <button style={s.serviceCard(CARD_COLORS.child)} onClick={() => { setServiceType('child'); setScreen('input') }}>
+                <span style={s.serviceEmoji}>🌱</span>
+                <span style={s.serviceLabel(CARD_COLORS.child)}>내 아이 괜찮을까</span>
+                <span style={s.serviceSub}>아이의 타고난 재능·진로를 미리 확인</span>
+                <span style={s.servicePrice(CARD_COLORS.child)}>1,900원</span>
+              </button>
+              <button style={s.serviceCard(CARD_COLORS.노후)} onClick={() => { setServiceType('노후'); setScreen('input') }}>
+                <span style={s.serviceEmoji}>🌅</span>
+                <span style={s.serviceLabel(CARD_COLORS.노후)}>나의 노후는 괜찮을까</span>
+                <span style={s.serviceSub}>말년 재물·건강·황혼 인연을 미리 확인</span>
+                <span style={s.servicePrice(CARD_COLORS.노후)}>1,900원</span>
+              </button>
+            </div>
+            <div style={{ ...s.grid2, gridTemplateColumns: '1fr' }}>
+              <button style={s.serviceCard(CARD_COLORS.길일)} onClick={() => { setServiceType('길일'); setScreen('gilil_input') }}>
+                <span style={s.serviceEmoji}>📅</span>
+                <span style={s.serviceLabel(CARD_COLORS.길일)}>오늘, 이 날짜 괜찮을까?</span>
+                <span style={s.serviceSub}>이사·계약·개업·결혼·수술 — 내 사주와 맞는 길일 추천</span>
+                <span style={s.servicePrice(CARD_COLORS.길일)}>9,900원</span>
+              </button>
+            </div>
+            <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.2)', marginTop: 8 }}>
+              <p style={{ fontSize: 12, color: '#8A7E6E', marginBottom: 12 }}>이미 많은 분들이 확인했어요</p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 24 }}>
+                {[['⭐','만족도 94%'],['🔒','안전한 결제'],['⚡','즉시 확인']].map(([e,t]) => (
+                  <div key={t} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 20 }}>{e}</div>
+                    <div style={{ fontSize: 11, color: '#8A7E6E', marginTop: 4, fontWeight: 500 }}>{t}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 사업자 정보 푸터 */}
         <div style={{
-          borderTop: '1px solid rgba(201,168,76,0.2)',
+          borderTop: '1px solid rgba(201,168,76,0.25)',
           padding: '24px 20px 40px',
-          background: '#0F1E36',
+          background: '#1B2A4A',
         }}>
           <div style={{ maxWidth: 480, margin: '0 auto', fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 2 }}>
             <p style={{ fontWeight: 600, color: '#C9A84C', marginBottom: 4 }}>봄결</p>
@@ -918,8 +931,8 @@ export default function App() {
             <p style={{ marginTop: 8 }}>© 2026 봄결. All rights reserved.</p>
           </div>
         </div>
+
       </div>
-      </div> 
     )
   }
 
