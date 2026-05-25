@@ -901,11 +901,8 @@ export default function App() {
               ))}
             </div>
           </div>
-        </div>
-      </div>
-    )
-  }
-{/* 사업자 정보 푸터 */}
+       
+   {/* 사업자 정보 푸터 */}
         <div style={{
           borderTop: '1px solid rgba(201,168,76,0.2)',
           padding: '24px 20px 40px',
@@ -921,7 +918,8 @@ export default function App() {
             <p style={{ marginTop: 8 }}>© 2026 봄결. All rights reserved.</p>
           </div>
         </div>
-   
+      </div>
+      </div> 
     )
   }
 
