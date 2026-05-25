@@ -932,47 +932,45 @@ export default function App() {
           </div>
         </div>
 
-  {/* 천간 섹션 */}
+ {/* 천간 섹션 */}
         <div style={{ background: '#0D1B3E', borderTop: '1px solid rgba(201,168,76,0.3)', borderBottom: '1px solid rgba(201,168,76,0.3)' }}>
           <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 28px', width: '100%', boxSizing: 'border-box' }}>
             <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', marginBottom: 4, fontWeight: 600, letterSpacing: '0.12em' }}>YOUR ENERGY</p>
             <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginBottom: 20, fontWeight: 700, fontFamily: 'var(--font-display)' }}>나는 어떤 기운일까? — 일간(日干)</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
-                { key: '갑목', title: '甲 갑목', sub: '하늘을 향해 곧게 자라는 나무', good: '목표가 뚜렷한 곳, 내가 왜 하는지 보이는 일', bad: '이유 없이 "그냥 해"가 반복되는 환경',
-                  icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><line x1="16" y1="28" x2="16" y2="4" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="16" y1="10" x2="9" y2="17" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="16" y1="14" x2="23" y2="21" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="16" y1="7" x2="11" y2="12" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="16" y1="7" x2="21" y2="12" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/></svg> },
-                { key: '을목', title: '乙 을목', sub: '어디서든 뿌리내리는 생명력', good: '세심하게 인정받는 분위기, 디테일이 빛나는 자리', bad: '감정 무시하는 곳, 거칠고 무뚝뚝한 환경',
-                  icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 26 C10 20 6 14 10 8 C12 5 16 4 16 4 C16 4 20 5 22 8 C26 14 22 20 16 26Z" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round"/><line x1="16" y1="26" x2="16" y2="30" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 16 C13 15 16 16 16 16" stroke="#C9A84C" strokeWidth="1" strokeLinecap="round"/></svg> },
-                { key: '병화', title: '丙 병화', sub: '주변을 환하게 밝히는 태양', good: '사람들 앞에 서는 자리, 반응이 오는 무대', bad: '혼자 조용히 처리해야 하는 단절된 환경',
-                  icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="5" stroke="#C9A84C" strokeWidth="1.5"/><line x1="16" y1="4" x2="16" y2="7" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="16" y1="25" x2="16" y2="28" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="4" y1="16" x2="7" y2="16" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="25" y1="16" x2="28" y2="16" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="7.5" y1="7.5" x2="9.5" y2="9.5" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="22.5" y1="22.5" x2="24.5" y2="24.5" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="24.5" y1="7.5" x2="22.5" y2="9.5" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="9.5" y1="22.5" x2="7.5" y2="24.5" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/></svg> },
-                { key: '정화', title: '丁 정화', sub: '어둠 속에서 깊이 타오르는 불꽃', good: '한 가지에 깊이 파고드는 환경, 조용한 집중', bad: '5분마다 끊기는 업무, 산만하고 소란스러운 곳',
-                  icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 28 C16 28 8 22 8 15 C8 10 11 6 16 4 C16 4 14 10 18 13 C20 14 22 12 22 12 C22 12 24 18 20 23 C18 26 16 28 16 28Z" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/><circle cx="16" cy="20" r="2" stroke="#C9A84C" strokeWidth="1"/></svg> },
-                { key: '무토', title: '戊 무토', sub: '모든 것을 품어내는 큰 산', good: '내가 중심이 되어 운영하는 구조, 믿고 맡기는 조직', bad: '책임만 지고 권한은 없는 자리, 끝없는 희생 요구',
-                  icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M4 24 L16 6 L28 24 Z" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/><line x1="4" y1="24" x2="28" y2="24" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 24 L16 14 L22 24" stroke="#C9A84C" strokeWidth="1" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/></svg> },
-                { key: '기토', title: '己 기토', sub: '씨앗을 키워내는 비옥한 땅', good: '규칙이 있고 예측 가능한 환경, 내 역할이 명확한 곳', bad: '매일 바뀌는 방침, 즉흥적이고 뒤죽박죽인 조직',
-                  icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><line x1="4" y1="20" x2="28" y2="20" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="4" y1="24" x2="28" y2="24" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="10" y1="20" x2="10" y2="14" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="16" y1="20" x2="16" y2="10" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><line x1="22" y1="20" x2="22" y2="14" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 14 C10 14 13 8 16 10" stroke="#C9A84C" strokeWidth="1" strokeLinecap="round"/><path d="M16 10 C16 10 19 8 22 14" stroke="#C9A84C" strokeWidth="1" strokeLinecap="round"/></svg> },
-                { key: '경금', title: '庚 경금', sub: '단단하고 날카로운 원석의 힘', good: '기준이 명확한 곳, 성과가 숫자로 보이는 환경', bad: '애매하고 흐릿한 기준, 불공정한 평가가 반복되는 곳',
-                  icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><polygon points="16,4 20,12 28,12 22,18 24,26 16,22 8,26 10,18 4,12 12,12" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinejoin="round"/></svg> },
-                { key: '신금', title: '辛 신금', sub: '정교하게 다듬어진 보석의 감각', good: '품격 있는 환경, 섬세함이 경쟁력이 되는 자리', bad: '저급하고 거친 분위기, 노력이 무시당하는 곳',
-                  icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 4 L20 12 L28 14 L22 20 L24 28 L16 24 L8 28 L10 20 L4 14 L12 12 Z" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinejoin="round"/><path d="M16 4 L16 24" stroke="#C9A84C" strokeWidth="0.5" opacity="0.3"/><path d="M4 14 L24 28" stroke="#C9A84C" strokeWidth="0.5" opacity="0.3"/><path d="M28 14 L8 28" stroke="#C9A84C" strokeWidth="0.5" opacity="0.3"/></svg> },
-                { key: '임수', title: '壬 임수', sub: '넓고 유연하게 흐르는 큰 강', good: '새로운 정보가 들어오는 곳, 판을 키울 수 있는 환경', bad: '변화 없이 고여있는 조직, 외부와 단절된 폐쇄적인 곳',
-                  icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M4 12 C8 10 12 14 16 12 C20 10 24 14 28 12" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round"/><path d="M4 18 C8 16 12 20 16 18 C20 16 24 20 28 18" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round"/><path d="M4 24 C8 22 12 26 16 24 C20 22 24 26 28 24" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg> },
-                { key: '계수', title: '癸 계수', sub: '깊은 곳에서 솟아오르는 지하수', good: '혼자 생각할 시간이 있는 환경, 깊이가 인정받는 자리', bad: '시끄럽고 감정 소모 심한 곳, 내면을 무시하는 환경',
-                  icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="10" r="4" stroke="#C9A84C" strokeWidth="1.5" fill="none"/><path d="M16 14 L16 20" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 20 C10 20 8 28 16 28 C24 28 22 20 22 20" stroke="#C9A84C" strokeWidth="1.5" fill="none" strokeLinecap="round"/><line x1="12" y1="20" x2="20" y2="20" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round"/></svg> },
+                { key: '갑목', ohaeng: '木', ohaengColor: '#4ADE80', title: '甲 갑목', sub: '하늘을 향해 곧게 자라는 나무', good: '목표가 뚜렷한 곳, 내가 왜 하는지 보이는 일', bad: '이유 없이 "그냥 해"가 반복되는 환경' },
+                { key: '을목', ohaeng: '木', ohaengColor: '#4ADE80', title: '乙 을목', sub: '어디서든 뿌리내리는 생명력', good: '세심하게 인정받는 분위기, 디테일이 빛나는 자리', bad: '감정 무시하는 곳, 거칠고 무뚝뚝한 환경' },
+                { key: '병화', ohaeng: '火', ohaengColor: '#F87171', title: '丙 병화', sub: '주변을 환하게 밝히는 태양', good: '사람들 앞에 서는 자리, 반응이 오는 무대', bad: '혼자 조용히 처리해야 하는 단절된 환경' },
+                { key: '정화', ohaeng: '火', ohaengColor: '#F87171', title: '丁 정화', sub: '어둠 속에서 깊이 타오르는 불꽃', good: '한 가지에 깊이 파고드는 환경, 조용한 집중', bad: '5분마다 끊기는 업무, 산만하고 소란스러운 곳' },
+                { key: '무토', ohaeng: '土', ohaengColor: '#C9A84C', title: '戊 무토', sub: '모든 것을 품어내는 큰 산', good: '내가 중심이 되어 운영하는 구조, 믿고 맡기는 조직', bad: '책임만 지고 권한은 없는 자리, 끝없는 희생 요구' },
+                { key: '기토', ohaeng: '土', ohaengColor: '#C9A84C', title: '己 기토', sub: '씨앗을 키워내는 비옥한 땅', good: '규칙이 있고 예측 가능한 환경, 내 역할이 명확한 곳', bad: '매일 바뀌는 방침, 즉흥적이고 뒤죽박죽인 조직' },
+                { key: '경금', ohaeng: '金', ohaengColor: '#E8C96A', title: '庚 경금', sub: '단단하고 날카로운 원석의 힘', good: '기준이 명확한 곳, 성과가 숫자로 보이는 환경', bad: '애매하고 흐릿한 기준, 불공정한 평가가 반복되는 곳' },
+                { key: '신금', ohaeng: '金', ohaengColor: '#E8C96A', title: '辛 신금', sub: '정교하게 다듬어진 보석의 감각', good: '품격 있는 환경, 섬세함이 경쟁력이 되는 자리', bad: '저급하고 거친 분위기, 노력이 무시당하는 곳' },
+                { key: '임수', ohaeng: '水', ohaengColor: '#60A5FA', title: '壬 임수', sub: '넓고 유연하게 흐르는 큰 강', good: '새로운 정보가 들어오는 곳, 판을 키울 수 있는 환경', bad: '변화 없이 고여있는 조직, 외부와 단절된 폐쇄적인 곳' },
+                { key: '계수', ohaeng: '水', ohaengColor: '#60A5FA', title: '癸 계수', sub: '깊은 곳에서 솟아오르는 지하수', good: '혼자 생각할 시간이 있는 환경, 깊이가 인정받는 자리', bad: '시끄럽고 감정 소모 심한 곳, 내면을 무시하는 환경' },
               ].map((c) => (
                 <div key={c.key}
                   onClick={() => setOpenCheongan(openCheongan === c.key ? null : c.key)}
                   style={{
-                    background: openCheongan === c.key ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${openCheongan === c.key ? 'rgba(201,168,76,0.7)' : 'rgba(201,168,76,0.15)'}`,
+                    background: openCheongan === c.key ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${openCheongan === c.key ? 'rgba(201,168,76,0.6)' : 'rgba(201,168,76,0.12)'}`,
                     borderRadius: 10, padding: '14px 12px', cursor: 'pointer',
-                    transition: 'all 0.2s', boxShadow: openCheongan === c.key ? '0 0 16px rgba(201,168,76,0.1)' : 'none',
+                    transition: 'all 0.2s',
                   }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                    <div style={{ flexShrink: 0 }}>{c.icon}</div>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: openCheongan === c.key ? '#C9A84C' : 'rgba(255,255,255,0.85)', fontFamily: 'var(--font-display)' }}>{c.title}</span>
+                    {/* 오행 한자 */}
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                      background: `${c.ohaengColor}18`,
+                      border: `1px solid ${c.ohaengColor}40`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 18, fontWeight: 900, color: c.ohaengColor,
+                      fontFamily: 'Georgia, serif',
+                    }}>{c.ohaeng}</div>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: openCheongan === c.key ? '#C9A84C' : 'rgba(255,255,255,0.85)', fontFamily: 'var(--font-display)', lineHeight: 1.3 }}>{c.title}</span>
                   </div>
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, margin: 0 }}>{c.sub}</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', lineHeight: 1.5, margin: 0 }}>{c.sub}</p>
                   {openCheongan === c.key && (
                     <div style={{ marginTop: 10, borderTop: '1px solid rgba(201,168,76,0.2)', paddingTop: 10 }}>
                       <p style={{ fontSize: 11, color: '#4ADE80', fontWeight: 600, marginBottom: 4 }}>✅ {c.good}</p>
