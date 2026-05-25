@@ -980,61 +980,63 @@ export default function App() {
             <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginBottom: 20, fontWeight: 700, fontFamily: 'var(--font-display)' }}>
               무엇이 궁금하세요?
             </p>
-            <div style={s.grid2}>
+<div style={s.grid2}>
               <button style={{
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,168,76,0.25)',
-                borderRadius: 12, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+                background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)',
+                borderRadius: 10, padding: '20px 12px', cursor: 'pointer', textAlign: 'center',
                 transition: 'all 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
               }} onClick={() => { setServiceType('saju'); setScreen('input') }}>
-                <span style={{ display: 'inline-block', background: '#1B2A4A', color: '#C9A84C', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, marginBottom: 8, border: '1px solid rgba(201,168,76,0.4)' }}>무료 맛보기</span>
-                <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>🔮</span>
-                <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 4, display: 'block', fontFamily: 'var(--font-display)' }}>나의 사주</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, display: 'block' }}>돈·직업·연애<br/>내 팔자가 정해놨다</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 10, display: 'block' }}>1,900원</span>
+                <span style={{ display: 'inline-block', background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 2, marginBottom: 12, border: '1px solid rgba(201,168,76,0.3)', letterSpacing: '0.1em' }}>FREE PREVIEW</span>
+                <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', lineHeight: 1, marginBottom: 12, letterSpacing: '-0.02em' }}>命</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>나의 사주</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>돈·직업·연애<br/>내 팔자가 정해놨다</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 12, letterSpacing: '0.05em' }}>1,900원</div>
               </button>
               <button style={{
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(155,29,58,0.4)',
-                borderRadius: 12, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+                background: 'rgba(155,29,58,0.06)', border: '1px solid rgba(155,29,58,0.3)',
+                borderRadius: 10, padding: '20px 12px', cursor: 'pointer', textAlign: 'center',
                 transition: 'all 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
               }} onClick={() => { setServiceType('gunghab'); setGunghabStep(1); setScreen('gunghab_input') }}>
-                <span style={{ fontSize: 28, display: 'block', marginBottom: 8, marginTop: 26 }}>💕</span>
-                <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 4, display: 'block', fontFamily: 'var(--font-display)' }}>궁합</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, display: 'block' }}>우리 잘 맞는지<br/>사주로 확인</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 10, display: 'block' }}>1,900원</span>
+                <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', lineHeight: 1, marginBottom: 12, marginTop: 22, letterSpacing: '-0.02em' }}>合</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>궁합</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>우리 잘 맞는지<br/>사주로 확인</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 12, letterSpacing: '0.05em' }}>1,900원</div>
               </button>
             </div>
             <div style={s.grid2}>
               <button style={{
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(45,122,82,0.4)',
-                borderRadius: 12, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+                background: 'rgba(45,122,82,0.06)', border: '1px solid rgba(45,122,82,0.3)',
+                borderRadius: 10, padding: '20px 12px', cursor: 'pointer', textAlign: 'center',
                 transition: 'all 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
               }} onClick={() => { setServiceType('child'); setScreen('input') }}>
-                <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>🌱</span>
-                <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 4, display: 'block', fontFamily: 'var(--font-display)' }}>내 아이 괜찮을까</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, display: 'block' }}>아이의 타고난 재능·진로를 미리 확인</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 10, display: 'block' }}>1,900원</span>
+                <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', lineHeight: 1, marginBottom: 12, letterSpacing: '-0.02em' }}>子</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>내 아이 괜찮을까</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>타고난 재능·진로<br/>미리 확인</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 12, letterSpacing: '0.05em' }}>1,900원</div>
               </button>
               <button style={{
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(45,106,155,0.4)',
-                borderRadius: 12, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+                background: 'rgba(45,106,155,0.06)', border: '1px solid rgba(45,106,155,0.3)',
+                borderRadius: 10, padding: '20px 12px', cursor: 'pointer', textAlign: 'center',
                 transition: 'all 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
               }} onClick={() => { setServiceType('노후'); setScreen('input') }}>
-                <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>🌅</span>
-                <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 4, display: 'block', fontFamily: 'var(--font-display)' }}>나의 노후는 괜찮을까</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, display: 'block' }}>말년 재물·건강·황혼 인연을 미리 확인</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 10, display: 'block' }}>1,900원</span>
+                <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', lineHeight: 1, marginBottom: 12, letterSpacing: '-0.02em' }}>老</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>나의 노후는 괜찮을까</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>말년 재물·건강<br/>황혼 인연 미리 확인</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 12, letterSpacing: '0.05em' }}>1,900원</div>
               </button>
             </div>
             <div style={{ marginBottom: 12 }}>
               <button style={{
-                width: '100%', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.4)',
-                borderRadius: 12, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
-                transition: 'all 0.2s', boxShadow: '0 0 20px rgba(201,168,76,0.05)',
+                width: '100%', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.35)',
+                borderRadius: 10, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+                transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 20, justifyContent: 'center',
               }} onClick={() => { setServiceType('길일'); setScreen('gilil_input') }}>
-                <span style={{ fontSize: 28, display: 'block', marginBottom: 8 }}>📅</span>
-                <span style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 4, display: 'block', fontFamily: 'var(--font-display)' }}>오늘, 이 날짜 괜찮을까?</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, display: 'block' }}>이사·계약·개업·결혼·수술 — 내 사주와 맞는 길일 추천</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 10, display: 'block' }}>9,900원</span>
+                <div style={{ fontSize: 40, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', letterSpacing: '-0.02em' }}>吉</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#C9A84C', marginBottom: 4, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>오늘, 이 날짜 괜찮을까?</div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>이사·계약·개업·결혼·수술<br/>내 사주와 맞는 길일 추천</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 6, letterSpacing: '0.05em' }}>9,900원</div>
+                </div>
               </button>
             </div>
             <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.15)', marginTop: 8 }}>
