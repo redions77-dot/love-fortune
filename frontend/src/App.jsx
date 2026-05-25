@@ -167,7 +167,7 @@ const s = {
     }),
     accordionTitle: (open) => ({ fontSize: 15, fontWeight: 700, color: open ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, fontFamily: 'var(--font-display)' }),
     accordionArrow: (open) => ({ fontSize: 12, color: 'rgba(201,168,76,0.5)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }),
-    accordionBody: { wordBreak: 'keep-all', padding: '16px 18px', fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.75)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' },
+    accordionBody: { wordBreak: 'keep-all', padding: '16px 18px', fontSize: 17, lineHeight: 2, color: 'rgba(255,255,255,0.75)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' },
     paidAccordion: { marginBottom: 8, border: '1px solid rgba(201,168,76,0.4)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
     paidAccordionHeader: (open) => ({
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
