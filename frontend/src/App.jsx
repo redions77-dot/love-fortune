@@ -1066,20 +1066,25 @@ export default function App() {
           </div>
         </div>
 
-        {/* 사업자 정보 푸터 */}
+     {/* 사업자 정보 푸터 */}
         <div style={{
-          borderTop: '1px solid rgba(201,168,76,0.25)',
-          padding: '24px 20px 40px',
-          background: '#1B2A4A',
+          borderTop: '1px solid rgba(201,168,76,0.2)',
+          padding: '28px 20px 44px',
+          background: '#050D1F',
         }}>
-          <div style={{ maxWidth: 480, margin: '0 auto', fontSize: 11, color: 'rgba(255,255,255,0.35)', lineHeight: 2 }}>
-            <p style={{ fontWeight: 600, color: '#C9A84C', marginBottom: 4 }}>봄결</p>
-            <p>대표자: 손영주</p>
-            <p>사업자등록번호: 219-17-02825</p>
-            <p>사업장 주소: 경기도 남양주시 별내3로 332, 701호 -V133호(별내동, 스카이프라자)</p>
-            <p>전화: 010-9772-1987</p>
-            <p>이메일: redions77@naver.com</p>
-            <p style={{ marginTop: 8 }}>© 2026 봄결. All rights reserved.</p>
+          <div style={{ maxWidth: 480, margin: '0 auto' }}>
+            <p style={{ fontSize: 10, color: 'rgba(201,168,76,0.5)', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 12 }}>BUSINESS INFO</p>
+            <div style={{ width: 24, height: 1, background: 'rgba(201,168,76,0.3)', marginBottom: 16 }} />
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginBottom: 10, fontFamily: 'var(--font-display)' }}>봄결</p>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', lineHeight: 2.2 }}>
+              <p>대표자 · 손영주</p>
+              <p>사업자등록번호 · 219-17-02825</p>
+              <p>사업장 · 경기도 남양주시 별내3로 332, 701호 -V133호</p>
+              <p>전화 · 010-9772-1987</p>
+              <p>이메일 · redions77@naver.com</p>
+            </div>
+            <div style={{ width: 24, height: 1, background: 'rgba(201,168,76,0.2)', margin: '16px 0' }} />
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.05em' }}>© 2026 봄결. All rights reserved.</p>
           </div>
         </div>
 
