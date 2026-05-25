@@ -796,16 +796,56 @@ export default function App() {
         </div>
 
         {/* 히어로 + 북극성 — 네이비로 통합 */}
-        <div style={{ background: 'linear-gradient(180deg, #1B2A4A 0%, #243557 100%)', paddingBottom: 40 }}>
-          <div style={s.landingHero}>
-       <div style={{ marginBottom: 16 }}>
-            <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M26 4L28.8 20.2L44 22L28.8 24.8L26 48L23.2 24.8L8 22L23.2 20.2L26 4Z" fill="#C9A84C"/>
-              <path d="M42 6L43.2 12.8L50 14L43.2 15.2L42 22L40.8 15.2L34 14L40.8 12.8L42 6Z" fill="rgba(201,168,76,0.6)"/>
-              <path d="M10 8L11 13L16 14L11 15L10 20L9 15L4 14L9 13L10 8Z" fill="rgba(201,168,76,0.4)"/>
-            </svg>
-          </div>
-            <h1 style={s.landingTitle}>나는 죽어라 했는데,<br/>쟤는 왜 얻어걸려도 잘될까</h1>
+<div style={{ background: 'linear-gradient(180deg, #1B2A4A 0%, #243557 100%)', paddingBottom: 40 }}>
+          <div style={{
+            ...s.landingHero,
+            margin: '20px 16px 0',
+            borderRadius: 16,
+            border: '1px solid rgba(201,168,76,0.7)',
+            outline: '3px solid rgba(201,168,76,0.25)',
+            outlineOffset: '4px',
+            boxShadow: '0 0 0 1px rgba(201,168,76,0.15), inset 0 0 40px rgba(27,42,74,0.3)',
+          }}>
+            {/* 몽환적 별 SVG */}
+            <div style={{ marginBottom: 20 }}>
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M32 2L33.5 29.5L32 62L30.5 29.5L32 2Z" fill="url(#g1)" strokeWidth="0"/>
+                <path d="M2 32L29.5 30.5L62 32L29.5 33.5L2 32Z" fill="url(#g2)" strokeWidth="0"/>
+                <path d="M32 2L34 28L62 32L34 36L32 62L30 36L2 32L30 28L32 2Z" fill="url(#g3)" opacity="0.6"/>
+                <circle cx="32" cy="32" r="3" fill="#E8C96A" opacity="0.9"/>
+                <circle cx="32" cy="32" r="8" fill="url(#glow)" opacity="0.3"/>
+                <path d="M14 14L18 30L14 46" stroke="rgba(201,168,76,0.3)" strokeWidth="0.5"/>
+                <path d="M50 14L46 30L50 46" stroke="rgba(201,168,76,0.3)" strokeWidth="0.5"/>
+                <defs>
+                  <linearGradient id="g1" x1="32" y1="2" x2="32" y2="62" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#E8C96A"/>
+                    <stop offset="50%" stopColor="#C9A84C"/>
+                    <stop offset="100%" stopColor="#E8C96A"/>
+                  </linearGradient>
+                  <linearGradient id="g2" x1="2" y1="32" x2="62" y2="32" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#E8C96A"/>
+                    <stop offset="50%" stopColor="#C9A84C"/>
+                    <stop offset="100%" stopColor="#E8C96A"/>
+                  </linearGradient>
+                  <linearGradient id="g3" x1="32" y1="2" x2="32" y2="62" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#F5E090"/>
+                    <stop offset="100%" stopColor="#C9A84C"/>
+                  </linearGradient>
+                  <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#E8C96A"/>
+                    <stop offset="100%" stopColor="transparent"/>
+                  </radialGradient>
+                </defs>
+              </svg>
+            </div>
+
+            <h1 style={{
+              wordBreak: 'keep-all', fontSize: 32, fontWeight: 800,
+              color: '#FFFFFF', marginBottom: 12, lineHeight: 1.3,
+              fontFamily: 'var(--font-display)', letterSpacing: '-0.02em',
+              textShadow: '0 2px 20px rgba(0,0,0,0.3)',
+            }}>나는 죽어라 했는데,<br/>쟤는 왜 얻어걸려도 잘될까</h1>
+
             <p style={s.landingSub}>
               방향이 달랐던 거예요.<br/>
               <span style={{ fontWeight: 700, color: '#C9A84C' }}>사주가 알려줄게요.</span>
