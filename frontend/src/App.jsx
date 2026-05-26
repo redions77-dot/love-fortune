@@ -898,7 +898,7 @@ export default function App() {
               fontFamily: 'var(--font-display)',
               letterSpacing: '-0.02em',
               textShadow: '0 0 40px rgba(100,140,255,0.4), 0 2px 20px rgba(0,0,0,0.8)',
-            }}>나는 죽어라 했는데,<br/>쟤는 왜 얻어걸려도 잘될까</h1>
+            }}>나는 죽어도 안되는 게,<br/>쟤는 왜 쉽게 될까</h1>
 
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, marginBottom: 24 }}>
               방향이 달랐던 거예요.<br/>
