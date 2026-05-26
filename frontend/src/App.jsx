@@ -14,7 +14,9 @@ const MARITAL_OPTIONS = [
 ]
 
 const PRICE = 1900
-
+function removeMarkers(text) {
+  return text.replace(/===[^=]+===/g, '').replace(/\n{3,}/g, '\n\n').trim()
+}
 function parseSections(text) {
   const sections = []
   const parts = text.split(/===(.+?)===/)
