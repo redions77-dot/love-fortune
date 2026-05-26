@@ -792,10 +792,6 @@ export default function App() {
     return (
       <div style={s.landing}>
         {/* 타이머 배너 */}
-        <div style={s.timerBanner}>
-          🔥 오늘 자정까지 할인
-          <span style={s.timerNum}>{countdown}</span>
-        </div>
 
         {/* 히어로 + 북극성 — 네이비로 통합 */}
 <div style={{ position: 'relative', overflow: 'hidden', paddingBottom: 0 }}>
@@ -1251,10 +1247,7 @@ export default function App() {
     return (
       <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
         {phase === 'done' && !isPaid && (
-          <div style={s.timerBanner}>
-            🔥 오늘 자정까지 할인 &nbsp;
-            <span style={s.timerNum}>{countdown}</span>
-          </div>
+     
         )}
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box', width: '100%' }}>
 
@@ -1371,7 +1364,7 @@ export default function App() {
                 ))}
               </div>
               <div style={{ fontSize: 38, fontWeight: 800, color: '#C9A84C', marginBottom: 4, fontFamily: 'var(--font-display)' }}>1,900원</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 16 }}>⏰ 오늘 자정까지 {countdown}</div>
+           
               <button style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em' }} onClick={() => {
                 if (window.confirm('1,900원 결제 후 전체 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
                   handlePaidAnalyze()
