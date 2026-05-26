@@ -1316,7 +1316,7 @@ export default function App() {
 
           {/* 유료 스트리밍 */}
           {isPaidStreaming && paidText && (
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{paidText}<span style={{ opacity: 0.4 }}>▌</span></div>
+            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{{paidText.replace(/===.+?===/g, '').replace(/\n{3,}/g, '\n\n')}}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
 
           {/* 유료 결과 */}
