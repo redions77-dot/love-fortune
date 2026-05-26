@@ -1248,26 +1248,37 @@ export default function App() {
       <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box', width: '100%' }}>
 
-          {/* 사주팔자 카드 */}
-          {sajuData?.사주 && (
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 20px', marginBottom: 12 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#C9A84C', marginBottom: 12, letterSpacing: '0.1em' }}>나의 사주팔자</p>
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 10, textAlign: 'center' }}>{sajuData.생년월일}</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-                {[
-                  { label: '시주(時)', value: sajuData.사주.시주 },
-                  { label: '일주(日)', value: sajuData.사주.일주 },
-                  { label: '월주(月)', value: sajuData.사주.월주 },
-                  { label: '년주(年)', value: sajuData.사주.년주 },
-                ].map(({ label, value }) => (
-                  <div key={label} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 4px', border: '1px solid rgba(201,168,76,0.15)' }}>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginBottom: 4, display: 'block' }}>{label}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.6 }}>{value || '-'}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+    {/* 사주팔자 카드 */}
+{sajuData?.사주 && (
+  <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 20px', marginBottom: 12 }}>
+    <p style={{ fontSize: 11, fontWeight: 600, color: '#C9A84C', marginBottom: 12, letterSpacing: '0.1em' }}>나의 사주팔자</p>
+    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 10, textAlign: 'center' }}>{sajuData.생년월일}</p>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+      {[
+        { label: '시주(時)', value: sajuData.사주.시주 },
+        { label: '일주(日)', value: sajuData.사주.일주 },
+        { label: '월주(月)', value: sajuData.사주.월주 },
+        { label: '년주(年)', value: sajuData.사주.년주 },
+      ].map(({ label, value }) => {
+        const 오행색 = {
+          '甲갑': '#4ADE80', '乙을': '#4ADE80',
+          '丙병': '#F87171', '丁정': '#F87171',
+          '戊무': '#C9A84C', '己기': '#C9A84C',
+          '庚경': '#E8C96A', '辛신': '#E8C96A',
+          '壬임': '#60A5FA', '癸계': '#60A5FA',
+        }
+        const 천간 = value?.slice(0, 2)
+        const 색 = 오행색[천간] || '#FFFFFF'
+        return (
+          <div key={label} style={{ textAlign: 'center', background: `${색}12`, borderRadius: 8, padding: '10px 4px', border: `1px solid ${색}40` }}>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginBottom: 4, display: 'block' }}>{label}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 색, lineHeight: 1.6 }}>{value || '-'}</span>
+          </div>
+        )
+      })}
+    </div>
+  </div>
+)}
 
           {/* 스트리밍 */}
           {isBaseStreaming && baseText && (
