@@ -1084,7 +1084,12 @@ export default function App() {
               <p>이메일 · redions77@naver.com</p>
             </div>
             <div style={{ width: 24, height: 1, background: 'rgba(201,168,76,0.2)', margin: '16px 0' }} />
-            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.05em' }}>© 2026 봄결. All rights reserved.</p>
+       <div style={{ display: 'flex', gap: 16, marginBottom: 12, flexWrap: 'wrap' }}>
+  <button onClick={() => setScreen('terms')} style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>이용약관</button>
+  <button onClick={() => setScreen('privacy')} style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>개인정보처리방침</button>
+  <button onClick={() => setScreen('refund')} style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>환불정책</button>
+</div>
+<p style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.05em' }}>© 2026 봄결. All rights reserved.</p>
           </div>
         </div>
 
@@ -1389,6 +1394,78 @@ export default function App() {
       </div>
     )
   }
+// ── 이용약관 ──
+if (screen === 'terms') return (
+  <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
+    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+      <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
+      <h1 style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', marginBottom: 24, fontFamily: 'var(--font-display)' }}>이용약관</h1>
+      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 2.2 }}>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>제1조 (목적)</p>
+        <p style={{ marginBottom: 20 }}>본 약관은 봄결(이하 "회사")이 운영하는 mysaju.shop(이하 "서비스")의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>제2조 (서비스 내용)</p>
+        <p style={{ marginBottom: 20 }}>회사는 사주 분석, 궁합, 길일 추천 등 사주명리학 기반의 디지털 콘텐츠 서비스를 제공합니다. 본 서비스는 참고용 정보 제공을 목적으로 하며, 전문적인 상담을 대체하지 않습니다.</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>제3조 (이용 요금)</p>
+        <p style={{ marginBottom: 20 }}>서비스 이용 요금은 각 서비스 화면에 표시된 금액을 따릅니다. 결제는 카카오페이, 신용카드 등 제공되는 결제 수단을 통해 이루어집니다.</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>제4조 (지적재산권)</p>
+        <p style={{ marginBottom: 20 }}>서비스에서 제공되는 모든 콘텐츠의 저작권은 회사에 있으며, 이용자는 서비스를 통해 얻은 정보를 회사의 사전 허락 없이 복제, 배포, 상업적으로 이용할 수 없습니다.</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>제5조 (면책)</p>
+        <p style={{ marginBottom: 20 }}>본 서비스는 사주명리학을 기반으로 한 참고용 콘텐츠이며, 회사는 분석 결과의 정확성에 대해 법적 책임을 지지 않습니다.</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>제6조 (준거법)</p>
+        <p style={{ marginBottom: 20 }}>본 약관은 대한민국 법률에 따라 해석되며, 분쟁 발생 시 관할 법원은 회사 소재지 관할 법원으로 합니다.</p>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 32 }}>시행일: 2026년 5월 26일 | 상호: 봄결 | 대표: 손영주</p>
+      </div>
+    </div>
+  </div>
+)
 
+// ── 개인정보처리방침 ──
+if (screen === 'privacy') return (
+  <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
+    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+      <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
+      <h1 style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', marginBottom: 24, fontFamily: 'var(--font-display)' }}>개인정보처리방침</h1>
+      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 2.2 }}>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>1. 수집하는 개인정보 항목</p>
+        <p style={{ marginBottom: 20 }}>서비스 이용 시 수집되는 정보: 이름(선택), 생년월일, 성별, 결제 정보(결제대행사를 통해 처리되며 회사는 카드번호 등을 저장하지 않습니다), 서비스 이용 기록</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>2. 개인정보 수집 및 이용 목적</p>
+        <p style={{ marginBottom: 20 }}>사주 분석 서비스 제공, 결제 처리, 서비스 품질 향상</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>3. 개인정보 보유 및 이용기간</p>
+        <p style={{ marginBottom: 20 }}>서비스 이용 종료 시 또는 이용자 요청 시 지체 없이 파기합니다. 단, 관계 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다.</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>4. 개인정보 제3자 제공</p>
+        <p style={{ marginBottom: 20 }}>회사는 이용자의 동의 없이 개인정보를 제3자에게 제공하지 않습니다. 단, 결제 처리를 위해 포트원(PortOne)을 통한 결제대행사에 최소한의 정보가 제공됩니다.</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>5. 이용자의 권리</p>
+        <p style={{ marginBottom: 20 }}>이용자는 언제든지 개인정보 열람, 수정, 삭제를 요청할 수 있습니다. 문의: redions77@naver.com</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>6. 개인정보 보호책임자</p>
+        <p style={{ marginBottom: 20 }}>성명: 손영주 | 이메일: redions77@naver.com | 전화: 010-9772-1987</p>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 32 }}>시행일: 2026년 5월 26일 | 상호: 봄결</p>
+      </div>
+    </div>
+  </div>
+)
+
+// ── 환불정책 ──
+if (screen === 'refund') return (
+  <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
+    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+      <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
+      <h1 style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', marginBottom: 24, fontFamily: 'var(--font-display)' }}>환불정책</h1>
+      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 2.2 }}>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>디지털 콘텐츠 특성상 환불 정책</p>
+        <p style={{ marginBottom: 20 }}>본 서비스는 결제 즉시 제공되는 디지털 콘텐츠입니다. 콘텐츠가 제공된 이후에는 「콘텐츠산업 진흥법」 및 「전자상거래법」에 따라 원칙적으로 환불이 제한됩니다.</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>환불 가능한 경우</p>
+        <p style={{ marginBottom: 8 }}>• 결제 후 콘텐츠가 정상적으로 제공되지 않은 경우</p>
+        <p style={{ marginBottom: 8 }}>• 서비스 오류로 인해 분석 결과를 확인하지 못한 경우</p>
+        <p style={{ marginBottom: 20 }}>• 결제 후 콘텐츠 확인 전 취소 요청한 경우 (결제 당일에 한함)</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>환불 불가한 경우</p>
+        <p style={{ marginBottom: 8 }}>• 분석 결과를 이미 확인한 경우</p>
+        <p style={{ marginBottom: 20 }}>• 단순 변심에 의한 취소</p>
+        <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>환불 신청 방법</p>
+        <p style={{ marginBottom: 20 }}>이메일(redions77@naver.com) 또는 전화(010-9772-1987)로 문의해 주세요. 영업일 기준 1~3일 내 처리됩니다.</p>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 32 }}>시행일: 2026년 5월 26일 | 상호: 봄결 | 대표: 손영주</p>
+      </div>
+    </div>
+  </div>
+)
   return null
 }
