@@ -1246,9 +1246,6 @@ export default function App() {
 
     return (
       <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
-        {phase === 'done' && !isPaid && (
-     
-        )}
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box', width: '100%' }}>
 
           {/* 사주팔자 카드 */}
