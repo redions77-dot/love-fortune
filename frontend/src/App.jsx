@@ -597,19 +597,7 @@ export default function App() {
           <button style={s.backBtn} onClick={() => setScreen('landing')}>←</button>
           <button style={s.nextBtn(!canNext)} disabled={!canNext}
             onClick={() => {
-       const IMP = window.IMP
-       IMP.init('imp87662575')
-       IMP.request_pay({
-         pg: 'kcp',
-         pay_method: 'card',
-         merchant_uid: `gilil_${Date.now()}`,
-         name: '마이사주 길일 추천',
-         amount: 9900,
-         buyer_name: myName || '고객',
-       }, (rsp) => {
-         if (rsp.success) handleGililAnalyze()
-         else alert('결제가 취소되었습니다.')
-        })
+       handleGililAnalyze()
             }}>
             📅 길일 찾기 (9,900원)
           </button>
@@ -744,19 +732,7 @@ export default function App() {
             onClick={() => {
               if (isStep1) setGunghabStep(2)
               else {
-           const IMP = window.IMP
-            IMP.init('imp87662575')
-            IMP.request_pay({
-             pg: 'kcp',
-             pay_method: 'card',
-             merchant_uid: `gunghab_${Date.now()}`,
-             name: '마이사주 궁합 분석',
-             amount: 1900,
-             buyer_name: myName || '고객',
-          }, (rsp) => {
-             if (rsp.success) handleGunghabAnalyze()
-             else alert('결제가 취소되었습니다.')
-           })
+          handleGunghabAnalyze()
               }
             }}>
             {isStep1 ? '다음 — 상대방 정보 입력' : '💕 궁합 분석받기 (1,900원)'}
@@ -1398,19 +1374,7 @@ export default function App() {
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>결제 후 즉시 사용 가능</p>
            
               <button style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em' }} onClick={() => {
-           const IMP = window.IMP
-           IMP.init('imp87662575')
-           IMP.request_pay({
-             pg: 'kcp',
-             pay_method: 'card',
-             merchant_uid: `saju_${Date.now()}`,
-             name: '마이사주 전체 분석',
-             amount: 1900,
-             buyer_name: myName || '고객',
-           }, (rsp) => {
-             if (rsp.success) handlePaidAnalyze()
-             else alert('결제가 취소되었습니다.')
-           })
+         handlePaidAnalyze()
               }}>
                 지금 전체 분석 받기 →
               </button>
