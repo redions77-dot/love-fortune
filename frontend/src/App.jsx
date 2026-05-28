@@ -1,5 +1,7 @@
-import { useEffect, useState, useRef } from 'react'
+  import { useEffect, useState, useRef } from 'react'
 
+const PORTONE_STORE_ID = 'store-cae7de20-4bfb-446b-b501-b26cee30a31e'
+const PORTONE_CHANNEL_KEY = 'channel-key-218ea554-45e0-4d59-b68b-01c25091629e'
 // ── 상수 ──────────────────────────────────────────────
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
@@ -595,9 +597,19 @@ export default function App() {
           <button style={s.backBtn} onClick={() => setScreen('landing')}>←</button>
           <button style={s.nextBtn(!canNext)} disabled={!canNext}
             onClick={() => {
-              if (window.confirm('9,900원 결제 후 길일 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
-                handleGililAnalyze()
-              }
+             const IMP = window.IMP
+             IMP.init(PORTONE_STORE_ID)
+             IMP.request_pay({
+              channel_key: PORTONE_CHANNEL_KEY,
+              pay_method: 'card',
+              merchant_uid: `gilil_${Date.now()}`,
+              name: '마이사주 길일 추천',
+              amount: 9900,
+              buyer_name: myName || '고객',
+            }, (rsp) => {
+              if (rsp.success) handleGililAnalyze()
+              else alert('결제가 취소되었습니다.')
+            })
             }}>
             📅 길일 찾기 (9,900원)
           </button>
@@ -732,9 +744,19 @@ export default function App() {
             onClick={() => {
               if (isStep1) setGunghabStep(2)
               else {
-                if (window.confirm('1,900원 결제 후 궁합 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
-                  handleGunghabAnalyze()
-                }
+               const IMP = window.IMP
+               IMP.init(PORTONE_STORE_ID)
+               IMP.request_pay({
+                 channel_key: PORTONE_CHANNEL_KEY,
+                 pay_method: 'card',
+                 merchant_uid: `gunghab_${Date.now()}`,
+                 name: '마이사주 궁합 분석',
+                 amount: 1900,
+                 buyer_name: myName || '고객',
+              }, (rsp) => {
+                if (rsp.success) handleGunghabAnalyze()
+                else alert('결제가 취소되었습니다.')
+             })
               }
             }}>
             {isStep1 ? '다음 — 상대방 정보 입력' : '💕 궁합 분석받기 (1,900원)'}
@@ -1374,9 +1396,19 @@ export default function App() {
               <div style={{ fontSize: 38, fontWeight: 800, color: '#C9A84C', marginBottom: 4, fontFamily: 'var(--font-display)' }}>1,900원</div>
            
               <button style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em' }} onClick={() => {
-                if (window.confirm('1,900원 결제 후 전체 분석을 받으시겠어요?\n(현재 테스트 중 - 결제 없이 바로 확인)')) {
-                  handlePaidAnalyze()
-                }
+               const IMP = window.IMP
+                IMP.init(PORTONE_STORE_ID)
+                IMP.request_pay({
+                channel_key: PORTONE_CHANNEL_KEY,
+                pay_method: 'card',
+                merchant_uid: `saju_${Date.now()}`,
+                name: '마이사주 전체 분석',
+                amount: 1900,
+                buyer_name: myName || '고객',
+              }, (rsp) => {
+               if (rsp.success) handlePaidAnalyze()
+               else alert('결제가 취소되었습니다.')
+            })
               }}>
                 지금 전체 분석 받기 →
               </button>
