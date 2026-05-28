@@ -1374,10 +1374,25 @@ export default function App() {
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>결제 후 즉시 사용 가능</p>
            
               <button style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em' }} onClick={() => {
-         handlePaidAnalyze()
+         const IMP = window.IMP
+IMP.init('imp87662575')
+IMP.request_pay({
+  pg: 'kcp',
+  pay_method: 'card',
+  merchant_uid: `saju_${Date.now()}`,
+  name: '마이사주 전체 분석',
+  amount: 1900,
+  buyer_name: myName || '고객',
+}, (rsp) => {
+  if (rsp.success) handlePaidAnalyze()
+  else alert('결제가 취소되었습니다.')
+})
               }}>
                 지금 전체 분석 받기 →
               </button>
+              <button style={{ width: '100%', padding: '12px', fontSize: 13, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.3)', marginTop: 8 }} onClick={handlePaidAnalyze}>
+  결과 미리보기 (테스트용)
+</button>
             </div>
           )}
 
