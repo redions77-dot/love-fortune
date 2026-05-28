@@ -597,19 +597,18 @@ export default function App() {
           <button style={s.backBtn} onClick={() => setScreen('landing')}>←</button>
           <button style={s.nextBtn(!canNext)} disabled={!canNext}
             onClick={() => {
-             const IMP = window.IMP
-             IMP.init(PORTONE_STORE_ID)
-             IMP.request_pay({
-              channel_key: PORTONE_CHANNEL_KEY,
-              pay_method: 'card',
-              merchant_uid: `gilil_${Date.now()}`,
-              name: '마이사주 길일 추천',
-              amount: 9900,
-              buyer_name: myName || '고객',
-            }, (rsp) => {
-              if (rsp.success) handleGililAnalyze()
-              else alert('결제가 취소되었습니다.')
-            })
+            PortOne.requestPayment({
+              storeId: PORTONE_STORE_ID,
+              channelKey: PORTONE_CHANNEL_KEY,
+              paymentId: `gilil_${Date.now()}`,
+              orderName: '마이사주 길일 추천',
+              totalAmount: 9900,
+              currency: 'KRW',
+              payMethod: 'CARD',
+       }).then((rsp) => {
+         if (!rsp.code) handleGililAnalyze()
+         else alert('결제가 취소되었습니다.')
+       })
             }}>
             📅 길일 찾기 (9,900원)
           </button>
@@ -744,19 +743,18 @@ export default function App() {
             onClick={() => {
               if (isStep1) setGunghabStep(2)
               else {
-               const IMP = window.IMP
-               IMP.init(PORTONE_STORE_ID)
-               IMP.request_pay({
-                 channel_key: PORTONE_CHANNEL_KEY,
-                 pay_method: 'card',
-                 merchant_uid: `gunghab_${Date.now()}`,
-                 name: '마이사주 궁합 분석',
-                 amount: 1900,
-                 buyer_name: myName || '고객',
-              }, (rsp) => {
-                if (rsp.success) handleGunghabAnalyze()
-                else alert('결제가 취소되었습니다.')
-             })
+             PortOne.requestPayment({
+                storeId: PORTONE_STORE_ID,
+                channelKey: PORTONE_CHANNEL_KEY,
+                paymentId: `gunghab_${Date.now()}`,
+                orderName: '마이사주 궁합 분석',
+                totalAmount: 1900,
+                currency: 'KRW',
+                payMethod: 'CARD',
+           }).then((rsp) => {
+             if (!rsp.code) handleGunghabAnalyze()
+             else alert('결제가 취소되었습니다.')
+            })
               }
             }}>
             {isStep1 ? '다음 — 상대방 정보 입력' : '💕 궁합 분석받기 (1,900원)'}
@@ -1396,18 +1394,17 @@ export default function App() {
               <div style={{ fontSize: 38, fontWeight: 800, color: '#C9A84C', marginBottom: 4, fontFamily: 'var(--font-display)' }}>1,900원</div>
            
               <button style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em' }} onClick={() => {
-               const IMP = window.IMP
-                IMP.init(PORTONE_STORE_ID)
-                IMP.request_pay({
-                channel_key: PORTONE_CHANNEL_KEY,
-                pay_method: 'card',
-                merchant_uid: `saju_${Date.now()}`,
-                name: '마이사주 전체 분석',
-                amount: 1900,
-                buyer_name: myName || '고객',
-              }, (rsp) => {
-               if (rsp.success) handlePaidAnalyze()
-               else alert('결제가 취소되었습니다.')
+             PortOne.requestPayment({
+               storeId: PORTONE_STORE_ID,
+               channelKey: PORTONE_CHANNEL_KEY,
+               paymentId: `saju_${Date.now()}`,
+               orderName: '마이사주 전체 분석',
+               totalAmount: 1900,
+               currency: 'KRW',
+               payMethod: 'CARD',
+            }).then((rsp) => {
+              if (!rsp.code) handlePaidAnalyze()
+              else alert('결제가 취소되었습니다.')
             })
               }}>
                 지금 전체 분석 받기 →
