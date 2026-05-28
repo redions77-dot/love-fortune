@@ -1103,6 +1103,7 @@ export default function App() {
               <p>전화 · 010-9772-1987</p>
               <p>이메일 · redions77@naver.com</p>
               <p>통신판매업신고 · 제2026-별내-1183호</p>
+              <p>과세유형 · 간이과세자</p>
             </div>
             <div style={{ width: 24, height: 1, background: 'rgba(201,168,76,0.2)', margin: '16px 0' }} />
        <div style={{ display: 'flex', gap: 16, marginBottom: 12, flexWrap: 'wrap' }}>
