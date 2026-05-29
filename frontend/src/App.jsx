@@ -648,7 +648,7 @@ export default function App() {
     )
   }
 
-  // ── 궁합 입력 화면 ──
+ // ── 궁합 입력 화면 ──
   if (screen === 'gunghab_input') {
     const isStep1 = gunghabStep === 1
     const myBirthdateValid = birthYear.length === 4 && Number(birthMonth) >= 1 && Number(birthMonth) <= 12 && Number(birthDay) >= 1
@@ -657,106 +657,164 @@ export default function App() {
     const canStep2Next = partnerGender !== '' && partnerBirthdateValid && partnerBirthtimeValid
 
     return (
-      <div style={s.app}>
-        <div style={s.header}>
-          <span style={s.heroEmoji}>💕</span>
-          <h1 style={s.heroTitle}>궁합 분석</h1>
-          <p style={s.heroSub}>{isStep1 ? '먼저 내 정보를 입력해주세요' : '이제 상대방 정보를 입력해주세요'}</p>
+      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
+          <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>合</div>
+          <h1 style={{ wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>궁합 분석</h1>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{isStep1 ? '먼저 내 정보를 입력해주세요' : '이제 상대방 정보를 입력해주세요'}</p>
         </div>
-        <div style={s.progressWrap}>
-          <div style={s.progressBar}><div style={s.progressFill(isStep1 ? 50 : 100)} /></div>
-          <p style={s.stepLabel}>{isStep1 ? '1' : '2'} / 2</p>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 99, margin: '14px 0 0', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: isStep1 ? '50%' : '100%', background: '#C9A84C', borderRadius: 99, transition: 'width 0.35s ease' }} />
+          </div>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'right', marginTop: 4, marginBottom: 8 }}>{isStep1 ? '1' : '2'} / 2</p>
         </div>
-        <div style={s.stepWrap}>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
           {isStep1 ? (
             <>
-              <h2 style={s.stepTitle}>나의 정보</h2>
-              <p style={s.stepSub}>내 성별부터 알려주세요</p>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>나의 정보</h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>내 성별부터 알려주세요</p>
               <div style={{ marginBottom: 16 }}>
-                <p style={s.timeLabel}>이름 (선택)</p>
+                <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>이름 (선택)</p>
                 <input
-                  style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', boxSizing: 'border-box', outline: 'none' }}
+                  style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box', outline: 'none' }}
                   type="text" placeholder="내 이름을 입력해주세요"
                   value={myName} onChange={e => setMyName(e.target.value)}
                 />
               </div>
-              <div style={s.genderGrid}>
-                <button style={s.genderBtn(gender === '여성')} onClick={() => setGender('여성')}>
-                  <span>♀️</span><span style={s.genderLabel(gender === '여성')}>여성</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
+                <button style={{ padding: '28px 16px', border: `2px solid ${gender === '여성' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: gender === '여성' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', fontSize: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s' }} onClick={() => setGender('여성')}>
+                  <span>♀️</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: gender === '여성' ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>여성</span>
                 </button>
-                <button style={s.genderBtn(gender === '남성')} onClick={() => setGender('남성')}>
-                  <span>♂️</span><span style={s.genderLabel(gender === '남성')}>남성</span>
+                <button style={{ padding: '28px 16px', border: `2px solid ${gender === '남성' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: gender === '남성' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', fontSize: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s' }} onClick={() => setGender('남성')}>
+                  <span>♂️</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: gender === '남성' ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>남성</span>
                 </button>
               </div>
-              <h2 style={{ ...s.stepTitle, marginTop: 20 }}>내 생년월일 · 시간</h2>
-              <DateInputs
-                year={birthYear} setYear={setBirthYear}
-                month={birthMonth} setMonth={setBirthMonth}
-                day={birthDay} setDay={setBirthDay}
-                lunar={isLunar} setLunar={setIsLunar}
-                hour={timeHour} setHour={setTimeHour}
-                min={timeMin} setMin={setTimeMin}
-                ampm={timeAmPm} setAmpm={setTimeAmPm}
-                unknown={timeUnknown} setUnknown={setTimeUnknown}
-              />
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginTop: 20, marginBottom: 6, fontFamily: 'var(--font-display)' }}>내 생년월일 · 시간</h2>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: !isLunar ? 600 : 400, border: `1px solid ${!isLunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: !isLunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: !isLunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setIsLunar(false)}>양력 🌞</button>
+                <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: isLunar ? 600 : 400, border: `1px solid ${isLunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: isLunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: isLunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setIsLunar(true)}>음력 🌙</button>
+              </div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 }}>
+                <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0,4))} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>년</span>
+                <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0,2))} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>월</span>
+                <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0,2))} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>일</span>
+              </div>
+              <button style={{ width: '100%', padding: '13px 16px', border: `1px solid ${timeUnknown ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: timeUnknown ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeUnknown ? '#C9A84C' : 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: timeUnknown ? 600 : 400, cursor: 'pointer', textAlign: 'center', marginBottom: 16 }} onClick={() => { setTimeUnknown(true); setTimeHour(''); setTimeMin('') }}>✓ 태어난 시간 모름</button>
+              {!timeUnknown && (
+                <>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>오전 / 오후</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+                    <button style={{ padding: '14px', fontSize: 15, fontWeight: timeAmPm === '오전' ? 700 : 400, border: `2px solid ${timeAmPm === '오전' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: timeAmPm === '오전' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeAmPm === '오전' ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setTimeAmPm('오전')}>🌅 오전</button>
+                    <button style={{ padding: '14px', fontSize: 15, fontWeight: timeAmPm === '오후' ? 700 : 400, border: `2px solid ${timeAmPm === '오후' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: timeAmPm === '오후' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeAmPm === '오후' ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setTimeAmPm('오후')}>🌇 오후</button>
+                  </div>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>시 선택</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
+                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                      <button key={h} style={{ padding: '12px 4px', fontSize: 14, fontWeight: timeHour === String(h) ? 700 : 400, border: `1px solid ${timeHour === String(h) ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 10, background: timeHour === String(h) ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeHour === String(h) ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', textAlign: 'center' }} onClick={() => setTimeHour(String(h))}>{h}시</button>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>분 선택</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
+                    {['00','10','20','30','40','50'].map(m => (
+                      <button key={m} style={{ padding: '12px 4px', fontSize: 14, fontWeight: timeMin === m ? 700 : 400, border: `1px solid ${timeMin === m ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 10, background: timeMin === m ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeMin === m ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', textAlign: 'center' }} onClick={() => setTimeMin(m)}>{m}분</button>
+                    ))}
+                  </div>
+                  {timeHour && timeMin && <p style={{ fontSize: 13, color: '#C9A84C', textAlign: 'center', marginBottom: 8, fontWeight: 600 }}>✓ {timeAmPm} {timeHour}시 {timeMin}분</p>}
+                </>
+              )}
+              {timeUnknown && <button style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', textDecoration: 'underline', display: 'block' }} onClick={() => setTimeUnknown(false)}>시간 직접 선택하기</button>}
             </>
           ) : (
             <>
-              <h2 style={s.stepTitle}>상대방 정보</h2>
-              <p style={s.stepSub}>상대방 성별을 알려주세요</p>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>상대방 정보</h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>상대방 성별을 알려주세요</p>
               <div style={{ marginBottom: 16 }}>
-                <p style={s.timeLabel}>상대방 이름 (선택)</p>
+                <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>상대방 이름 (선택)</p>
                 <input
-                  style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', color: 'var(--color-text)', boxSizing: 'border-box', outline: 'none' }}
+                  style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box', outline: 'none' }}
                   type="text" placeholder="상대방 이름을 입력해주세요"
                   value={partnerName} onChange={e => setPartnerName(e.target.value)}
                 />
               </div>
-              <div style={s.genderGrid}>
-                <button style={s.genderBtn(partnerGender === '여성')} onClick={() => setPartnerGender('여성')}>
-                  <span>♀️</span><span style={s.genderLabel(partnerGender === '여성')}>여성</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
+                <button style={{ padding: '28px 16px', border: `2px solid ${partnerGender === '여성' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: partnerGender === '여성' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', fontSize: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s' }} onClick={() => setPartnerGender('여성')}>
+                  <span>♀️</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: partnerGender === '여성' ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>여성</span>
                 </button>
-                <button style={s.genderBtn(partnerGender === '남성')} onClick={() => setPartnerGender('남성')}>
-                  <span>♂️</span><span style={s.genderLabel(partnerGender === '남성')}>남성</span>
+                <button style={{ padding: '28px 16px', border: `2px solid ${partnerGender === '남성' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: partnerGender === '남성' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', fontSize: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s' }} onClick={() => setPartnerGender('남성')}>
+                  <span>♂️</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: partnerGender === '남성' ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>남성</span>
                 </button>
               </div>
-              <h2 style={{ ...s.stepTitle, marginTop: 20 }}>상대방 생년월일 · 시간</h2>
-              <DateInputs
-                year={partnerBirthYear} setYear={setPartnerBirthYear}
-                month={partnerBirthMonth} setMonth={setPartnerBirthMonth}
-                day={partnerBirthDay} setDay={setPartnerBirthDay}
-                lunar={partnerIsLunar} setLunar={setPartnerIsLunar}
-                hour={partnerTimeHour} setHour={setPartnerTimeHour}
-                min={partnerTimeMin} setMin={setPartnerTimeMin}
-                ampm={partnerTimeAmPm} setAmpm={setPartnerTimeAmPm}
-                unknown={partnerTimeUnknown} setUnknown={setPartnerTimeUnknown}
-              />
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginTop: 20, marginBottom: 6, fontFamily: 'var(--font-display)' }}>상대방 생년월일 · 시간</h2>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: !partnerIsLunar ? 600 : 400, border: `1px solid ${!partnerIsLunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: !partnerIsLunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: !partnerIsLunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setPartnerIsLunar(false)}>양력 🌞</button>
+                <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: partnerIsLunar ? 600 : 400, border: `1px solid ${partnerIsLunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: partnerIsLunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: partnerIsLunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setPartnerIsLunar(true)}>음력 🌙</button>
+              </div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 }}>
+                <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="년도" value={partnerBirthYear} onChange={e => setPartnerBirthYear(e.target.value.slice(0,4))} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>년</span>
+                <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="월" value={partnerBirthMonth} onChange={e => setPartnerBirthMonth(e.target.value.slice(0,2))} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>월</span>
+                <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={partnerBirthDay} onChange={e => setPartnerBirthDay(e.target.value.slice(0,2))} />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>일</span>
+              </div>
+              <button style={{ width: '100%', padding: '13px 16px', border: `1px solid ${partnerTimeUnknown ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: partnerTimeUnknown ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: partnerTimeUnknown ? '#C9A84C' : 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: partnerTimeUnknown ? 600 : 400, cursor: 'pointer', textAlign: 'center', marginBottom: 16 }} onClick={() => { setPartnerTimeUnknown(true); setPartnerTimeHour(''); setPartnerTimeMin('') }}>✓ 태어난 시간 모름</button>
+              {!partnerTimeUnknown && (
+                <>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>오전 / 오후</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+                    <button style={{ padding: '14px', fontSize: 15, fontWeight: partnerTimeAmPm === '오전' ? 700 : 400, border: `2px solid ${partnerTimeAmPm === '오전' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: partnerTimeAmPm === '오전' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: partnerTimeAmPm === '오전' ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setPartnerTimeAmPm('오전')}>🌅 오전</button>
+                    <button style={{ padding: '14px', fontSize: 15, fontWeight: partnerTimeAmPm === '오후' ? 700 : 400, border: `2px solid ${partnerTimeAmPm === '오후' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: partnerTimeAmPm === '오후' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: partnerTimeAmPm === '오후' ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setPartnerTimeAmPm('오후')}>🌇 오후</button>
+                  </div>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>시 선택</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
+                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                      <button key={h} style={{ padding: '12px 4px', fontSize: 14, fontWeight: partnerTimeHour === String(h) ? 700 : 400, border: `1px solid ${partnerTimeHour === String(h) ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 10, background: partnerTimeHour === String(h) ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: partnerTimeHour === String(h) ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', textAlign: 'center' }} onClick={() => setPartnerTimeHour(String(h))}>{h}시</button>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>분 선택</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
+                    {['00','10','20','30','40','50'].map(m => (
+                      <button key={m} style={{ padding: '12px 4px', fontSize: 14, fontWeight: partnerTimeMin === m ? 700 : 400, border: `1px solid ${partnerTimeMin === m ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 10, background: partnerTimeMin === m ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: partnerTimeMin === m ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', textAlign: 'center' }} onClick={() => setPartnerTimeMin(m)}>{m}분</button>
+                    ))}
+                  </div>
+                  {partnerTimeHour && partnerTimeMin && <p style={{ fontSize: 13, color: '#C9A84C', textAlign: 'center', marginBottom: 8, fontWeight: 600 }}>✓ {partnerTimeAmPm} {partnerTimeHour}시 {partnerTimeMin}분</p>}
+                </>
+              )}
+              {partnerTimeUnknown && <button style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', textDecoration: 'underline', display: 'block' }} onClick={() => setPartnerTimeUnknown(false)}>시간 직접 선택하기</button>}
             </>
           )}
         </div>
-        <div style={s.bottomBar}>
-          <button style={s.backBtn} onClick={() => {
+        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box' }}>
+          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => {
             if (isStep1) setScreen('landing')
             else setGunghabStep(1)
           }}>←</button>
-          <button style={s.nextBtn(isStep1 ? !canStep1Next : !canStep2Next)}
+          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: (isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: (isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: (isStep1 ? !canStep1Next : !canStep2Next) ? 'not-allowed' : 'pointer', letterSpacing: '0.03em' }}
             disabled={isStep1 ? !canStep1Next : !canStep2Next}
             onClick={() => {
               if (isStep1) setGunghabStep(2)
               else {
-  if (IS_ADMIN) { handleGunghabAnalyze(); return; }
-  
-  IMP.init('imp87662575')
-  IMP.request_pay({
-    pg: 'html5_inicis', pay_method: 'card',
-    merchant_uid: `gunghab_${Date.now()}`,
-    name: '마이사주 궁합 분석', amount: 1900,
-    buyer_name: myName || '고객',
-  }, (rsp) => {
-    if (rsp.success) handleGunghabAnalyze()
-    else alert('결제가 취소되었습니다.')
-  })
-}
+                if (IS_ADMIN) { handleGunghabAnalyze(); return; }
+                const IMP = window.IMP
+                IMP.init('imp87662575')
+                IMP.request_pay({
+                  pg: 'html5_inicis', pay_method: 'card',
+                  merchant_uid: `gunghab_${Date.now()}`,
+                  name: '마이사주 궁합 분석', amount: 1900,
+                  buyer_name: myName || '고객',
+                }, (rsp) => {
+                  if (rsp.success) handleGunghabAnalyze()
+                  else alert('결제가 취소되었습니다.')
+                })
+              }
             }}>
             {isStep1 ? '다음 — 상대방 정보 입력' : '💕 궁합 분석받기 (1,900원)'}
           </button>
