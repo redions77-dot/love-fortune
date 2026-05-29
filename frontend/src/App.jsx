@@ -5,7 +5,7 @@ const PORTONE_CHANNEL_KEY = 'channel-key-ee1dda53-8dfa-471e-9b76-4483df87605f'
 // ── 상수 ──────────────────────────────────────────────
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
-const STEPS = ['gender', 'birthdate', 'birthtime', 'mbti', 'blood']
+const STEPS = ['gender', 'marital', 'birthdate', 'birthtime', 'mbti', 'blood']
 const API_URL = 'https://love-fortune.onrender.com'
 
 const MARITAL_OPTIONS = [
