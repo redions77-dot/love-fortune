@@ -5,7 +5,7 @@ const PORTONE_CHANNEL_KEY = 'channel-key-ee1dda53-8dfa-471e-9b76-4483df87605f'
 // ── 상수 ──────────────────────────────────────────────
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
-const STEPS = ['gender', 'marital', 'birthdate', 'birthtime', 'mbti', 'blood']
+const STEPS = ['gender', 'birthdate', 'birthtime', 'mbti', 'blood']
 const API_URL = 'https://love-fortune.onrender.com'
 
 const MARITAL_OPTIONS = [
@@ -359,7 +359,6 @@ export default function App() {
 
   function canGoNext() {
     if (currentStepId === 'gender') return gender !== ''
-    if (currentStepId === 'marital') return maritalStatus !== ''
     if (currentStepId === 'birthdate') return birthdateValid
     if (currentStepId === 'birthtime') return birthtimeValid
     return true
@@ -1266,6 +1265,8 @@ export default function App() {
               </div>
             </>
           )}
+          {currentStepId === 'gender' && (
+            <>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>성별을 알려주세요</h2>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>사주 풀이에 사용돼요</p>
               <div style={{ marginBottom: 16 }}>
