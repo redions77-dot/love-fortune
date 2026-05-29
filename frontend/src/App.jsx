@@ -11,8 +11,6 @@ const API_URL = 'https://love-fortune.onrender.com'
 const MARITAL_OPTIONS = [
   { value: '미혼', emoji: '💫', label: '미혼', sub: '아직 결혼 전이에요' },
   { value: '기혼', emoji: '💍', label: '기혼', sub: '결혼해서 살고 있어요' },
-  { value: '돌싱', emoji: '🌱', label: '돌싱', sub: '이혼 후 혼자예요' },
-  { value: '돌싱2+', emoji: '🔥', label: '돌싱2+', sub: '이혼을 두 번 이상 했어요' },
 ]
 
 const PRICE = 1900
