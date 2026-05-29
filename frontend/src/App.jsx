@@ -1074,7 +1074,7 @@ export default function App() {
             <p style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginBottom: 10, fontFamily: 'var(--font-display)' }}>봄결</p>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', lineHeight: 2.2 }}>
               <p>대표자 · 손영주</p>
-              <p>사업자등록번호 · 219-17-02825</p>
+              <p>사업자등록번호 · 291-17-02825</p>
               <p>사업장 · 경기도 남양주시 별내3로 332, 701호 -V133호</p>
               <p>전화 · 010-9772-1987</p>
               <p>이메일 · redions77@naver.com</p>
