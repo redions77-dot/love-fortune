@@ -1265,38 +1265,6 @@ export default function App() {
               </div>
             </>
           )}
-          {currentStepId === 'gender' && (
-            <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>성별을 알려주세요</h2>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>사주 풀이에 사용돼요</p>
-              <div style={{ marginBottom: 16 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8, letterSpacing: '0.05em' }}>이름 (선택)</p>
-                <input
-                  style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box', outline: 'none' }}
-                  type="text" placeholder="이름을 입력해주세요"
-                  value={myName} onChange={e => setMyName(e.target.value)}
-                />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
-                <button style={{
-                  padding: '28px 16px', border: `2px solid ${gender === '여성' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`,
-                  borderRadius: 10, background: gender === '여성' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',
-                  cursor: 'pointer', fontSize: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s',
-                }} onClick={() => setGender('여성')}>
-                  <span>♀️</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: gender === '여성' ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>여성</span>
-                </button>
-                <button style={{
-                  padding: '28px 16px', border: `2px solid ${gender === '남성' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`,
-                  borderRadius: 10, background: gender === '남성' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',
-                  cursor: 'pointer', fontSize: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all 0.15s',
-                }} onClick={() => setGender('남성')}>
-                  <span>♂️</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: gender === '남성' ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>남성</span>
-                </button>
-              </div>
-            </>
-          )}
           {currentStepId === 'birthdate' && (
             <>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>생년월일을 알려주세요</h2>
