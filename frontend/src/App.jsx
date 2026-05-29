@@ -1,7 +1,7 @@
   import { useEffect, useState, useRef } from 'react'
 
 const PORTONE_IMP_KEY = 'imp87662575'
-const PORTONE_CHANNEL_KEY = 'channel-key-218ea554-45e0-4d59-b68b-01c25091629e'
+const PORTONE_CHANNEL_KEY = 'channel-key-ee1dda53-8dfa-471e-9b76-4483df87605f'
 // ── 상수 ──────────────────────────────────────────────
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
@@ -1377,7 +1377,7 @@ export default function App() {
          const IMP = window.IMP
 IMP.init('imp87662575')
 IMP.request_pay({
-  pg: 'kcp',
+  pg: 'html5_inicis',
   pay_method: 'card',
   merchant_uid: `saju_${Date.now()}`,
   name: '마이사주 전체 분석',
