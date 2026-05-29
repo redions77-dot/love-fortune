@@ -16,6 +16,7 @@ const MARITAL_OPTIONS = [
 ]
 
 const PRICE = 1900
+const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'bomgyeol2026'
 function removeMarkers(text) {
   return text.split('===').filter((_, i) => i % 2 === 0).join('').replace(/\n{3,}/g, '\n\n').trim()
 }
@@ -596,9 +597,20 @@ export default function App() {
         <div style={s.bottomBar}>
           <button style={s.backBtn} onClick={() => setScreen('landing')}>←</button>
           <button style={s.nextBtn(!canNext)} disabled={!canNext}
-            onClick={() => {
-       handleGililAnalyze()
-            }}>
+           onClick={() => {
+  if (IS_ADMIN) { handleGililAnalyze(); return; }
+  const IMP = window.IMP
+  IMP.init('imp87662575')
+  IMP.request_pay({
+    pg: 'html5_inicis', pay_method: 'card',
+    merchant_uid: `gilil_${Date.now()}`,
+    name: '마이사주 길일 추천', amount: 9900,
+    buyer_name: '고객',
+  }, (rsp) => {
+    if (rsp.success) handleGililAnalyze()
+    else alert('결제가 취소되었습니다.')
+  })
+}}>
             📅 길일 찾기 (9,900원)
           </button>
         </div>
@@ -732,8 +744,19 @@ export default function App() {
             onClick={() => {
               if (isStep1) setGunghabStep(2)
               else {
-          handleGunghabAnalyze()
-              }
+  if (IS_ADMIN) { handleGunghabAnalyze(); return; }
+  
+  IMP.init('imp87662575')
+  IMP.request_pay({
+    pg: 'html5_inicis', pay_method: 'card',
+    merchant_uid: `gunghab_${Date.now()}`,
+    name: '마이사주 궁합 분석', amount: 1900,
+    buyer_name: myName || '고객',
+  }, (rsp) => {
+    if (rsp.success) handleGunghabAnalyze()
+    else alert('결제가 취소되었습니다.')
+  })
+}
             }}>
             {isStep1 ? '다음 — 상대방 정보 입력' : '💕 궁합 분석받기 (1,900원)'}
           </button>
