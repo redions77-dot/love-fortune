@@ -5,7 +5,7 @@ const PORTONE_CHANNEL_KEY = 'channel-key-ee1dda53-8dfa-471e-9b76-4483df87605f'
 // ── 상수 ──────────────────────────────────────────────
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
-const STEPS = ['gender', 'birthdate', 'birthtime', 'mbti', 'blood']
+const STEPS = ['gender', 'marital', 'birthdate', 'birthtime', 'mbti', 'blood']
 const API_URL = 'https://love-fortune.onrender.com'
 
 const MARITAL_OPTIONS = [
@@ -359,6 +359,7 @@ export default function App() {
 
   function canGoNext() {
     if (currentStepId === 'gender') return gender !== ''
+    if (currentStepId === 'marital') return maritalStatus !== ''
     if (currentStepId === 'birthdate') return birthdateValid
     if (currentStepId === 'birthtime') return birthtimeValid
     return true
@@ -1207,6 +1208,34 @@ export default function App() {
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
           {currentStepId === 'gender' && (
             <>
+              {currentStepId === 'marital' && (
+            <>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>결혼 상태를 알려주세요</h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>사주 풀이에 사용돼요</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[
+                  { value: '미혼', emoji: '💫', label: '미혼', sub: '아직 결혼 전이에요' },
+                  { value: '기혼', emoji: '💍', label: '기혼', sub: '결혼해서 살고 있어요' },
+                  { value: '돌싱', emoji: '🌱', label: '돌싱', sub: '이혼 후 혼자예요' },
+                  { value: '돌싱2+', emoji: '🔥', label: '돌싱2+', sub: '이혼을 두 번 이상 했어요' },
+                ].map(({ value, emoji, label, sub }) => (
+                  <button key={value}
+                    style={{
+                      padding: '18px 20px', border: `2px solid ${maritalStatus === value ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`,
+                      borderRadius: 10, background: maritalStatus === value ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.15s',
+                    }}
+                    onClick={() => setMaritalStatus(value)}>
+                    <span style={{ fontSize: 28 }}>{emoji}</span>
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: maritalStatus === value ? '#C9A84C' : '#FFFFFF' }}>{label}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{sub}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>성별을 알려주세요</h2>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>사주 풀이에 사용돼요</p>
               <div style={{ marginBottom: 16 }}>
