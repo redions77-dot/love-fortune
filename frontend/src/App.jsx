@@ -1206,9 +1206,11 @@ export default function App() {
 
         {/* 스텝 내용 */}
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
-          {currentStepId === 'gender' && (
+         {currentStepId === 'gender' && (
             <>
-              {currentStepId === 'marital' && (
+            </>
+          )}
+          {currentStepId === 'marital' && (
             <>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>결혼 상태를 알려주세요</h2>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>사주 풀이에 사용돼요</p>
