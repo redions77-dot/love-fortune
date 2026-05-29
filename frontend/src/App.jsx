@@ -1397,7 +1397,8 @@ export default function App() {
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>결제 후 즉시 사용 가능</p>
            
               <button style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em' }} onClick={() => {
-         const IMP = window.IMP
+     if (IS_ADMIN) { handlePaidAnalyze(); return; }
+              const IMP = window.IMP
 IMP.init('imp87662575')
 IMP.request_pay({
   pg: 'html5_inicis',
