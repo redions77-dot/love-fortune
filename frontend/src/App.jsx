@@ -543,7 +543,7 @@ export default function App() {
     setIsGililStreaming(false)
   }
 
-  // ── 길일 입력 화면 ──
+ // ── 길일 입력 화면 ──
   if (screen === 'gilil_input') {
     const 목적목록 = [
       { value: '이사', emoji: '🏠' },
@@ -555,69 +555,71 @@ export default function App() {
     ]
     const canNext = gilil목적 !== '' && birthdateValid
     return (
-      <div style={s.app}>
-        <div style={s.header}>
-          <span style={s.heroEmoji}>📅</span>
-          <h1 style={s.heroTitle}>길일 추천</h1>
-          <p style={s.heroSub}>내 사주와 맞는 좋은 날을 찾아드려요</p>
+      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
+          <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>吉</div>
+          <h1 style={{ wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>길일 추천</h1>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>내 사주와 맞는 좋은 날을 찾아드려요</p>
         </div>
-        <div style={s.stepWrap}>
-          <h2 style={s.stepTitle}>어떤 날을 찾고 계세요?</h2>
-          <p style={s.stepSub}>목적을 선택해주세요</p>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>어떤 날을 찾고 계세요?</h2>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>목적을 선택해주세요</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 24 }}>
             {목적목록.map(({ value, emoji }) => (
               <button key={value}
                 style={{
-                  padding: '16px 8px', border: `2px solid ${gilil목적 === value ? '#D97706' : 'var(--color-border)'}`,
-                  borderRadius: 'var(--radius-md)', background: gilil목적 === value ? '#FFFBEB' : 'var(--color-surface)',
+                  padding: '16px 8px',
+                  border: `2px solid ${gilil목적 === value ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`,
+                  borderRadius: 10,
+                  background: gilil목적 === value ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)',
                   cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s',
                 }}
                 onClick={() => setGilil목적(value)}>
                 <div style={{ fontSize: 24, marginBottom: 4 }}>{emoji}</div>
-                <div style={{ fontSize: 13, fontWeight: gilil목적 === value ? 700 : 400, color: gilil목적 === value ? '#78350F' : 'var(--color-text)' }}>{value}</div>
+                <div style={{ fontSize: 13, fontWeight: gilil목적 === value ? 700 : 400, color: gilil목적 === value ? '#C9A84C' : 'rgba(255,255,255,0.6)' }}>{value}</div>
               </button>
             ))}
           </div>
-          <h2 style={s.stepTitle}>생년월일을 알려주세요</h2>
-          <p style={s.stepSub}>내 사주를 기준으로 길일을 찾아드려요</p>
-          <div style={s.calToggle}>
-            <button style={s.calBtn(!isLunar)} onClick={() => setIsLunar(false)}>양력 🌞</button>
-            <button style={s.calBtn(isLunar)} onClick={() => setIsLunar(true)}>음력 🌙</button>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6, fontFamily: 'var(--font-display)' }}>생년월일을 알려주세요</h2>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>내 사주를 기준으로 길일을 찾아드려요</p>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: !isLunar ? 600 : 400, border: `1px solid ${!isLunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: !isLunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: !isLunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setIsLunar(false)}>양력 🌞</button>
+            <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: isLunar ? 600 : 400, border: `1px solid ${isLunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: isLunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: isLunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setIsLunar(true)}>음력 🌙</button>
           </div>
-          <div style={s.dateRow}>
-            <input style={s.dateNumInput} type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0,4))} />
-            <span style={s.dateUnitLabel}>년</span>
-            <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0,2))} />
-            <span style={s.dateUnitLabel}>월</span>
-            <input style={s.dateNumInputSmall} type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0,2))} />
-            <span style={s.dateUnitLabel}>일</span>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 }}>
+            <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0,4))} />
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>년</span>
+            <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0,2))} />
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>월</span>
+            <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0,2))} />
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>일</span>
           </div>
-          {birthdateValid && <p style={s.datePreview}>✓ {birthYear}년 {birthMonth}월 {birthDay}일</p>}
+          {birthdateValid && <p style={{ fontSize: 13, color: '#C9A84C', textAlign: 'center', marginBottom: 8, fontWeight: 600 }}>✓ {birthYear}년 {birthMonth}월 {birthDay}일</p>}
         </div>
-        <div style={s.bottomBar}>
-          <button style={s.backBtn} onClick={() => setScreen('landing')}>←</button>
-          <button style={s.nextBtn(!canNext)} disabled={!canNext}
-           onClick={() => {
-  if (IS_ADMIN) { handleGililAnalyze(); return; }
-  const IMP = window.IMP
-  IMP.init('imp87662575')
-  IMP.request_pay({
-    pg: 'html5_inicis', pay_method: 'card',
-    merchant_uid: `gilil_${Date.now()}`,
-    name: '마이사주 길일 추천', amount: 9900,
-    buyer_name: '고객',
-  }, (rsp) => {
-    if (rsp.success) handleGililAnalyze()
-    else alert('결제가 취소되었습니다.')
-  })
-}}>
+        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box' }}>
+          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => setScreen('landing')}>←</button>
+          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: !canNext ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: !canNext ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: !canNext ? 'not-allowed' : 'pointer', letterSpacing: '0.03em' }}
+            disabled={!canNext}
+            onClick={() => {
+              if (IS_ADMIN) { handleGililAnalyze(); return; }
+              const IMP = window.IMP
+              IMP.init('imp87662575')
+              IMP.request_pay({
+                pg: 'html5_inicis', pay_method: 'card',
+                merchant_uid: `gilil_${Date.now()}`,
+                name: '마이사주 길일 추천', amount: 9900,
+                buyer_name: '고객',
+              }, (rsp) => {
+                if (rsp.success) handleGililAnalyze()
+                else alert('결제가 취소되었습니다.')
+              })
+            }}>
             📅 길일 찾기 (9,900원)
           </button>
         </div>
       </div>
     )
   }
-
   // ── 길일 결과 화면 ──
   if (screen === 'gilil_result') {
     const gililSections = parseSections(gililText)
