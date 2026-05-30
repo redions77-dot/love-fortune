@@ -363,6 +363,10 @@ export default function App() {
   }
 
   function goNext() {
+    if (currentStepId === 'marital' && (serviceType === 'child' || serviceType === '노후')) {
+      setStep(s => s + 2)
+      return
+    }
     if (step < STEPS.length - 1) setStep(s => s + 1)
     else handleFreeAnalyze()
   }
