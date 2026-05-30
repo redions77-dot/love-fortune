@@ -1249,7 +1249,7 @@ function goBack() {
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>사주 풀이에 사용돼요</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {[
-                  { value: '미혼', emoji: '💫', label: '미혼', sub: '아직 결혼 전이에요' },
+                  { value: '미혼', emoji: '💫', label: '미혼', sub: '결혼 전이거나 현재 혼자예요' },
                   { value: '기혼', emoji: '💍', label: '기혼', sub: '결혼해서 살고 있어요' },
                 ].map(({ value, emoji, label, sub }) => (
                   <button key={value}
