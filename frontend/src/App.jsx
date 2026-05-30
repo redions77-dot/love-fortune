@@ -466,8 +466,9 @@ function goBack() {
     } catch (e) {
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
     }
-   
+   setIsDeepStreaming(false); setIsDeepPaid(true)
   }
+  
 
   function handleRestart() {
     abortRef.current?.abort()
@@ -1587,7 +1588,30 @@ const element = document.getElementById('result-content')
         </button>
       </div>
     </div>
+{/* 심화 스트리밍 */}
+    {isDeepStreaming && deepText && (
+      <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+        {removeMarkers(deepText)}<span style={{ opacity: 0.4 }}>▌</span>
+      </div>
+    )}
+    {isDeepStreaming && !deepText && (
+      <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 8 }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
+          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>🔮 심화 분석 중이에요...</span>
+        </div>
+      </div>
+    )}
 
+    {/* 심화 결과 아코디언 */}
+    {!isDeepStreaming && parseSections(deepText).length > 0 && (
+      <>
+        <p style={{ fontSize: 12, fontWeight: 600, color: '#C9A84C', textAlign: 'center', margin: '16px 0 8px', letterSpacing: '0.08em' }}>✦ 심화 분석 결과 ✦</p>
+        {parseSections(deepText).map((sec, i) => (
+          <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />
+        ))}
+      </>
+    )}
     {/* 29,900원 */}
     <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 12, padding: '20px', marginBottom: 10, opacity: 0.7 }}>
       <p style={{ fontSize: 11, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>🌟 인생 전략 풀패키지 — 29,900원</p>
