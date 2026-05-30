@@ -1526,12 +1526,14 @@ IMP.request_pay({
   <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요. 지금 접혀있는 항목은 저장되지 않아요.</p>
 </div>
          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginTop: 10 }} onClick={() => {
-  const element = document.getElementById('result-content')
+  window.scrollTo(0, 0)
+const element = document.getElementById('result-content')
   const opt = {
     margin: 10,
     filename: '마이사주_분석결과.pdf',
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, backgroundColor: '#050D1F' },
+    html2canvas: { scale: 2, backgroundColor: '#050D1F', useCORS: true, logging: false },
+jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   }
   window.html2pdf().set(opt).from(element).save()
