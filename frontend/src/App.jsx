@@ -316,6 +316,9 @@ export default function App() {
   const [isPaidStreaming, setIsPaidStreaming] = useState(false)
   const [isBaseStreaming, setIsBaseStreaming] = useState(false)
   const [isPaid, setIsPaid] = useState(false)
+  const [isDeepPaid, setIsDeepPaid] = useState(false)
+const [deepText, setDeepText] = useState('')
+const [isDeepStreaming, setIsDeepStreaming] = useState(false)
   const [openCheongan, setOpenCheongan] = useState(null)
   // 궁합 전용 상태
   const [gunghabStep, setGunghabStep] = useState(1)
@@ -449,21 +452,21 @@ function goBack() {
     setIsPaidStreaming(false); setIsPaid(true)
   }
   async function handleDeepAnalyze() {
-    setPaidText(''); setIsPaidStreaming(true)
+    setDeepText(''); setIsDeepStreaming(true)
     isPaidSectionRef.current = false
     try {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName },
         onSaju: () => {},
         onBaseText: () => {},
-        onPaidText: (t) => setPaidText(prev => prev + t),
+        onPaidText: (t) => setDeepText(prev => prev + t),
         onDone: () => {},
         onError: (e) => alert(e),
       })
     } catch (e) {
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
     }
-    setIsPaidStreaming(false); setIsPaid(true)
+   
   }
 
   function handleRestart() {
