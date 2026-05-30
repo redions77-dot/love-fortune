@@ -1108,7 +1108,7 @@ function goBack() {
                 transition: 'all 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
               }} onClick={() => { setServiceType('child'); setScreen('input') }}>
                 <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', lineHeight: 1, marginBottom: 12, letterSpacing: '-0.02em' }}>子</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>내 아이 괜찮을까</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>혼냈던 게 사실은 재능이었어요</div>
                 <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>타고난 재능·진로<br/>미리 확인</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 12, letterSpacing: '0.05em' }}>1,900원</div>
               </button>
@@ -1118,7 +1118,7 @@ function goBack() {
                 transition: 'all 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
               }} onClick={() => { setServiceType('노후'); setScreen('input') }}>
                 <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', lineHeight: 1, marginBottom: 12, letterSpacing: '-0.02em' }}>老</div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>나의 노후는 괜찮을까</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>내 인생 후반전, 어떻게 흘러갈까?</div>
                 <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>말년 재물·건강<br/>황혼 인연 미리 확인</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 12, letterSpacing: '0.05em' }}>1,900원</div>
               </button>
@@ -1186,7 +1186,7 @@ function goBack() {
 
 // ── 입력 ──
   if (screen === 'input') {
-    const serviceNames = { saju: '나의 사주', gunghab: '궁합', child: '내 아이 괜찮을까', 노후: '나의 노후는 괜찮을까' }
+    const serviceNames = { saju: '나의 사주', gunghab: '궁합', child: '혼냈던 게 사실은 재능이었어요', 노후: '내 인생 후반전, 어떻게 흘러갈까?' }
     const serviceChar = { saju: '命', gunghab: '合', child: '子', 노후: '老' }
     return (
       <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
