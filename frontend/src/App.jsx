@@ -1555,7 +1555,52 @@ const element = document.getElementById('result-content')
   window.html2pdf().set(opt).from(element).save()
 }}>📄 결과 저장하기 (PDF)</button>
 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 6 }}>결과는 저장되지 않아요. PDF로 저장해두세요!</p>
-<button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.3)', marginTop: 8 }} onClick={handleRestart}>처음으로 돌아가기</button>
+{isPaid && serviceType === 'saju' && (
+  <div style={{ marginTop: 24, marginBottom: 8 }}>
+    <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 16 }}>더 깊이 알고 싶다면?</p>
+    
+    {/* 9,900원 */}
+    <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px', marginBottom: 10 }}>
+      <p style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>🔮 사주 심화 분석</p>
+      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 12 }}>10년 대운 흐름 · 2026 하반기 월별 · 2027년 전체 · 귀인 분석 · 지금 해야 할 것</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 22, fontWeight: 800, color: '#C9A84C' }}>9,900원</span>
+        <button style={{ padding: '10px 20px', fontSize: 14, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+          onClick={() => {
+            if (IS_ADMIN) { handleDeepAnalyze(); return; }
+            const IMP = window.IMP
+            IMP.init('imp87662575')
+            IMP.request_pay({
+              pg: 'html5_inicis', pay_method: 'card',
+              merchant_uid: `deep_${Date.now()}`,
+              name: '마이사주 심화 분석', amount: 9900,
+              buyer_name: myName || '고객',
+            }, (rsp) => {
+              if (rsp.success) handleDeepAnalyze()
+              else alert('결제가 취소되었습니다.')
+            })
+          }}>
+          분석 받기 →
+        </button>
+      </div>
+    </div>
+
+    {/* 29,900원 */}
+    <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 12, padding: '20px', marginBottom: 10, opacity: 0.7 }}>
+      <p style={{ fontSize: 11, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>🌟 인생 전략 풀패키지 — 29,900원</p>
+      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>심화 분석 + 6개월 길일 + 직업/투자 타이밍 + 고급 PDF</p>
+      <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
+    </div>
+
+    {/* 49,900원 */}
+    <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '20px', marginBottom: 10, opacity: 0.5 }}>
+      <p style={{ fontSize: 11, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>💎 AI 사주 상담 — 49,900원</p>
+      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>풀패키지 + 내 고민 3가지 사주 맞춤 답변</p>
+      <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
+    </div>
+  </div>
+)}
+         <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.3)', marginTop: 8 }} onClick={handleRestart}>처음으로 돌아가기</button>
         </div>
       </div>
     )
