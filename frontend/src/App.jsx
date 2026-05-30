@@ -451,22 +451,17 @@ function goBack() {
     }
     setIsPaidStreaming(false); setIsPaid(true)
   }
-  async function handleDeepAnalyze() {
+ async function handleDeepAnalyze() {
     setDeepText(''); setIsDeepStreaming(true)
     isPaidSectionRef.current = false
     try {
       await streamAnalyze({
-        body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName },
-        onSaju: () => {},
-        onBaseText: () => {},
-        onPaidText: (t) => setDeepText(prev => prev + t),
-        onDone: () => {},
-        onError: (e) => alert(e),
+        ...
       })
     } catch (e) {
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
     }
-   setIsDeepStreaming(false); setIsDeepPaid(true)
+    setIsDeepStreaming(false); setIsDeepPaid(true)
   }
   
 
