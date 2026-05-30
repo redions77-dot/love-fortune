@@ -1360,7 +1360,7 @@ function goBack() {
 
     return (
       <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box', width: '100%' }}>
+       <div id="result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box', width: '100%' }}>
 
     {/* 사주팔자 카드 */}
 {sajuData?.사주 && (
@@ -1522,7 +1522,19 @@ IMP.request_pay({
             </div>
           )}
 
-          <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.3)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
+         <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginTop: 10 }} onClick={() => {
+  const element = document.getElementById('result-content')
+  const opt = {
+    margin: 10,
+    filename: '마이사주_분석결과.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, backgroundColor: '#050D1F' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  }
+  window.html2pdf().set(opt).from(element).save()
+}}>📄 결과 저장하기 (PDF)</button>
+<p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 6 }}>결과는 저장되지 않아요. PDF로 저장해두세요!</p>
+<button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.3)', marginTop: 8 }} onClick={handleRestart}>처음으로 돌아가기</button>
         </div>
       </div>
     )
