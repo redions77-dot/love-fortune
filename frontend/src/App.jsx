@@ -448,6 +448,23 @@ function goBack() {
     }
     setIsPaidStreaming(false); setIsPaid(true)
   }
+  async function handleDeepAnalyze() {
+    setPaidText(''); setIsPaidStreaming(true)
+    isPaidSectionRef.current = false
+    try {
+      await streamAnalyze({
+        body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName },
+        onSaju: () => {},
+        onBaseText: () => {},
+        onPaidText: (t) => setPaidText(prev => prev + t),
+        onDone: () => {},
+        onError: (e) => alert(e),
+      })
+    } catch (e) {
+      if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
+    }
+    setIsPaidStreaming(false); setIsPaid(true)
+  }
 
   function handleRestart() {
     abortRef.current?.abort()
