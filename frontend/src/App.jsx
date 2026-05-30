@@ -451,13 +451,32 @@ function goBack() {
     }
     setIsPaidStreaming(false); setIsPaid(true)
   }
- async function handleDeepAnalyze() {
+async function handleDeepAnalyze() {
     setDeepText(''); setIsDeepStreaming(true)
-    isPaidSectionRef.current = false
     try {
-      await streamAnalyze({
-        ...
+      const ctrl = new AbortController()
+      abortRef.current = ctrl
+      const res = await fetch(`${API_URL}/api/analyze`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName }),
+        signal: ctrl.signal,
       })
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split('\n'); buf = lines.pop()
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const json = JSON.parse(line.slice(6))
+            if (json.text) setDeepText(prev => prev + json.text)
+          } catch {}
+        }
+      }
     } catch (e) {
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
     }
