@@ -1171,6 +1171,44 @@ async function handleDeepAnalyze() {
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 6, letterSpacing: '0.05em' }}>9,900원</div>
                 </div>
               </button>
+          {/* 샘플 분석 결과 */}
+<div style={{ background: '#0A1628', borderTop: '1px solid rgba(201,168,76,0.2)', borderBottom: '1px solid rgba(201,168,76,0.2)', marginTop: 8 }}>
+  <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
+    <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', marginBottom: 4, fontWeight: 600, letterSpacing: '0.12em' }}>SAMPLE</p>
+    <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginBottom: 4, fontWeight: 700, fontFamily: 'var(--font-display)' }}>이런 분석이 나와요 👇</p>
+    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', textAlign: 'center', marginBottom: 20 }}>1990년생 · 여성 · 김☆희님 샘플</p>
+
+    {/* 무료 섹션 */}
+    {[
+      { title: '나의 사주 기운', content: `김☆희님은 겉으로는 차분하고 조용해 보이지만, 속에는 강한 열정과 고집이 있어요. 주변 사람들은 "항상 침착하다"고 하지만 본인은 속으로 치열하게 생각하고 있는 타입이에요.\n\n한마디로 표현하면 — "겉은 물, 속은 불"\n\n이 사주는 감정을 잘 숨기는 대신, 한 번 결심하면 끝까지 가는 뚝심이 있어요. 주변의 시선보다 내 기준으로 사는 게 이 사주엔 맞아요.` },
+      { title: '재물운', content: `돈이 한 번에 크게 들어오는 스타일은 아니에요. 꾸준히 모이는 타입인데, 30대 중반부터 재물 흐름이 달라지기 시작해요.\n\n지금 이 시기(2024~2026)는 씨앗을 심는 시기예요. 무리한 투자보다는 기반을 다지는 게 맞아요. 2027~2028년이 이 사주에서 재물이 가장 크게 움직이는 구간이에요.` },
+      { title: '나이대별 재물 흐름', content: `20대는 씨앗을 심는 시기였고, 30대는 싹이 트는 시기예요.\n\n돈이 가장 크게 움직이는 나이대는 35~42세 구간이에요. 지금 준비하는 게 그 시기를 결정해요.\n\n이 사주는 40대 이후가 진짜 전성기예요.` },
+    ].map((sec, i) => (
+      <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
+    ))}
+
+    {/* 유료 섹션 미리보기 */}
+    <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 12, padding: '16px', marginTop: 8, marginBottom: 8 }}>
+      <p style={{ fontSize: 12, fontWeight: 600, color: '#C9A84C', textAlign: 'center', marginBottom: 12, letterSpacing: '0.08em' }}>✦ 전체 분석 결과 ✦</p>
+      {[
+        { title: '인생 재운 흐름', content: `김☆희님의 사주는 壬水 일간으로, 넓고 깊은 강물 같은 기운을 타고났어요. 돈이 들어오는 방식은 한방형이 아니라 흐름형 — 꾸준히 쌓이다가 특정 시점에 크게 터지는 패턴이에요.\n\n2024~2026년은 재물의 씨앗을 심는 시기예요. 지금 당장 큰 돈보다는 기반을 다지는 게 맞아요. 무리한 투자나 사업 확장은 이 시기엔 맞지 않아요.\n\n2027~2029년이 이 사주에서 재물이 가장 크게 움직이는 구간이에요. 지금부터 준비하면 그 시기에 확실히 달라져요. 가장 중요한 해는 2028년이에요.` },
+        { title: '직업운 · 커리어', content: `김☆희님은 혼자 조용히 하는 일보다 사람을 만나고 소통하는 일에서 진짜 능력이 발휘돼요. 전문성이 쌓일수록 빛나는 사주라서, 한 분야를 깊이 파고드는 게 맞아요.\n\n지금 직장이나 일이 답답하게 느껴진다면 — 환경 문제예요. 사람 문제가 아니에요. 2027년 이후 커리어 전환점이 오는데, 그때 움직이면 훨씬 유리해요.` },
+        { title: '투자 · 부동산', content: `이 사주는 부동산과 궁합이 좋아요. 단, 타이밍이 중요해요.\n\n2026년 하반기~2027년 상반기 사이가 부동산 결정을 내리기 좋은 시기예요. 갭투자보다는 실거주 중심으로 접근하는 게 이 사주엔 맞아요. 주식은 단기보다 장기 적립식이 훨씬 잘 맞아요.` },
+        { title: '인간관계 · 사람운', content: `귀인이 있어요. 나보다 10살 이상 연상이거나, 전문직 종사자일 가능성이 높아요.\n\n2027년 전후로 인생을 바꿔줄 사람을 만날 가능성이 높으니 사람을 가려 사귀되 새로운 만남을 닫지 마세요.\n\n반대로 조심해야 할 사람은 — 처음엔 잘해주다가 점점 의존하게 만드는 타입이에요.` },
+        { title: '월별 운세 (2026년 하반기)', content: `7월: 새로운 기회가 보이는 달. 단 섣불리 결정하지 말고 정보 수집에 집중하세요.\n8월: 재물 흐름이 살짝 막히는 달. 지출 관리가 중요해요.\n9월: 인간관계에서 귀인을 만날 가능성이 높아요. 모임이나 네트워킹에 적극적으로 나가세요.\n10월: 하반기 중 가장 좋은 달. 결정을 미뤘던 일이 있다면 이달에 움직이세요.\n11월: 체력이 떨어지기 쉬운 달. 무리하지 말고 컨디션 관리에 집중하세요.\n12월: 한 해를 마무리하며 내년을 준비하는 달. 2027년 계획을 구체적으로 세우세요.\n\n가장 조심할 달: 8월 / 가장 적극적으로 움직일 달: 10월` },
+        { title: '행운 아이템', content: `행운 색깔: 블루, 블랙\n행운 마스코트: 물고기, 거북이\n행운 방향: 북쪽\n행운 숫자: 1, 6` },
+        { title: '이 사주로 잘 사는 법', content: `김☆희님의 사주는 물처럼 유연하게 흐르는 게 핵심이에요. 억지로 막거나 버티는 게 아니라, 흐름을 타는 사람이에요. 지금 안 풀린다면 방향이 틀린 거예요 — 노력이 부족한 게 아니에요.\n\n딱 한 가지만 기억하세요: 지금은 심는 시기예요. 2027년에 거두는 사람이 되려면 지금 뭘 심고 있는지가 전부예요.` },
+      ].map((sec, i) => (
+        <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />
+      ))}
+    </div>
+
+    <button style={{ width: '100%', padding: '16px', fontSize: 15, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em', marginTop: 8 }}
+      onClick={() => { setServiceType('saju'); setScreen('input') }}>
+      내 사주 분석받기 →
+    </button>
+  </div>
+</div>
             </div>
             <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.15)', marginTop: 8 }}>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 12 }}>이미 많은 분들이 확인했어요</p>
