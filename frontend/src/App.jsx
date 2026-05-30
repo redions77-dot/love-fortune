@@ -1533,7 +1533,6 @@ const element = document.getElementById('result-content')
     filename: '마이사주_분석결과.pdf',
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, backgroundColor: '#050D1F', useCORS: true, logging: false },
-jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   }
   window.html2pdf().set(opt).from(element).save()
