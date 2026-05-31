@@ -1212,7 +1212,7 @@ if (screen === 'deep_result') {
     border: '1px solid rgba(201,168,76,0.5)',
     borderRadius: 10, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
     transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 20, justifyContent: 'center',
-  }} onClick={() => { setServiceType('saju'); setScreen('input') }}>
+  }} onClick={() => { setServiceType('deep'); setScreen('input') }}>
     <div style={{ fontSize: 40, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', letterSpacing: '-0.02em' }}>🔮</div>
     <div style={{ textAlign: 'left' }}>
       <div style={{ fontSize: 9, fontWeight: 700, color: '#C9A84C', letterSpacing: '0.1em', marginBottom: 6, background: 'rgba(201,168,76,0.15)', display: 'inline-block', padding: '2px 8px', borderRadius: 2, border: '1px solid rgba(201,168,76,0.3)' }}>DEEP ANALYSIS</div>
