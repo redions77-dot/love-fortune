@@ -1158,19 +1158,39 @@ async function handleDeepAnalyze() {
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 12, letterSpacing: '0.05em' }}>1,900원</div>
               </button>
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <button style={{
-                width: '100%', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.35)',
-                borderRadius: 10, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
-                transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 20, justifyContent: 'center',
-              }} onClick={() => { setServiceType('길일'); setScreen('gilil_input') }}>
-                <div style={{ fontSize: 40, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', letterSpacing: '-0.02em' }}>吉</div>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: '#C9A84C', marginBottom: 4, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>오늘, 이 날짜 괜찮을까?</div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>이사·계약·개업·결혼·수술<br/>내 사주와 맞는 길일 추천</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 6, letterSpacing: '0.05em' }}>9,900원</div>
-                </div>
-              </button>
+ {/* 심화 분석 업셀링 카드 */}
+<div style={{ marginBottom: 12 }}>
+  <button style={{
+    width: '100%', background: 'linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.06))',
+    border: '1px solid rgba(201,168,76,0.5)',
+    borderRadius: 10, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+    transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 20, justifyContent: 'center',
+  }} onClick={() => { setServiceType('saju'); setScreen('input') }}>
+    <div style={{ fontSize: 40, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', letterSpacing: '-0.02em' }}>🔮</div>
+    <div style={{ textAlign: 'left' }}>
+      <div style={{ fontSize: 9, fontWeight: 700, color: '#C9A84C', letterSpacing: '0.1em', marginBottom: 6, background: 'rgba(201,168,76,0.15)', display: 'inline-block', padding: '2px 8px', borderRadius: 2, border: '1px solid rgba(201,168,76,0.3)' }}>DEEP ANALYSIS</div>
+      <div style={{ fontSize: 14, fontWeight: 800, color: '#C9A84C', marginBottom: 4, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>사주 심화 분석</div>
+      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>10년 대운 · 월별 운세 · 귀인 분석<br/>지금 해야 할 것 vs 하지 말아야 할 것</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 6, letterSpacing: '0.05em' }}>9,900원</div>
+    </div>
+  </button>
+</div>
+
+{/* 길일 카드 (아래로 이동) */}
+<div style={{ marginBottom: 12 }}>
+  <button style={{
+    width: '100%', background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)',
+    borderRadius: 10, padding: '20px 16px', cursor: 'pointer', textAlign: 'center',
+    transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 20, justifyContent: 'center',
+  }} onClick={() => { setServiceType('길일'); setScreen('gilil_input') }}>
+    <div style={{ fontSize: 40, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', letterSpacing: '-0.02em' }}>吉</div>
+    <div style={{ textAlign: 'left' }}>
+      <div style={{ fontSize: 14, fontWeight: 800, color: '#C9A84C', marginBottom: 4, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>오늘, 이 날짜 괜찮을까?</div>
+      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>이사·계약·개업·결혼·수술<br/>내 사주와 맞는 길일 추천</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 6, letterSpacing: '0.05em' }}>9,900원</div>
+    </div>
+  </button>
+</div>
           {/* 샘플 분석 결과 */}
 <div style={{ background: '#0A1628', borderTop: '1px solid rgba(201,168,76,0.2)', borderBottom: '1px solid rgba(201,168,76,0.2)', marginTop: 8 }}>
   <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
