@@ -22,6 +22,59 @@ const MODEL_PAID = 'claude-sonnet-4-5-20250929';
 
 app.get('/ping', (req, res) => res.json({ ok: true }));
 
+// 손없는 날 체크
+function getSonNobunNal(lunarDay) {
+  return [9, 10, 19, 20, 29, 30].includes(lunarDay);
+}
+
+// 목적별 멘트 풀
+function getComment(purpose) {
+  const comments = {
+    이사: ['새 공간에 좋은 기운이 가득 드는 날','이동과 변화에 흐름이 순조로운 날','안정적으로 자리잡기 좋은 날','재물운을 품고 들어가기 좋은 날','귀인이 새집에 복을 가져다주는 날','가족 모두에게 편안한 기운이 흐르는 날'],
+    계약: ['좋은 인연으로 맺어지기 좋은 날','약속이 단단하게 이어지는 날','재물운이 계약서에 깃드는 날','믿을 수 있는 흐름이 만들어지는 날','귀인의 도움으로 일이 풀리는 날'],
+    개업: ['새 출발에 기운이 활짝 열리는 날','재물운이 문 앞으로 들어오는 날','좋은 손님과 인연이 닿는 날','사업의 흐름이 순조롭게 시작되는 날','귀인이 첫걸음을 함께 해주는 날','번창의 기운이 자리를 잡는 날'],
+    결혼: ['두 사람의 인연이 가장 빛나는 날','행복한 출발을 축복받기 좋은 날','좋은 기운이 두 사람을 감싸는 날','평생 함께할 약속을 맺기 좋은 날','가족과 귀인의 복이 함께하는 날'],
+    수술: ['몸의 회복에 기운이 도와주는 날','안정적으로 치유가 시작되는 날','좋은 흐름 속에 건강을 되찾는 날','귀인의 손길이 함께하는 날','몸과 마음이 편안하게 나아가는 날'],
+    시험: ['그동안의 노력이 빛을 발하는 날','집중력과 기운이 최고조인 날','좋은 결과를 향해 흐름이 열리는 날','귀인의 기운이 함께하는 날','자신감이 가장 충만해지는 날'],
+  };
+  const list = comments[purpose] || comments['이사'];
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+// 6개월치 길일 API
+app.post('/api/gilil', (req, res) => {
+  const { purpose } = req.body;
+  const results = {};
+  const today = new Date();
+
+  for (let m = 0; m < 6; m++) {
+    const targetDate = new Date(today.getFullYear(), today.getMonth() + m, 1);
+    const targetYear = targetDate.getFullYear();
+    const targetMonth = targetDate.getMonth() + 1;
+    const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+    const gililDays = [];
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const calendar = new KoreanLunarCalendar();
+      calendar.setSolarDate(targetYear, targetMonth, d);
+      const lunarDay = calendar.getLunarCalendar().day;
+
+      if (getSonNobunNal(lunarDay)) {
+        gililDays.push({ date: d, comment: getComment(purpose) });
+      }
+    }
+
+    results[`${targetYear}-${targetMonth}`] = {
+      year: targetYear,
+      month: targetMonth,
+      days: gililDays
+    };
+  }
+
+  res.json({ success: true, data: results });
+});
+
+
 function lunarToSolar(year, month, day) {
   const calendar = new KoreanLunarCalendar();
   calendar.setLunarDate(year, month, day, false);
