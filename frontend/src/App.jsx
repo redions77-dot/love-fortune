@@ -339,6 +339,7 @@ const [isDeepStreaming, setIsDeepStreaming] = useState(false)
   const [gilil목적, setGilil목적] = useState('')
   const [gililText, setGililText] = useState('')
   const [isGililStreaming, setIsGililStreaming] = useState(false)
+  const [gililData, setGililData] = useState(null)
 
   const abortRef = useRef(null)
   const isPaidSectionRef = useRef(false)
@@ -564,39 +565,21 @@ async function handleDeepAnalyze() {
     setIsGunghabStreaming(false)
   }
 
-  async function handleGililAnalyze() {
-    setGililText(''); setIsGililStreaming(true); setScreen('gilil_result')
-    try {
-      const ctrl = new AbortController()
-      abortRef.current = ctrl
+ async function handleGililAnalyze() {
+  setGililData(null); setIsGililStreaming(true); setScreen('gilil_result')
+  try {
     const res = await fetch(`${API_URL}/api/gilil`, {
-  method: 'POST', headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    purpose: gilil목적,
-  }),
-        signal: ctrl.signal,
-      })
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let buf = ''
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buf += decoder.decode(value, { stream: true })
-        const lines = buf.split('\n'); buf = lines.pop()
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          try {
-            const json = JSON.parse(line.slice(6))
-            if (json.text) setGililText(prev => prev + json.text)
-          } catch {}
-        }
-      }
-    } catch (e) {
-      if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
-    }
-    setIsGililStreaming(false)
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ purpose: gilil목적 }),
+    })
+    const data = await res.json()
+    if (data.success) setGililData(data.data)
+  } catch (e) {
+    alert('서버에 연결할 수 없습니다.')
   }
+  setIsGililStreaming(false)
+}
 
  // ── 길일 입력 화면 ──
   if (screen === 'gilil_input') {
