@@ -1132,7 +1132,7 @@ async function handleDeepAnalyze() {
                 background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)',
                 borderRadius: 10, padding: '20px 12px', cursor: 'pointer', textAlign: 'center',
                 transition: 'all 0.2s', boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
-              }} onClick={() => { setServiceType('saju'); setScreen('input') }}>
+              }} onClick={() => { setServiceType('deep'); setScreen('input') }}>
                 <span style={{ display: 'inline-block', background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 2, marginBottom: 12, border: '1px solid rgba(201,168,76,0.3)', letterSpacing: '0.1em' }}>FREE PREVIEW</span>
                 <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, "Times New Roman", serif', lineHeight: 1, marginBottom: 12, letterSpacing: '-0.02em' }}>命</div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, fontFamily: 'Georgia, serif', letterSpacing: '0.05em' }}>나의 사주</div>
