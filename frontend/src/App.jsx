@@ -266,8 +266,8 @@ function DateInputs({ year, setYear, month, setMonth, day, setDay, lunar, setLun
 }
 
 function GililResult({ months, gilil목적, isGililStreaming, handleRestart }) {
-  const [selectedMonth, setSelectedMonth] = React.useState(0)
-  const [selectedDay, setSelectedDay] = React.useState(null)
+  const [selectedMonth, setSelectedMonth] = useState(0)
+  const [selectedDay, setSelectedDay] = useState(null)
   const currentMonthData = months[selectedMonth]
 
   return (
