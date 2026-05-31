@@ -385,8 +385,10 @@ const [isDeepStreaming, setIsDeepStreaming] = useState(false)
         else alert('결제가 취소되었습니다.')
       })
    
-    } else handleFreeAnalyze()
-function goBack() {
+ } else handleFreeAnalyze()
+  }
+
+  function goBack() {
     if (currentStepId === 'birthdate' && (serviceType === 'child' || serviceType === '노후')) {
       setStep(s => s - 2)
       return
