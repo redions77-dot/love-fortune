@@ -1645,7 +1645,7 @@ const element = document.getElementById('result-content')
   window.html2pdf().set(opt).from(element).save()
 }}>📄 결과 저장하기 (PDF)</button>
 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 6 }}>결과는 저장되지 않아요. PDF로 저장해두세요!</p>
-{isPaid && serviceType === 'saju' && (
+{(isPaid && serviceType === 'saju') || serviceType === 'deep') && (
   <div style={{ marginTop: 24, marginBottom: 8 }}>
     <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 16 }}>더 깊이 알고 싶다면?</p>
     
