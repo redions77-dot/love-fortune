@@ -1226,7 +1226,7 @@ async function handleDeepAnalyze() {
       onClick={() => { setServiceType('saju'); setScreen('input') }}>
       내 사주 분석받기 →
     </button>
-  </div>
+  </div> 
 </div>
             </div>
             <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.15)', marginTop: 8 }}>
