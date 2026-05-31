@@ -1158,7 +1158,7 @@ async function handleDeepAnalyze() {
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 12, letterSpacing: '0.05em' }}>1,900원</div>
               </button>
              </div> 
-             </div>  
+            
  {/* 심화 분석 업셀링 카드 */}
 <div style={{ marginBottom: 12 }}>
   <button style={{
@@ -1229,7 +1229,7 @@ async function handleDeepAnalyze() {
     </button>
   </div> 
 </div>
-            </div>
+         
             <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.15)', marginTop: 8 }}>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 12 }}>이미 많은 분들이 확인했어요</p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 24 }}>
