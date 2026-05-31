@@ -569,12 +569,11 @@ async function handleDeepAnalyze() {
     try {
       const ctrl = new AbortController()
       abortRef.current = ctrl
-      const res = await fetch(`${API_URL}/api/analyze`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          gender, birthdate, birthtime, isLunar,
-          목적: gilil목적, type: '길일', isPaid: true,
-        }),
+    const res = await fetch(`${API_URL}/api/gilil`, {
+  method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    purpose: gilil목적,
+  }),
         signal: ctrl.signal,
       })
       const reader = res.body.getReader()
