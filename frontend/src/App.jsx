@@ -265,6 +265,109 @@ function DateInputs({ year, setYear, month, setMonth, day, setDay, lunar, setLun
   )
 }
 
+function GililResult({ months, gilil목적, isGililStreaming, handleRestart }) {
+  const [selectedMonth, setSelectedMonth] = React.useState(0)
+  const [selectedDay, setSelectedDay] = React.useState(null)
+  const currentMonthData = months[selectedMonth]
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)' }}>
+        <div style={{ fontSize: 36 }}>吉</div>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginTop: 8 }}>{gilil목적} 길일 추천</h1>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>내 사주 기준으로 좋은 날을 찾았어요</p>
+      </div>
+
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 100px', width: '100%', boxSizing: 'border-box' }}>
+        {isGililStreaming && (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
+            🔍 길일을 찾고 있어요...
+          </div>
+        )}
+
+        {!isGililStreaming && gililData && (
+          <>
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '16px 0 12px', scrollbarWidth: 'none' }}>
+              {months.map((m, i) => (
+                <button key={i} onClick={() => { setSelectedMonth(i); setSelectedDay(null) }}
+                  style={{ flexShrink: 0, padding: '5px 14px', borderRadius: 20, fontSize: 12, border: '0.5px solid', cursor: 'pointer',
+                    borderColor: selectedMonth === i ? '#C9A94E' : 'rgba(255,255,255,0.2)',
+                    background: selectedMonth === i ? '#C9A94E' : 'transparent',
+                    color: selectedMonth === i ? '#0D1B3E' : 'rgba(255,255,255,0.5)',
+                    fontWeight: selectedMonth === i ? 700 : 400,
+                  }}>
+                  {m.month}월
+                </button>
+              ))}
+            </div>
+
+            {currentMonthData && (
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '14px 12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: 8 }}>
+                  {['일','월','화','수','목','금','토'].map((d, i) => (
+                    <div key={d} style={{ fontSize: 11, padding: '2px 0', color: i === 0 ? 'rgba(220,80,80,0.6)' : 'rgba(255,255,255,0.35)' }}>{d}</div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+                  {(() => {
+                    const startDay = new Date(currentMonthData.year, currentMonthData.month - 1, 1).getDay()
+                    const daysInMonth = new Date(currentMonthData.year, currentMonthData.month, 0).getDate()
+                    const gililMap = {}
+                    currentMonthData.days.forEach(d => { gililMap[d.date] = d.comment })
+                    const cells = []
+                    for (let i = 0; i < startDay; i++) cells.push(<div key={`e${i}`} />)
+                    for (let d = 1; d <= daysInMonth; d++) {
+                      const isGilil = !!gililMap[d]
+                      const isSun = (startDay + d - 1) % 7 === 0
+                      const isSelected = selectedDay === d
+                      cells.push(
+                        <div key={d} onClick={() => isGilil && setSelectedDay(isSelected ? null : d)}
+                          style={{
+                            aspectRatio: '1', display: 'flex', flexDirection: 'column',
+                            alignItems: 'center', justifyContent: 'center', fontSize: 12, borderRadius: 8,
+                            cursor: isGilil ? 'pointer' : 'default',
+                            background: isGilil ? 'rgba(201,169,78,0.18)' : 'transparent',
+                            border: isSelected ? '1.5px solid #C9A94E' : isGilil ? '0.5px solid rgba(201,169,78,0.5)' : 'none',
+                            color: isGilil ? (isSun ? '#f4a0a0' : '#f0d080') : (isSun ? 'rgba(220,80,80,0.5)' : 'rgba(255,255,255,0.55)'),
+                            fontWeight: isGilil ? 600 : 400,
+                          }}>
+                          {d}
+                          {isGilil && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#C9A94E', marginTop: 2 }} />}
+                        </div>
+                      )
+                    }
+                    return cells
+                  })()}
+                </div>
+
+                <div style={{ minHeight: 38, marginTop: 10 }}>
+                  {selectedDay && currentMonthData.days.find(d => d.date === selectedDay) && (
+                    <div style={{ background: 'rgba(201,169,78,0.12)', border: '0.5px solid rgba(201,169,78,0.4)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#f0d080', lineHeight: 1.6 }}>
+                      {currentMonthData.month}월 {selectedDay}일 — {currentMonthData.days.find(d => d.date === selectedDay).comment}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, paddingTop: 10, borderTop: '0.5px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 3, background: 'rgba(201,169,78,0.25)', border: '0.5px solid rgba(201,169,78,0.6)' }} />
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>길일</span>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginLeft: 'auto' }}>날짜를 눌러 상세 확인</span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <div style={{ position: 'fixed', bottom: 0, width: '100%', background: '#050D1F', borderTop: '1px solid rgba(201,169,78,0.15)', padding: '12px 20px' }}>
+        <button onClick={handleRestart} style={{ width: '100%', padding: '14px', borderRadius: 10, border: '1px solid rgba(201,169,78,0.3)', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: 14, cursor: 'pointer' }}>
+          처음으로 돌아가기
+        </button>
+      </div>
+    </div>
+  )
+}
 function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, isGilil = false, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   const style = isGunghab ? s.gunghabAccordion : isChild ? s.childAccordion : isGilil ? s.gililAccordion : isPaid ? s.paidAccordion : s.accordion
@@ -689,35 +792,11 @@ if (screen === 'deep_result') {
     </div>
   )
 }
-  // ── 길일 결과 화면 ──
-  if (screen === 'gilil_result') {
-    const gililSections = parseSections(gililText)
-    return (
-      <div style={s.app}>
-        <div style={s.resultWrap}>
-          <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
-            <span style={{ fontSize: 36 }}>📅</span>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)', marginTop: 8 }}>{gilil목적} 길일 추천</h2>
-          </div>
-          {isGililStreaming && gililText && (
-            <div style={s.streamCard}>{gililText}<span style={{ opacity: 0.4 }}>▌</span></div>
-          )}
-          {isGililStreaming && !gililText && (
-            <div style={s.loadingCard}>
-              <div style={s.loading}>
-                {[0,1,2].map(i => <div key={i} style={s.dot(i)} />)}
-                <span style={{ fontSize: 14, color: 'var(--color-text-muted)', marginLeft: 8 }}>📅 길일을 찾고 있어요...</span>
-              </div>
-            </div>
-          )}
-          {!isGililStreaming && gililSections.map((sec, i) => (
-            <Accordion key={i} title={sec.title} content={sec.content} isGilil={true} defaultOpen={i === 0} />
-          ))}
-          <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
-        </div>
-      </div>
-    )
-  }
+// — 길일 결과 화면 —
+if (screen === 'gilil_result') {
+  const months = gililData ? Object.values(gililData) : []
+  return <GililResult months={months} gilil목적={gilil목적} isGililStreaming={isGililStreaming} handleRestart={handleRestart} />
+}
 
  // ── 궁합 입력 화면 ──
   if (screen === 'gunghab_input') {
