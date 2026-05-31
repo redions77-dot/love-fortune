@@ -265,7 +265,7 @@ function DateInputs({ year, setYear, month, setMonth, day, setDay, lunar, setLun
   )
 }
 
-function GililResult({ months, gilil목적, isGililStreaming, handleRestart }) {
+function GililResult({ months, gililData, gilil목적, isGililStreaming, handleRestart }) {
   const [selectedMonth, setSelectedMonth] = useState(0)
   const [selectedDay, setSelectedDay] = useState(null)
   const currentMonthData = months[selectedMonth]
@@ -795,7 +795,7 @@ if (screen === 'deep_result') {
 // — 길일 결과 화면 —
 if (screen === 'gilil_result') {
   const months = gililData ? Object.values(gililData) : []
-  return <GililResult months={months} gilil목적={gilil목적} isGililStreaming={isGililStreaming} handleRestart={handleRestart} />
+return <GililResult months={months} gililData={gililData} gilil목적={gilil목적} isGililStreaming={isGililStreaming} handleRestart={handleRestart} />
 }
 
  // ── 궁합 입력 화면 ──
