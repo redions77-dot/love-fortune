@@ -371,22 +371,21 @@ const [isDeepStreaming, setIsDeepStreaming] = useState(false)
       return
     }
     if (step < STEPS.length - 1) setStep(s => s + 1)
-    else if (serviceType === 'deep') {
-  // 9,900원 결제 후 handleDeepAnalyze()
-  if (IS_ADMIN) { handleDeepAnalyze(); setScreen('result'); return; }
-  const IMP = window.IMP
-  IMP.init('imp87662575')
-  IMP.request_pay({
-    pg: 'html5_inicis', pay_method: 'card',
-    merchant_uid: `deep_${Date.now()}`,
-    name: '마이사주 심화 분석', amount: 9900,
-    buyer_name: myName || '고객',
-  }, (rsp) => {
-    if (rsp.success) { setScreen('result'); handleDeepAnalyze(); }
-    else alert('결제가 취소되었습니다.')
-  })
-} else handleFreeAnalyze()
-  }
+ else if (serviceType === 'deep') {
+      if (IS_ADMIN) { handleDeepAnalyze(); setScreen('result'); return; }
+      const IMP = window.IMP
+      IMP.init('imp87662575')
+      IMP.request_pay({
+        pg: 'html5_inicis', pay_method: 'card',
+        merchant_uid: `deep_${Date.now()}`,
+        name: '마이사주 심화 분석', amount: 9900,
+        buyer_name: myName || '고객',
+      }, (rsp) => {
+        if (rsp.success) { setScreen('result'); handleDeepAnalyze(); }
+        else alert('결제가 취소되었습니다.')
+      })
+    } 
+    } else handleFreeAnalyze()
 function goBack() {
     if (currentStepId === 'birthdate' && (serviceType === 'child' || serviceType === '노후')) {
       setStep(s => s - 2)
