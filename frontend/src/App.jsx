@@ -372,7 +372,7 @@ const [isDeepStreaming, setIsDeepStreaming] = useState(false)
     }
     if (step < STEPS.length - 1) setStep(s => s + 1)
  else if (serviceType === 'deep') {
-      if (IS_ADMIN) { handleDeepAnalyze(); setScreen('result'); return; }
+      if (IS_ADMIN) { handleDeepAnalyze(); setScreen('deep_result'); return; }
       const IMP = window.IMP
       IMP.init('imp87662575')
       IMP.request_pay({
@@ -381,7 +381,7 @@ const [isDeepStreaming, setIsDeepStreaming] = useState(false)
         name: '마이사주 심화 분석', amount: 9900,
         buyer_name: myName || '고객',
       }, (rsp) => {
-        if (rsp.success) { setScreen('result'); handleDeepAnalyze(); }
+        if (rsp.success) { setScreen('deep_result'); handleDeepAnalyze(); }
         else alert('결제가 취소되었습니다.')
       })
    
@@ -676,6 +676,37 @@ async function handleDeepAnalyze() {
       </div>
     )
   }
+  // ── 심화 결과 화면 ──
+if (screen === 'deep_result') {
+  const deepSections = parseSections(deepText)
+  return (
+    <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
+        <div style={{ fontSize: 36 }}>🔮</div>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>사주 심화 분석</h1>
+      </div>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
+        {isDeepStreaming && !deepText && (
+          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
+              <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>🔮 심화 분석 중이에요...</span>
+            </div>
+          </div>
+        )}
+        {isDeepStreaming && deepText && (
+          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+            {removeMarkers(deepText)}<span style={{ opacity: 0.4 }}>▌</span>
+          </div>
+        )}
+        {!isDeepStreaming && deepSections.map((sec, i) => (
+          <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />
+        ))}
+        <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
+      </div>
+    </div>
+  )
+}
   // ── 길일 결과 화면 ──
   if (screen === 'gilil_result') {
     const gililSections = parseSections(gililText)
