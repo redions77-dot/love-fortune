@@ -1242,7 +1242,7 @@ async function handleDeepAnalyze() {
               </div>
             </div>
           </div>
-        </div>
+     
      {/* 사업자 정보 푸터 */}
         <div style={{
           borderTop: '1px solid rgba(201,168,76,0.2)',
