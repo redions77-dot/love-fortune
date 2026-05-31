@@ -1157,6 +1157,7 @@ async function handleDeepAnalyze() {
                 <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>말년 재물·건강<br/>황혼 인연 미리 확인</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 12, letterSpacing: '0.05em' }}>1,900원</div>
               </button>
+               </div>
              </div> 
  {/* 심화 분석 업셀링 카드 */}
 <div style={{ marginBottom: 12 }}>
