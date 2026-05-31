@@ -384,7 +384,7 @@ const [isDeepStreaming, setIsDeepStreaming] = useState(false)
         if (rsp.success) { setScreen('result'); handleDeepAnalyze(); }
         else alert('결제가 취소되었습니다.')
       })
-    } 
+   
     } else handleFreeAnalyze()
 function goBack() {
     if (currentStepId === 'birthdate' && (serviceType === 'child' || serviceType === '노후')) {
