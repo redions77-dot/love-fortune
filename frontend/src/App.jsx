@@ -1705,9 +1705,6 @@ IMP.request_pay({
               }}>
                 지금 전체 분석 받기 →
               </button>
-              <button style={{ width: '100%', padding: '12px', fontSize: 13, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.3)', marginTop: 8 }} onClick={handlePaidAnalyze}>
-  결과 미리보기 (테스트용)
-</button>
             </div>
           )}
 
