@@ -808,12 +808,7 @@ if (screen === 'deep_result') {
       </div>
     )
 }
-// — 길일 결과 화면 —
-        <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
-      </div>
-    </div>
-  )
-}
+
 // — 길일 결과 화면 —
 if (screen === 'gilil_result') {
   const months = gililData ? Object.values(gililData) : []
