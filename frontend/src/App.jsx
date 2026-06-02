@@ -770,7 +770,7 @@ if (screen === 'deep_result') {
         <div style={{ fontSize: 36 }}>🔮</div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>사주 심화 분석</h1>
       </div>
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
+      <div id="deep-result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
         {isDeepStreaming && !deepText && (
           <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
