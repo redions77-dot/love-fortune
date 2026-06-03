@@ -796,10 +796,11 @@ if (screen === 'deep_result') {
           const element = document.getElementById('deep-result-content')
           const opt = {
             margin: 10,
-            filename: '마이사주_심화분석_' + (myName || '결과') + '.pdf',
+filename: '마이사주_심화분석_' + (myName || '결과') + '.pdf',
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, backgroundColor: '#050D1F', useCORS: true, logging: false },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            html2canvas: { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
           }
           window.html2pdf().set(opt).from(element).save()
         }}>📄 심화 분석 저장하기 (PDF)</button>
@@ -1743,10 +1744,11 @@ IMP.request_pay({
 const element = document.getElementById('result-content')
   const opt = {
     margin: 10,
-    filename: '마이사주_분석결과.pdf',
+    filename: '마이사주_분석결과_' + (myName || '결과') + '.pdf',
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, backgroundColor: '#050D1F', useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    html2canvas: { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   }
   window.html2pdf().set(opt).from(element).save()
 }}>📄 결과 저장하기 (PDF)</button>
