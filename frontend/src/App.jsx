@@ -1770,7 +1770,9 @@ const element = document.getElementById('result-content')
     {/* 9,900원 */}
     <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px', marginBottom: 10 }}>
       <p style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>🔮 사주 심화 분석</p>
-      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 12 }}>10년 대운 흐름 · 2026 하반기 월별 · 2027년 전체 · 귀인 분석 · 지금 해야 할 것</p>
+      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 12 }}>기본 분석엔 없어요.
+2026 하반기, 내가 올라타야 할 달 vs 조심해야 할 달.
+귀인이 오는 시기까지 — 지금 안 보면 그냥 지나가요.</p>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 22, fontWeight: 800, color: '#C9A84C' }}>9,900원</span>
         <button style={{ padding: '10px 20px', fontSize: 14, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer' }}
@@ -1788,7 +1790,7 @@ const element = document.getElementById('result-content')
               else alert('결제가 취소되었습니다.')
             })
           }}>
-          분석 받기 →
+          확인하기 →
         </button>
       </div>
     </div>
