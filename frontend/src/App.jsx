@@ -32,7 +32,7 @@ function getMidnightCountdown() {
   const midnight = new Date()
   midnight.setHours(24, 0, 0, 0)
   const diff = midnight - now
-  const h = Math.floor(diff / 3600000)
+  const h = Math.floor(diff / 3600000)  
   const m = Math.floor((diff % 3600000) / 60000)
   const s = Math.floor((diff % 60000) / 1000)
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
