@@ -786,11 +786,11 @@ if (screen === 'deep_result') {
         )}
         {!isDeepStreaming && deepSections.map((sec, i) => (
           <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />
-       ))}
+  ))}
         <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 10 }}>
           <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
-</div>
+        </div>
         <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={() => {
           window.scrollTo(0, 0)
           const element = document.getElementById('deep-result-content')
@@ -808,8 +808,10 @@ if (screen === 'deep_result') {
     </div>
   )
 }
-
 // — 길일 결과 화면 —
+          <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
+
 if (screen === 'gilil_result') {
   const months = gililData ? Object.values(gililData) : []
 return <GililResult months={months} gililData={gililData} gilil목적={gilil목적} isGililStreaming={isGililStreaming} handleRestart={handleRestart} />
