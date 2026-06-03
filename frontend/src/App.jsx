@@ -805,7 +805,9 @@ filename: '마이사주_심화분석_' + (myName || '결과') + '.pdf',
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
           }
-          window.html2pdf().set(opt).from(element).save()
+          window.html2pdf().set(opt).from(element).save().then(() => {
+            allCards.forEach((el, i) => { el.style.cssText = origStyles[i] })
+          })
         }}>📄 심화 분석 저장하기 (PDF)</button>
         <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
       </div>
