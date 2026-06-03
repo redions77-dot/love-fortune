@@ -1763,7 +1763,7 @@ const element = document.getElementById('result-content')
         <span style={{ fontSize: 22, fontWeight: 800, color: '#C9A84C' }}>9,900원</span>
         <button style={{ padding: '10px 20px', fontSize: 14, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer' }}
           onClick={() => {
-            if (IS_ADMIN) { handleDeepAnalyze(); return; }
+            if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return; }
             const IMP = window.IMP
             IMP.init('imp87662575')
             IMP.request_pay({
@@ -1772,7 +1772,7 @@ const element = document.getElementById('result-content')
               name: '마이사주 심화 분석', amount: 9900,
               buyer_name: myName || '고객',
             }, (rsp) => {
-              if (rsp.success) handleDeepAnalyze()
+              if (rsp.success) { setScreen('deep_result'); handleDeepAnalyze(); }
               else alert('결제가 취소되었습니다.')
             })
           }}>
