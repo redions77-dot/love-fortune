@@ -794,6 +794,9 @@ if (screen === 'deep_result') {
         <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={() => {
           window.scrollTo(0, 0)
           const element = document.getElementById('deep-result-content')
+          const allCards = element.querySelectorAll('[style*="background: #0D1B3E"], [style*="background: #050D1F"], [style*="background: #1B2A4A"]')
+          const origStyles = []
+          allCards.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
           const opt = {
             margin: 10,
 filename: '마이사주_심화분석_' + (myName || '결과') + '.pdf',
