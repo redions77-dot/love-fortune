@@ -809,10 +809,7 @@ if (screen === 'deep_result') {
   )
 }
 // — 길일 결과 화면 —
-          <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
-
-if (screen === 'gilil_result') {
+ if (screen === 'gilil_result') {
   const months = gililData ? Object.values(gililData) : []
 return <GililResult months={months} gililData={gililData} gilil목적={gilil목적} isGililStreaming={isGililStreaming} handleRestart={handleRestart} />
 }
