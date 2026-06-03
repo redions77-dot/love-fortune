@@ -1747,6 +1747,9 @@ IMP.request_pay({
          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginTop: 10 }} onClick={() => {
   window.scrollTo(0, 0)
 const element = document.getElementById('result-content')
+          const allEls = element.querySelectorAll('*')
+          const origStyles = []
+          allEls.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
   const opt = {
     margin: 10,
     filename: '마이사주_분석결과_' + (myName || '결과') + '.pdf',
@@ -1755,7 +1758,9 @@ const element = document.getElementById('result-content')
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   }
-  window.html2pdf().set(opt).from(element).save()
+ window.html2pdf().set(opt).from(element).save().then(() => {
+    allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
+  })
 }}>📄 결과 저장하기 (PDF)</button>
 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 6 }}>결과는 저장되지 않아요. PDF로 저장해두세요!</p>
 {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
