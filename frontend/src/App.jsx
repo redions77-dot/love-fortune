@@ -806,7 +806,7 @@ if (screen === 'deep_result') {
         <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
       </div>
     </div>
-    )
+  )
 }
 
 // — 길일 결과 화면 —
