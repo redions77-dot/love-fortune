@@ -1000,7 +1000,7 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
     const gunghabSections = parseSections(gunghabText)
     return (
       <div style={s.app}>
-        <div style={s.resultWrap}>
+        <div id="gunghab-result-content" style={s.resultWrap}>
           <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
             <span style={{ fontSize: 36 }}>💕</span>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)', marginTop: 8 }}>두 사람의 궁합 분석</h2>
@@ -1019,6 +1019,28 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
           {!isGunghabStreaming && gunghabSections.map((sec, i) => (
             <Accordion key={i} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={i === 0} />
           ))}
+         <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 10, marginTop: 16 }}>
+            <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
+          </div>
+          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={() => {
+            window.scrollTo(0, 0)
+            const element = document.getElementById('gunghab-result-content')
+            const allEls = element.querySelectorAll('*')
+            const origStyles = []
+            allEls.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
+            const opt = {
+              margin: 10,
+              filename: '마이사주_궁합분석_' + (myName || '결과') + '.pdf',
+              image: { type: 'jpeg', quality: 0.98 },
+              html2canvas: { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false },
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+              pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            }
+            window.html2pdf().set(opt).from(element).save().then(() => {
+              allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
+            })
+          }}>📄 궁합 분석 저장하기 (PDF)</button>
           <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
         </div>
       </div>
