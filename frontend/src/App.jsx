@@ -826,24 +826,32 @@ if (screen === 'deep_result') {
   ))}
         <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 10 }}>
           <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
         </div>
         <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={() => {
           window.scrollTo(0, 0)
           const element = document.getElementById('deep-result-content')
-         const allEls = element.querySelectorAll('*')
+          const allEls = element.querySelectorAll('*')
           const origStyles = []
           allEls.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
           const opt = {
             margin: 10,
-filename: '마이사주_심화분석_' + (myName || '결과') + '.pdf',
+            filename: '마이사주_심화분석_' + (myName || '결과') + '.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
           }
-          window.html2pdf().set(opt).from(element).save().then(() => {
-           allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
+          window.html2pdf().set(opt).from(element).outputPdf('blob').then((blob) => {
+            allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = '마이사주_심화분석_' + (myName || '결과') + '.pdf'
+            a.target = '_blank'
+            document.body.appendChild(a)
+            a.click()
+            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 1000)
           })
         }}>📄 심화 분석 저장하기 (PDF)</button>
         <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
@@ -1108,7 +1116,7 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
           ))}
          <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 10, marginTop: 16 }}>
             <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
           </div>
           <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={() => {
             window.scrollTo(0, 0)
@@ -1124,8 +1132,16 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
               jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
               pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
             }
-            window.html2pdf().set(opt).from(element).save().then(() => {
+            window.html2pdf().set(opt).from(element).outputPdf('blob').then((blob) => {
               allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = '마이사주_궁합분석_' + (myName || '결과') + '.pdf'
+              a.target = '_blank'
+              document.body.appendChild(a)
+              a.click()
+              setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 1000)
             })
           }}>📄 궁합 분석 저장하기 (PDF)</button>
           <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
@@ -1851,14 +1867,14 @@ IMP.request_pay({
           )}
          <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginTop: 10 }}>
   <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
-  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요. 지금 접혀있는 항목은 저장되지 않아요.</p>
+  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요. 지금 접혀있는 항목은 저장되지 않아요.</p>
 </div>
          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginTop: 10 }} onClick={() => {
   window.scrollTo(0, 0)
-const element = document.getElementById('result-content')
-          const allEls = element.querySelectorAll('*')
-          const origStyles = []
-          allEls.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
+  const element = document.getElementById('result-content')
+  const allEls = element.querySelectorAll('*')
+  const origStyles = []
+  allEls.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
   const opt = {
     margin: 10,
     filename: '마이사주_분석결과_' + (myName || '결과') + '.pdf',
@@ -1867,8 +1883,16 @@ const element = document.getElementById('result-content')
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   }
- window.html2pdf().set(opt).from(element).save().then(() => {
+  window.html2pdf().set(opt).from(element).outputPdf('blob').then((blob) => {
     allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = '마이사주_분석결과_' + (myName || '결과') + '.pdf'
+    a.target = '_blank'
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 1000)
   })
 }}>📄 결과 저장하기 (PDF)</button>
 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 6 }}>결과는 저장되지 않아요. PDF로 저장해두세요!</p>
