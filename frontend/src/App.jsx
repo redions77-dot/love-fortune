@@ -1,4 +1,4 @@
-  import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 const PORTONE_IMP_KEY = 'imp87662575'
 const PORTONE_CHANNEL_KEY = 'channel-key-ee1dda53-8dfa-471e-9b76-4483df87605f'
@@ -384,6 +384,11 @@ function Accordion({ title, content, isPaid = false, isChild = false, isGunghab 
 }
 
 export default function App() {
+  // ── 모바일 결제 복귀 파라미터 파싱 ──
+  const _qs = new URLSearchParams(window.location.search)
+  const _mobilePayment = _qs.get('payment')       // 'gunghab' | 'gilil'
+  const _impSuccess = _qs.get('imp_success')       // 'true' | 'false'
+
   useEffect(() => {
     const ping = () => fetch(`${API_URL}/ping`).catch(() => {})
     ping()
@@ -391,20 +396,44 @@ export default function App() {
     return () => clearInterval(id)
   }, [])
 
+  // ── 모바일 결제 복귀 처리 ──
+  useEffect(() => {
+    if (_mobilePayment === 'gunghab' && _impSuccess === 'true') {
+      // URL 파라미터로 상태 복원 후 분석 자동 시작
+      // 상태가 초기화되고 나서 실행되도록 약간 딜레이
+      const t = setTimeout(() => {
+        handleGunghabAnalyze()
+        // URL 정리 (뒤로가기 방지)
+        window.history.replaceState({}, '', window.location.pathname)
+      }, 300)
+      return () => clearTimeout(t)
+    }
+    if (_mobilePayment === 'gunghab' && _impSuccess === 'false') {
+      alert('결제가 취소되었습니다.')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, []) // eslint-disable-line
+
   const [countdown, setCountdown] = useState(getMidnightCountdown())
   useEffect(() => {
     const id = setInterval(() => setCountdown(getMidnightCountdown()), 1000)
     return () => clearInterval(id)
   }, [])
 
-  const [screen, setScreen] = useState('landing')
-  const [serviceType, setServiceType] = useState(null)
+  const [screen, setScreen] = useState(() => {
+    if (_mobilePayment === 'gunghab' && _impSuccess === 'true') return 'result'
+    return 'landing'
+  })
+  const [serviceType, setServiceType] = useState(() => {
+    if (_mobilePayment === 'gunghab' && _impSuccess === 'true') return 'gunghab'
+    return null
+  })
   const [step, setStep] = useState(0)
-  const [gender, setGender] = useState('')
+  const [gender, setGender] = useState(() => _qs.get('g') || '')
   const [maritalStatus, setMaritalStatus] = useState('')
-  const [birthYear, setBirthYear] = useState('')
-  const [birthMonth, setBirthMonth] = useState('')
-  const [birthDay, setBirthDay] = useState('')
+  const [birthYear, setBirthYear] = useState(() => _qs.get('by') || '')
+  const [birthMonth, setBirthMonth] = useState(() => _qs.get('bm') || '')
+  const [birthDay, setBirthDay] = useState(() => _qs.get('bd') || '')
   const [isLunar, setIsLunar] = useState(false)
   const [timeHour, setTimeHour] = useState('')
   const [timeMin, setTimeMin] = useState('')
@@ -425,19 +454,20 @@ const [isDeepStreaming, setIsDeepStreaming] = useState(false)
   const [openCheongan, setOpenCheongan] = useState(null)
   // 궁합 전용 상태
   const [gunghabStep, setGunghabStep] = useState(1)
-  const [partnerGender, setPartnerGender] = useState('')
-  const [partnerBirthYear, setPartnerBirthYear] = useState('')
-  const [partnerBirthMonth, setPartnerBirthMonth] = useState('')
-  const [partnerBirthDay, setPartnerBirthDay] = useState('')
-  const [partnerIsLunar, setPartnerIsLunar] = useState(false)
-  const [partnerTimeHour, setPartnerTimeHour] = useState('')
-  const [partnerTimeMin, setPartnerTimeMin] = useState('')
-  const [partnerTimeAmPm, setPartnerTimeAmPm] = useState('오전')
-  const [partnerTimeUnknown, setPartnerTimeUnknown] = useState(false)
-  const [myName, setMyName] = useState('')
-  const [partnerName, setPartnerName] = useState('')
+  const [partnerGender, setPartnerGender] = useState(() => _qs.get('pg') || '')
+  const [partnerBirthYear, setPartnerBirthYear] = useState(() => _qs.get('pby') || '')
+  const [partnerBirthMonth, setPartnerBirthMonth] = useState(() => _qs.get('pbm') || '')
+  const [partnerBirthDay, setPartnerBirthDay] = useState(() => _qs.get('pbd') || '')
+  const [partnerIsLunar, setPartnerIsLunar] = useState(() => _qs.get('pil') === '1')
+  const [partnerTimeHour, setPartnerTimeHour] = useState(() => _qs.get('pth') || '')
+  const [partnerTimeMin, setPartnerTimeMin] = useState(() => _qs.get('ptm') || '')
+  const [partnerTimeAmPm, setPartnerTimeAmPm] = useState(() => _qs.get('ptap') || '오전')
+  const [partnerTimeUnknown, setPartnerTimeUnknown] = useState(() => _qs.get('ptu') === '1')
+  const [myName, setMyName] = useState(() => _qs.get('mn') || '')
+  const [partnerName, setPartnerName] = useState(() => _qs.get('pn') || '')
   const [gunghabText, setGunghabText] = useState('')
   const [isGunghabStreaming, setIsGunghabStreaming] = useState(false)
+  const [gunghabSajuData, setGunghabSajuData] = useState(null)
   // 길일 전용 상태
   const [gilil목적, setGilil목적] = useState('')
   const [gililText, setGililText] = useState('')
@@ -614,7 +644,7 @@ async function handleDeepAnalyze() {
     setGunghabStep(1); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
     setPartnerIsLunar(false); setPartnerTimeHour(''); setPartnerTimeMin(''); setPartnerTimeAmPm('오전'); setPartnerTimeUnknown(false)
     setMyName(''); setPartnerName('')
-    setGunghabText(''); setIsGunghabStreaming(false)
+    setGunghabText(''); setIsGunghabStreaming(false); setGunghabSajuData(null)
     setGilil목적(''); setGililText(''); setIsGililStreaming(false)
     isPaidSectionRef.current = false
   }
@@ -632,6 +662,12 @@ async function handleDeepAnalyze() {
   const partnerBirthtimeValid = partnerTimeUnknown || (partnerTimeHour !== '' && partnerTimeMin !== '')
 
   async function handleGunghabAnalyze() {
+    // 모바일 복귀 시 URL 파라미터에서 birthtime/partnerBirthtime 복원
+    const _isMobileReturn = new URLSearchParams(window.location.search).get('payment') === 'gunghab'
+    const _qs2 = new URLSearchParams(window.location.search)
+    const _birthtime = _isMobileReturn ? (_qs2.get('bt') || '') : birthtime
+    const _partnerBirthtime = _isMobileReturn ? (_qs2.get('pbt') || '') : partnerBirthtime
+
     setGunghabText(''); setIsGunghabStreaming(true); setScreen('result')
     try {
       const ctrl = new AbortController()
@@ -639,8 +675,8 @@ async function handleDeepAnalyze() {
       const res = await fetch(`${API_URL}/api/analyze`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          gender, birthdate, birthtime, isLunar,
-          partnerGender, partnerBirthdate, partnerBirthtime, partnerIsLunar,
+          gender, birthdate, birthtime: _birthtime, isLunar,
+          partnerGender, partnerBirthdate, partnerBirthtime: _partnerBirthtime, partnerIsLunar,
           myName: myName || 'A', partnerName: partnerName || 'B',
           type: '궁합', isPaid: true,
         }),
@@ -658,7 +694,8 @@ async function handleDeepAnalyze() {
           if (!line.startsWith('data: ')) continue
           try {
             const json = JSON.parse(line.slice(6))
-            if (json.text) setGunghabText(prev => prev + json.text)
+            if (json.type === 'gunghab_saju') setGunghabSajuData(json)
+            else if (json.text) setGunghabText(prev => prev + json.text)
           } catch {}
         }
       }
@@ -977,11 +1014,31 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
                 if (IS_ADMIN) { handleGunghabAnalyze(); return; }
                 const IMP = window.IMP
                 IMP.init('imp87662575')
+                // 모바일 복귀용 URL (입력값 파라미터로 전달)
+                const _pbt = (() => {
+                  if (partnerTimeUnknown) return ''
+                  if (!partnerTimeHour || !partnerTimeMin) return ''
+                  let h = Number(partnerTimeHour)
+                  if (partnerTimeAmPm === '오전' && h === 12) h = 0
+                  if (partnerTimeAmPm === '오후' && h !== 12) h += 12
+                  return `${String(h).padStart(2,'0')}:${String(partnerTimeMin).padStart(2,'0')}`
+                })()
+                const _params = new URLSearchParams({
+                  payment: 'gunghab', imp_success: 'true',
+                  g: gender, by: birthYear, bm: birthMonth, bd: birthDay,
+                  il: isLunar ? '1' : '0', bt: birthtime || '',
+                  mn: myName || '', pn: partnerName || '',
+                  pg: partnerGender, pby: partnerBirthYear, pbm: partnerBirthMonth, pbd: partnerBirthDay,
+                  ptu: partnerTimeUnknown ? '1' : '0', pil: partnerIsLunar ? '1' : '0',
+                  pbt: _pbt, ptap: partnerTimeAmPm,
+                }).toString()
+                const _redirectUrl = `${window.location.origin}${window.location.pathname}?${_params}`
                 IMP.request_pay({
                   pg: 'html5_inicis', pay_method: 'card',
                   merchant_uid: `gunghab_${Date.now()}`,
                   name: '마이사주 궁합 분석', amount: 1900,
                   buyer_name: myName || '고객',
+                  m_redirect_url: _redirectUrl,
                 }, (rsp) => {
                   if (rsp.success) handleGunghabAnalyze()
                   else alert('결제가 취소되었습니다.')
@@ -1005,6 +1062,36 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
             <span style={{ fontSize: 36 }}>💕</span>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)', marginTop: 8 }}>두 사람의 궁합 분석</h2>
           </div>
+
+          {/* 두 사람 사주팔자 카드 */}
+          {gunghabSajuData && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#C9A84C', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 10 }}>💕 두 사람의 사주팔자</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {[
+                  { label: gunghabSajuData.my.name + '님', data: gunghabSajuData.my },
+                  { label: gunghabSajuData.partner.name + '님', data: gunghabSajuData.partner }
+                ].map(({ label, data }) => (
+                  <div key={label} style={{ background: '#1B2A4A', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, padding: '12px 10px' }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#C9A84C', textAlign: 'center', marginBottom: 8, letterSpacing: '0.05em' }}>{label}</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                      {[
+                        { k: '년주(年)', v: data.년주 },
+                        { k: '월주(月)', v: data.월주 },
+                        { k: '일주(日)', v: data.일주 },
+                        { k: '시주(時)', v: data.시주 },
+                      ].map(({ k, v }) => (
+                        <div key={k} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.06)', borderRadius: 7, padding: '8px 4px', border: '1px solid rgba(201,168,76,0.15)' }}>
+                          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 3 }}>{k}</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: '#FFFFFF' }}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {isGunghabStreaming && gunghabText && (
             <div style={s.streamCard}>{gunghabText}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
