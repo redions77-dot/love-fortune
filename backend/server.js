@@ -386,6 +386,13 @@ ${공통규칙}
 첫 문단: 궁합 점수를 100점 만점으로 표현하고 (예: 78점), 이 점수의 이유를 사주 근거로 따뜻하게 설명.
 두 번째 문단: ${nameA}님과 ${nameB}님이 함께 잘 살기 위한 핵심 조언 2가지를 구체적으로.`;
 
+    // 두 사람 사주팔자 데이터를 먼저 전송
+    res.write(`data: ${JSON.stringify({
+      type: 'gunghab_saju',
+      my: { name: nameA, 년주, 월주, 일주, 시주: 시주 || '-' },
+      partner: { name: nameB, 년주: pSaju.년주, 월주: pSaju.월주, 일주: pSaju.일주, 시주: pSaju.시주 || '-' }
+    })}\n\n`);
+
     try {
       await streamToClient(res, prompt, MODEL_PAID, 6000);
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
