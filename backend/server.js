@@ -818,5 +818,36 @@ ${getAgeBasedPaidSection(year, maritalStatus)}
   res.end();
 });
 
+// ── PDF 생성 API ──────────────────────────────────────
+app.post('/api/pdf', async (req, res) => {
+  const { html, filename } = req.body;
+  if (!html) return res.status(400).json({ error: 'html 없음' });
+
+  let browser;
+  try {
+    const puppeteer = require('puppeteer');
+    browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdf = await page.pdf({
+      format: 'A4',
+      margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' },
+      printBackground: true,
+    });
+    await browser.close();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename || '마이사주_결과')}.pdf`);
+    res.send(pdf);
+  } catch (e) {
+    if (browser) await browser.close().catch(() => {});
+    console.error('PDF 생성 오류:', e);
+    res.status(500).json({ error: 'PDF 생성 실패' });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`서버 실행 중: http://localhost:${PORT}`));
