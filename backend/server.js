@@ -858,5 +858,34 @@ app.post('/api/pdf', async (req, res) => {
   }
 });
 
+// ── 이메일 발송 API ──────────────────────────────────────
+app.post('/api/send-email', async (req, res) => {
+  const { to, subject, html } = req.body;
+  if (!to || !html) return res.status(400).json({ error: '이메일 또는 내용 없음' });
+
+  try {
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `마이사주 <${process.env.GMAIL_USER}>`,
+      to,
+      subject: subject || '마이사주 분석 결과',
+      html,
+    });
+
+    res.json({ success: true });
+  } catch (e) {
+    console.error('이메일 발송 오류:', e);
+    res.status(500).json({ error: '이메일 발송 실패' });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`서버 실행 중: http://localhost:${PORT}`));
