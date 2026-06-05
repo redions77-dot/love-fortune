@@ -1,5 +1,81 @@
 import { useEffect, useState, useRef } from 'react'
 
+// ── jsPDF PDF 생성 헬퍼 ──────────────────────────────
+async function generatePDF(elementId, filename) {
+  // jsPDF CDN 동적 로드
+  if (!window.jspdf) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script')
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+      s.onload = resolve; s.onerror = reject
+      document.head.appendChild(s)
+    })
+  }
+  if (!window.html2canvas) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script')
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
+      s.onload = resolve; s.onerror = reject
+      document.head.appendChild(s)
+    })
+  }
+
+  const element = document.getElementById(elementId)
+  if (!element) return
+
+  // 스타일 임시 변경 (밝은 배경)
+  const allEls = element.querySelectorAll('*')
+  const origStyles = []
+  const origElementBg = element.style.background
+  const origElementColor = element.style.color
+  element.style.background = '#FFFFFF'
+  element.style.color = '#1A1A1A'
+  allEls.forEach(el => {
+    origStyles.push(el.style.cssText)
+    el.style.background = '#FFFFFF'
+    el.style.color = '#1A1A1A'
+  })
+
+  try {
+    const canvas = await window.html2canvas(element, {
+      scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false,
+      windowWidth: element.scrollWidth, windowHeight: element.scrollHeight,
+    })
+
+    const { jsPDF } = window.jspdf
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
+    const pageW = pdf.internal.pageSize.getWidth()
+    const pageH = pdf.internal.pageSize.getHeight()
+    const margin = 10
+    const imgW = pageW - margin * 2
+    const imgH = (canvas.height * imgW) / canvas.width
+    const imgData = canvas.toDataURL('image/jpeg', 0.92)
+
+    let y = margin
+    let remainH = imgH
+    while (remainH > 0) {
+      const sliceH = Math.min(remainH, pageH - margin * 2)
+      const srcY = ((imgH - remainH) / imgH) * canvas.height
+      const srcH = (sliceH / imgH) * canvas.height
+      const sliceCanvas = document.createElement('canvas')
+      sliceCanvas.width = canvas.width
+      sliceCanvas.height = srcH
+      const ctx = sliceCanvas.getContext('2d')
+      ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH)
+      pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', margin, y, imgW, sliceH)
+      remainH -= sliceH
+      if (remainH > 0) { pdf.addPage(); y = margin }
+    }
+
+    pdf.save(filename + '.pdf')
+  } finally {
+    // 스타일 복원
+    element.style.background = origElementBg
+    element.style.color = origElementColor
+    allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
+  }
+}
+
 const PORTONE_IMP_KEY = 'imp87662575'
 const PORTONE_CHANNEL_KEY = 'channel-key-ee1dda53-8dfa-471e-9b76-4483df87605f'
 // ── 상수 ──────────────────────────────────────────────
@@ -829,24 +905,8 @@ if (screen === 'deep_result') {
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
         </div>
         <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => {
-          const element = document.getElementById('deep-result-content')
-          const allEls = element.querySelectorAll('*')
-          const origStyles = []
-          allEls.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
-          const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:20px;}</style></head><body>${element.innerHTML}</body></html>`
-          allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
           try {
-            const res = await fetch(`${API_URL}/api/pdf`, {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ html, filename: '마이사주_심화분석_' + (myName || '결과') })
-            })
-            if (!res.ok) throw new Error('실패')
-            const blob = await res.blob()
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url; a.download = '마이사주_심화분석_' + (myName || '결과') + '.pdf'
-            document.body.appendChild(a); a.click()
-            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 1000)
+            await generatePDF('deep-result-content', '마이사주_심화분석_' + (myName || '결과'))
           } catch { alert('PDF 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.') }
         }}>📄 심화 분석 저장하기 (PDF)</button>
         <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
@@ -1114,24 +1174,8 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
           </div>
           <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => {
-            const element = document.getElementById('gunghab-result-content')
-            const allEls = element.querySelectorAll('*')
-            const origStyles = []
-            allEls.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
-            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:20px;}</style></head><body>${element.innerHTML}</body></html>`
-            allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
             try {
-              const res = await fetch(`${API_URL}/api/pdf`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ html, filename: '마이사주_궁합분석_' + (myName || '결과') })
-              })
-              if (!res.ok) throw new Error('실패')
-              const blob = await res.blob()
-              const url = URL.createObjectURL(blob)
-              const a = document.createElement('a')
-              a.href = url; a.download = '마이사주_궁합분석_' + (myName || '결과') + '.pdf'
-              document.body.appendChild(a); a.click()
-              setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 1000)
+              await generatePDF('gunghab-result-content', '마이사주_궁합분석_' + (myName || '결과'))
             } catch { alert('PDF 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.') }
           }}>📄 궁합 분석 저장하기 (PDF)</button>
           <button style={s.restartBtn} onClick={handleRestart}>처음으로 돌아가기</button>
@@ -1860,24 +1904,8 @@ IMP.request_pay({
   <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요. 지금 접혀있는 항목은 저장되지 않아요.</p>
 </div>
          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginTop: 10 }} onClick={async () => {
-  const element = document.getElementById('result-content')
-  const allEls = element.querySelectorAll('*')
-  const origStyles = []
-  allEls.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:20px;}</style></head><body>${element.innerHTML}</body></html>`
-  allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
   try {
-    const res = await fetch(`${API_URL}/api/pdf`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ html, filename: '마이사주_분석결과_' + (myName || '결과') })
-    })
-    if (!res.ok) throw new Error('실패')
-    const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = '마이사주_분석결과_' + (myName || '결과') + '.pdf'
-    document.body.appendChild(a); a.click()
-    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url) }, 1000)
+    await generatePDF('result-content', '마이사주_분석결과_' + (myName || '결과'))
   } catch { alert('PDF 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.') }
 }}>📄 결과 저장하기 (PDF)</button>
 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 6 }}>결과는 저장되지 않아요. PDF로 저장해두세요!</p>
