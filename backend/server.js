@@ -827,11 +827,17 @@ app.post('/api/pdf', async (req, res) => {
   try {
     const chromium = require('@sparticuz/chromium');
     const puppeteer = require('puppeteer-core');
+
+    // Render 환경에서 chromium 실행 파일 경로 명시
+    const executablePath = process.env.CHROME_PATH
+      || await chromium.executablePath('/opt/render/.cache/puppeteer/chrome')
+      || '/usr/bin/google-chrome-stable';
+
     browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      defaultViewport: { width: 1280, height: 800 },
+      executablePath,
+      headless: true,
     });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
