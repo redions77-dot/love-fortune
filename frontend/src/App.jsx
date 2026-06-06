@@ -667,12 +667,13 @@ const [isDeepStreaming, setIsDeepStreaming] = useState(false)
     setPaidText(''); setIsPaidStreaming(true)
     isPaidSectionRef.current = false
     const apiType = serviceType === 'child' ? '자녀천명' : serviceType === '노후' ? '노후' : '전체'
+    let _fullBase = '', _fullPaid = ''
     try {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: true, isLunar, userName: myName },
         onSaju: () => {},
-        onBaseText: (t) => setBaseText(prev => prev + t),
-        onPaidText: (t) => setPaidText(prev => prev + t),
+        onBaseText: (t) => { setBaseText(prev => prev + t); _fullBase += t },
+        onPaidText: (t) => { setPaidText(prev => prev + t); _fullPaid += t },
         onDone: () => {},
         onError: (e) => alert(e),
       })
@@ -680,6 +681,16 @@ const [isDeepStreaming, setIsDeepStreaming] = useState(false)
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
     }
     setIsPaidStreaming(false); setIsPaid(true)
+    // 결제 전 이메일 입력했으면 자동 발송
+    if (preEmail) {
+      const label = serviceType === 'child' ? '🌱 자녀 학운 분석' : serviceType === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'
+      autoSendEmail({
+        email: preEmail,
+        subject: `${label} - ${myName || ''}님의 결과`,
+        sections: [...parseSections(_fullBase), ...parseSections(_fullPaid)],
+        name: myName,
+      })
+    }
   }
 async function handleDeepAnalyze() {
     setDeepText(''); setIsDeepStreaming(true)
@@ -713,6 +724,30 @@ async function handleDeepAnalyze() {
     setIsDeepStreaming(false); setIsDeepPaid(true)
   }
   
+
+  // 결제 후 자동 이메일 발송 공통 함수
+  async function autoSendEmail({ email, subject, sections, name }) {
+    if (!email || !email.includes('@')) return
+    const htmlContent = `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#0D1B3E;color:#FFFFFF;">
+        <h1 style="color:#C9A84C;text-align:center;">${subject}</h1>
+        <p style="text-align:center;color:rgba(255,255,255,0.6);">${name || ''}님의 분석 결과</p>
+        <hr style="border-color:rgba(201,168,76,0.3);margin:20px 0;">
+        ${sections.map(sec => `
+          <h2 style="color:#C9A84C;">${sec.title}</h2>
+          <p style="color:rgba(255,255,255,0.8);line-height:1.8;white-space:pre-wrap;">${sec.content}</p>
+        `).join('')}
+        <hr style="border-color:rgba(201,168,76,0.3);margin:20px 0;">
+        <p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p>
+      </div>
+    `
+    try {
+      await fetch(`${API_URL}/api/send-email`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: email, subject, html: htmlContent })
+      })
+    } catch {}
+  }
 
   // 결제 전 이메일 수집 공통 함수
   function requestPayWithEmail(productName, onConfirm) {
@@ -763,6 +798,7 @@ async function handleDeepAnalyze() {
     const _partnerBirthtime = _isMobileReturn ? (_qs2.get('pbt') || '') : partnerBirthtime
 
     setGunghabText(''); setIsGunghabStreaming(true); setScreen('result')
+    let _fullGunghabText = ''
     try {
       const ctrl = new AbortController()
       abortRef.current = ctrl
@@ -789,7 +825,7 @@ async function handleDeepAnalyze() {
           try {
             const json = JSON.parse(line.slice(6))
             if (json.type === 'gunghab_saju') setGunghabSajuData(json)
-            else if (json.text) setGunghabText(prev => prev + json.text)
+            else if (json.text) { setGunghabText(prev => prev + json.text); _fullGunghabText += json.text }
           } catch {}
         }
       }
@@ -797,6 +833,15 @@ async function handleDeepAnalyze() {
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
     }
     setIsGunghabStreaming(false)
+    // 결제 전 이메일 입력했으면 자동 발송
+    if (preEmail) {
+      autoSendEmail({
+        email: preEmail,
+        subject: `💕 ${myName || 'A'}님 & ${partnerName || 'B'}님 궁합 분석 결과`,
+        sections: parseSections(_fullGunghabText),
+        name: myName,
+      })
+    }
   }
 
  async function handleGililAnalyze() {
