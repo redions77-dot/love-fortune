@@ -2026,19 +2026,22 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
            
               <button style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em' }} onClick={() => {
      if (IS_ADMIN) { handlePaidAnalyze(); return; }
-              const IMP = window.IMP
-IMP.init('imp87662575')
-IMP.request_pay({
-  pg: 'html5_inicis',
-  pay_method: 'card',
-  merchant_uid: `saju_${Date.now()}`,
-  name: '마이사주 전체 분석',
-  amount: 1900,
-  buyer_name: myName || '고객',
-}, (rsp) => {
-  if (rsp.success) handlePaidAnalyze()
-  else alert('결제가 취소되었습니다.')
-})
+     requestPayWithEmail('전체 분석', (email) => {
+       const IMP = window.IMP
+       IMP.init('imp87662575')
+       IMP.request_pay({
+         pg: 'html5_inicis',
+         pay_method: 'card',
+         merchant_uid: `saju_${Date.now()}`,
+         name: '마이사주 전체 분석',
+         amount: 1900,
+         buyer_name: myName || '고객',
+         buyer_email: email || '',
+       }, (rsp) => {
+         if (rsp.success) handlePaidAnalyze()
+         else alert('결제가 취소되었습니다.')
+       })
+     })
               }}>
                 지금 전체 분석 받기 →
               </button>
