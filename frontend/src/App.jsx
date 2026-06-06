@@ -999,7 +999,7 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
     const myBirthdateValid = birthYear.length === 4 && Number(birthMonth) >= 1 && Number(birthMonth) <= 12 && Number(birthDay) >= 1
     const myBirthtimeValid = timeUnknown || (timeHour !== '' && timeMin !== '')
     const canStep1Next = gender !== '' && myBirthdateValid && myBirthtimeValid
-    const canStep2Next = partnerGender !== '' && partnerBirthYear.length === 4 && Number(partnerBirthMonth) >= 1 && Number(partnerBirthDay) >= 1
+    const canStep2Next = partnerGender !== '' && partnerBirthdateValid && partnerBirthtimeValid
 
     return (
       <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
@@ -1142,46 +1142,41 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
             if (isStep1) setScreen('landing')
             else setGunghabStep(1)
           }}>←</button>
-          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em' }}
+          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: (isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: (isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: (isStep1 ? !canStep1Next : !canStep2Next) ? 'not-allowed' : 'pointer', letterSpacing: '0.03em' }}
+            disabled={isStep1 ? !canStep1Next : !canStep2Next}
             onClick={() => {
-              if (isStep1) {
-                if (!canStep1Next) { alert('성별, 생년월일, 태어난 시간을 모두 입력해주세요.'); return }
-                setGunghabStep(2)
-              } else {
-                requestPayWithEmail('궁합 분석', (email) => {
-                  if (IS_ADMIN) { handleGunghabAnalyze(email); return; }
-                  const IMP = window.IMP
-                  IMP.init('imp87662575')
-                  const _pbt = (() => {
-                    if (partnerTimeUnknown) return ''
-                    if (!partnerTimeHour || !partnerTimeMin) return ''
-                    let h = Number(partnerTimeHour)
-                    if (partnerTimeAmPm === '오전' && h === 12) h = 0
-                    if (partnerTimeAmPm === '오후' && h !== 12) h += 12
-                    return `${String(h).padStart(2,'0')}:${String(partnerTimeMin).padStart(2,'0')}`
-                  })()
-                  const _params = new URLSearchParams({
-                    payment: 'gunghab', imp_success: 'true',
-                    g: gender, by: birthYear, bm: birthMonth, bd: birthDay,
-                    il: isLunar ? '1' : '0', bt: birthtime || '',
-                    mn: myName || '', pn: partnerName || '',
-                    pg: partnerGender, pby: partnerBirthYear, pbm: partnerBirthMonth, pbd: partnerBirthDay,
-                    ptu: partnerTimeUnknown ? '1' : '0', pil: partnerIsLunar ? '1' : '0',
-                    pbt: _pbt, ptap: partnerTimeAmPm,
-                    ...(email ? { pe: email } : {})
-                  }).toString()
-                  const _redirectUrl = `${window.location.origin}${window.location.pathname}?${_params}`
-                  IMP.request_pay({
-                    pg: 'html5_inicis', pay_method: 'card',
-                    merchant_uid: `gunghab_${Date.now()}`,
-                    name: '마이사주 궁합 분석', amount: 1900,
-                    buyer_name: myName || '고객',
-                    buyer_email: email || '',
-                    m_redirect_url: _redirectUrl,
-                  }, (rsp) => {
-                    if (rsp.success) handleGunghabAnalyze(email)
-                    else alert('결제가 취소되었습니다.')
-                  })
+              if (isStep1) setGunghabStep(2)
+              else {
+                if (IS_ADMIN) { handleGunghabAnalyze(null); return; }
+                const IMP = window.IMP
+                IMP.init('imp87662575')
+                const _pbt = (() => {
+                  if (partnerTimeUnknown) return ''
+                  if (!partnerTimeHour || !partnerTimeMin) return ''
+                  let h = Number(partnerTimeHour)
+                  if (partnerTimeAmPm === '오전' && h === 12) h = 0
+                  if (partnerTimeAmPm === '오후' && h !== 12) h += 12
+                  return `${String(h).padStart(2,'0')}:${String(partnerTimeMin).padStart(2,'0')}`
+                })()
+                const _params = new URLSearchParams({
+                  payment: 'gunghab', imp_success: 'true',
+                  g: gender, by: birthYear, bm: birthMonth, bd: birthDay,
+                  il: isLunar ? '1' : '0', bt: birthtime || '',
+                  mn: myName || '', pn: partnerName || '',
+                  pg: partnerGender, pby: partnerBirthYear, pbm: partnerBirthMonth, pbd: partnerBirthDay,
+                  ptu: partnerTimeUnknown ? '1' : '0', pil: partnerIsLunar ? '1' : '0',
+                  pbt: _pbt, ptap: partnerTimeAmPm,
+                }).toString()
+                const _redirectUrl = `${window.location.origin}${window.location.pathname}?${_params}`
+                IMP.request_pay({
+                  pg: 'html5_inicis', pay_method: 'card',
+                  merchant_uid: `gunghab_${Date.now()}`,
+                  name: '마이사주 궁합 분석', amount: 1900,
+                  buyer_name: myName || '고객',
+                  m_redirect_url: _redirectUrl,
+                }, (rsp) => {
+                  if (rsp.success) handleGunghabAnalyze(null)
+                  else alert('결제가 취소되었습니다.')
                 })
               }
             }}>
