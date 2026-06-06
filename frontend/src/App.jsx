@@ -2053,7 +2053,7 @@ IMP.request_pay({
                   const allSections = [...parseSections(baseText), ...parseSections(paidText)]
                   const htmlContent = `
                     <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#0D1B3E;color:#FFFFFF;">
-                      <h1 style="color:#C9A84C;text-align:center;">✨ 나의 사주 분석</h1>
+                      <h1 style="color:#C9A84C;text-align:center;">${serviceType === 'child' ? '🌱 자녀 학운 분석' : serviceType === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'}</h1>
                       <p style="text-align:center;color:rgba(255,255,255,0.6);">${myName || ''}님의 분석 결과</p>
                       <hr style="border-color:rgba(201,168,76,0.3);margin:20px 0;">
                       ${allSections.map(sec => `
@@ -2067,7 +2067,7 @@ IMP.request_pay({
                   try {
                     const res = await fetch(`${API_URL}/api/send-email`, {
                       method: 'POST', headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ to: email, subject: `✨ ${myName || ''}님의 사주 분석 결과`, html: htmlContent })
+                      body: JSON.stringify({ to: email, subject: `✨ ${myName || ''}님의 ${serviceType === 'child' ? '자녀 학운' : serviceType === '노후' ? '노후 운세' : '사주'} 분석 결과`, html: htmlContent })
                     })
                     if (!res.ok) throw new Error('실패')
                     document.getElementById('result-email-input').dataset.sent = 'true'; alert('이메일을 발송했어요! 받은 편지함을 확인해주세요 😊')
