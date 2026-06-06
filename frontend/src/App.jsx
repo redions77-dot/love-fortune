@@ -999,7 +999,7 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
     const myBirthdateValid = birthYear.length === 4 && Number(birthMonth) >= 1 && Number(birthMonth) <= 12 && Number(birthDay) >= 1
     const myBirthtimeValid = timeUnknown || (timeHour !== '' && timeMin !== '')
     const canStep1Next = gender !== '' && myBirthdateValid && myBirthtimeValid
-    const canStep2Next = partnerGender !== '' && partnerBirthdateValid && partnerBirthtimeValid
+    const canStep2Next = partnerGender !== '' && partnerBirthdateValid
 
     return (
       <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
