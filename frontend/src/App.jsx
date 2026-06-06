@@ -1953,7 +1953,7 @@ IMP.request_pay({
     await generatePDF('result-content', '마이사주_분석결과_' + (myName || '결과'))
   } catch(e) { alert('PDF 오류: ' + e.message) }
 }}>📄 결과 저장하기 (PDF)</button>
-<p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 6 }}>결과는 저장되지 않아요. PDF로 저장해두세요!</p>
+<p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', textAlign: 'center', marginTop: 6 }}>결과는 저장되지 않아요. PDF로 저장해두세요!</p>
 {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
   <div style={{ marginTop: 24, marginBottom: 8 }}>
     <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 16 }}>더 깊이 알고 싶다면?</p>
@@ -2024,12 +2024,12 @@ IMP.request_pay({
     </div>
   </div>
 )}
-         <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.3)', marginTop: 8 }} onClick={handleRestart}>처음으로 돌아가기</button>
+         <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 8 }} onClick={handleRestart}>처음으로 돌아가기</button>
 
           {/* 이메일로 결과 받기 */}
-          <div style={{ marginTop: 16, background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 10, padding: '16px' }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#C9A84C', marginBottom: 4 }}>📧 이메일로 결과 받기</p>
-            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 12, lineHeight: 1.6 }}>분석 결과를 이메일로 보내드려요. 모바일에서 저장하기 편해요!</p>
+          <div style={{ marginTop: 20, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, padding: '20px' }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 6 }}>📧 이메일로 결과 받기</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 14, lineHeight: 1.7 }}>결과를 이메일로 받아두면 언제든 다시 볼 수 있어요.</p>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
                 id="result-email-input"
