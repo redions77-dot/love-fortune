@@ -1142,11 +1142,12 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
             if (isStep1) setScreen('landing')
             else setGunghabStep(1)
           }}>←</button>
-          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: (isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: (isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: (isStep1 ? !canStep1Next : !canStep2Next) ? 'not-allowed' : 'pointer', letterSpacing: '0.03em' }}
-            disabled={isStep1 ? !canStep1Next : !canStep2Next}
+          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em' }}
             onClick={() => {
-              if (isStep1) setGunghabStep(2)
-              else {
+              if (isStep1) {
+                if (!canStep1Next) { alert('성별, 생년월일, 태어난 시간을 모두 입력해주세요.'); return }
+                setGunghabStep(2)
+              } else {
                 requestPayWithEmail('궁합 분석', (email) => {
                   if (IS_ADMIN) { handleGunghabAnalyze(email); return; }
                   const IMP = window.IMP
