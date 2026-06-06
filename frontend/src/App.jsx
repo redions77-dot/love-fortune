@@ -584,8 +584,8 @@ const [isDeepStreaming, setIsDeepStreaming] = useState(false)
     }
     if (step < STEPS.length - 1) setStep(s => s + 1)
  else if (serviceType === 'deep') {
-      if (IS_ADMIN) { handleDeepAnalyze(); setScreen('deep_result'); return; }
       requestPayWithEmail('심화 분석', (email) => {
+        if (IS_ADMIN) { handleDeepAnalyze(); setScreen('deep_result'); return; }
         const IMP = window.IMP
         IMP.init('imp87662575')
         IMP.request_pay({
@@ -1137,8 +1137,8 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
             onClick={() => {
               if (isStep1) setGunghabStep(2)
               else {
-                if (IS_ADMIN) { handleGunghabAnalyze(); return; }
                 requestPayWithEmail('궁합 분석', (email) => {
+                  if (IS_ADMIN) { handleGunghabAnalyze(); return; }
                   const IMP = window.IMP
                   IMP.init('imp87662575')
                   const _pbt = (() => {
@@ -2025,8 +2025,8 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>결제 후 즉시 사용 가능</p>
            
               <button style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', letterSpacing: '0.03em' }} onClick={() => {
-     if (IS_ADMIN) { handlePaidAnalyze(); return; }
      requestPayWithEmail('전체 분석', (email) => {
+       if (IS_ADMIN) { handlePaidAnalyze(); return; }
        const IMP = window.IMP
        IMP.init('imp87662575')
        IMP.request_pay({
@@ -2081,8 +2081,8 @@ return <GililResult months={months} gililData={gililData} gilil목적={gilil목�
         <span style={{ fontSize: 22, fontWeight: 800, color: '#C9A84C' }}>9,900원</span>
         <button style={{ padding: '10px 20px', fontSize: 14, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer' }}
           onClick={() => {
-            if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return; }
             requestPayWithEmail('심화 분석', (email) => {
+              if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return; }
               const IMP = window.IMP
               IMP.init('imp87662575')
               IMP.request_pay({
