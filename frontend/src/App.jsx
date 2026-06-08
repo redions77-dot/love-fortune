@@ -291,20 +291,23 @@ export default function App() {
   async function handleFreeAnalyze() {
     setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null)
     setIsBaseStreaming(true); isPaidSectionRef.current = false; setScreen('result')
-    startLoadingTimers()
+    setLoadingCountdown(0)
+    loadingTimersRef.current.countdown = setInterval(() => {
+      setLoadingCountdown(prev => prev + 1)
+    }, 1000)
     const apiType = serviceType === 'child' ? '자녀천명' : serviceType === '노후' ? '노후' : '기본'
     try {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: false, isLunar, userName: myName },
         onSaju: (d) => { setSajuData(d) },
-        onBaseText: (t) => { stopLoading(); setBaseText(prev => prev + t) },
+        onBaseText: (t) => { setBaseText(prev => prev + t) },
         onPaidText: () => {},
-        onDone: () => { setIsBaseStreaming(false); setPhase('done') },
-        onError: (e) => { alert(e); setPhase('input'); setIsBaseStreaming(false); stopLoading() },
+        onDone: () => { clearLoadingTimers(); setIsBaseStreaming(false); setPhase('done') },
+        onError: (e) => { alert(e); setPhase('input'); setIsBaseStreaming(false) },
       })
     } catch (e) {
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
-      setPhase('input'); setIsBaseStreaming(false); stopLoading()
+      setPhase('input'); setIsBaseStreaming(false)
     }
   }
 
@@ -1028,7 +1031,11 @@ export default function App() {
         <div id="result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box', width: '100%' }}>
 
           {/* ★ 로딩 화면 — 분석 버튼 누른 직후 표시 */}
-          {loadingPhase === 'loading' && <AnalysisLoading countdown={loadingCountdown} stageIndex={loadingStage} />}
+          {isBaseStreaming && (
+            <div style={{ textAlign: 'center', padding: '10px', marginBottom: 12, fontSize: 13, color: 'rgba(201,168,76,0.7)', fontWeight: 600 }}>
+              ✦ 분석 중 · {loadingCountdown}초 경과 ✦
+            </div>
+          )}
 
           {/* 사주팔자 카드 */}
           {!loadingPhase && sajuData?.사주 && (
