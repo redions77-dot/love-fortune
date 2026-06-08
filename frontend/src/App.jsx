@@ -313,6 +313,10 @@ export default function App() {
 
   async function handlePaidAnalyze(emailOverride) {
     setPaidText(''); setIsPaidStreaming(true); isPaidSectionRef.current = false
+setLoadingCountdown(0)
+loadingTimersRef.current.countdown = setInterval(() => {
+  setLoadingCountdown(prev => prev + 1)
+}, 1000)
     const apiType = serviceType === 'child' ? '자녀천명' : serviceType === '노후' ? '노후' : '전체'
     let _fullBase = '', _fullPaid = ''
     try {
@@ -324,7 +328,7 @@ export default function App() {
         onDone: () => {}, onError: (e) => alert(e),
       })
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
-    setIsPaidStreaming(false); setIsPaid(true)
+    clearLoadingTimers(); setIsPaidStreaming(false); setIsPaid(true)
     const _email = emailOverride || preEmail
     if (_email) {
       const label = serviceType === 'child' ? '🌱 자녀 학운 분석' : serviceType === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'
