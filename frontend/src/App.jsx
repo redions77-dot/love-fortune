@@ -296,7 +296,7 @@ export default function App() {
     try {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: false, isLunar, userName: myName },
-        onSaju: (d) => { setSajuData(d); stopLoading() },
+        onSaju: (d) => { setSajuData(d) },
         onBaseText: (t) => { stopLoading(); setBaseText(prev => prev + t) },
         onPaidText: () => {},
         onDone: () => { setIsBaseStreaming(false); setPhase('done') },
