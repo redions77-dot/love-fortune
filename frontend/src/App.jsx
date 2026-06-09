@@ -651,7 +651,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
     </div>
   </>
 )}
-          {isStep1 ? (
+         {!isStep0 && isStep1 ? (
             <>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>나의 정보</h2>
               <div style={{ marginBottom: 16 }}>
