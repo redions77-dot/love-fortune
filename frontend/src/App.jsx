@@ -843,41 +843,54 @@ if (emailModal) {
         </div>
 
         {/* 천간 섹션 */}
-        <div style={{ background: '#0D1B3E', borderTop: '1px solid rgba(201,168,76,0.3)', borderBottom: '1px solid rgba(201,168,76,0.3)' }}>
-          <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 28px', width: '100%', boxSizing: 'border-box' }}>
-            <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', marginBottom: 4, fontWeight: 600, letterSpacing: '0.12em' }}>YOUR ENERGY</p>
-            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginBottom: 20, fontWeight: 700 }}>나는 어떤 기운일까? — 일간(日干)</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {[
-                { key: '갑목', ohaeng: '木', color: '#4ADE80', title: '甲 갑목', sub: '하늘을 향해 곧게 자라는 나무', good: '목표가 뚜렷한 곳, 내가 왜 하는지 보이는 일', bad: '이유 없이 "그냥 해"가 반복되는 환경' },
-                { key: '을목', ohaeng: '木', color: '#4ADE80', title: '乙 을목', sub: '어디서든 뿌리내리는 생명력', good: '세심하게 인정받는 분위기, 디테일이 빛나는 자리', bad: '감정 무시하는 곳, 거칠고 무뚝뚝한 환경' },
-                { key: '병화', ohaeng: '火', color: '#F87171', title: '丙 병화', sub: '주변을 환하게 밝히는 태양', good: '사람들 앞에 서는 자리, 반응이 오는 무대', bad: '혼자 조용히 처리해야 하는 단절된 환경' },
-                { key: '정화', ohaeng: '火', color: '#F87171', title: '丁 정화', sub: '어둠 속에서 깊이 타오르는 불꽃', good: '한 가지에 깊이 파고드는 환경, 조용한 집중', bad: '5분마다 끊기는 업무, 산만하고 소란스러운 곳' },
-                { key: '무토', ohaeng: '土', color: '#C9A84C', title: '戊 무토', sub: '모든 것을 품어내는 큰 산', good: '내가 중심이 되어 운영하는 구조, 믿고 맡기는 조직', bad: '책임만 지고 권한은 없는 자리, 끝없는 희생 요구' },
-                { key: '기토', ohaeng: '土', color: '#C9A84C', title: '己 기토', sub: '씨앗을 키워내는 비옥한 땅', good: '규칙이 있고 예측 가능한 환경, 내 역할이 명확한 곳', bad: '매일 바뀌는 방침, 즉흥적이고 뒤죽박죽인 조직' },
-                { key: '경금', ohaeng: '金', color: '#E8C96A', title: '庚 경금', sub: '단단하고 날카로운 원석의 힘', good: '기준이 명확한 곳, 성과가 숫자로 보이는 환경', bad: '애매하고 흐릿한 기준, 불공정한 평가가 반복되는 곳' },
-                { key: '신금', ohaeng: '金', color: '#E8C96A', title: '辛 신금', sub: '정교하게 다듬어진 보석의 감각', good: '품격 있는 환경, 섬세함이 경쟁력이 되는 자리', bad: '저급하고 거친 분위기, 노력이 무시당하는 곳' },
-                { key: '임수', ohaeng: '水', color: '#60A5FA', title: '壬 임수', sub: '넓고 유연하게 흐르는 큰 강', good: '새로운 정보가 들어오는 곳, 판을 키울 수 있는 환경', bad: '변화 없이 고여있는 조직, 외부와 단절된 폐쇄적인 곳' },
-                { key: '계수', ohaeng: '水', color: '#60A5FA', title: '癸 계수', sub: '깊은 곳에서 솟아오르는 지하수', good: '혼자 생각할 시간이 있는 환경, 깊이가 인정받는 자리', bad: '시끄럽고 감정 소모 심한 곳, 내면을 무시하는 환경' },
-              ].map((c) => (
-                <div key={c.key} onClick={() => setOpenCheongan(openCheongan === c.key ? null : c.key)} style={{ background: openCheongan === c.key ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', border: `1px solid ${openCheongan === c.key ? 'rgba(201,168,76,0.6)' : 'rgba(201,168,76,0.12)'}`, borderRadius: 10, padding: '14px 12px', cursor: 'pointer', transition: 'all 0.2s' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0, background: `${c.color}18`, border: `1px solid ${c.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color: c.color, fontFamily: 'Georgia, serif' }}>{c.ohaeng}</div>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: openCheongan === c.key ? '#C9A84C' : 'rgba(255,255,255,0.85)' }}>{c.title}</span>
-                  </div>
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', lineHeight: 1.5, margin: 0 }}>{c.sub}</p>
-                  {openCheongan === c.key && (
-                    <div style={{ marginTop: 10, borderTop: '1px solid rgba(201,168,76,0.2)', paddingTop: 10 }}>
-                      <p style={{ fontSize: 11, color: '#4ADE80', fontWeight: 600, marginBottom: 4 }}>✅ {c.good}</p>
-                      <p style={{ fontSize: 11, color: '#F87171', fontWeight: 600, marginBottom: 4 }}>❌ {c.bad}</p>
-                      <p style={{ fontSize: 11, color: '#C9A84C', fontWeight: 500 }}>🔒 내 일간이 뭔지 모른다면? 사주 분석에서 확인하세요</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+<div style={{ background: '#0D1B3E', borderTop: '1px solid rgba(201,168,76,0.3)', borderBottom: '1px solid rgba(201,168,76,0.3)' }}>
+  <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 28px', width: '100%', boxSizing: 'border-box' }}>
+    <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.7)', textAlign: 'center', marginBottom: 6, fontWeight: 600, letterSpacing: '0.12em' }}>YOUR ENERGY</p>
+    <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: 8, fontWeight: 800 }}>나는 어떤 기운일까? — 일간(日干)</p>
+    <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginBottom: 24 }}>내 일간을 찾아 잘 맞는 환경을 확인해보세요 👆</p>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      {[
+        { key: '갑목', ohaeng: '木', color: '#4ADE80', title: '甲 갑목', sub: '하늘을 향해 곧게 자라는 나무', good: '목표가 뚜렷한 곳, 내가 왜 하는지 보이는 일', bad: '이유 없이 "그냥 해"가 반복되는 환경' },
+        { key: '을목', ohaeng: '木', color: '#4ADE80', title: '乙 을목', sub: '어디서든 뿌리내리는 생명력', good: '세심하게 인정받는 분위기, 디테일이 빛나는 자리', bad: '감정 무시하는 곳, 거칠고 무뚝뚝한 환경' },
+        { key: '병화', ohaeng: '火', color: '#F87171', title: '丙 병화', sub: '주변을 환하게 밝히는 태양', good: '사람들 앞에 서는 자리, 반응이 오는 무대', bad: '혼자 조용히 처리해야 하는 단절된 환경' },
+        { key: '정화', ohaeng: '火', color: '#F87171', title: '丁 정화', sub: '어둠 속에서 깊이 타오르는 불꽃', good: '한 가지에 깊이 파고드는 환경, 조용한 집중', bad: '5분마다 끊기는 업무, 산만하고 소란스러운 곳' },
+        { key: '무토', ohaeng: '土', color: '#C9A84C', title: '戊 무토', sub: '모든 것을 품어내는 큰 산', good: '내가 중심이 되어 운영하는 구조, 믿고 맡기는 조직', bad: '책임만 지고 권한은 없는 자리, 끝없는 희생 요구' },
+        { key: '기토', ohaeng: '土', color: '#C9A84C', title: '己 기토', sub: '씨앗을 키워내는 비옥한 땅', good: '규칙이 있고 예측 가능한 환경, 내 역할이 명확한 곳', bad: '매일 바뀌는 방침, 즉흥적이고 뒤죽박죽인 조직' },
+        { key: '경금', ohaeng: '金', color: '#E8C96A', title: '庚 경금', sub: '단단하고 날카로운 원석의 힘', good: '기준이 명확한 곳, 성과가 숫자로 보이는 환경', bad: '애매하고 흐릿한 기준, 불공정한 평가가 반복되는 곳' },
+        { key: '신금', ohaeng: '金', color: '#E8C96A', title: '辛 신금', sub: '정교하게 다듬어진 보석의 감각', good: '품격 있는 환경, 섬세함이 경쟁력이 되는 자리', bad: '저급하고 거친 분위기, 노력이 무시당하는 곳' },
+        { key: '임수', ohaeng: '水', color: '#60A5FA', title: '壬 임수', sub: '넓고 유연하게 흐르는 큰 강', good: '새로운 정보가 들어오는 곳, 판을 키울 수 있는 환경', bad: '변화 없이 고여있는 조직, 외부와 단절된 폐쇄적인 곳' },
+        { key: '계수', ohaeng: '水', color: '#60A5FA', title: '癸 계수', sub: '깊은 곳에서 솟아오르는 지하수', good: '혼자 생각할 시간이 있는 환경, 깊이가 인정받는 자리', bad: '시끄럽고 감정 소모 심한 곳, 내면을 무시하는 환경' },
+      ].map((c) => (
+        <div key={c.key}
+          style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(201,168,76,0.15)`, borderRadius: 14, padding: '18px 14px', transition: 'all 0.2s' }}>
+          {/* 오행 아이콘 + 제목 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: `${c.color}18`, border: `1px solid ${c.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, color: c.color, fontFamily: 'Georgia, serif' }}>{c.ohaeng}</div>
+            <span style={{ fontSize: 15, fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>{c.title}</span>
+          </div>
+          {/* 한줄 설명 */}
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, margin: '0 0 12px' }}>{c.sub}</p>
+          {/* 구분선 */}
+          <div style={{ height: 1, background: 'rgba(201,168,76,0.15)', marginBottom: 12 }} />
+          {/* 좋은 환경 */}
+          <div style={{ marginBottom: 8 }}>
+            <p style={{ fontSize: 11, color: 'rgba(74,222,128,0.7)', fontWeight: 700, marginBottom: 4 }}>✅ 잘 맞는 환경</p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>{c.good}</p>
+          </div>
+          {/* 나쁜 환경 */}
+          <div style={{ marginBottom: 10 }}>
+            <p style={{ fontSize: 11, color: 'rgba(248,113,113,0.7)', fontWeight: 700, marginBottom: 4 }}>❌ 안 맞는 환경</p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>{c.bad}</p>
+          </div>
+          {/* 잠금 안내 */}
+          <div style={{ background: 'rgba(201,168,76,0.08)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+            <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, margin: 0 }}>🔒 내 일간 확인 → 사주 분석</p>
           </div>
         </div>
+      ))}
+    </div>
+  </div>
+</div>
 
         {/* 서비스 카드 */}
         <div style={{ background: '#0A1628' }}>
