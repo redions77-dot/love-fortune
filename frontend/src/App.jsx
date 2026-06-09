@@ -813,7 +813,7 @@ if (emailModal) {
   if (screen === 'landing') {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#050D1F' }}>
-        <div style={{ position: 'relative', overflow: 'hidden', minHeight: 'auto', paddingBottom: 40 }}>
+        <div style={{ position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 20% 50%, #0D1B3E 0%, #050D1F 40%, #000510 100%)' }}/>
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(100,140,255,0.12) 0%, transparent 60%)' }}/>
           {[...Array(30)].map((_, i) => <div key={i} style={{ position: 'absolute', width: i % 5 === 0 ? 2 : 1, height: i % 5 === 0 ? 2 : 1, borderRadius: '50%', background: i % 7 === 0 ? '#C9A84C' : 'white', opacity: 0.3 + (i % 3) * 0.15, top: `${(i * 17) % 60}%`, left: `${(i * 53) % 100}%`, pointerEvents: 'none' }}/>)}
