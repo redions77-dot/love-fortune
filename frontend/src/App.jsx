@@ -1341,20 +1341,15 @@ if (screen === 'result') {
             <button
   style={{ width: '100%', padding: '18px', fontSize: 16, fontWeight: 700, background: '#FEE500', color: '#191919', border: 'none', borderRadius: 12, cursor: 'pointer', marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
   onClick={() => {
-    if (window.Kakao && window.Kakao.isInitialized()) {
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: '마이사주 · 나의 사주 분석',
-          description: '나는 죽어도 안되는 게, 쟤는 왜 쉽게 될까?\n방향이 달랐던 거예요. 사주가 알려줄게요.',
-          imageUrl: 'https://mysaju.shop/og-image.png',
-          link: { mobileWebUrl: 'https://mysaju.shop', webUrl: 'https://mysaju.shop' }
-        },
-        buttons: [{ title: '나도 확인하기', link: { mobileWebUrl: 'https://mysaju.shop', webUrl: 'https://mysaju.shop' } }]
-      })
-    } else {
-      navigator.clipboard?.writeText('https://mysaju.shop').then(() => alert('링크가 복사됐어요! 친구에게 공유해보세요 😊'))
-    }
+    navigator.clipboard?.writeText('https://mysaju.shop').then(() => alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')).catch(() => {
+  const el = document.createElement('textarea')
+  el.value = 'https://mysaju.shop'
+  document.body.appendChild(el)
+  el.select()
+  document.execCommand('copy')
+  document.body.removeChild(el)
+  alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')
+})
   }}>
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
     <path d="M10 2C5.58 2 2 4.92 2 8.5c0 2.3 1.42 4.32 3.57 5.5L4.5 17l3.85-2.02A9.3 9.3 0 0010 15c4.42 0 8-2.92 8-6.5S14.42 2 10 2z" fill="#191919"/>
