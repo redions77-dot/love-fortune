@@ -813,11 +813,7 @@ if (emailModal) {
   if (screen === 'landing') {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#050D1F' }}>
-        <div style={{ position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 20% 50%, #0D1B3E 0%, #050D1F 40%, #000510 100%)' }}/>
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 70% 30%, rgba(100,140,255,0.12) 0%, transparent 60%)' }}/>
-          {[...Array(30)].map((_, i) => <div key={i} style={{ position: 'absolute', width: i % 5 === 0 ? 2 : 1, height: i % 5 === 0 ? 2 : 1, borderRadius: '50%', background: i % 7 === 0 ? '#C9A84C' : 'white', opacity: 0.3 + (i % 3) * 0.15, top: `${(i * 17) % 60}%`, left: `${(i * 53) % 100}%`, pointerEvents: 'none' }}/>)}
-          <div style={{ position: 'relative', textAlign: 'center', padding: '52px 24px 36px', margin: '20px 16px 0', borderRadius: 16, border: '1px solid rgba(201,168,76,0.5)', background: 'rgba(5,13,31,0.6)', backdropFilter: 'blur(8px)', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
+        <div style={{ position: 'relative' }}>          <div style={{ position: 'relative', textAlign: 'center', padding: '52px 24px 36px', margin: '20px 16px 0', borderRadius: 16, border: '1px solid rgba(201,168,76,0.5)', background: 'rgba(5,13,31,0.6)', backdropFilter: 'blur(8px)', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
             <div style={{ marginBottom: 20 }}>
               <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
                 <defs>
