@@ -1181,23 +1181,23 @@ if (screen === 'result') {
 
         {/* 사주팔자 카드 */}
         {!loadingPhase && sajuData?.사주 && (
-          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '20px', marginBottom: 16 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginBottom: 6, letterSpacing: '0.1em' }}>나의 사주팔자</p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginBottom: 14, textAlign: 'center' }}>{sajuData.생년월일}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-              {[{ label: '시주(時)', value: sajuData.사주.시주 }, { label: '일주(日)', value: sajuData.사주.일주 }, { label: '월주(月)', value: sajuData.사주.월주 }, { label: '년주(年)', value: sajuData.사주.년주 }].map(({ label, value }) => {
-                const 오행색 = { '甲갑': '#4ADE80', '乙을': '#4ADE80', '丙병': '#F87171', '丁정': '#F87171', '戊무': '#C9A84C', '己기': '#C9A84C', '庚경': '#E8C96A', '辛신': '#E8C96A', '壬임': '#60A5FA', '癸계': '#60A5FA' }
-                const 색 = 오행색[value?.slice(0, 2)] || '#FFFFFF'
-                return (
-                  <div key={label} style={{ textAlign: 'center', background: `${색}12`, borderRadius: 10, padding: '14px 4px', border: `1px solid ${색}40` }}>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6, display: 'block' }}>{label}</span>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: 색, lineHeight: 1.6 }}>{value || '-'}</span>
-                  </div>
-                )
-              })}
-            </div>
+  <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+    <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
+    <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      {[{ label: '시주(時)', value: sajuData.사주.시주 }, { label: '일주(日)', value: sajuData.사주.일주 }, { label: '월주(月)', value: sajuData.사주.월주 }, { label: '년주(年)', value: sajuData.사주.년주 }].map(({ label, value }) => {
+        const 오행색 = { '甲갑': '#4ADE80', '乙을': '#4ADE80', '丙병': '#F87171', '丁정': '#F87171', '戊무': '#C9A84C', '己기': '#C9A84C', '庚경': '#E8C96A', '辛신': '#E8C96A', '壬임': '#60A5FA', '癸계': '#60A5FA' }
+        const 색 = 오행색[value?.slice(0, 2)] || '#FFFFFF'
+        return (
+          <div key={label} style={{ textAlign: 'center', background: `${색}15`, borderRadius: 12, padding: '18px 4px', border: `2px solid ${색}50` }}>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 10, display: 'block' }}>{label}</span>
+            <span style={{ fontSize: 18, fontWeight: 900, color: 색, lineHeight: 1.5 }}>{value || '-'}</span>
           </div>
-        )}
+        )
+      })}
+    </div>
+  </div>
+)}
 
         {/* 스트리밍 텍스트 */}
         {!loadingPhase && isBaseStreaming && baseText && (
