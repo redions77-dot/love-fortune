@@ -122,12 +122,12 @@ function Accordion({ title, content, isPaid = false, isChild = false, isGunghab 
   const borderColor = isGunghab ? 'rgba(155,29,58,0.4)' : isChild ? 'rgba(45,122,82,0.4)' : isGilil ? 'rgba(201,168,76,0.4)' : isPaid ? 'rgba(201,168,76,0.4)' : 'rgba(201,168,76,0.15)'
   const openBg = isGunghab ? 'rgba(155,29,58,0.1)' : isChild ? 'rgba(45,122,82,0.1)' : 'rgba(201,168,76,0.08)'
   return (
-    <div style={{ marginBottom: 8, border: `1px solid ${borderColor}`, borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', cursor: 'pointer', background: open ? openBg : '#0D1B3E', transition: 'all 0.2s' }} onClick={() => setOpen(o => !o)}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: open ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1 }}>{title}</span>
-        <span style={{ fontSize: 12, color: 'rgba(201,168,76,0.5)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+    <div style={{ marginBottom: 10, border: `1px solid ${borderColor}`, borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px', cursor: 'pointer', background: open ? openBg : '#0D1B3E', transition: 'all 0.2s' }} onClick={() => setOpen(o => !o)}>
+        <span style={{ fontSize: 17, fontWeight: 700, color: open ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
+        <span style={{ fontSize: 14, color: 'rgba(201,168,76,0.5)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
       </div>
-      {open && <div style={{ wordBreak: 'keep-all', padding: '16px 18px', fontSize: 15, lineHeight: 2, color: 'rgba(255,255,255,0.75)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{content}</div>}
+      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 16, lineHeight: 2.1, color: 'rgba(255,255,255,0.82)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{content}</div>}
     </div>
   )
 }
@@ -1146,147 +1146,213 @@ if (screen === 'input') {
     </div>
   )
 }
-  // ── 결과 화면 (핵심! 로딩 화면 추가됨) ──
-  if (screen === 'result') {
-    const baseSections = parseSections(baseText)
-    const paidSections = parseSections(paidText)
-    return (
-      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
-        <div id="result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box', width: '100%' }}>
+// ── 결과 화면 ──
+if (screen === 'result') {
+  const baseSections = parseSections(baseText)
+  const paidSections = parseSections(paidText)
+  return (
+    <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+      <div id="result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 20px 60px', boxSizing: 'border-box', width: '100%' }}>
 
-          {/* ★ 로딩 화면 — 분석 버튼 누른 직후 표시 */}
-          {isBaseStreaming && (
-            <div style={{ textAlign: 'center', padding: '10px', marginBottom: 12, fontSize: 13, color: 'rgba(201,168,76,0.7)', fontWeight: 600 }}>
-              ✦ 분석 중 · {loadingCountdown}초 경과 ✦
+        {/* 로딩 카운터 */}
+        {isBaseStreaming && (
+          <div style={{ textAlign: 'center', padding: '16px', marginBottom: 16, fontSize: 15, color: 'rgba(201,168,76,0.7)', fontWeight: 700 }}>
+            ✦ 분석 중 · {loadingCountdown}초 경과 ✦
+          </div>
+        )}
+
+        {/* 사주팔자 카드 */}
+        {!loadingPhase && sajuData?.사주 && (
+          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '20px', marginBottom: 16 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginBottom: 6, letterSpacing: '0.1em' }}>나의 사주팔자</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', marginBottom: 14, textAlign: 'center' }}>{sajuData.생년월일}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+              {[{ label: '시주(時)', value: sajuData.사주.시주 }, { label: '일주(日)', value: sajuData.사주.일주 }, { label: '월주(月)', value: sajuData.사주.월주 }, { label: '년주(年)', value: sajuData.사주.년주 }].map(({ label, value }) => {
+                const 오행색 = { '甲갑': '#4ADE80', '乙을': '#4ADE80', '丙병': '#F87171', '丁정': '#F87171', '戊무': '#C9A84C', '己기': '#C9A84C', '庚경': '#E8C96A', '辛신': '#E8C96A', '壬임': '#60A5FA', '癸계': '#60A5FA' }
+                const 색 = 오행색[value?.slice(0, 2)] || '#FFFFFF'
+                return (
+                  <div key={label} style={{ textAlign: 'center', background: `${색}12`, borderRadius: 10, padding: '14px 4px', border: `1px solid ${색}40` }}>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 6, display: 'block' }}>{label}</span>
+                    <span style={{ fontSize: 15, fontWeight: 800, color: 색, lineHeight: 1.6 }}>{value || '-'}</span>
+                  </div>
+                )
+              })}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* 사주팔자 카드 */}
-          {!loadingPhase && sajuData?.사주 && (
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 20px', marginBottom: 12 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#C9A84C', marginBottom: 12, letterSpacing: '0.1em' }}>나의 사주팔자</p>
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 10, textAlign: 'center' }}>{sajuData.생년월일}</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-                {[{ label: '시주(時)', value: sajuData.사주.시주 }, { label: '일주(日)', value: sajuData.사주.일주 }, { label: '월주(月)', value: sajuData.사주.월주 }, { label: '년주(年)', value: sajuData.사주.년주 }].map(({ label, value }) => {
-                  const 오행색 = { '甲갑': '#4ADE80', '乙을': '#4ADE80', '丙병': '#F87171', '丁정': '#F87171', '戊무': '#C9A84C', '己기': '#C9A84C', '庚경': '#E8C96A', '辛신': '#E8C96A', '壬임': '#60A5FA', '癸계': '#60A5FA' }
-                  const 색 = 오행색[value?.slice(0, 2)] || '#FFFFFF'
-                  return <div key={label} style={{ textAlign: 'center', background: `${색}12`, borderRadius: 8, padding: '10px 4px', border: `1px solid ${색}40` }}><span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginBottom: 4, display: 'block' }}>{label}</span><span style={{ fontSize: 13, fontWeight: 700, color: 색, lineHeight: 1.6 }}>{value || '-'}</span></div>
-                })}
+        {/* 스트리밍 텍스트 */}
+        {!loadingPhase && isBaseStreaming && baseText && (
+          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 17, lineHeight: 2.1, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+            {removeMarkers(baseText)}<span style={{ opacity: 0.4 }}>▌</span>
+          </div>
+        )}
+
+        {/* 기본 분석 결과 아코디언 */}
+        {!loadingPhase && !isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기')).map((sec, i) => (
+          <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
+        ))}
+
+        {/* 행운 아이템 미리보기 */}
+        {!loadingPhase && !isBaseStreaming && !paidSections.length && (() => {
+          const luckySec = baseSections.find(s => s.title.includes('행운미리보기'))
+          const color = luckySec?.content?.match(/색깔[:\s]+([^\n]+)/)?.[1]?.trim()
+          if (!color) return null
+          return (
+            <div style={{ background: 'linear-gradient(135deg, #0D1B3E, #1B2A4A)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 14, padding: '22px', marginBottom: 14 }}>
+              <p style={{ fontSize: 16, fontWeight: 700, color: '#C9A84C', marginBottom: 14 }}>나의 행운 아이템</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '14px', border: '1px solid rgba(201,168,76,0.15)' }}>
+                  <span style={{ fontSize: 12, color: '#C9A84C', fontWeight: 600, marginBottom: 6, display: 'block' }}>행운 색깔</span>
+                  <span style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 600 }}>{color}</span>
+                </div>
+                {['마스코트','행운 방향','행운 숫자'].map(label => (
+                  <div key={label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '14px', border: '1px solid rgba(201,168,76,0.15)', position: 'relative' }}>
+                    <span style={{ fontSize: 12, color: '#C9A84C', fontWeight: 600, marginBottom: 6, display: 'block' }}>{label}</span>
+                    <div style={{ height: 18, background: 'rgba(201,168,76,0.1)', borderRadius: 4 }} />
+                    <span style={{ position: 'absolute', bottom: 10, right: 10, fontSize: 14 }}>🔒</span>
+                  </div>
+                ))}
               </div>
+              <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.6)', textAlign: 'center', marginTop: 14, fontWeight: 600 }}>🔒 마스코트·방향·숫자는 전체 분석에서 확인하세요</p>
             </div>
-          )}
+          )
+        })()}
 
-          {!loadingPhase && isBaseStreaming && baseText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(baseText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
+        {/* 유료 스트리밍 텍스트 */}
+        {!loadingPhase && isPaidStreaming && paidText && (
+          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 17, lineHeight: 2.1, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+            {removeMarkers(paidText)}<span style={{ opacity: 0.4 }}>▌</span>
+          </div>
+        )}
 
-          {!loadingPhase && !isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기')).map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />)}
+        {/* 유료 분석 아코디언 */}
+        {!loadingPhase && !isPaidStreaming && paidSections.length > 0 && (
+          <>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', textAlign: 'center', margin: '20px 0 12px', letterSpacing: '0.08em' }}>✦ 전체 분석 결과 ✦</p>
+            {paidSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />)}
+          </>
+        )}
 
-          {!loadingPhase && !isBaseStreaming && !paidSections.length && (() => {
-            const luckySec = baseSections.find(s => s.title.includes('행운미리보기'))
-            const color = luckySec?.content?.match(/색깔[:\s]+([^\n]+)/)?.[1]?.trim()
-            if (!color) return null
-            return (
-              <div style={{ background: 'linear-gradient(135deg, #0D1B3E, #1B2A4A)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 12, padding: '20px', marginBottom: 12 }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 12 }}>나의 행운 아이템</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 12px', border: '1px solid rgba(201,168,76,0.15)' }}><span style={{ fontSize: 10, color: '#C9A84C', fontWeight: 600, marginBottom: 3, display: 'block' }}>행운 색깔</span><span style={{ fontSize: 13, color: '#FFFFFF', fontWeight: 500 }}>{color}</span></div>
-                  {['마스코트','행운 방향','행운 숫자'].map(label => <div key={label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 12px', border: '1px solid rgba(201,168,76,0.15)', position: 'relative' }}><span style={{ fontSize: 10, color: '#C9A84C', fontWeight: 600, marginBottom: 3, display: 'block' }}>{label}</span><div style={{ height: 16, background: 'rgba(201,168,76,0.1)', borderRadius: 4 }} /><span style={{ position: 'absolute', bottom: 8, right: 8, fontSize: 12 }}>🔒</span></div>)}
+        {/* 결제 유도 카드 */}
+        {!loadingPhase && phase === 'done' && !isPaid && !isPaidStreaming && (
+          <div style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', borderRadius: 16, padding: '32px 24px', marginBottom: 16, textAlign: 'center', border: '1px solid rgba(201,168,76,0.3)' }}>
+            <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 20 }}>FULL ANALYSIS</p>
+            <p style={{ fontSize: 18, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 20, wordBreak: 'keep-all', lineHeight: 1.5 }}>
+              {serviceType === 'child' ? '아이의 타고난 운명을 전부 확인하세요' : serviceType === '노후' ? '당신의 노후를 미리 준비하세요' : '내 사주의 모든 것을 확인하세요'}
+            </p>
+            <div style={{ textAlign: 'left', marginBottom: 24 }}>
+              {(serviceType === 'child'
+                ? ['타고난 기질 · 성격 심층 분석','학습 스타일 · 공부가 잘 되는 환경','재능의 씨앗 · 빛나는 분야','진로 방향 · 어울리는 직업군','부모와의 관계 · 키우는 법','이 사주로 잘 크는 법']
+                : serviceType === '노후'
+                ? ['노후 재물 심화 분석','건강 심화 분석','황혼 인연 심화','인간관계 · 사람운','월별 운세 12개월','노후를 빛나게 하는 법']
+                : ['인생 재운 흐름 (20대~말년)','직업운 · 커리어 방향','투자 · 부동산 전략','인간관계 · 사람운','월별 운세 12개월','행운 아이템 전체','이 사주로 잘 사는 법']
+              ).map(item => (
+                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                  <span style={{ color: '#C9A84C', fontWeight: 700, fontSize: 14 }}>✦</span>
+                  <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16 }}>{item}</span>
                 </div>
-                <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', textAlign: 'center', marginTop: 12, fontWeight: 600 }}>🔒 마스코트·방향·숫자는 전체 분석에서 확인하세요</p>
-              </div>
-            )
-          })()}
-
-          {!loadingPhase && isPaidStreaming && paidText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(paidText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
-
-          {!loadingPhase && !isPaidStreaming && paidSections.length > 0 && (
-            <><p style={{ fontSize: 12, fontWeight: 600, color: '#C9A84C', textAlign: 'center', margin: '16px 0 8px', letterSpacing: '0.08em' }}>✦ 전체 분석 결과 ✦</p>{paidSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />)}</>
-          )}
-
-          {!loadingPhase && phase === 'done' && !isPaid && !isPaidStreaming && (
-            <div style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', borderRadius: 12, padding: '28px 20px', marginBottom: 12, textAlign: 'center', border: '1px solid rgba(201,168,76,0.3)' }}>
-              <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 16 }}>FULL ANALYSIS</p>
-              <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.9)', marginBottom: 16, wordBreak: 'keep-all' }}>{serviceType === 'child' ? '아이의 타고난 운명을 전부 확인하세요' : serviceType === '노후' ? '당신의 노후를 미리 준비하세요' : '내 사주의 모든 것을 확인하세요'}</p>
-              <div style={{ textAlign: 'left', marginBottom: 20 }}>
-                {(serviceType === 'child' ? ['타고난 기질 · 성격 심층 분석','학습 스타일 · 공부가 잘 되는 환경','재능의 씨앗 · 빛나는 분야','진로 방향 · 어울리는 직업군','부모와의 관계 · 키우는 법','이 사주로 잘 크는 법']
-                  : serviceType === '노후' ? ['노후 재물 심화 분석','건강 심화 분석','황혼 인연 심화','인간관계 · 사람운','월별 운세 12개월','노후를 빛나게 하는 법']
-                  : ['인생 재운 흐름 (20대~말년)','직업운 · 커리어 방향','투자 · 부동산 전략','인간관계 · 사람운','월별 운세 12개월','행운 아이템 전체','이 사주로 잘 사는 법']
-                ).map(item => <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}><span style={{ color: '#C9A84C', fontWeight: 700, fontSize: 12 }}>✦</span><span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14 }}>{item}</span></div>)}
-              </div>
-              <div style={{ fontSize: 38, fontWeight: 800, color: '#C9A84C', marginBottom: 4 }}>1,900원</div>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>결제 후 즉시 사용 가능</p>
-              <button style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
-                onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) handlePaidAnalyze(email); else alert('결제가 취소되었습니다.') }) }) }}>
-                지금 전체 분석 받기 →
-              </button>
+              ))}
             </div>
-          )}
+            <div style={{ fontSize: 44, fontWeight: 900, color: '#C9A84C', marginBottom: 6 }}>1,900원</div>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>결제 후 즉시 사용 가능</p>
+            <button
+              style={{ width: '100%', padding: '20px', fontSize: 18, fontWeight: 700, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 14, cursor: 'pointer' }}
+              onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) handlePaidAnalyze(email); else alert('결제가 취소되었습니다.') }) }) }}>
+              지금 전체 분석 받기 →
+            </button>
+          </div>
+        )}
 
-          {!loadingPhase && isPaidStreaming && !paidText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}><div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>{[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}<span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>전체 사주를 분석하고 있어요...</span></div></div>}
+        {/* 유료 분석 로딩 */}
+        {!loadingPhase && isPaidStreaming && !paidText && (
+          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '28px 20px', marginBottom: 14 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
+              <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.5)', marginLeft: 10 }}>전체 사주를 분석하고 있어요...</span>
+            </div>
+          </div>
+        )}
 
-          {!loadingPhase && (
-            <>
-              <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginTop: 10 }}>
-                <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
+        {!loadingPhase && (
+          <>
+            {/* PDF 안내 */}
+            <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 12, padding: '16px 18px', marginTop: 14 }}>
+              <p style={{ fontSize: 14, color: '#C9A84C', fontWeight: 700, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
+            </div>
+            <button style={{ width: '100%', padding: '18px', fontSize: 16, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, cursor: 'pointer', color: '#C9A84C', marginTop: 12 }}
+              onClick={async () => { try { await generatePDF('result-content', '마이사주_분석결과_' + (myName || '결과')) } catch(e) { alert('PDF 오류: ' + e.message) } }}>
+              📄 결과 저장하기 (PDF)
+            </button>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 8 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>
+
+            {/* 심화분석 업셀 */}
+            {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
+              <div style={{ marginTop: 28, marginBottom: 10 }}>
+                <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.7)', textAlign: 'center', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 18 }}>더 깊이 알고 싶다면?</p>
+                <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '22px', marginBottom: 12 }}>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: '#C9A84C', marginBottom: 10 }}>🔮 사주 심화 분석</p>
+                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.9, marginBottom: 16 }}>기본 분석엔 없어요. 2026 하반기, 내가 올라타야 할 달 vs 조심해야 할 달. 귀인이 오는 시기까지.</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 26, fontWeight: 900, color: '#C9A84C' }}>9,900원</span>
+                    <button style={{ padding: '14px 24px', fontSize: 15, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
+                      onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) { setScreen('deep_result'); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>확인하기 →</button>
+                  </div>
+                </div>
+                <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 14, padding: '20px', marginBottom: 10, opacity: 0.7 }}>
+                  <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>🌟 인생 전략 풀패키지 — 29,900원</p>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>심화 분석 + 6개월 길일 + 직업/투자 타이밍 + 고급 PDF</p>
+                  <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
+                </div>
+                <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, opacity: 0.5 }}>
+                  <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>💎 AI 사주 상담 — 49,900원</p>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>풀패키지 + 내 고민 3가지 사주 맞춤 답변</p>
+                  <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
+                </div>
               </div>
-              <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginTop: 10 }} onClick={async () => { try { await generatePDF('result-content', '마이사주_분석결과_' + (myName || '결과')) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 결과 저장하기 (PDF)</button>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginTop: 6 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>
-              {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
-                <div style={{ marginTop: 24, marginBottom: 8 }}>
-                  <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 16 }}>더 깊이 알고 싶다면?</p>
-                  <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px', marginBottom: 10 }}>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>🔮 사주 심화 분석</p>
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 12 }}>기본 분석엔 없어요. 2026 하반기, 내가 올라타야 할 달 vs 조심해야 할 달. 귀인이 오는 시기까지.</p>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 22, fontWeight: 800, color: '#C9A84C' }}>9,900원</span>
-                      <button style={{ padding: '10px 20px', fontSize: 14, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                        onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) { setScreen('deep_result'); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>확인하기 →</button>
-                    </div>
-                  </div>
-                  <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 12, padding: '20px', marginBottom: 10, opacity: 0.7 }}>
-                    <p style={{ fontSize: 11, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>🌟 인생 전략 풀패키지 — 29,900원</p>
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>심화 분석 + 6개월 길일 + 직업/투자 타이밍 + 고급 PDF</p>
-                    <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
-                  </div>
-                  <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '20px', marginBottom: 10, opacity: 0.5 }}>
-                    <p style={{ fontSize: 11, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>💎 AI 사주 상담 — 49,900원</p>
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>풀패키지 + 내 고민 3가지 사주 맞춤 답변</p>
-                    <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
-                  </div>
+            )}
+
+            <button style={{ width: '100%', padding: '18px', fontSize: 16, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
+
+            {/* 이메일 */}
+            {isPaid && preEmail ? (
+              <div style={{ marginTop: 24, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 14, padding: '24px', textAlign: 'center' }}>
+                <p style={{ fontSize: 24, marginBottom: 8 }}>✅</p>
+                <p style={{ fontSize: 17, fontWeight: 700, color: '#C9A84C', marginBottom: 6 }}>이메일 발송 완료!</p>
+                <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>{preEmail}<br/>로 결과를 보내드렸어요.</p>
+              </div>
+            ) : (
+              <div style={{ marginTop: 24, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 14, padding: '22px' }}>
+                <p style={{ fontSize: 17, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>📧 이메일로 결과 받기</p>
+                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', marginBottom: 16, lineHeight: 1.7 }}>결과를 이메일로 받아두면 언제든 다시 볼 수 있어요.</p>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <input id="result-email-input" type="email" placeholder="이메일 주소 입력"
+                    style={{ flex: 1, padding: '14px 16px', fontSize: 15, border: '1px solid rgba(180,160,110,0.4)', borderRadius: 10, background: '#FFFFFF', color: '#1B1B1B', outline: 'none' }} />
+                  <button style={{ padding: '14px 20px', fontSize: 15, fontWeight: 600, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    onClick={async () => {
+                      const email = document.getElementById('result-email-input').value
+                      if (!email || !email.includes('@')) { alert('이메일 주소를 확인해주세요.'); return }
+                      const btn = document.querySelector('#result-email-input + button'); btn.textContent = '발송 중...'; btn.disabled = true
+                      const allSections = [...parseSections(baseText), ...parseSections(paidText)]
+                      const htmlContent = `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#0D1B3E;color:#FFFFFF;"><h1 style="color:#C9A84C;text-align:center;">${serviceType === 'child' ? '🌱 자녀 학운 분석' : serviceType === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'}</h1><p style="text-align:center;color:rgba(255,255,255,0.6);">${myName || ''}님의 분석 결과</p><hr style="border-color:rgba(201,168,76,0.3);margin:20px 0;">${allSections.map(s => `<h2 style="color:#C9A84C;">${s.title}</h2><p style="color:rgba(255,255,255,0.8);line-height:1.8;white-space:pre-wrap;">${s.content}</p>`).join('')}<hr style="border-color:rgba(201,168,76,0.3);margin:20px 0;"><p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p></div>`
+                      try {
+                        const res = await fetch(`${API_URL}/api/send-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: email, subject: `✨ ${myName || ''}님의 사주 분석 결과`, html: htmlContent }) })
+                        if (!res.ok) throw new Error('실패')
+                        document.getElementById('result-email-input').dataset.sent = 'true'
+                        alert('이메일을 발송했어요! 😊')
+                      } catch { alert('발송 오류가 발생했습니다.') }
+                      finally { btn.textContent = '발송'; btn.disabled = false }
+                    }}>발송</button>
                 </div>
-              )}
-              <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 8 }} onClick={handleRestart}>처음으로 돌아가기</button>
-              {isPaid && preEmail ? (
-                <div style={{ marginTop: 20, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, padding: '20px', textAlign: 'center' }}>
-                  <p style={{ fontSize: 20, marginBottom: 6 }}>✅</p>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 4 }}>이메일 발송 완료!</p>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>{preEmail}<br/>로 결과를 보내드렸어요.</p>
-                </div>
-              ) : (
-                <div style={{ marginTop: 20, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, padding: '20px' }}>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 6 }}>📧 이메일로 결과 받기</p>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 14, lineHeight: 1.7 }}>결과를 이메일로 받아두면 언제든 다시 볼 수 있어요.</p>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input id="result-email-input" type="email" placeholder="이메일 주소 입력" style={{ flex: 1, padding: '10px 14px', fontSize: 13, border: '1px solid rgba(180,160,110,0.4)', borderRadius: 8, background: '#FFFFFF', color: '#1B1B1B', outline: 'none' }} />
-                    <button style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                      onClick={async () => {
-                        const email = document.getElementById('result-email-input').value
-                        if (!email || !email.includes('@')) { alert('이메일 주소를 확인해주세요.'); return }
-                        const btn = document.querySelector('#result-email-input + button'); btn.textContent = '발송 중...'; btn.disabled = true
-                        const allSections = [...parseSections(baseText), ...parseSections(paidText)]
-                        const htmlContent = `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#0D1B3E;color:#FFFFFF;"><h1 style="color:#C9A84C;text-align:center;">${serviceType === 'child' ? '🌱 자녀 학운 분석' : serviceType === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'}</h1><p style="text-align:center;color:rgba(255,255,255,0.6);">${myName || ''}님의 분석 결과</p><hr style="border-color:rgba(201,168,76,0.3);margin:20px 0;">${allSections.map(s => `<h2 style="color:#C9A84C;">${s.title}</h2><p style="color:rgba(255,255,255,0.8);line-height:1.8;white-space:pre-wrap;">${s.content}</p>`).join('')}<hr style="border-color:rgba(201,168,76,0.3);margin:20px 0;"><p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p></div>`
-                        try { const res = await fetch(`${API_URL}/api/send-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: email, subject: `✨ ${myName || ''}님의 사주 분석 결과`, html: htmlContent }) }); if (!res.ok) throw new Error('실패'); document.getElementById('result-email-input').dataset.sent = 'true'; alert('이메일을 발송했어요! 😊') } catch { alert('발송 오류가 발생했습니다.') }
-                        finally { btn.textContent = '발송'; btn.disabled = false }
-                      }}>발송</button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
-    )
-  }
+    </div>
+  )
+}
 
   // ── 약관/정책 화면들 ──
   if (screen === 'terms') return (
