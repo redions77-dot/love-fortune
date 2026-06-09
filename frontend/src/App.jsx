@@ -869,7 +869,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
               {[
                 { type: 'saju', char: '命', label: '나의 사주', sub: '돈·직업·연애\n내 팔자가 정해놨다', badge: 'FREE PREVIEW', border: 'rgba(201,168,76,0.3)', bg: 'rgba(201,168,76,0.06)' },
-                { type: 'gunghab', char: '合', label: '궁합', sub: '우리 잘 맞는지\n사주로 확인', border: 'rgba(155,29,58,0.3)', bg: 'rgba(155,29,58,0.06)', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') },
+                { type: 'gunghab', char: '合', label: '궁합', sub: '우리 잘 맞는지\n사주로 확인', border: 'rgba(155,29,58,0.3)', bg: 'rgba(155,29,58,0.06)', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') } },
                 { type: 'child', char: '子', label: '혼냈던 게 재능이었어요', sub: '타고난 재능·진로\n미리 확인', border: 'rgba(45,122,82,0.3)', bg: 'rgba(45,122,82,0.06)' },
                 { type: '노후', char: '老', label: '내 후반전', sub: '말년 재물·건강\n황혼 인연 미리 확인', border: 'rgba(45,106,155,0.3)', bg: 'rgba(45,106,155,0.06)' },
               ].map(({ type, char, label, sub, badge, border, bg, onClick }) => (
