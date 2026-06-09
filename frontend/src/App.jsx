@@ -187,6 +187,7 @@ export default function App() {
   const [loadingCountdown, setLoadingCountdown] = useState(30)
   const [loadingStage, setLoadingStage] = useState(0)
 
+  const [관계유형, set관계유형] = useState('연인')
   const [gunghabStep, setGunghabStep] = useState(1)
   const [partnerGender, setPartnerGender] = useState(() => _qs.get('pg') || '')
   const [partnerBirthYear, setPartnerBirthYear] = useState(() => _qs.get('pby') || '')
@@ -375,7 +376,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
     setIsLunar(false); setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
     setMbti(''); setBlood(''); setPhase('input'); setSajuData(null); setBaseText(''); setPaidText('')
     setIsBaseStreaming(false); setIsPaidStreaming(false); setIsPaid(false)
-    setGunghabStep(1); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
+    setGunghabStep(1); set관계유형('연인'); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
     setPartnerIsLunar(false); setPartnerTimeHour(''); setPartnerTimeMin(''); setPartnerTimeAmPm('오전'); setPartnerTimeUnknown(false)
     setMyName(''); setPartnerName(''); setGunghabText(''); setIsGunghabStreaming(false); setGunghabSajuData(null)
     setGilil목적(''); setGililText(''); setIsGililStreaming(false); isPaidSectionRef.current = false
@@ -401,7 +402,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
     let _fullGunghabText = ''
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
-      const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, birthdate, birthtime: _birthtime, isLunar, partnerGender, partnerBirthdate, partnerBirthtime: _partnerBirthtime, partnerIsLunar, myName: myName || 'A', partnerName: partnerName || 'B', type: '궁합', isPaid: true }), signal: ctrl.signal })
+      const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, birthdate, birthtime: _birthtime, isLunar, partnerGender, partnerBirthdate, partnerBirthtime: _partnerBirthtime, partnerIsLunar, myName: myName || 'A', partnerName: partnerName || 'B', type: '궁합', isPaid: true, 관계유형 }), signal: ctrl.signal })
       const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''
       while (true) {
         const { done, value } = await reader.read(); if (done) break
@@ -563,6 +564,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
 
   // ── 궁합 입력 ──
   if (screen === 'gunghab_input') {
+    const isStep0 = gunghabStep === 0
     const isStep1 = gunghabStep === 1
     const myBirthdateValid = birthYear.length === 4 && Number(birthMonth) >= 1 && Number(birthMonth) <= 12 && Number(birthDay) >= 1
     const myBirthtimeValid = timeUnknown || (timeHour !== '' && timeMin !== '')
@@ -615,15 +617,40 @@ loadingTimersRef.current.countdown = setInterval(() => {
         <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
           <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>合</div>
           <h1 style={{ wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>궁합 분석</h1>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{isStep1 ? '먼저 내 정보를 입력해주세요' : '이제 상대방 정보를 입력해주세요'}</p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{isStep0 ? '어떤 관계를 분석할까요?' : isStep1 ? '먼저 내 정보를 입력해주세요' : '이제 상대방 정보를 입력해주세요'}</p>
         </div>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 99, margin: '14px 0 0', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: isStep1 ? '50%' : '100%', background: '#C9A84C', borderRadius: 99, transition: 'width 0.35s ease' }} />
+            <div style={{ height: '100%', width: isStep0 ? '33%' : isStep1 ? '66%' : '100%', background: '#C9A84C', borderRadius: 99, transition: 'width 0.35s ease' }} />
           </div>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'right', marginTop: 4, marginBottom: 8 }}>{isStep1 ? '1' : '2'} / 2</p>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'right', marginTop: 4, marginBottom: 8 }}>{isStep0 ? '1' : isStep1 ? '2' : '3'} / 3</p>
         </div>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
+          {isStep0 && (
+  <>
+    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>어떤 관계인가요?</h2>
+    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 24 }}>관계에 맞는 분석을 해드려요</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {[
+        { value: '직장상사', emoji: '👔', label: '직장 상사', sub: '왜 이 상사가 나를 힘들게 하는지' },
+        { value: '직장동료', emoji: '🤝', label: '직장 동료', sub: '같이 일하면 어떤 팀이 되는지' },
+        { value: '가족', emoji: '👨‍👩‍👧', label: '가족', sub: '왜 가족인데 이렇게 힘든지' },
+        { value: '친구', emoji: '👫', label: '오랜 친구', sub: '이 친구가 진짜 내 편인지' },
+        { value: '연인', emoji: '💕', label: '연인 / 부부', sub: '우리 잘 맞는지 사주로 확인' },
+      ].map(({ value, emoji, label, sub }) => (
+        <button key={value}
+          style={{ padding: '18px 20px', border: `2px solid ${관계유형 === value ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: 관계유형 === value ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.15s' }}
+          onClick={() => set관계유형(value)}>
+          <span style={{ fontSize: 28 }}>{emoji}</span>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 관계유형 === value ? '#C9A84C' : '#FFFFFF' }}>{label}</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{sub}</div>
+          </div>
+        </button>
+      ))}
+    </div>
+  </>
+)}
           {isStep1 ? (
             <>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>나의 정보</h2>
@@ -655,18 +682,23 @@ loadingTimersRef.current.countdown = setInterval(() => {
           )}
         </div>
         <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
-          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => { if (isStep1) setScreen('landing'); else setGunghabStep(1) }}>←</button>
+          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => {
+  if (isStep0) setScreen('landing')
+  else if (isStep1) setGunghabStep(0)
+  else setGunghabStep(1)
+}}>←</button>
           <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: (isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: (isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: (isStep1 ? !canStep1Next : !canStep2Next) ? 'not-allowed' : 'pointer' }}
-            disabled={isStep1 ? !canStep1Next : !canStep2Next}
-            onClick={() => {
-              if (isStep1) { setGunghabStep(2); return }
+            disabled={isStep0 ? !관계유형 : isStep1 ? !canStep1Next : !canStep2Next}
+           onClick={() => {
+  if (isStep0) { setGunghabStep(1); return }
+  if (isStep1) { setGunghabStep(2); return }
               if (IS_ADMIN) { handleGunghabAnalyze(null); return }
               const IMP = window.IMP; IMP.init('imp87662575')
               const _pbt = (() => { if (partnerTimeUnknown) return ''; if (!partnerTimeHour || !partnerTimeMin) return ''; let h = Number(partnerTimeHour); if (partnerTimeAmPm === '오전' && h === 12) h = 0; if (partnerTimeAmPm === '오후' && h !== 12) h += 12; return `${String(h).padStart(2,'0')}:${String(partnerTimeMin).padStart(2,'0')}` })()
               const _params = new URLSearchParams({ payment: 'gunghab', imp_success: 'true', g: gender, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mn: myName || '', pn: partnerName || '', pg: partnerGender, pby: partnerBirthYear, pbm: partnerBirthMonth, pbd: partnerBirthDay, ptu: partnerTimeUnknown ? '1' : '0', pil: partnerIsLunar ? '1' : '0', pbt: _pbt, ptap: partnerTimeAmPm }).toString()
               IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `gunghab_${Date.now()}`, name: '마이사주 궁합 분석', amount: 1900, buyer_name: myName || '고객', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_params}` }, (rsp) => { if (rsp.success) handleGunghabAnalyze(null); else alert('결제가 취소되었습니다.') })
             }}>
-            {isStep1 ? '다음 — 상대방 정보 입력' : '💕 궁합 분석받기 (1,900원)'}
+            {isStep0 ? '다음 — 내 정보 입력' : isStep1 ? '다음 — 상대방 정보 입력' : '💕 관계 분석받기 (1,900원)'}
           </button>
         </div>
       </div>
@@ -837,7 +869,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
               {[
                 { type: 'saju', char: '命', label: '나의 사주', sub: '돈·직업·연애\n내 팔자가 정해놨다', badge: 'FREE PREVIEW', border: 'rgba(201,168,76,0.3)', bg: 'rgba(201,168,76,0.06)' },
-                { type: 'gunghab', char: '合', label: '궁합', sub: '우리 잘 맞는지\n사주로 확인', border: 'rgba(155,29,58,0.3)', bg: 'rgba(155,29,58,0.06)', onClick: () => { setServiceType('gunghab'); setGunghabStep(1); setScreen('gunghab_input') } },
+                { type: 'gunghab', char: '合', label: '궁합', sub: '우리 잘 맞는지\n사주로 확인', border: 'rgba(155,29,58,0.3)', bg: 'rgba(155,29,58,0.06)', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') },
                 { type: 'child', char: '子', label: '혼냈던 게 재능이었어요', sub: '타고난 재능·진로\n미리 확인', border: 'rgba(45,122,82,0.3)', bg: 'rgba(45,122,82,0.06)' },
                 { type: '노후', char: '老', label: '내 후반전', sub: '말년 재물·건강\n황혼 인연 미리 확인', border: 'rgba(45,106,155,0.3)', bg: 'rgba(45,106,155,0.06)' },
               ].map(({ type, char, label, sub, badge, border, bg, onClick }) => (
