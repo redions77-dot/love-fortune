@@ -940,124 +940,212 @@ loadingTimersRef.current.countdown = setInterval(() => {
     )
   }
 
-  // ── 입력 화면 ──
-  if (screen === 'input') {
-    const serviceNames = { saju: '나의 사주', child: '혼냈던 게 재능이었어요', 노후: '내 후반전, 어떻게 흘러갈까?', deep: '사주 심화 분석' }
-    const serviceChar = { saju: '命', child: '子', 노후: '老', deep: '🔮' }
-    return (
-      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
-          <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>{serviceChar[serviceType] || '命'}</div>
-          <h1 style={{ wordBreak: 'keep-all', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>{serviceNames[serviceType] || '사주 분석'}</h1>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>생년월일을 입력하면 무료로 먼저 확인해드려요</p>
-        </div>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' }}>
-          <div style={{ height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 99, margin: '14px 0 0', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress}%`, background: '#C9A84C', borderRadius: 99, transition: 'width 0.35s ease' }} />
-          </div>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'right', marginTop: 4, marginBottom: 8 }}>{step + 1} / {STEPS.length}</p>
-        </div>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
-          {currentStepId === 'gender' && (
-            <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>성별을 알려주세요</h2>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>사주 풀이에 사용돼요</p>
-              <div style={{ marginBottom: 16 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8 }}>이름 (선택)</p>
-                <input style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box', outline: 'none' }} type="text" placeholder="이름을 입력해주세요" value={myName} onChange={e => setMyName(e.target.value)} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                {['여성','남성'].map(g => <button key={g} style={{ padding: '28px 16px', border: `2px solid ${gender === g ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: gender === g ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', fontSize: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }} onClick={() => setGender(g)}><span>{g === '여성' ? '♀️' : '♂️'}</span><span style={{ fontSize: 14, fontWeight: 600, color: gender === g ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>{g}</span></button>)}
-              </div>
-            </>
-          )}
-          {currentStepId === 'marital' && (
-            <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>결혼 상태를 알려주세요</h2>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>사주 풀이에 사용돼요</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[{ value: '미혼', emoji: '💫', sub: '결혼 전이거나 현재 혼자예요' }, { value: '기혼', emoji: '💍', sub: '결혼해서 살고 있어요' }].map(({ value, emoji, sub }) => (
-                  <button key={value} style={{ padding: '18px 20px', border: `2px solid ${maritalStatus === value ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: maritalStatus === value ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16 }} onClick={() => setMaritalStatus(value)}>
-                    <span style={{ fontSize: 28 }}>{emoji}</span>
-                    <div style={{ textAlign: 'left' }}><div style={{ fontSize: 15, fontWeight: 600, color: maritalStatus === value ? '#C9A84C' : '#FFFFFF' }}>{value}</div><div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{sub}</div></div>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-          {currentStepId === 'birthdate' && (
-            <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>생년월일을 알려주세요</h2>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>숫자로 직접 입력해주세요</p>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: !isLunar ? 600 : 400, border: `1px solid ${!isLunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: !isLunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: !isLunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setIsLunar(false)}>양력 🌞</button>
-                <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: isLunar ? 600 : 400, border: `1px solid ${isLunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: isLunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: isLunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setIsLunar(true)}>음력 🌙</button>
-              </div>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 }}>
-                <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0,4))} />
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>년</span>
-                <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0,2))} />
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>월</span>
-                <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0,2))} />
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>일</span>
-              </div>
-              {birthdateValid && <p style={{ fontSize: 13, color: '#C9A84C', textAlign: 'center', fontWeight: 600 }}>✓ {birthYear}년 {birthMonth}월 {birthDay}일 {isLunar ? '(음력)' : '(양력)'}</p>}
-            </>
-          )}
-          {currentStepId === 'birthtime' && (
-            <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>태어난 시간을 알려주세요</h2>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>모르셔도 괜찮아요</p>
-              <button style={{ width: '100%', padding: '13px 16px', border: `1px solid ${timeUnknown ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: timeUnknown ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeUnknown ? '#C9A84C' : 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: timeUnknown ? 600 : 400, cursor: 'pointer', textAlign: 'center', marginBottom: 16 }} onClick={() => { setTimeUnknown(true); setTimeHour(''); setTimeMin('') }}>✓ 태어난 시간 모름</button>
-              {!timeUnknown && (
-                <>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8 }}>오전 / 오후</p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
-                    {['오전','오후'].map(ap => <button key={ap} style={{ padding: '14px', fontSize: 15, fontWeight: timeAmPm === ap ? 700 : 400, border: `2px solid ${timeAmPm === ap ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: timeAmPm === ap ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeAmPm === ap ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setTimeAmPm(ap)}>{ap === '오전' ? '🌅' : '🌇'} {ap}</button>)}
-                  </div>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8 }}>시 선택</p>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
-                    {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => <button key={h} style={{ padding: '12px 4px', fontSize: 14, fontWeight: timeHour === String(h) ? 700 : 400, border: `1px solid ${timeHour === String(h) ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 10, background: timeHour === String(h) ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeHour === String(h) ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', textAlign: 'center' }} onClick={() => setTimeHour(String(h))}>{h}시</button>)}
-                  </div>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8 }}>분 선택</p>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
-                    {['00','10','20','30','40','50'].map(m => <button key={m} style={{ padding: '12px 4px', fontSize: 14, fontWeight: timeMin === m ? 700 : 400, border: `1px solid ${timeMin === m ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 10, background: timeMin === m ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeMin === m ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', textAlign: 'center' }} onClick={() => setTimeMin(m)}>{m}분</button>)}
-                  </div>
-                  {timeHour && timeMin && <p style={{ fontSize: 13, color: '#C9A84C', textAlign: 'center', fontWeight: 600 }}>✓ {timeAmPm} {timeHour}시 {timeMin}분</p>}
-                </>
-              )}
-              {timeUnknown && <button style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', textDecoration: 'underline', display: 'block' }} onClick={() => setTimeUnknown(false)}>시간 직접 선택하기</button>}
-            </>
-          )}
-          {currentStepId === 'mbti' && (
-            <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>MBTI를 선택해주세요</h2>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>모르시면 건너뛰어도 돼요</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {MBTI_LIST.map(m => <button key={m} style={{ border: `1px solid ${mbti === m ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 20, padding: '7px 16px', fontSize: 13, cursor: 'pointer', background: mbti === m ? 'rgba(201,168,76,0.1)' : 'transparent', color: mbti === m ? '#C9A84C' : 'rgba(255,255,255,0.4)', fontWeight: mbti === m ? 600 : 400 }} onClick={() => setMbti(mbti === m ? '' : m)}>{m}</button>)}
-              </div>
-            </>
-          )}
-          {currentStepId === 'blood' && (
-            <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>혈액형을 선택해주세요</h2>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>선택하지 않아도 분석은 가능해요</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {BLOOD_LIST.map(b => <button key={b} style={{ border: `1px solid ${blood === b ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 20, padding: '7px 16px', fontSize: 13, cursor: 'pointer', background: blood === b ? 'rgba(201,168,76,0.1)' : 'transparent', color: blood === b ? '#C9A84C' : 'rgba(255,255,255,0.4)', fontWeight: blood === b ? 600 : 400 }} onClick={() => setBlood(blood === b ? '' : b)}>{b}형</button>)}
-              </div>
-            </>
-          )}
-        </div>
-        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
-          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={goBack}>←</button>
-          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: !canGoNext() ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: !canGoNext() ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: !canGoNext() ? 'not-allowed' : 'pointer', letterSpacing: '0.03em' }} onClick={goNext} disabled={!canGoNext()}>
-            {currentStepId === 'blood' ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : '무료 사주 분석하기 ✨') : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음'}
-          </button>
-        </div>
-      </div>
-    )
-  }
+// ── 입력 화면 ──
+if (screen === 'input') {
+  const serviceNames = { saju: '나의 사주', child: '혼냈던 게 재능이었어요', 노후: '내 후반전, 어떻게 흘러갈까?', deep: '사주 심화 분석' }
+  const serviceChar = { saju: '命', child: '子', 노후: '老', deep: '🔮' }
 
+  return (
+    <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+      {/* 헤더 */}
+      <div style={{ textAlign: 'center', padding: '36px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
+        <div style={{ fontSize: 48, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 12 }}>{serviceChar[serviceType] || '命'}</div>
+        <h1 style={{ wordBreak: 'keep-all', fontSize: 22, fontWeight: 800, color: '#FFFFFF', marginBottom: 8 }}>{serviceNames[serviceType] || '사주 분석'}</h1>
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>생년월일을 입력하면 무료로 먼저 확인해드려요</p>
+      </div>
+
+      {/* 진행바 */}
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 20px', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 99, margin: '16px 0 0', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #C9A84C, #F5E090)', borderRadius: 99, transition: 'width 0.35s ease' }} />
+        </div>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'right', marginTop: 6 }}>{step + 1} / {STEPS.length}</p>
+      </div>
+
+      {/* 본문 */}
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 20px 120px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
+
+        {/* 섹션 제목 */}
+        <div style={{ marginBottom: 28 }}>
+          <h2 style={{ fontSize: 28, fontWeight: 800, color: '#FFFFFF', lineHeight: 1.2, wordBreak: 'keep-all', margin: 0, marginBottom: 8 }}>
+            {currentStepId === 'gender' && '성별을 알려주세요'}
+            {currentStepId === 'marital' && '결혼 상태를 알려주세요'}
+            {currentStepId === 'birthdate' && '생년월일을 알려주세요'}
+            {currentStepId === 'birthtime' && '태어난 시간을 알려주세요'}
+            {currentStepId === 'mbti' && 'MBTI를 선택해주세요'}
+            {currentStepId === 'blood' && '혈액형을 선택해주세요'}
+          </h2>
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+            {currentStepId === 'gender' && '사주 풀이에 사용돼요'}
+            {currentStepId === 'marital' && '사주 풀이에 사용돼요'}
+            {currentStepId === 'birthdate' && '숫자로 직접 입력해주세요'}
+            {currentStepId === 'birthtime' && '모르셔도 괜찮아요'}
+            {currentStepId === 'mbti' && '모르시면 건너뛰어도 돼요'}
+            {currentStepId === 'blood' && '선택하지 않아도 분석은 가능해요'}
+          </p>
+        </div>
+
+        {/* ── 성별 ── */}
+        {currentStepId === 'gender' && (
+          <>
+            <div style={{ marginBottom: 24 }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 10 }}>이름 (선택)</p>
+              <input
+                style={{ width: '100%', fontSize: 18, padding: '18px 20px', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 14, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box', outline: 'none' }}
+                type="text" placeholder="이름을 입력해주세요" value={myName} onChange={e => setMyName(e.target.value)} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              {['여성','남성'].map(g => (
+                <button key={g}
+                  style={{ padding: '40px 16px', border: `2px solid ${gender === g ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 16, background: gender === g ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, transition: 'all 0.15s' }}
+                  onClick={() => setGender(g)}>
+                  <span style={{ fontSize: 44 }}>{g === '여성' ? '♀️' : '♂️'}</span>
+                  <span style={{ fontSize: 20, fontWeight: 700, color: gender === g ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>{g}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* ── 결혼 상태 ── */}
+        {currentStepId === 'marital' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {[{ value: '미혼', emoji: '💫', sub: '결혼 전이거나 현재 혼자예요' }, { value: '기혼', emoji: '💍', sub: '결혼해서 살고 있어요' }].map(({ value, emoji, sub }) => (
+              <button key={value}
+                style={{ padding: '28px 24px', border: `2px solid ${maritalStatus === value ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 16, background: maritalStatus === value ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 20, transition: 'all 0.15s' }}
+                onClick={() => setMaritalStatus(value)}>
+                <span style={{ fontSize: 40 }}>{emoji}</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: maritalStatus === value ? '#C9A84C' : '#FFFFFF' }}>{value}</div>
+                  <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{sub}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ── 생년월일 ── */}
+        {currentStepId === 'birthdate' && (
+          <>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+              {[['양력 🌞', false], ['음력 🌙', true]].map(([label, val]) => (
+                <button key={label}
+                  style={{ flex: 1, padding: '16px', fontSize: 16, fontWeight: isLunar === val ? 700 : 400, border: `2px solid ${isLunar === val ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 12, background: isLunar === val ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: isLunar === val ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
+                  onClick={() => setIsLunar(val)}>{label}</button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16 }}>
+              <input
+                style={{ width: 108, flexShrink: 0, padding: '22px 4px', fontSize: 24, fontWeight: 800, border: '1px solid rgba(201,168,76,0.25)', borderRadius: 14, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }}
+                type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0,4))} />
+              <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>년</span>
+              <input
+                style={{ width: 66, flexShrink: 0, padding: '22px 4px', fontSize: 24, fontWeight: 800, border: '1px solid rgba(201,168,76,0.25)', borderRadius: 14, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }}
+                type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0,2))} />
+              <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>월</span>
+              <input
+                style={{ width: 66, flexShrink: 0, padding: '22px 4px', fontSize: 24, fontWeight: 800, border: '1px solid rgba(201,168,76,0.25)', borderRadius: 14, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }}
+                type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0,2))} />
+              <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>일</span>
+            </div>
+            {birthdateValid && (
+              <p style={{ fontSize: 16, color: '#C9A84C', textAlign: 'center', fontWeight: 700, marginTop: 8 }}>
+                ✓ {birthYear}년 {birthMonth}월 {birthDay}일 {isLunar ? '(음력)' : '(양력)'}
+              </p>
+            )}
+          </>
+        )}
+
+        {/* ── 시간 ── */}
+        {currentStepId === 'birthtime' && (
+          <>
+            <button
+              style={{ width: '100%', padding: '20px 16px', border: `2px solid ${timeUnknown ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 14, background: timeUnknown ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeUnknown ? '#C9A84C' : 'rgba(255,255,255,0.4)', fontSize: 18, fontWeight: timeUnknown ? 700 : 400, cursor: 'pointer', textAlign: 'center', marginBottom: 24 }}
+              onClick={() => { setTimeUnknown(true); setTimeHour(''); setTimeMin('') }}>
+              ✓ 태어난 시간 모름
+            </button>
+            {!timeUnknown && (
+              <>
+                <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(201,168,76,0.7)', marginBottom: 12 }}>오전 / 오후</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+                  {['오전','오후'].map(ap => (
+                    <button key={ap}
+                      style={{ padding: '20px', fontSize: 18, fontWeight: timeAmPm === ap ? 700 : 400, border: `2px solid ${timeAmPm === ap ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 14, background: timeAmPm === ap ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeAmPm === ap ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
+                      onClick={() => setTimeAmPm(ap)}>{ap === '오전' ? '🌅' : '🌇'} {ap}</button>
+                  ))}
+                </div>
+                <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(201,168,76,0.7)', marginBottom: 12 }}>시 선택</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
+                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                    <button key={h}
+                      style={{ padding: '18px 4px', fontSize: 17, fontWeight: timeHour === String(h) ? 700 : 400, border: `2px solid ${timeHour === String(h) ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 12, background: timeHour === String(h) ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeHour === String(h) ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
+                      onClick={() => setTimeHour(String(h))}>{h}시</button>
+                  ))}
+                </div>
+                <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(201,168,76,0.7)', marginBottom: 12 }}>분 선택</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+                  {['00','10','20','30','40','50'].map(m => (
+                    <button key={m}
+                      style={{ padding: '18px 4px', fontSize: 17, fontWeight: timeMin === m ? 700 : 400, border: `2px solid ${timeMin === m ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 12, background: timeMin === m ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeMin === m ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
+                      onClick={() => setTimeMin(m)}>{m}분</button>
+                  ))}
+                </div>
+                {timeHour && timeMin && (
+                  <p style={{ fontSize: 16, color: '#C9A84C', textAlign: 'center', fontWeight: 700 }}>✓ {timeAmPm} {timeHour}시 {timeMin}분</p>
+                )}
+              </>
+            )}
+            {timeUnknown && (
+              <button style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', textDecoration: 'underline', display: 'block' }} onClick={() => setTimeUnknown(false)}>시간 직접 선택하기</button>
+            )}
+          </>
+        )}
+
+        {/* ── MBTI ── */}
+        {currentStepId === 'mbti' && (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 10 }}>
+              {MBTI_LIST.map(m => (
+                <button key={m}
+                  style={{ padding: '20px 4px', fontSize: 16, fontWeight: mbti === m ? 800 : 500, border: `2px solid ${mbti === m ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 12, background: mbti === m ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)', color: mbti === m ? '#C9A84C' : 'rgba(255,255,255,0.55)', cursor: 'pointer' }}
+                  onClick={() => setMbti(mbti === m ? '' : m)}>{m}</button>
+              ))}
+            </div>
+            <button
+              style={{ width: '100%', padding: '20px', fontSize: 16, fontWeight: 500, border: `2px solid rgba(201,168,76,0.15)`, borderRadius: 12, background: 'rgba(255,255,255,0.02)', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', marginTop: 4 }}
+              onClick={() => setMbti('')}>MBTI를 모릅니다</button>
+          </>
+        )}
+
+        {/* ── 혈액형 ── */}
+        {currentStepId === 'blood' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+            {BLOOD_LIST.map(b => (
+              <button key={b}
+                style={{ padding: '40px 16px', fontSize: 28, fontWeight: blood === b ? 800 : 600, border: `2px solid ${blood === b ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 16, background: blood === b ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)', color: blood === b ? '#C9A84C' : 'rgba(255,255,255,0.6)', cursor: 'pointer', textAlign: 'center' }}
+                onClick={() => setBlood(blood === b ? '' : b)}>{b}형</button>
+            ))}
+          </div>
+        )}
+
+      </div>
+
+      {/* 하단 버튼 */}
+      <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '14px 20px 30px', display: 'flex', gap: 12, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+        <button
+          style={{ flex: '0 0 auto', padding: '18px 24px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 14, background: 'rgba(255,255,255,0.03)', fontSize: 20, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }}
+          onClick={goBack}>←</button>
+        <button
+          style={{ flex: 1, padding: '18px', fontSize: 18, fontWeight: 700, background: !canGoNext() ? 'rgba(201,168,76,0.2)' : 'linear-gradient(135deg, #C9A84C, #F5E090)', color: !canGoNext() ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 14, cursor: !canGoNext() ? 'not-allowed' : 'pointer', letterSpacing: '0.02em' }}
+          onClick={goNext} disabled={!canGoNext()}>
+          {currentStepId === 'blood'
+            ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : '무료 사주 분석하기 ✨')
+            : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음 →'}
+        </button>
+      </div>
+    </div>
+  )
+}
   // ── 결과 화면 (핵심! 로딩 화면 추가됨) ──
   if (screen === 'result') {
     const baseSections = parseSections(baseText)
