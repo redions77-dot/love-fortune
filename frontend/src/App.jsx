@@ -772,24 +772,42 @@ loadingTimersRef.current.countdown = setInterval(() => {
     )
   }
 
-  // ── 이메일 모달 ──
-  if (emailModal) {
-    return (
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 24 }}>
-        <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 16, padding: '32px 24px', maxWidth: 380, width: '100%' }}>
-          <p style={{ fontSize: 22, textAlign: 'center', marginBottom: 8 }}>📧</p>
-          <p style={{ fontSize: 17, fontWeight: 700, color: '#C9A84C', textAlign: 'center', marginBottom: 16 }}>결과 받을 이메일을 입력해주세요</p>
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', lineHeight: 1.9, margin: 0 }}>📱 모바일에서는 결과 저장이 안 될 수 있어요.<br/>💻 PC에서는 PDF로 저장 가능해요.<br/>📩 이메일로 결과를 보내드릴게요.<br/>🔒 이메일은 결과 발송에만 사용됩니다.</p>
-          </div>
-          <input type="email" placeholder="이메일 주소 입력" value={preEmail} onChange={e => setPreEmail(e.target.value)} style={{ width: '100%', padding: '12px 16px', fontSize: 15, border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, background: '#FFFFFF', color: '#1B1B1B', outline: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
-          <button style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', marginBottom: 10 }} onClick={() => { if (!preEmail || !preEmail.includes('@')) { alert('이메일 주소를 확인해주세요.'); return } const cb = emailModal.onConfirm; setEmailModal(null); cb(preEmail) }}>결제하기 →</button>
-          <button style={{ width: '100%', padding: '12px', fontSize: 13, background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }} onClick={() => { const cb = emailModal.onConfirm; setEmailModal(null); cb(null) }}>이메일 없이 결제하기</button>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 4 }}>이메일 없이 결제하면 결과를 저장할 수 없어요.</p>
+ // ── 이메일 모달 ──
+if (emailModal) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 24 }}>
+      <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 20, padding: '36px 28px', maxWidth: 380, width: '100%' }}>
+        <p style={{ fontSize: 32, textAlign: 'center', marginBottom: 10 }}>📧</p>
+        <p style={{ fontSize: 20, fontWeight: 800, color: '#C9A84C', textAlign: 'center', marginBottom: 20, wordBreak: 'keep-all', lineHeight: 1.4 }}>결과 받을 이메일을<br/>입력해주세요</p>
+        <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2.2, margin: 0 }}>
+            📱 모바일에서는 결과 저장이 안 될 수 있어요.<br/>
+            💻 PC에서는 PDF로 저장 가능해요.<br/>
+            📩 이메일로 결과를 보내드릴게요.<br/>
+            🔒 이메일은 결과 발송에만 사용됩니다.
+          </p>
         </div>
+        <input
+          type="email"
+          placeholder="이메일 주소 입력"
+          value={preEmail}
+          onChange={e => setPreEmail(e.target.value)}
+          style={{ width: '100%', padding: '16px 18px', fontSize: 17, border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, background: '#FFFFFF', color: '#1B1B1B', outline: 'none', boxSizing: 'border-box', marginBottom: 14 }} />
+        <button
+          style={{ width: '100%', padding: '18px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', marginBottom: 12, letterSpacing: '0.02em' }}
+          onClick={() => { if (!preEmail || !preEmail.includes('@')) { alert('이메일 주소를 확인해주세요.'); return } const cb = emailModal.onConfirm; setEmailModal(null); cb(preEmail) }}>
+          결제하기 →
+        </button>
+        <button
+          style={{ width: '100%', padding: '14px', fontSize: 15, background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}
+          onClick={() => { const cb = emailModal.onConfirm; setEmailModal(null); cb(null) }}>
+          이메일 없이 결제하기
+        </button>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 6 }}>이메일 없이 결제하면 결과를 저장할 수 없어요.</p>
       </div>
-    )
-  }
+    </div>
+  )
+}
 
   // ── 랜딩 ──
   if (screen === 'landing') {
