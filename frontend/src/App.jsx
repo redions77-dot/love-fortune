@@ -127,7 +127,7 @@ function Accordion({ title, content, isPaid = false, isChild = false, isGunghab 
         <span style={{ fontSize: 17, fontWeight: 700, color: open ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
         <span style={{ fontSize: 14, color: 'rgba(201,168,76,0.5)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
       </div>
-      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 16, lineHeight: 2.1, color: 'rgba(255,255,255,0.82)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{content}</div>}
+      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', 'rgba(255,255,255,0.82)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{content}</div>}
     </div>
   )
 }
@@ -1199,7 +1199,7 @@ if (screen === 'result') {
         return (
           <div key={label} style={{ textAlign: 'center', background: `${색}15`, borderRadius: 12, padding: '18px 4px', border: `2px solid ${색}50` }}>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 10, display: 'block' }}>{label}</span>
-            <span style={{ fontSize: 18, fontWeight: 900, color: 색, lineHeight: 1.5 }}>{value || '-'}</span>
+            <span style={{ fontSize: 13, fontWeight: 900, color: 색, lineHeight: 1.4, whiteSpace: 'nowrap', overflow: 'hidden', display: 'block', textOverflow: 'ellipsis' }}>{value || '-'}</span>
           </div>
         )
       })}
