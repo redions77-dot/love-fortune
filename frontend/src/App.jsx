@@ -904,9 +904,9 @@ if (emailModal) {
                   onClick={onClick || (() => { setServiceType(type); setScreen('input') })}>
                   {badge && <span style={{ display: 'inline-block', background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 2, marginBottom: 12, border: '1px solid rgba(201,168,76,0.3)', letterSpacing: '0.1em' }}>{badge}</span>}
                   <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 12, marginTop: badge ? 0 : 22 }}>{char}</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6 }}>{label}</div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>{sub}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 12 }}>1,900원</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6 }}>{label}</div>
+<div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{sub}</div>
+<div style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginTop: 12 }}>1,900원</div>
                 </button>
               ))}
             </div>
@@ -948,18 +948,17 @@ if (emailModal) {
         <div style={{ borderTop: '1px solid rgba(201,168,76,0.2)', padding: '28px 20px 44px', background: '#050D1F' }}>
           <div style={{ maxWidth: 480, margin: '0 auto' }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginBottom: 10 }}>봄결</p>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', lineHeight: 2.2 }}>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 2.4 }}>
               <p>대표자 · 손영주</p><p>사업자등록번호 · 291-17-02825</p>
               <p>사업장 · 경기도 남양주시 별내3로 322, 701호 -V133호</p>
               <p>전화 · 010-9772-1987</p><p>이메일 · redions77@naver.com</p>
               <p>통신판매업신고 · 제2026-별내-1183호</p><p>과세유형 · 간이과세자</p>
             </div>
             <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
-              <button onClick={() => setScreen('terms')} style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>이용약관</button>
-              <button onClick={() => setScreen('privacy')} style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>개인정보처리방침</button>
-              <button onClick={() => setScreen('refund')} style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>환불정책</button>
-              <button onClick={() => window.open('https://open.kakao.com/me/mysajushop', '_blank')} style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>고객문의</button>
-            </div>
+              <button onClick={() => setScreen('terms')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>이용약관</button>
+<button onClick={() => setScreen('privacy')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>개인정보처리방침</button>
+<button onClick={() => setScreen('refund')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>환불정책</button>
+<button onClick={() => window.open('https://open.kakao.com/me/mysajushop', '_blank')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>고객문의</button>            </div>
             <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)', marginTop: 12 }}>© 2026 봄결. All rights reserved.</p>
           </div>
         </div>
