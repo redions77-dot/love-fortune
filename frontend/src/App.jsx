@@ -831,7 +831,7 @@ if (emailModal) {
               <span>⏰</span><span>오늘만 <span style={{ fontWeight: 800 }}>1,900원</span></span>
             </div>
           </div>
-          <div style={{ maxWidth: 480, margin: '0 auto', padding: '40px 24px 40px', textAlign: 'center' }}>
+          <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 24px 16px', textAlign: 'center' }}>
             <p style={{ fontSize: 18, lineHeight: 1.75, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', fontWeight: 700 }}>노력이 부족한 게 아니에요.<br/>방향이 틀린 거예요.</p>
             <div style={{ width: 30, height: 1, background: 'rgba(201,168,76,0.3)', margin: '20px auto' }}/>
             <p style={{ fontSize: 17, lineHeight: 1.75, color: '#C9A84C', wordBreak: 'keep-all', fontWeight: 700 }}>사주팔자는 내 북극성이<br/>어느 쪽에 있는지 알려주는 지도예요.</p>
