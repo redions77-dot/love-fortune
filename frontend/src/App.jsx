@@ -1351,10 +1351,8 @@ if (screen === 'result') {
   alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')
 })
   }}>
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-    <path d="M10 2C5.58 2 2 4.92 2 8.5c0 2.3 1.42 4.32 3.57 5.5L4.5 17l3.85-2.02A9.3 9.3 0 0010 15c4.42 0 8-2.92 8-6.5S14.42 2 10 2z" fill="#191919"/>
-  </svg>
-  🔗 링크 복사해서 공유하기
+  <span style={{ fontSize: 20 }}>💬</span>
+  친구에게 마이사주 알려주기 💛
 </button>
 <button style={{ width: '100%', padding: '18px', fontSize: 16, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
 
