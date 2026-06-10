@@ -175,6 +175,7 @@ export default function App() {
   const [isBaseStreaming, setIsBaseStreaming] = useState(false)
   const [isPaid, setIsPaid] = useState(false)
   const [isDeepPaid, setIsDeepPaid] = useState(false)
+  const [scoreData, setScoreData] = useState(null)
   const [emailModal, setEmailModal] = useState(null)
   const [preEmail, setPreEmail] = useState('')
   const [deepText, setDeepText] = useState('')
@@ -300,9 +301,24 @@ export default function App() {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: false, isLunar, userName: myName },
         onSaju: (d) => { setSajuData(d) },
-        onBaseText: (t) => { setBaseText(prev => prev + t) },
+        onBaseText: (t) => {
+  setBaseText(prev => {
+    const next = prev + t
+    // 점수 JSON 파싱 시도
+    const match = next.match(/===__운세점수__===[\s\S]*?(\{[\s\S]*?\})/);
+    if (match) {
+      try {
+        const parsed = JSON.parse(match[1]);
+        if (parsed.종합) setScoreData(parsed);
+      } catch {}
+    }
+    return next
+  })
+},
         onPaidText: () => {},
-        onDone: () => { clearLoadingTimers(); setIsBaseStreaming(false); setPhase('done') },
+        onDone: () => {
+          clearLoadingTimers(); setIsBaseStreaming(false); setPhase('done')
+        },
         onError: (e) => { alert(e); setPhase('input'); setIsBaseStreaming(false) },
       })
     } catch (e) {
@@ -1205,6 +1221,60 @@ if (screen === 'result') {
           </div>
         )
       })}
+    </div>
+  </div>
+)}
+        {/* 운세 점수 카드 */}
+{!loadingPhase && !isBaseStreaming && scoreData && (
+  <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+    <div style={{ textAlign: 'center', marginBottom: 20 }}>
+      <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>2026년 종합운</p>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
+        <span style={{ fontSize: 56, fontWeight: 800, color: '#C9A84C', lineHeight: 1 }}>{scoreData.종합}</span>
+        <span style={{ fontSize: 22, color: 'rgba(255,255,255,0.5)' }}>점</span>
+      </div>
+      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>
+        상위 {Math.max(5, 100 - scoreData.종합 + Math.floor(Math.random() * 8))}% 수준이에요
+      </p>
+    </div>
+
+    <div style={{ borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: 16 }}>
+      {isPaid ? (
+        // 유료: 영역별 점수 표시
+        [
+          { label: '재물운', score: scoreData.재물, color: '#7F77DD' },
+          { label: '애정운', score: scoreData.애정, color: '#D4537E' },
+          { label: '직업운', score: scoreData.직업, color: '#1D9E75' },
+          { label: '건강운', score: scoreData.건강, color: '#BA7517' },
+        ].map(({ label, score, color }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', width: 44, flexShrink: 0 }}>{label}</span>
+            <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${score}%`, background: color, borderRadius: 99, transition: 'width 1s ease' }} />
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#FFFFFF', width: 32, textAlign: 'right', flexShrink: 0 }}>{score}</span>
+          </div>
+        ))
+      ) : (
+        // 무료: 블러 처리
+        <>
+          {[
+            { label: '재물운', color: '#7F77DD' },
+            { label: '애정운', color: '#D4537E' },
+            { label: '직업운', color: '#1D9E75' },
+            { label: '건강운', color: '#BA7517' },
+          ].map(({ label, color }) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, filter: 'blur(4px)', pointerEvents: 'none', userSelect: 'none' }}>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', width: 44, flexShrink: 0 }}>{label}</span>
+              <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${50 + Math.floor(Math.random() * 40)}%`, background: color, borderRadius: 99 }} />
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#FFFFFF', width: 32, textAlign: 'right', flexShrink: 0 }}>??</span>
+            </div>
+          ))}
+          <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', textAlign: 'center', marginTop: 8, fontWeight: 600 }}>🔒 세부 점수는 전체 분석에서 확인하세요</p>
+        </>
+      )}
     </div>
   </div>
 )}
