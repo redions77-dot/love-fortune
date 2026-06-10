@@ -934,7 +934,7 @@ ${getAgeBasedPaidSection(year, maritalStatus)}
   try {
     if (!isPaid) {
       // 무료: haiku로 3섹션만
-      await streamToClient(res, basePrompt, MODEL_FREE, 2500);
+      await streamToClient(res, basePrompt, MODEL_FREE, 3500);
     } else {
       // 유료: 무료 재호출 없이 바로 paid_start → 유료 전용만 스트리밍
       // (무료 결과는 프론트에서 그대로 유지됨)
