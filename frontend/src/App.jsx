@@ -1291,7 +1291,7 @@ if (screen === 'result') {
         )}
 
         {/* 기본 분석 결과 아코디언 */}
-        {!loadingPhase && !isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기')).map((sec, i) => (
+        {!loadingPhase && !isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수')).map((sec, i) => (
           <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
         ))}
 
