@@ -1439,5 +1439,77 @@ if (screen === 'result') {
     </div>
   </div>
 )
+  if (screen === 'terms') return (
+    <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto' }}>
+        <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', marginBottom: 4 }}>이용약관</h1>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 32 }}>시행일: 2026년 6월 1일</p>
+        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2.2 }}>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제1조 (목적)</p>
+          <p style={{ marginBottom: 24 }}>이 약관은 봄결(이하 "회사")이 운영하는 마이사주(mysaju.shop) 서비스의 이용 조건 및 절차, 회사와 이용자 간의 권리·의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제2조 (서비스 내용)</p>
+          <p style={{ marginBottom: 24 }}>회사는 이용자가 입력한 생년월일, 성별 등 정보를 바탕으로 AI가 생성하는 사주 분석 콘텐츠를 제공합니다. 본 서비스는 오락·참고 목적의 콘텐츠이며, 의학·법률·재무 등 전문적 조언을 대체하지 않습니다.</p>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제3조 (이용 계약)</p>
+          <p style={{ marginBottom: 24 }}>이용자가 서비스를 이용하거나 결제를 진행하면 본 약관에 동의한 것으로 간주합니다.</p>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제4조 (결제 및 요금)</p>
+          <p style={{ marginBottom: 8 }}>① 서비스 요금은 결제 화면에 표시된 금액을 따릅니다.</p>
+          <p style={{ marginBottom: 24 }}>② 결제는 KG이니시스를 통한 신용카드 및 간편결제로 이루어집니다.</p>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제5조 (콘텐츠의 한계)</p>
+          <p style={{ marginBottom: 24 }}>AI가 생성하는 사주 분석 결과는 참고용이며, 결과의 정확성·완전성을 보장하지 않습니다. 이용자는 본 서비스 결과를 전적으로 신뢰하여 중요한 결정을 내리지 않도록 합니다.</p>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제6조 (환불)</p>
+          <p style={{ marginBottom: 24 }}>환불에 관한 사항은 별도의 환불정책을 따릅니다.</p>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제7조 (면책)</p>
+          <p style={{ marginBottom: 24 }}>회사는 이용자가 서비스 결과를 근거로 내린 판단이나 행동에 대해 책임을 지지 않습니다.</p>
+          <div style={{ borderTop: '1px solid rgba(201,168,76,0.15)', paddingTop: 24, marginTop: 8 }}>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 2 }}>
+              상호: 봄결 · 대표자: 손영주<br/>
+              사업자등록번호: 291-17-02825<br/>
+              통신판매업신고: 제2026-별내-1183호<br/>
+              이메일: redions77@naver.com
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  if (screen === 'privacy') return (
+    <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto' }}>
+        <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', marginBottom: 4 }}>개인정보처리방침</h1>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 32 }}>시행일: 2026년 6월 1일</p>
+        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2.2 }}>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제1조 (수집하는 개인정보)</p>
+          <p style={{ marginBottom: 8 }}>회사는 서비스 제공을 위해 다음 정보를 수집합니다.</p>
+          <p style={{ marginBottom: 8 }}>· 필수: 생년월일, 태어난 시간(선택), 성별</p>
+          <p style={{ marginBottom: 24 }}>· 선택: 이름, 이메일 주소, MBTI, 혈액형</p>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제2조 (수집 목적)</p>
+          <p style={{ marginBottom: 8 }}>· 사주 분석 콘텐츠 생성 및 제공</p>
+          <p style={{ marginBottom: 8 }}>· 이메일 입력 시: 분석 결과 발송</p>
+          <p style={{ marginBottom: 24 }}>· 결제 처리 (KG이니시스를 통해 처리되며, 카드 정보는 회사가 저장하지 않습니다)</p>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제3조 (보유 및 이용 기간)</p>
+          <p style={{ marginBottom: 24 }}>입력 정보는 분석 결과 생성 후 별도로 저장하지 않습니다. 이메일 주소는 결과 발송 후 즉시 파기합니다.</p>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제4조 (제3자 제공)</p>
+          <p style={{ marginBottom: 24 }}>회사는 이용자의 개인정보를 결제 처리(KG이니시스) 외 제3자에게 제공하지 않습니다.</p>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제5조 (이용자 권리)</p>
+          <p style={{ marginBottom: 24 }}>이용자는 개인정보 열람·삭제를 요청할 수 있습니다. 문의는 redions77@naver.com으로 연락해 주세요.</p>
+          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제6조 (개인정보보호책임자)</p>
+          <p style={{ marginBottom: 24 }}>· 성명: 손영주 · 이메일: redions77@naver.com</p>
+          <div style={{ borderTop: '1px solid rgba(201,168,76,0.15)', paddingTop: 24, marginTop: 8 }}>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 2 }}>
+              상호: 봄결 · 대표자: 손영주<br/>
+              사업자등록번호: 291-17-02825<br/>
+              통신판매업신고: 제2026-별내-1183호<br/>
+              이메일: redions77@naver.com
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  return null
   return null
 }
