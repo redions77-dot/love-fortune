@@ -1162,7 +1162,7 @@ if (screen === 'input') {
             </div>
             <button
               style={{ width: '100%', padding: '20px', fontSize: 16, fontWeight: 500, border: `2px solid rgba(201,168,76,0.15)`, borderRadius: 12, background: 'rgba(255,255,255,0.02)', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', marginTop: 4 }}
-              onClick={() => setMbti('')}>MBTI를 모릅니다</button>
+              onClick={() => { setMbti(''); goNext(); }}>MBTI를 모릅니다</button>
           </>
         )}
 
