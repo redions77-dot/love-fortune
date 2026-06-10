@@ -279,6 +279,7 @@ export default function App() {
         try {
           const json = JSON.parse(line.slice(6))
           if (json.type === 'saju') onSaju?.(json)
+          else if (json.type === 'score') onBaseText?.(json.text)
           else if (json.type === 'paid_start') isPaidSectionRef.current = true
           else if (json.type === 'done') onDone?.()
           else if (json.error) onError?.(json.error)
