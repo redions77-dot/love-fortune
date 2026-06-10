@@ -338,6 +338,10 @@ loadingTimersRef.current.countdown = setInterval(() => {
 
   async function handleDeepAnalyze() {
     setDeepText(''); setIsDeepStreaming(true)
+    setLoadingCountdown(0)
+    loadingTimersRef.current.countdown = setInterval(() => {
+      setLoadingCountdown(prev => prev + 1)
+    }, 1000)
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
       const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName }), signal: ctrl.signal })
@@ -352,7 +356,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
         }
       }
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
-    setIsDeepStreaming(false); setIsDeepPaid(true)
+    clearLoadingTimers(); setIsDeepStreaming(false); setIsDeepPaid(true)
   }
 
   async function autoSendEmail({ email, subject, sections, name }) {
@@ -481,9 +485,14 @@ loadingTimersRef.current.countdown = setInterval(() => {
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>사주 심화 분석</h1>
         </div>
         <div id="deep-result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
+         {isDeepStreaming && (
+            <div style={{ textAlign: 'center', padding: '16px', marginBottom: 16, fontSize: 15, color: 'rgba(201,168,76,0.7)', fontWeight: 700 }}>
+              ✦ 심화 분석 중 · {loadingCountdown}초 경과 ✦
+            </div>
+          )}
+
           {isDeepStreaming && !deepText && (
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
                 <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>🔮 심화 분석 중이에요...</span>
               </div>
@@ -1280,6 +1289,13 @@ if (screen === 'result') {
               onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) handlePaidAnalyze(email); else alert('결제가 취소되었습니다.') }) }) }}>
               지금 전체 분석 받기 →
             </button>
+          </div>
+        )}
+
+        {/* 유료 분석 타이머 */}
+        {isPaidStreaming && (
+          <div style={{ textAlign: 'center', padding: '16px', marginBottom: 16, fontSize: 15, color: 'rgba(201,168,76,0.7)', fontWeight: 700 }}>
+            ✦ 전체 분석 중 · {loadingCountdown}초 경과 ✦
           </div>
         )}
 
