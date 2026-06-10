@@ -305,13 +305,16 @@ export default function App() {
   setBaseText(prev => {
     const next = prev + t
     // 점수 JSON 파싱 시도
-    const match = next.match(/===__운세점수__===[\s\S]*?(\{[\s\S]*?\})/);
-    if (match) {
-      try {
-        const parsed = JSON.parse(match[1]);
-        if (parsed.종합) setScoreData(parsed);
-      } catch {}
+    const scoreMatch = next.match(/===__운세점수__===([\s\S]*?)(?:===|$)/);
+if (scoreMatch) {
+  try {
+    const jsonStr = scoreMatch[1].match(/\{[\s\S]*?\}/)?.[0];
+    if (jsonStr) {
+      const parsed = JSON.parse(jsonStr);
+      if (parsed.종합) setScoreData(parsed);
     }
+  } catch {}
+}
     return next
   })
 },
