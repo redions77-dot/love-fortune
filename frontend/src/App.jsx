@@ -1390,51 +1390,54 @@ if (screen === 'result') {
 }
 
   // ── 약관/정책 화면들 ──
-  if (screen === 'terms') return (
-    <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
-      <div style={{ maxWidth: 480, margin: '0 auto' }}>
-        <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', marginBottom: 24 }}>이용약관</h1>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 2.2 }}>
-          <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>제1조 (목적)</p><p style={{ marginBottom: 20 }}>본 약관은 봄결(이하 "회사")이 운영하는 mysaju.shop의 이용과 관련하여 회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>제2조 (서비스 내용)</p><p style={{ marginBottom: 20 }}>회사는 사주 분석, 궁합, 길일 추천 등 사주명리학 기반의 디지털 콘텐츠 서비스를 제공합니다. 본 서비스는 참고용 정보 제공을 목적으로 하며, 전문적인 상담을 대체하지 않습니다.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>제3조 (면책)</p><p style={{ marginBottom: 20 }}>본 서비스는 사주명리학을 기반으로 한 참고용 콘텐츠이며, 회사는 분석 결과의 정확성에 대해 법적 책임을 지지 않습니다.</p>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 32 }}>시행일: 2026년 5월 26일 | 상호: 봄결 | 대표: 손영주</p>
-        </div>
-      </div>
-    </div>
-  )
-  if (screen === 'privacy') return (
-    <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
-      <div style={{ maxWidth: 480, margin: '0 auto' }}>
-        <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', marginBottom: 24 }}>개인정보처리방침</h1>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 2.2 }}>
-          <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>1. 수집 항목</p><p style={{ marginBottom: 20 }}>이름(선택), 생년월일, 성별, 결제 정보(PG사를 통해 처리, 카드번호 저장 안 함)</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>2. 이용 목적</p><p style={{ marginBottom: 20 }}>사주 분석 서비스 제공, 결제 처리, 서비스 품질 향상</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>3. 보유 기간</p><p style={{ marginBottom: 20 }}>서비스 이용 종료 또는 이용자 요청 시 지체 없이 파기</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>4. 개인정보 보호책임자</p><p style={{ marginBottom: 20 }}>성명: 손영주 | 이메일: redions77@naver.com | 전화: 010-9772-1987</p>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 32 }}>시행일: 2026년 5월 26일 | 상호: 봄결</p>
-        </div>
-      </div>
-    </div>
-  )
   if (screen === 'refund') return (
-    <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
-      <div style={{ maxWidth: 480, margin: '0 auto' }}>
-        <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', marginBottom: 24 }}>환불정책</h1>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 2.2 }}>
-          <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>디지털 콘텐츠 환불 정책</p><p style={{ marginBottom: 20 }}>본 서비스는 결제 즉시 제공되는 디지털 콘텐츠로, 콘텐츠 제공 후 원칙적으로 환불이 제한됩니다.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>환불 가능한 경우</p>
-          <p style={{ marginBottom: 4 }}>• 결제 후 콘텐츠가 정상적으로 제공되지 않은 경우</p>
-          <p style={{ marginBottom: 20 }}>• 결제 당일 확인 전 취소 요청한 경우</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>환불 신청</p><p style={{ marginBottom: 20 }}>이메일(redions77@naver.com) 또는 전화(010-9772-1987)로 문의해 주세요.</p>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 32 }}>시행일: 2026년 5월 26일 | 상호: 봄결 | 대표: 손영주</p>
+  <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
+    <div style={{ maxWidth: 480, margin: '0 auto' }}>
+      <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', marginBottom: 4 }}>환불정책</h1>
+      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 32 }}>시행일: 2026년 6월 1일</p>
+
+      <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 28 }}>
+        <p style={{ fontSize: 14, color: '#C9A84C', fontWeight: 700, marginBottom: 6 }}>⚠️ 구매 전 꼭 확인해주세요</p>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.8 }}>본 서비스는 결제 즉시 생성되는 1회성 디지털 콘텐츠로, 결제 완료 후에는 원칙적으로 환불이 불가합니다. 결제 전 서비스 내용을 충분히 확인해 주세요.</p>
+      </div>
+
+      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2.2 }}>
+        <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제1조 (디지털 콘텐츠의 특성)</p>
+        <p style={{ marginBottom: 24 }}>마이사주(mysaju.shop) 서비스는 이용자가 입력한 정보를 바탕으로 AI가 즉시 생성하는 1회성 맞춤형 디지털 콘텐츠입니다. 결제가 완료되는 즉시 콘텐츠 생성이 시작되며, 이용자 요청에 따라 개인화된 풀이가 제공됩니다.</p>
+
+        <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제2조 (환불 불가 원칙)</p>
+        <p style={{ marginBottom: 8 }}>① 결제 완료 후 콘텐츠 생성이 시작된 경우, 「전자상거래 등에서의 소비자보호에 관한 법률」 제17조 제2항 제5호에 따라 디지털 콘텐츠의 특성상 청약 철회 및 환불이 불가합니다.</p>
+        <p style={{ marginBottom: 24 }}>② 이용자는 결제 전 서비스 소개 페이지에서 제공 내용을 충분히 확인하시기 바랍니다.</p>
+
+        <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제3조 (예외적 환불 사유)</p>
+        <p style={{ marginBottom: 8 }}>다음의 경우에 한해 환불 신청을 검토합니다.</p>
+        <p style={{ marginBottom: 8 }}>① 결제는 완료되었으나 서비스 시스템 오류로 인해 콘텐츠가 전혀 생성·제공되지 않은 경우</p>
+        <p style={{ marginBottom: 8 }}>② 동일한 정보로 중복 결제가 발생한 경우 (중복분에 한해 환불)</p>
+        <p style={{ marginBottom: 24 }}>③ 기타 회사의 귀책사유로 서비스 이용이 불가한 경우</p>
+
+        <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제4조 (환불 신청 방법)</p>
+        <p style={{ marginBottom: 8 }}>환불 신청은 결제일로부터 7일 이내에 아래 방법으로 요청하시기 바랍니다.</p>
+        <p style={{ marginBottom: 8 }}>· 카카오톡 오픈채팅: <span style={{ color: '#C9A84C' }}>open.kakao.com/me/mysajushop</span></p>
+        <p style={{ marginBottom: 8 }}>· 이메일: <span style={{ color: '#C9A84C' }}>redions77@naver.com</span></p>
+        <p style={{ marginBottom: 24 }}>· 요청 시 포함 사항: 결제일시, 결제금액, 환불 사유 및 증빙자료</p>
+
+        <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제5조 (환불 처리 기간)</p>
+        <p style={{ marginBottom: 8 }}>· 신용카드: 카드사 정책에 따라 영업일 기준 3~7일</p>
+        <p style={{ marginBottom: 24 }}>· 간편결제(카카오페이 등): 영업일 기준 1~3일</p>
+
+        <div style={{ borderTop: '1px solid rgba(201,168,76,0.15)', paddingTop: 24, marginTop: 8 }}>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 2 }}>
+            상호: 봄결 · 대표자: 손영주<br/>
+            사업자등록번호: 291-17-02825<br/>
+            통신판매업신고: 제2026-별내-1183호<br/>
+            사업장: 경기도 남양주시 별내3로 322, 701호 -V133호<br/>
+            전화: 010-9772-1987 · 이메일: redions77@naver.com
+          </p>
         </div>
       </div>
     </div>
-  )
-
+  </div>
+)
   return null
 }
