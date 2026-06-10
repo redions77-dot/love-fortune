@@ -260,10 +260,25 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
         await new Promise(r => setTimeout(r, delay));
         continue;
       }
-      throw e;
+     throw e;
     }
   }
 }
+
+async function getScoreOnly(sajuInfo) {
+  const scorePrompt = `다음 사주를 보고 2026년 운세 점수를 JSON으로만 출력하세요.
+${sajuInfo}
+아래 형식만 출력. 설명 없이 JSON만:
+{"종합":숫자,"재물":숫자,"애정":숫자,"직업":숫자,"건강":숫자}
+점수는 1~100 정수. 모두 다른 숫자로.`;
+  const msg = await anthropic.messages.create({
+    model: MODEL_FREE,
+    max_tokens: 100,
+    messages: [{ role: 'user', content: scorePrompt }],
+  });
+  return msg.content[0]?.text || '';
+}
+
 // 사주 계산 공통 함수
 function calcSaju(birthdate, birthtime, isLunar) {
   const rawDate = new Date(birthdate);
@@ -941,7 +956,15 @@ ${getAgeBasedPaidSection(year, maritalStatus)}
       res.write(`data: ${JSON.stringify({ type: 'paid_start' })}\n\n`);
       await streamToClient(res, paidOnlyPrompt, MODEL_PAID, 7000);
     }
-    res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+    // 점수 별도 요청
+if (!isPaid) {
+  try {
+    const scoreText = await getScoreOnly(infoBlock);
+    const scoreJson = scoreText.match(/\{[\s\S]*?\}/)?.[0];
+    if (scoreJson) res.write(`data: ${JSON.stringify({ type: 'score', text: `===__운세점수__===\n${scoreJson}` })}\n\n`);
+  } catch {}
+}
+res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
   } catch (e) {
     console.error(e);
     res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
