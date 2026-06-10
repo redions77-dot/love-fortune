@@ -305,7 +305,7 @@ export default function App() {
         onBaseText: (t) => {
   setBaseText(prev => {
     const next = prev + t
-    console.log('현재텍스트길이:', next.length, '운세점수포함?', next.includes('__운세점수__'))
+    
     // 점수 JSON 파싱 시도
     const scoreMatch = next.match(/===__운세점수__===([\s\S]*?)(?:===|$)/);
 if (scoreMatch) {
