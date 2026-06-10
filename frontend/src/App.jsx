@@ -868,7 +868,7 @@ if (emailModal) {
     <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.7)', textAlign: 'center', marginBottom: 6, fontWeight: 600, letterSpacing: '0.12em' }}>YOUR ENERGY</p>
     <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.9)', textAlign: 'center', marginBottom: 8, fontWeight: 800 }}>나는 어떤 기운일까? — 일간(日干)</p>
     <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginBottom: 24 }}>내 일간을 찾아 잘 맞는 환경을 확인해보세요 👆</p>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
       {[
         { key: '갑목', ohaeng: '木', color: '#4ADE80', title: '甲 갑목', sub: '하늘을 향해 곧게 자라는 나무', good: '목표가 뚜렷한 곳, 내가 왜 하는지 보이는 일', bad: '이유 없이 "그냥 해"가 반복되는 환경' },
         { key: '을목', ohaeng: '木', color: '#4ADE80', title: '乙 을목', sub: '어디서든 뿌리내리는 생명력', good: '세심하게 인정받는 분위기, 디테일이 빛나는 자리', bad: '감정 무시하는 곳, 거칠고 무뚝뚝한 환경' },
