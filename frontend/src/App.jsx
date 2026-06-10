@@ -1222,7 +1222,10 @@ if (screen === 'result') {
         return (
           <div key={label} style={{ textAlign: 'center', background: `${색}15`, borderRadius: 12, padding: '18px 4px', border: `2px solid ${색}50` }}>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 10, display: 'block' }}>{label}</span>
-            <span style={{ fontSize: 13, fontWeight: 900, color: 색, lineHeight: 1.4, whiteSpace: 'nowrap', overflow: 'hidden', display: 'block', textOverflow: 'ellipsis' }}>{value || '-'}</span>
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+  <span style={{ fontSize: 22, fontWeight: 900, color: 색, lineHeight: 1.2 }}>{value?.slice(0,1) || '-'}</span>
+  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{value?.slice(1) || ''}</span>
+</span>
           </div>
         )
       })}
