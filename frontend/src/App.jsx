@@ -882,29 +882,29 @@ if (emailModal) {
         { key: '계수', ohaeng: '水', color: '#60A5FA', title: '癸 계수', sub: '깊은 곳에서 솟아오르는 지하수', good: '혼자 생각할 시간이 있는 환경, 깊이가 인정받는 자리', bad: '시끄럽고 감정 소모 심한 곳, 내면을 무시하는 환경' },
       ].map((c) => (
         <div key={c.key}
-          style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(201,168,76,0.15)`, borderRadius: 14, padding: '18px 14px', transition: 'all 0.2s' }}>
-          {/* 오행 아이콘 + 제목 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: `${c.color}18`, border: `1px solid ${c.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, color: c.color, fontFamily: 'Georgia, serif' }}>{c.ohaeng}</div>
-            <span style={{ fontSize: 15, fontWeight: 800, color: 'rgba(255,255,255,0.9)' }}>{c.title}</span>
+          style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid rgba(201,168,76,0.15)`, borderRadius: 14, padding: '20px 16px', transition: 'all 0.2s' }}>
+          {/* 오행 아이콘 + 제목 한 줄 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, background: `${c.color}18`, border: `1px solid ${c.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: c.color, fontFamily: 'Georgia, serif' }}>{c.ohaeng}</div>
+            <span style={{ fontSize: 17, fontWeight: 800, color: 'rgba(255,255,255,0.95)', whiteSpace: 'nowrap' }}>{c.title}</span>
           </div>
           {/* 한줄 설명 */}
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, margin: '0 0 12px' }}>{c.sub}</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, margin: '0 0 14px' }}>{c.sub}</p>
           {/* 구분선 */}
-          <div style={{ height: 1, background: 'rgba(201,168,76,0.15)', marginBottom: 12 }} />
+          <div style={{ height: 1, background: 'rgba(201,168,76,0.15)', marginBottom: 14 }} />
           {/* 좋은 환경 */}
-          <div style={{ marginBottom: 8 }}>
-            <p style={{ fontSize: 11, color: 'rgba(74,222,128,0.7)', fontWeight: 700, marginBottom: 4 }}>✅ 잘 맞는 환경</p>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>{c.good}</p>
+          <div style={{ marginBottom: 10 }}>
+            <p style={{ fontSize: 13, color: 'rgba(74,222,128,0.8)', fontWeight: 700, marginBottom: 6 }}>✅ 잘 맞는 환경</p>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.8 }}>{c.good}</p>
           </div>
           {/* 나쁜 환경 */}
-          <div style={{ marginBottom: 10 }}>
-            <p style={{ fontSize: 11, color: 'rgba(248,113,113,0.7)', fontWeight: 700, marginBottom: 4 }}>❌ 안 맞는 환경</p>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>{c.bad}</p>
+          <div style={{ marginBottom: 12 }}>
+            <p style={{ fontSize: 13, color: 'rgba(248,113,113,0.8)', fontWeight: 700, marginBottom: 6 }}>❌ 안 맞는 환경</p>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.8 }}>{c.bad}</p>
           </div>
           {/* 잠금 안내 */}
-          <div style={{ background: 'rgba(201,168,76,0.08)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-            <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, margin: 0 }}>🔒 내 일간 확인 → 사주 분석</p>
+          <div style={{ background: 'rgba(201,168,76,0.08)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
+            <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.7)', fontWeight: 600, margin: 0 }}>🔒 내 일간 확인 → 사주 분석</p>
           </div>
         </div>
       ))}
@@ -1225,7 +1225,7 @@ if (screen === 'result') {
   </div>
 )}
         {/* 운세 점수 카드 */}
-{!loadingPhase && !isBaseStreaming && scoreData && (
+{!loadingPhase && scoreData && (
   <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
     <div style={{ textAlign: 'center', marginBottom: 20 }}>
       <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>2026년 종합운</p>
