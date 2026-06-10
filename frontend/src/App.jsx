@@ -944,15 +944,9 @@ if (emailModal) {
         </div>
 
         {/* 푸터 */}
-        <div style={{ borderTop: '1px solid rgba(201,168,76,0.2)', padding: '28px 20px 44px', background: '#050D1F' }}>
-          <div style={{ maxWidth: 480, margin: '0 auto' }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginBottom: 10 }}>봄결</p>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 2.4 }}>
-              <p>대표자 · 손영주</p><p>사업자등록번호 · 291-17-02825</p>
-              <p>사업장 · 경기도 남양주시 별내3로 322, 701호 -V133호</p>
-              <p>전화 · 010-9772-1987</p><p>이메일 · redions77@naver.com</p>
-              <p>통신판매업신고 · 제2026-별내-1183호</p><p>과세유형 · 간이과세자</p>
-            </div>
+<div style={{ borderTop: '1px solid rgba(201,168,76,0.2)', padding: '28px 20px 44px', background: '#050D1F' }}>
+  <div style={{ maxWidth: 480, margin: '0 auto' }}>
+    <p style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginBottom: 10 }}>봄결</p>
             <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
               <button onClick={() => setScreen('terms')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>이용약관</button>
 <button onClick={() => setScreen('privacy')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>개인정보처리방침</button>
