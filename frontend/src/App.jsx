@@ -886,21 +886,21 @@ if (emailModal) {
           {/* 오행 아이콘 + 제목 한 줄 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, background: `${c.color}18`, border: `1px solid ${c.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: c.color, fontFamily: 'Georgia, serif' }}>{c.ohaeng}</div>
-            <span style={{ fontSize: 17, fontWeight: 800, color: 'rgba(255,255,255,0.95)', whiteSpace: 'nowrap' }}>{c.title}</span>
+            <span style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.95)', whiteSpace: 'nowrap' }}>{c.title}</span>
           </div>
           {/* 한줄 설명 */}
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, margin: '0 0 14px' }}>{c.sub}</p>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: '0 0 14px' }}>{c.sub}</p>
           {/* 구분선 */}
           <div style={{ height: 1, background: 'rgba(201,168,76,0.15)', marginBottom: 14 }} />
           {/* 좋은 환경 */}
           <div style={{ marginBottom: 10 }}>
             <p style={{ fontSize: 13, color: 'rgba(74,222,128,0.8)', fontWeight: 700, marginBottom: 6 }}>✅ 잘 맞는 환경</p>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.8 }}>{c.good}</p>
+            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', lineHeight: 1.9 }}>{c.good}</p>
           </div>
           {/* 나쁜 환경 */}
           <div style={{ marginBottom: 12 }}>
             <p style={{ fontSize: 13, color: 'rgba(248,113,113,0.8)', fontWeight: 700, marginBottom: 6 }}>❌ 안 맞는 환경</p>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.8 }}>{c.bad}</p>
+            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', lineHeight: 1.9 }}>{c.bad}</p>
           </div>
           {/* 잠금 안내 */}
           <div style={{ background: 'rgba(201,168,76,0.08)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
