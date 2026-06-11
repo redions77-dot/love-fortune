@@ -1225,7 +1225,7 @@ if (screen === 'result') {
             <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
  <span style={{ fontSize: 22, fontWeight: 900, color: 색, lineHeight: 1.2 }}>{value?.slice(0,1) || '-'}</span>
 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
-<span style={{ fontSize: 13, fontWeight: 700, color: 색, opacity: 0.7, marginTop: 2 }}>{value?.slice(2,3) || ''}</span>
+<span style={{ fontSize: 16, fontWeight: 700, color: 색, opacity: 0.7, marginTop: 2 }}>{value?.slice(2,3) || ''}</span>
 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
 </span>
           </div>
