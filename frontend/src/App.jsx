@@ -1556,9 +1556,8 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
               </div>
             )}
 
-            <button
-  style={{ width: '100%', padding: '18px', fontSize: 16, fontWeight: 700, background: '#FEE500', color: '#191919', border: 'none', borderRadius: 12, cursor: 'pointer', marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-  onClick={() => {
+           <button
+  style={{ width: '100%', padding: '18px', fontSize: 16, fontWeight: 700, background: 'transparent', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, cursor: 'pointer', marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}  onClick={() => {
     navigator.clipboard?.writeText('https://mysaju.shop').then(() => alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')).catch(() => {
   const el = document.createElement('textarea')
   el.value = 'https://mysaju.shop'
