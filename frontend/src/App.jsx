@@ -1299,7 +1299,8 @@ if (screen === 'result') {
 
 {/* 일주 타입 카드 */}
 {!loadingPhase && sajuData?.사주?.일주 && (() => {
-  const 일주키 = sajuData.사주.일주.slice(0, 2)
+  const 일주원문 = sajuData.사주.일주  // 예: "辛신亥해"
+const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   const 타입 = 일주타입명[일주키]
   if (!타입) return null
   const 오행색 = { '甲': '#4ADE80', '乙': '#4ADE80', '丙': '#F87171', '丁': '#F87171', '戊': '#C9A84C', '己': '#C9A84C', '庚': '#E8C96A', '辛': '#E8C96A', '壬': '#60A5FA', '癸': '#60A5FA' }
