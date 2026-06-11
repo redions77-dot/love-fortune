@@ -1294,7 +1294,7 @@ if (screen === 'result') {
         )
       })}
     </div>
-  </div></div>
+  </div>
 )}
 
 {/* 일주 타입 카드 */}
