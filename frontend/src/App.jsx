@@ -1507,12 +1507,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
                   <span style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 600 }}>{color}</span>
                 </div>
                 {['마스코트','행운 방향','행운 숫자'].map(label => (
-                  <div key={label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '14px', border: '1px solid rgba(201,168,76,0.15)', position: 'relative' }}>
-                    <span style={{ fontSize: 12, color: '#C9A84C', fontWeight: 600, marginBottom: 6, display: 'block' }}>{label}</span>
-                    <div style={{ height: 18, background: 'rgba(201,168,76,0.1)', borderRadius: 4 }} />
-                    <span style={{ position: 'absolute', bottom: 10, right: 10, fontSize: 14 }}>🔒</span>
-                  </div>
-                ))}
+  <div key={label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '14px', border: '1px solid rgba(201,168,76,0.15)', position: 'relative', overflow: 'hidden' }}>
+    <span style={{ fontSize: 12, color: '#C9A84C', fontWeight: 600, marginBottom: 6, display: 'block' }}>{label}</span>
+    <div style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 600, filter: 'blur(6px)', userSelect: 'none' }}>▓▓▓▓</div>
+  </div>
+))}
               </div>
               <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.6)', textAlign: 'center', marginTop: 14, fontWeight: 600 }}>🔒 마스코트·방향·숫자는 전체 분석에서 확인하세요</p>
             </div>
