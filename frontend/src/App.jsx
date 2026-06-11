@@ -1499,96 +1499,103 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           </div>
         )}
 
-        {!loadingPhase && (
-          <>
-            {/* PDF 안내 */}
-            <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 12, padding: '16px 18px', marginTop: 14 }}>
-              <p style={{ fontSize: 14, color: '#C9A84C', fontWeight: 700, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
+{!loadingPhase && (
+  <>
+    {/* 심화분석 업셀 */}
+    {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
+      <div style={{ marginTop: 28, marginBottom: 10 }}>
+        <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.7)', textAlign: 'center', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 18 }}>더 깊이 알고 싶다면?</p>
+        <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '22px', marginBottom: 12 }}>
+          <p style={{ fontSize: 16, fontWeight: 700, color: '#C9A84C', marginBottom: 10 }}>🔮 사주 심화 분석</p>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.9, marginBottom: 16 }}>기본 분석엔 없어요. 2026 하반기, 내가 올라타야 할 달 vs 조심해야 할 달. 귀인이 오는 시기까지.</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 26, fontWeight: 900, color: '#C9A84C' }}>9,900원</span>
+            <button style={{ padding: '14px 24px', fontSize: 15, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
+              onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) { setScreen('deep_result'); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>확인하기 →</button>
+          </div>
+        </div>
+        <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 14, padding: '20px', marginBottom: 10, opacity: 0.7 }}>
+          <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>🌟 인생 전략 풀패키지 — 29,900원</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>심화 분석 + 6개월 길일 + 직업/투자 타이밍 + 고급 PDF</p>
+          <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
+        </div>
+        <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, opacity: 0.5 }}>
+          <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>💎 AI 사주 상담 — 49,900원</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>풀패키지 + 내 고민 3가지 사주 맞춤 답변</p>
+          <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
+        </div>
+      </div>
+    )}
+
+    {/* 하단 액션 영역 */}
+    <div style={{ borderTop: '1px solid rgba(201,168,76,0.1)', marginTop: 32, paddingTop: 24 }}>
+
+      {/* 이메일 — 접이식 */}
+      {isPaid && (
+        preEmail ? (
+          <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '18px', textAlign: 'center', marginBottom: 20 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 4 }}>✅ 이메일 발송 완료</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{preEmail}로 결과를 보내드렸어요.</p>
+          </div>
+        ) : (
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginBottom: 10 }}>📧 결과를 이메일로 받아두면 언제든 다시 볼 수 있어요</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input id="result-email-input" type="email" placeholder="이메일 주소 입력"
+                style={{ flex: 1, padding: '12px 14px', fontSize: 14, border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, background: '#FFFFFF', color: '#1B1B1B', outline: 'none' }} />
+              <button style={{ padding: '12px 18px', fontSize: 14, fontWeight: 600, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                onClick={async () => {
+                  const email = document.getElementById('result-email-input').value
+                  if (!email || !email.includes('@')) { alert('이메일 주소를 확인해주세요.'); return }
+                  const btn = document.querySelector('#result-email-input + button'); btn.textContent = '발송 중...'; btn.disabled = true
+                  const allSections = [...parseSections(baseText), ...parseSections(paidText)]
+                  const htmlContent = `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#0D1B3E;color:#FFFFFF;"><h1 style="color:#C9A84C;text-align:center;">${serviceType === 'child' ? '🌱 자녀 학운 분석' : serviceType === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'}</h1><p style="text-align:center;color:rgba(255,255,255,0.6);">${myName || ''}님의 분석 결과</p><hr style="border-color:rgba(201,168,76,0.3);margin:20px 0;">${allSections.map(s => `<h2 style="color:#C9A84C;">${s.title}</h2><p style="color:rgba(255,255,255,0.8);line-height:1.8;white-space:pre-wrap;">${s.content}</p>`).join('')}<hr style="border-color:rgba(201,168,76,0.3);margin:20px 0;"><p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p></div>`
+                  try {
+                    const res = await fetch(`${API_URL}/api/send-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: email, subject: `✨ ${myName || ''}님의 사주 분석 결과`, html: htmlContent }) })
+                    if (!res.ok) throw new Error('실패')
+                    document.getElementById('result-email-input').dataset.sent = 'true'
+                    alert('이메일을 발송했어요! 😊')
+                  } catch { alert('발송 오류가 발생했습니다.') }
+                  finally { btn.textContent = '발송'; btn.disabled = false }
+                }}>발송</button>
             </div>
-            <button style={{ width: '100%', padding: '18px', fontSize: 16, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, cursor: 'pointer', color: '#C9A84C', marginTop: 12 }}
-              onClick={async () => { try { await generatePDF('result-content', '마이사주_분석결과_' + (myName || '결과')) } catch(e) { alert('PDF 오류: ' + e.message) } }}>
-              📄 결과 저장하기 (PDF)
-            </button>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: 8 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>
+          </div>
+        )
+      )}
 
-            {/* 심화분석 업셀 */}
-            {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
-              <div style={{ marginTop: 28, marginBottom: 10 }}>
-                <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.7)', textAlign: 'center', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 18 }}>더 깊이 알고 싶다면?</p>
-                <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '22px', marginBottom: 12 }}>
-                  <p style={{ fontSize: 16, fontWeight: 700, color: '#C9A84C', marginBottom: 10 }}>🔮 사주 심화 분석</p>
-                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.9, marginBottom: 16 }}>기본 분석엔 없어요. 2026 하반기, 내가 올라타야 할 달 vs 조심해야 할 달. 귀인이 오는 시기까지.</p>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 26, fontWeight: 900, color: '#C9A84C' }}>9,900원</span>
-                    <button style={{ padding: '14px 24px', fontSize: 15, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
-                      onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) { setScreen('deep_result'); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>확인하기 →</button>
-                  </div>
-                </div>
-                <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 14, padding: '20px', marginBottom: 10, opacity: 0.7 }}>
-                  <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>🌟 인생 전략 풀패키지 — 29,900원</p>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>심화 분석 + 6개월 길일 + 직업/투자 타이밍 + 고급 PDF</p>
-                  <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
-                </div>
-                <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, opacity: 0.5 }}>
-                  <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>💎 AI 사주 상담 — 49,900원</p>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>풀패키지 + 내 고민 3가지 사주 맞춤 답변</p>
-                  <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
-                </div>
-              </div>
-            )}
+      {/* PDF + 처음으로 — 나란히 */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+        <button
+          style={{ flex: 1, padding: '14px', fontSize: 14, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C' }}
+          onClick={async () => { try { await generatePDF('result-content', '마이사주_분석결과_' + (myName || '결과')) } catch(e) { alert('PDF 오류: ' + e.message) } }}>
+          📄 PDF 저장
+        </button>
+        <button
+          style={{ flex: 1, padding: '14px', fontSize: 14, background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}
+          onClick={handleRestart}>
+          ← 처음으로
+        </button>
+      </div>
 
-           <button
-  style={{ width: '100%', padding: '18px', fontSize: 16, fontWeight: 700, background: 'transparent', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, cursor: 'pointer', marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}  onClick={() => {
-    navigator.clipboard?.writeText('https://mysaju.shop').then(() => alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')).catch(() => {
-  const el = document.createElement('textarea')
-  el.value = 'https://mysaju.shop'
-  document.body.appendChild(el)
-  el.select()
-  document.execCommand('copy')
-  document.body.removeChild(el)
-  alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')
-})
-  }}>
-  <span style={{ fontSize: 20 }}>💬</span>
-  친구에게 마이사주 알려주기 💛
-</button>
-<button style={{ width: '100%', padding: '18px', fontSize: 16, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
+      {/* 친구 공유 — 텍스트 링크 */}
+      <p style={{ textAlign: 'center', marginBottom: 8 }}>
+        <button
+          style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+          onClick={() => {
+            navigator.clipboard?.writeText('https://mysaju.shop').then(() => alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')).catch(() => {
+              const el = document.createElement('textarea'); el.value = 'https://mysaju.shop'
+              document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el)
+              alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')
+            })
+          }}>
+          친구에게 마이사주 알려주기
+        </button>
+      </p>
 
-            {/* 이메일 */}
-            {isPaid && preEmail ? (
-              <div style={{ marginTop: 24, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 14, padding: '24px', textAlign: 'center' }}>
-                <p style={{ fontSize: 24, marginBottom: 8 }}>✅</p>
-                <p style={{ fontSize: 17, fontWeight: 700, color: '#C9A84C', marginBottom: 6 }}>이메일 발송 완료!</p>
-                <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>{preEmail}<br/>로 결과를 보내드렸어요.</p>
-              </div>
-            ) : (
-              <div style={{ marginTop: 24, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 14, padding: '22px' }}>
-                <p style={{ fontSize: 17, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>📧 이메일로 결과 받기</p>
-                <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', marginBottom: 16, lineHeight: 1.7 }}>결과를 이메일로 받아두면 언제든 다시 볼 수 있어요.</p>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <input id="result-email-input" type="email" placeholder="이메일 주소 입력"
-                    style={{ flex: 1, padding: '14px 16px', fontSize: 15, border: '1px solid rgba(180,160,110,0.4)', borderRadius: 10, background: '#FFFFFF', color: '#1B1B1B', outline: 'none' }} />
-                  <button style={{ padding: '14px 20px', fontSize: 15, fontWeight: 600, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                    onClick={async () => {
-                      const email = document.getElementById('result-email-input').value
-                      if (!email || !email.includes('@')) { alert('이메일 주소를 확인해주세요.'); return }
-                      const btn = document.querySelector('#result-email-input + button'); btn.textContent = '발송 중...'; btn.disabled = true
-                      const allSections = [...parseSections(baseText), ...parseSections(paidText)]
-                      const htmlContent = `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#0D1B3E;color:#FFFFFF;"><h1 style="color:#C9A84C;text-align:center;">${serviceType === 'child' ? '🌱 자녀 학운 분석' : serviceType === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'}</h1><p style="text-align:center;color:rgba(255,255,255,0.6);">${myName || ''}님의 분석 결과</p><hr style="border-color:rgba(201,168,76,0.3);margin:20px 0;">${allSections.map(s => `<h2 style="color:#C9A84C;">${s.title}</h2><p style="color:rgba(255,255,255,0.8);line-height:1.8;white-space:pre-wrap;">${s.content}</p>`).join('')}<hr style="border-color:rgba(201,168,76,0.3);margin:20px 0;"><p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p></div>`
-                      try {
-                        const res = await fetch(`${API_URL}/api/send-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: email, subject: `✨ ${myName || ''}님의 사주 분석 결과`, html: htmlContent }) })
-                        if (!res.ok) throw new Error('실패')
-                        document.getElementById('result-email-input').dataset.sent = 'true'
-                        alert('이메일을 발송했어요! 😊')
-                      } catch { alert('발송 오류가 발생했습니다.') }
-                      finally { btn.textContent = '발송'; btn.disabled = false }
-                    }}>발송</button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
+      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>
+    </div>
+  </>
+)}
       </div>
       {phase === 'done' && !isPaid && !isPaidStreaming && (
         <div style={{
