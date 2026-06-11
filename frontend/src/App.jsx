@@ -1513,7 +1513,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   </div>
 ))}
               </div>
-              <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.6)', textAlign: 'center', marginTop: 14, fontWeight: 600 }}>🔒 마스코트·방향·숫자는 전체 분석에서 확인하세요</p>
             </div>
           )
         })()}
