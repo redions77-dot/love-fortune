@@ -1376,7 +1376,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     </div>
 
     <div style={{ borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: 16 }}>
-     {(isPaid || paidSections.length > 0) ? (
+    {(isPaid || paidText.length > 0) ? (
         // 유료: 영역별 점수 표시
         [
           { label: '재물운', score: scoreData.재물, color: '#7F77DD' },
