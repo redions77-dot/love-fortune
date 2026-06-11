@@ -292,28 +292,7 @@ async function getScoreOnly(sajuInfo) {
   const keys = ['재물','애정','직업','건강']
   keys.forEach((k, i) => { if (scores[k] === scores.종합) scores[k] += (i % 2 === 0 ? 3 : -3) })
 
-  return Promise.resolve(JSON.stringify(scores))
-}
-  const scorePrompt = `당신은 사주 전문가입니다. 아래 사주를 보고 2026년 운세 점수를 계산하세요.
-
-${sajuInfo}
-
-계산 방법:
-- 일주의 천간과 지지가 2026년 병오년과 어떻게 작용하는지 분석
-- 월주·년주와의 합충 관계 반영
-- 오행 균형 상태 반영
-- 각 영역별로 실제 다른 점수 산출
-
-반드시 아래 JSON만 출력. 다른 말 절대 금지:
-{"종합":숫자,"재물":숫자,"애정":숫자,"직업":숫자,"건강":숫자}
-
-규칙: 50~95 사이 정수. 5개 모두 다른 숫자. 종합은 나머지 4개 평균과 ±3 이내.`;
-  const msg = await anthropic.messages.create({
-    model: MODEL_PAID,
-    max_tokens: 100,
-    messages: [{ role: 'user', content: scorePrompt }],
-  });
-  return msg.content[0]?.text || '';
+ return Promise.resolve(JSON.stringify(scores))
 }
 
 // 사주 계산 공통 함수
