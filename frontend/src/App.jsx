@@ -1343,61 +1343,115 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   )
 })()}
 
-        {/* 운세 점수 카드 */}
-{!loadingPhase && scoreData && (
-  <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
-    <div style={{ textAlign: 'center', marginBottom: 20 }}>
-      <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>2026년 종합운</p>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-        <span style={{ fontSize: 56, fontWeight: 800, color: '#C9A84C', lineHeight: 1 }}>{scoreData.종합}</span>
-        <span style={{ fontSize: 22, color: 'rgba(255,255,255,0.5)' }}>점</span>
-      </div>
-      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>
-  상위 {scoreData.종합 >= 90 ? '5' : scoreData.종합 >= 80 ? '15' : scoreData.종합 >= 70 ? '25' : scoreData.종합 >= 60 ? '40' : '50'}% 수준이에요
-</p>
-    </div>
+{/* 운세 점수 카드 — 레이더 차트 */}
+{!loadingPhase && scoreData && (() => {
+  const categories = [
+    { label: '재물운', score: scoreData.재물, color: '#7F77DD' },
+    { label: '애정운', score: scoreData.애정, color: '#D4537E' },
+    { label: '직업운', score: scoreData.직업, color: '#1D9E75' },
+    { label: '건강운', score: scoreData.건강, color: '#BA7517' },
+    { label: '종합운', score: scoreData.종합, color: '#C9A84C' },
+  ]
+  const size = 260
+  const cx = size / 2, cy = size / 2, r = 95
+  const levels = [0.2, 0.4, 0.6, 0.8, 1.0]
+  const n = categories.length
+  const angleOffset = -Math.PI / 2
 
-    <div style={{ borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: 16 }}>
-   {true ? (
-        // 유료: 영역별 점수 표시
-        [
-          { label: '재물운', score: scoreData.재물, color: '#7F77DD' },
-          { label: '애정운', score: scoreData.애정, color: '#D4537E' },
-          { label: '직업운', score: scoreData.직업, color: '#1D9E75' },
-          { label: '건강운', score: scoreData.건강, color: '#BA7517' },
-        ].map(({ label, score, color }) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', width: 44, flexShrink: 0 }}>{label}</span>
-            <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${score}%`, background: color, borderRadius: 99, transition: 'width 1s ease' }} />
-            </div>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#FFFFFF', width: 32, textAlign: 'right', flexShrink: 0 }}>{score}</span>
-          </div>
-        ))
-     ) : (
-        // 무료: 블러 처리
-        <>
-          {[
-            { label: '재물운', color: '#7F77DD' },
-            { label: '애정운', color: '#D4537E' },
-            { label: '직업운', color: '#1D9E75' },
-            { label: '건강운', color: '#BA7517' },
-          ].map(({ label, color }) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, filter: 'blur(4px)', pointerEvents: 'none', userSelect: 'none' }}>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', width: 44, flexShrink: 0 }}>{label}</span>
-              <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${50 + Math.floor(Math.random() * 40)}%`, background: color, borderRadius: 99 }} />
-              </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.3)', width: 32, textAlign: 'right', flexShrink: 0 }}>🔒</span>
-            </div>
+  const getPoint = (i, ratio) => {
+    const angle = angleOffset + (2 * Math.PI * i) / n
+    return {
+      x: cx + r * ratio * Math.cos(angle),
+      y: cy + r * ratio * Math.sin(angle),
+    }
+  }
+  const getLabelPoint = (i) => {
+    const angle = angleOffset + (2 * Math.PI * i) / n
+    const labelR = r + 22
+    return {
+      x: cx + labelR * Math.cos(angle),
+      y: cy + labelR * Math.sin(angle),
+    }
+  }
+
+  const dataPoints = categories.map((c, i) => getPoint(i, c.score / 100))
+  const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
+
+  return (
+    <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+      <div style={{ textAlign: 'center', marginBottom: 8 }}>
+        <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>2026년 운세 스탯</p>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
+          <span style={{ fontSize: 52, fontWeight: 800, color: '#C9A84C', lineHeight: 1 }}>{scoreData.종합}</span>
+          <span style={{ fontSize: 20, color: 'rgba(255,255,255,0.5)' }}>점</span>
+        </div>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+          상위 {scoreData.종합 >= 90 ? '5' : scoreData.종합 >= 80 ? '15' : scoreData.종합 >= 70 ? '25' : scoreData.종합 >= 60 ? '40' : '50'}% 수준이에요
+        </p>
+      </div>
+
+      {/* 레이더 차트 */}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          {/* 배경 그물망 */}
+          {levels.map((level, li) => {
+            const pts = categories.map((_, i) => getPoint(i, level))
+            const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
+            return <path key={li} d={path} fill="none" stroke="rgba(201,168,76,0.12)" strokeWidth="1" />
+          })}
+
+          {/* 축선 */}
+          {categories.map((_, i) => {
+            const outer = getPoint(i, 1.0)
+            return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="rgba(201,168,76,0.15)" strokeWidth="1" />
+          })}
+
+          {/* 데이터 영역 */}
+          <path d={dataPath} fill="rgba(201,168,76,0.15)" stroke="#C9A84C" strokeWidth="2" />
+
+          {/* 데이터 점 */}
+          {dataPoints.map((p, i) => (
+            <circle key={i} cx={p.x} cy={p.y} r="4" fill={categories[i].color} stroke="#0D1B3E" strokeWidth="2" />
           ))}
-          <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', textAlign: 'center', marginTop: 8, fontWeight: 600 }}>🔒 세부 점수는 전체 분석에서 확인하세요</p>
-        </>
-      )}
-      
+
+          {/* 라벨 */}
+          {categories.map((c, i) => {
+            const lp = getLabelPoint(i)
+            return (
+              <g key={i}>
+                <text
+                  x={lp.x} y={lp.y - 6}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fill="rgba(255,255,255,0.6)"
+                  fontWeight="600"
+                >{c.label}</text>
+                <text
+                  x={lp.x} y={lp.y + 8}
+                  textAnchor="middle"
+                  fontSize="12"
+                  fill={c.color}
+                  fontWeight="800"
+                >{c.score}</text>
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+
+      {/* 범례 */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: 14 }}>
+        {categories.filter(c => c.label !== '종합운').map(({ label, score, color }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{label}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginLeft: 'auto' }}>{score}</span>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-)}
+  )
+})()}
 
         {/* 스트리밍 텍스트 */}
         {!loadingPhase && isBaseStreaming && baseText && (
