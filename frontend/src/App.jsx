@@ -1461,9 +1461,37 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         )}
 
         {/* 기본 분석 결과 아코디언 */}
-        {!loadingPhase && !isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수')).map((sec, i) => (
-          <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
-        ))}
+{!loadingPhase && !isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수')).map((sec, i) => {
+  const isBlurred = i >= 1 // Part 1부터 블러
+  const previewLines = sec.content.split('\n').slice(0, 3).join('\n')
+  const restLines = sec.content.split('\n').slice(3).join('\n')
+
+  if (isBlurred && !isPaid) {
+    return (
+      <div key={i} style={{ marginBottom: 10, border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, overflow: 'hidden' }}>
+        {/* 제목 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px', background: '#0D1B3E' }}>
+          <span style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{sec.title}</span>
+          <span style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', background: 'rgba(201,168,76,0.1)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(201,168,76,0.3)' }}>전체 분석 공개</span>
+        </div>
+        {/* 미리보기 — 앞 3줄 */}
+        <div style={{ padding: '16px 20px 0', fontSize: 16, lineHeight: 2.1, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', background: '#050D1F' }}>
+          {previewLines}
+        </div>
+        {/* 블러 처리 나머지 */}
+        <div style={{ position: 'relative', background: '#050D1F', padding: '0 20px 20px' }}>
+          <div style={{ fontSize: 16, lineHeight: 2.1, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>
+            {restLines || '이 내용은 전체 분석에서 확인할 수 있어요.'}
+          </div>
+          {/* 그라데이션 오버레이 */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 0%, #050D1F 80%)', pointerEvents: 'none' }} />
+        </div>
+      </div>
+    )
+  }
+
+  return <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
+})}
 
         {/* 행운 아이템 미리보기 */}
         {!loadingPhase && !isBaseStreaming && !paidSections.length && (() => {
