@@ -947,6 +947,8 @@ ${getAgeBasedPaidSection(year, maritalStatus)}
 첫 문단: 이 사주의 진짜 강점과 그것을 살리는 방향. 이 사람에게만 해당하는 구체적인 내용.
 두 번째 문단: 지금 당장 실천할 수 있는 구체적 행동 조언.`;
 
+// 유료 분석 후 점수도 별도 요청
+
   try {
     if (!isPaid) {
       // 무료: haiku로 3섹션만
@@ -958,7 +960,7 @@ ${getAgeBasedPaidSection(year, maritalStatus)}
       await streamToClient(res, paidOnlyPrompt, MODEL_PAID, 7000);
     }
     // 점수 별도 요청
-if (!isPaid) {
+if (true) {
   try {
     const scoreText = await getScoreOnly(infoBlock);
     const scoreJson = scoreText.match(/\{[\s\S]*?\}/)?.[0];
