@@ -55,6 +55,68 @@ async function generatePDF(elementId, filename) {
   }
 }
 
+const 일주타입명 = {
+  '甲子': { name: '고요한 선구자형', desc: '물 위에 뿌리내린 나무, 조용하지만 멈추지 않는다' },
+  '甲寅': { name: '천하제일형', desc: '나무 위의 나무, 타고난 리더십으로 판을 만든다' },
+  '甲辰': { name: '용의 날개형', desc: '땅속 용처럼 때를 기다렸다 한 번에 도약한다' },
+  '甲午': { name: '태양의 나무형', desc: '빛을 향해 끝없이 자라는, 열정이 무기인 사람' },
+  '甲申': { name: '벼락출세형', desc: '금이 나무를 다듬듯, 시련이 나를 완성시킨다' },
+  '甲戌': { name: '황야의 개척자형', desc: '척박한 땅에서도 뿌리내리는 불굴의 생명력' },
+  '乙丑': { name: '뚝심 승부사형', desc: '느리지만 반드시 이긴다, 포기를 모르는 덩굴' },
+  '乙卯': { name: '봄의 주인공형', desc: '제철을 만난 꽃처럼, 빛날 때 확실히 빛난다' },
+  '乙巳': { name: '화려한 생존형', desc: '불 속에서도 피어나는 꽃, 위기가 오히려 기회다' },
+  '乙未': { name: '부드러운 강자형', desc: '겉은 온화하지만 속은 단단한 대나무 같은 사람' },
+  '乙酉': { name: '정밀한 장인형', desc: '금속 위의 꽃, 디테일로 승부하는 완벽주의자' },
+  '乙亥': { name: '깊은 물의 꽃형', desc: '수면 아래 조용히 피어나는 연꽃, 내면이 무기다' },
+  '丙子': { name: '냉철한 태양형', desc: '뜨거운 열정 속 차가운 이성, 감성과 논리를 동시에' },
+  '丙寅': { name: '천하를 밝히는형', desc: '숲 위로 떠오르는 태양, 타고난 카리스마로 무대를 장악한다' },
+  '丙辰': { name: '폭발적 에너지형', desc: '용과 태양의 만남, 한번 불붙으면 아무도 못 막는다' },
+  '丙午': { name: '순수 불꽃형', desc: '가장 뜨겁고 가장 순수한 불, 진심이 모든 걸 이긴다' },
+  '丙申': { name: '빛나는 검형', desc: '태양이 금속을 달구듯, 열정이 재능을 날카롭게 한다' },
+  '丙戌': { name: '황혼의 빛형', desc: '지는 해가 가장 아름답듯, 후반으로 갈수록 빛난다' },
+  '丁丑': { name: '동토의 불꽃형', desc: '차가운 땅 속 꺼지지 않는 불씨, 역경이 연료다' },
+  '丁卯': { name: '봄밤의 촛불형', desc: '부드럽고 따뜻하게 주변을 밝히는, 사람을 끄는 매력' },
+  '丁巳': { name: '불의 정수형', desc: '불 속의 불, 한 분야에서 최고가 되기 위해 태어났다' },
+  '丁未': { name: '여름 밤하늘형', desc: '뜨거운 감성과 깊은 내면, 예술적 영혼의 소유자' },
+  '丁酉': { name: '보석 세공사형', desc: '정밀한 불꽃이 원석을 보석으로, 집중력이 압도적이다' },
+  '丁亥': { name: '깊은 바다의 등대형', desc: '어둠 속에서도 방향을 잃지 않는, 타인의 나침반' },
+  '戊子': { name: '지혜로운 산형', desc: '물을 품은 산처럼, 유연함과 단단함을 동시에 가졌다' },
+  '戊寅': { name: '대산의 호랑이형', desc: '산 위의 호랑이, 한번 마음먹으면 반드시 정상에 선다' },
+  '戊辰': { name: '대지의 용형', desc: '대륙을 움직이는 힘, 스케일이 남다른 대기만성형' },
+  '戊午': { name: '타오르는 대지형', desc: '태양이 내리쬐는 산, 에너지 넘치고 추진력이 폭발한다' },
+  '戊申': { name: '철옹산형', desc: '금을 품은 산, 한번 결심하면 누구도 흔들 수 없다' },
+  '戊戌': { name: '불굴의 영토형', desc: '불을 품은 땅, 강한 의지로 자기만의 세계를 구축한다' },
+  '己丑': { name: '묵묵한 수확자형', desc: '차가운 논밭을 일구는 농부, 성실함이 결국 이긴다' },
+  '己卯': { name: '봄밭의 씨앗형', desc: '때를 알고 싹을 틔운다, 준비된 자에게 기회가 온다' },
+  '己巳': { name: '뜨거운 대지형', desc: '불 위의 땅, 뜨거운 열정으로 무엇이든 키워낸다' },
+  '己未': { name: '풍요로운 들판형', desc: '여름 들판처럼 풍성한 감수성, 사람을 살리는 따뜻함' },
+  '己酉': { name: '정돈된 수확형', desc: '논밭 위의 금, 체계적이고 완성도 높은 결과물을 낸다' },
+  '己亥': { name: '물을 품은 땅형', desc: '깊은 땅속 지하수처럼, 보이지 않는 곳에서 세상을 지탱한다' },
+  '庚子': { name: '냉철한 원석형', desc: '물속의 쇠, 감성을 품은 원칙주의자' },
+  '庚寅': { name: '호랑이 발톱형', desc: '날카롭고 강렬하게, 한번 목표를 잡으면 놓지 않는다' },
+  '庚辰': { name: '용광로형', desc: '거대한 용이 금속을 녹이듯, 압도적인 존재감으로 판을 바꾼다' },
+  '庚午': { name: '불꽃 단련형', desc: '불로 단련된 검, 시련을 거칠수록 더 빛난다' },
+  '庚申': { name: '최강 원칙형', desc: '금 위의 금, 기준이 가장 높고 가장 단단한 사람' },
+  '庚戌': { name: '불 속의 강철형', desc: '제련이 끝난 강철, 완성된 자신만의 세계가 있다' },
+  '辛丑': { name: '땅속 보석형', desc: '아직 발견되지 않은 보석, 늦게 빛나지만 가장 오래 빛난다' },
+  '辛卯': { name: '봄의 보석형', desc: '봄 숲속 빛나는 이슬, 섬세함과 감각으로 사람을 매료시킨다' },
+  '辛巳': { name: '불꽃 보석형', desc: '불에 정제된 보석, 극한의 압력이 나를 완성시킨다' },
+  '辛未': { name: '여름 보석형', desc: '따뜻한 감성의 보석, 공감 능력으로 사람의 마음을 얻는다' },
+  '辛酉': { name: '순수 보석형', desc: '가장 정교하고 가장 아름다운, 완벽을 추구하는 장인' },
+  '辛亥': { name: '깊은 물속 보석형', desc: '수면 아래 빛나는 보석, 알수록 더 매력적인 사람' },
+  '壬子': { name: '깊은 바다형', desc: '가장 깊고 넓은 물, 끝을 알 수 없는 무한한 가능성' },
+  '壬寅': { name: '폭포형', desc: '산에서 내리꽂히는 폭포, 거침없는 추진력으로 판을 뒤집는다' },
+  '壬辰': { name: '용이 된 강형', desc: '용이 사는 강, 한번 흐르기 시작하면 아무도 막을 수 없다' },
+  '壬午': { name: '뜨거운 강형', desc: '태양 아래 달리는 강, 열정과 유연함이 공존하는 희귀한 사람' },
+  '壬申': { name: '금산에서 솟는 샘형', desc: '바위를 뚫고 나오는 물, 어떤 장벽도 돌아서 흐른다' },
+  '壬戌': { name: '대지를 적시는형', desc: '사막을 적시는 비, 척박한 환경을 기회로 바꾸는 능력' },
+  '癸丑': { name: '동토의 지하수형', desc: '얼어붙은 땅 아래 흐르는 물, 겉과 속이 전혀 다른 사람' },
+  '癸卯': { name: '봄비형', desc: '봄을 깨우는 첫 비, 조용하지만 세상을 바꾸는 힘이 있다' },
+  '癸巳': { name: '신비한 증기형', desc: '불 위의 물이 만드는 안개, 아무도 예측할 수 없는 매력' },
+  '癸未': { name: '여름 소나기형', desc: '뜨거운 여름을 식히는 소나기, 나타나면 분위기가 바뀐다' },
+  '癸酉': { name: '이슬형', desc: '새벽 이슬처럼 섬세하고 순수한, 디테일에서 차이가 난다' },
+  '癸亥': { name: '대해의 근원형', desc: '모든 물의 시작점, 깊이를 알 수 없는 내면의 소유자' },
+}
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
 const STEPS = ['gender', 'marital', 'birthdate', 'birthtime', 'mbti', 'blood']
@@ -1232,8 +1294,35 @@ if (screen === 'result') {
         )
       })}
     </div>
-  </div>
+  </div></div>
 )}
+
+{/* 일주 타입 카드 */}
+{!loadingPhase && sajuData?.사주?.일주 && (() => {
+  const 일주키 = sajuData.사주.일주.slice(0, 2)
+  const 타입 = 일주타입명[일주키]
+  if (!타입) return null
+  const 오행색 = { '甲': '#4ADE80', '乙': '#4ADE80', '丙': '#F87171', '丁': '#F87171', '戊': '#C9A84C', '己': '#C9A84C', '庚': '#E8C96A', '辛': '#E8C96A', '壬': '#60A5FA', '癸': '#60A5FA' }
+  const 색 = 오행색[일주키[0]] || '#C9A84C'
+  return (
+    <div style={{ background: '#0D1B3E', border: `1px solid ${색}40`, borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+      <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 12 }}>MY TYPE</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+        <div style={{ width: 52, height: 52, borderRadius: 12, background: `${색}18`, border: `1px solid ${색}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: 색, fontFamily: 'Georgia, serif', flexShrink: 0 }}>{일주키}</div>
+        <div>
+          <p style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', marginBottom: 4 }}>{타입.name}</p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>{타입.desc}</p>
+        </div>
+      </div>
+      <button
+        style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 600, background: `${색}15`, border: `1px solid ${색}40`, borderRadius: 10, color: 색, cursor: 'pointer' }}
+        onClick={() => { navigator.clipboard?.writeText(`나의 사주 타입은 "${타입.name}" ✨\n${타입.desc}\n\n내 타입 확인하기 → mysaju.shop`).then(() => alert('복사됐어요! 카카오톡에 붙여넣기 해보세요 😊')) }}>
+        ✦ 내 타입 공유하기
+      </button>
+    </div>
+  )
+})()}
+
         {/* 운세 점수 카드 */}
 {!loadingPhase && scoreData && (
   <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
