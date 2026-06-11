@@ -272,7 +272,7 @@ ${sajuInfo}
 {"종합":숫자,"재물":숫자,"애정":숫자,"직업":숫자,"건강":숫자}
 점수는 1~100 사이 정수. 반드시 사주 구조를 반영해서 사람마다 다르게. 종합은 재물/애정/직업/건강 평균과 비슷하게. 모두 다른 숫자로. 절대 72 고정값 금지.`;
   const msg = await anthropic.messages.create({
-    model: MODEL_FREE,
+    model: MODEL_PAID,
     max_tokens: 100,
     messages: [{ role: 'user', content: scorePrompt }],
   });
