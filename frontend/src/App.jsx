@@ -1389,7 +1389,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${score}%`, background: color, borderRadius: 99, transition: 'width 1s ease' }} />
             </div>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.3)', width: 32, textAlign: 'right', flexShrink: 0 }}>🔒</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#FFFFFF', width: 32, textAlign: 'right', flexShrink: 0 }}>🔒</span>
           </div>
         ))
      ) : (
