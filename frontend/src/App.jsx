@@ -568,6 +568,29 @@ loadingTimersRef.current.countdown = setInterval(() => {
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>사주 심화 분석</h1>
         </div>
         <div id="deep-result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
+  {scoreData && (
+    <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>2026년 종합운</p>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
+          <span style={{ fontSize: 56, fontWeight: 800, color: '#C9A84C', lineHeight: 1 }}>{scoreData.종합}</span>
+          <span style={{ fontSize: 22, color: 'rgba(255,255,255,0.5)' }}>점</span>
+        </div>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>상위 {scoreData.종합 >= 90 ? '5' : scoreData.종합 >= 80 ? '15' : scoreData.종합 >= 70 ? '25' : scoreData.종합 >= 60 ? '40' : '50'}% 수준이에요</p>
+      </div>
+      <div style={{ borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: 16 }}>
+        {[{ label: '재물운', score: scoreData.재물, color: '#7F77DD' }, { label: '애정운', score: scoreData.애정, color: '#D4537E' }, { label: '직업운', score: scoreData.직업, color: '#1D9E75' }, { label: '건강운', score: scoreData.건강, color: '#BA7517' }].map(({ label, score, color }) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', width: 44, flexShrink: 0 }}>{label}</span>
+            <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${score}%`, background: color, borderRadius: 99, transition: 'width 1s ease' }} />
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#FFFFFF', width: 32, textAlign: 'right', flexShrink: 0 }}>{score}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
          {isDeepStreaming && (
             <div style={{ textAlign: 'center', padding: '16px', marginBottom: 16, fontSize: 15, color: 'rgba(201,168,76,0.7)', fontWeight: 700 }}>
               ✦ 심화 분석 중 · {loadingCountdown}초 경과 ✦
