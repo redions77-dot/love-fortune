@@ -1412,21 +1412,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', textAlign: 'center', marginTop: 8, fontWeight: 600 }}>🔒 세부 점수는 전체 분석에서 확인하세요</p>
         </>
       )}
-        [
-          { label: '재물운', score: scoreData.재물, color: '#7F77DD' },
-          { label: '애정운', score: scoreData.애정, color: '#D4537E' },
-          { label: '직업운', score: scoreData.직업, color: '#1D9E75' },
-          { label: '건강운', score: scoreData.건강, color: '#BA7517' },
-        ].map(({ label, score, color }) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', width: 44, flexShrink: 0 }}>{label}</span>
-            <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${score}%`, background: color, borderRadius: 99, transition: 'width 1s ease' }} />
-            </div>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#FFFFFF', width: 32, textAlign: 'right', flexShrink: 0 }}>{score}</span>
-          </div>
-        ))
-      )}
+      
     </div>
   </div>
 )}
