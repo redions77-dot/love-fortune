@@ -265,7 +265,7 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
   }
 }
 
-function getScoreOnly(sajuInfo) {
+async function getScoreOnly(sajuInfo) {
   // 사주 정보에서 일주 추출해서 규칙 기반 점수 생성
   const 천간점수 = { '甲': 72, '乙': 68, '丙': 81, '丁': 76, '戊': 65, '己': 70, '庚': 78, '辛': 83, '壬': 74, '癸': 69 }
   const 지지점수 = { '子': 5, '丑': -3, '寅': 8, '卯': 3, '辰': -2, '巳': 7, '午': 10, '未': 1, '申': 6, '酉': 4, '戌': -1, '亥': 2 }
