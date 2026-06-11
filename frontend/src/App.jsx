@@ -1316,7 +1316,10 @@ if (screen === 'result') {
       </div>
       <button
         style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 600, background: `${색}15`, border: `1px solid ${색}40`, borderRadius: 10, color: 색, cursor: 'pointer' }}
-        onClick={() => { navigator.clipboard?.writeText(`나의 사주 타입은 "${타입.name}" ✨\n${타입.desc}\n\n내 타입 확인하기 → mysaju.shop`).then(() => alert('복사됐어요! 카카오톡에 붙여넣기 해보세요 😊')) }}>
+        onClick={() => {
+  const text = '나의 사주 타입은 [' + 타입.name + '] ✨\n' + 타입.desc + '\n\n내 타입 확인하기 → mysaju.shop'
+  navigator.clipboard?.writeText(text).then(() => alert('복사됐어요! 카카오톡에 붙여넣기 해보세요 😊'))
+}}>
         ✦ 내 타입 공유하기
       </button>
     </div>
