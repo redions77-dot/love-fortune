@@ -265,7 +265,35 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
   }
 }
 
-async function getScoreOnly(sajuInfo) {
+function getScoreOnly(sajuInfo) {
+  // 사주 정보에서 일주 추출해서 규칙 기반 점수 생성
+  const 천간점수 = { '甲': 72, '乙': 68, '丙': 81, '丁': 76, '戊': 65, '己': 70, '庚': 78, '辛': 83, '壬': 74, '癸': 69 }
+  const 지지점수 = { '子': 5, '丑': -3, '寅': 8, '卯': 3, '辰': -2, '巳': 7, '午': 10, '未': 1, '申': 6, '酉': 4, '戌': -1, '亥': 2 }
+  const 영역보정 = { '재물': 0, '애정': 3, '직업': -2, '건강': 5 }
+
+  // infoBlock에서 일주 파싱
+  const 일주match = sajuInfo.match(/일주:\s*([甲乙丙丁戊己庚辛壬癸])[가-힣]([子丑寅卯辰巳午未申酉戌亥])[가-힣]/)
+  const 월주match = sajuInfo.match(/월주:\s*([甲乙丙丁戊己庚辛壬癸])[가-힣]([子丑寅卯辰巳午未申酉戌亥])[가-힣]/)
+  const 년주match = sajuInfo.match(/년주:\s*([甲乙丙丁戊己庚辛壬癸])[가-힣]([子丑寅卯辰巳午未申酉戌亥])[가-힣]/)
+
+  const base = (천간점수[일주match?.[1]] || 72) + (지지점수[일주match?.[2]] || 0)
+  const 월보정 = (지지점수[월주match?.[2]] || 0) * 0.3
+  const 년보정 = (지지점수[년주match?.[2]] || 0) * 0.2
+  const 종합 = Math.round(Math.min(95, Math.max(50, base + 월보정 + 년보정)))
+
+  const scores = {
+    종합,
+    재물: Math.min(95, Math.max(50, 종합 + 영역보정.재물 + (지지점수[일주match?.[2]] || 0) - 2)),
+    애정: Math.min(95, Math.max(50, 종합 + 영역보정.애정 - (지지점수[월주match?.[2]] || 0))),
+    직업: Math.min(95, Math.max(50, 종합 + 영역보정.직업 + (지지점수[년주match?.[2]] || 0))),
+    건강: Math.min(95, Math.max(50, 종합 + 영역보정.건강 - 3)),
+  }
+  // 중복 방지
+  const keys = ['재물','애정','직업','건강']
+  keys.forEach((k, i) => { if (scores[k] === scores.종합) scores[k] += (i % 2 === 0 ? 3 : -3) })
+
+  return Promise.resolve(JSON.stringify(scores))
+}
   const scorePrompt = `당신은 사주 전문가입니다. 아래 사주를 보고 2026년 운세 점수를 계산하세요.
 
 ${sajuInfo}
