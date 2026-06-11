@@ -189,7 +189,7 @@ function Accordion({ title, content, isPaid = false, isChild = false, isGunghab 
         <span style={{ fontSize: 17, fontWeight: 700, color: open ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
         <span style={{ fontSize: 14, color: 'rgba(201,168,76,0.5)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
       </div>
-      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 17, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)', fontFamily: "'Gowun Batang', serif", fontSize: 16, lineHeight: 2.1 }}>{content}</div>}    </div>
+      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 17, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)', fontSize: 16, lineHeight: 2.1 }}>{content}</div>}    </div>
   )
 }
 
