@@ -1338,25 +1338,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>{타입.desc}</p>
         </div>
       </div>
-      <button
-        style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 600, background: `${색}15`, border: `1px solid ${색}40`, borderRadius: 10, color: 색, cursor: 'pointer' }}
-        onClick={async () => {
-  if (!window.html2canvas) {
-    const s = document.createElement('script')
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
-    await new Promise(r => { s.onload = r; document.head.appendChild(s) })
-  }
-  const el = document.getElementById('share-card')
-  const canvas = await window.html2canvas(el, { scale: 3, backgroundColor: '#050D1F', useCORS: true })
-  canvas.toBlob(blob => {
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = '마이사주_' + 타입.name + '.png'
-    a.click(); URL.revokeObjectURL(url)
-  })
-}}>
-  📸 내 결과 이미지로 저장하기
-      </button>
+     
     </div>
   )
 })()}
