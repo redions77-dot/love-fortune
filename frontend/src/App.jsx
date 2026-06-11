@@ -1306,7 +1306,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   const 오행색 = { '甲': '#4ADE80', '乙': '#4ADE80', '丙': '#F87171', '丁': '#F87171', '戊': '#C9A84C', '己': '#C9A84C', '庚': '#E8C96A', '辛': '#E8C96A', '壬': '#60A5FA', '癸': '#60A5FA' }
   const 색 = 오행색[일주키[0]] || '#C9A84C'
   return (
-    <div style={{ background: '#0D1B3E', border: `1px solid ${색}40`, borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+    <div id="share-card" style={{ background: '#0D1B3E', border: `1px solid ${색}40`, borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
       <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 12 }}>MY TYPE</p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
         <div style={{ width: 52, height: 52, borderRadius: 12, background: `${색}18`, border: `1px solid ${색}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: 색, fontFamily: 'Georgia, serif', flexShrink: 0 }}>{일주키}</div>
@@ -1317,11 +1317,22 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       </div>
       <button
         style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 600, background: `${색}15`, border: `1px solid ${색}40`, borderRadius: 10, color: 색, cursor: 'pointer' }}
-        onClick={() => {
-  const text = '나의 사주 타입은 [' + 타입.name + '] ✨\n' + 타입.desc + '\n\n내 타입 확인하기 → mysaju.shop'
-  navigator.clipboard?.writeText(text).then(() => alert('복사됐어요! 카카오톡에 붙여넣기 해보세요 😊'))
+        onClick={async () => {
+  if (!window.html2canvas) {
+    const s = document.createElement('script')
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
+    await new Promise(r => { s.onload = r; document.head.appendChild(s) })
+  }
+  const el = document.getElementById('share-card')
+  const canvas = await window.html2canvas(el, { scale: 3, backgroundColor: '#050D1F', useCORS: true })
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = '마이사주_' + 타입.name + '.png'
+    a.click(); URL.revokeObjectURL(url)
+  })
 }}>
-        ✦ 내 타입 공유하기
+  📸 내 결과 이미지로 저장하기
       </button>
     </div>
   )
@@ -1337,8 +1348,8 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         <span style={{ fontSize: 22, color: 'rgba(255,255,255,0.5)' }}>점</span>
       </div>
       <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>
-        상위 {Math.max(5, 100 - scoreData.종합 + Math.floor(Math.random() * 8))}% 수준이에요
-      </p>
+  상위 {scoreData.종합 >= 90 ? '5' : scoreData.종합 >= 80 ? '15' : scoreData.종합 >= 70 ? '25' : scoreData.종합 >= 60 ? '40' : '50'}% 수준이에요
+</p>
     </div>
 
     <div style={{ borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: 16 }}>
@@ -1355,7 +1366,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${score}%`, background: color, borderRadius: 99, transition: 'width 1s ease' }} />
             </div>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#FFFFFF', width: 32, textAlign: 'right', flexShrink: 0 }}>{score}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.3)', width: 32, textAlign: 'right', flexShrink: 0 }}>🔒</span>
           </div>
         ))
       ) : (
