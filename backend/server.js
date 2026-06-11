@@ -266,11 +266,20 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
 }
 
 async function getScoreOnly(sajuInfo) {
-  const scorePrompt = `다음 사주를 보고 2026년 운세 점수를 JSON으로만 출력하세요.
+  const scorePrompt = `당신은 사주 전문가입니다. 아래 사주를 보고 2026년 운세 점수를 계산하세요.
+
 ${sajuInfo}
-아래 형식만 출력. 설명 없이 JSON만:
+
+계산 방법:
+- 일주의 천간과 지지가 2026년 병오년과 어떻게 작용하는지 분석
+- 월주·년주와의 합충 관계 반영
+- 오행 균형 상태 반영
+- 각 영역별로 실제 다른 점수 산출
+
+반드시 아래 JSON만 출력. 다른 말 절대 금지:
 {"종합":숫자,"재물":숫자,"애정":숫자,"직업":숫자,"건강":숫자}
-점수는 1~100 사이 정수. 반드시 사주 구조를 반영해서 사람마다 다르게. 종합은 재물/애정/직업/건강 평균과 비슷하게. 모두 다른 숫자로. 절대 72 고정값 금지.`;
+
+규칙: 50~95 사이 정수. 5개 모두 다른 숫자. 종합은 나머지 4개 평균과 ±3 이내.`;
   const msg = await anthropic.messages.create({
     model: MODEL_PAID,
     max_tokens: 100,
