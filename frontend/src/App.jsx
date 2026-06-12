@@ -371,7 +371,7 @@ export default function App() {
     const next = prev + t
     
     // 점수 JSON 파싱 시도
-    const scoreMatch = next.match(/===__운세점수__===([\s\S]*?)(?:===|$)/);
+    const scoreMatch = next.match(new RegExp('===__운세점수__===([\s\S]*?)(?:===|$)'));
 if (scoreMatch) {
   try {
     const jsonStr = scoreMatch[1].match(/\{[\s\S]*?\}/)?.[0];
