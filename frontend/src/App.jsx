@@ -1685,7 +1685,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         </button>
       </p>
 
-          {phase === 'done' && !isPaid && !isPaidStreaming && (
+         {phase === 'done' && !isPaid && !isPaidStreaming && (
         <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, zIndex: 999, background: '#111', borderTop: '1px solid rgba(201,168,76,0.3)', padding: '10px 16px 20px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#CC2222', borderRadius: 6, padding: '5px 12px' }}>
@@ -1701,10 +1701,10 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           </button>
         </div>
       )}
-  </div>  
-    </div>    
+    </div>
+  </div>
   )
-}           
+} 
 
   // ── 약관/정책 화면들 ──
   if (screen === 'refund') return (
