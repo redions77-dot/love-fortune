@@ -1830,10 +1830,9 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             </p>
           </div>
         </div>
-      </div>
-    </div>
-     </div>
-  )
+  </div>
+  </div>
+ )
 
   return null
  
