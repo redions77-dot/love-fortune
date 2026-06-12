@@ -126,11 +126,11 @@ const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'b
 const LOADING_STAGES = ['사주 데이터를 읽고 있어요', '기운의 흐름을 분석하고 있어요', '당신만의 풀이를 만들고 있어요']
 
 function removeMarkers(text) {
-  return text.split('===').filter((_, i) => i % 2 === 0).join('').replace(/\n{3,}/g, '\n\n').replace(/^#{1,6}\s*/gm, '').trim()
+  return text.split('===').filter((_, i) => i % 2 === 0).join('').replace(new RegExp('\\n{3,}', 'g'), '\n\n').replace(new RegExp('^#{1,6}\\s*', 'gm'), '').trim()
 }
 function parseSections(text) {
   const sections = []
-  const parts = text.split(/===(.+?)===/s)
+  const parts = text.split(new RegExp('===(.+?)===', 's'))
   if (parts[0]?.trim()) sections.push({ title: '분석 결과', content: parts[0].trim() })
   for (let i = 1; i < parts.length; i += 2) sections.push({ title: parts[i].trim(), content: parts[i + 1]?.trim() || '' })
   return sections
