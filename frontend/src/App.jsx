@@ -1699,17 +1699,32 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
               <span style={{ fontSize: 14 }}>⏱</span>
               <span style={{ fontSize: 15, fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.05em' }}>{countdown}</span>
             </div>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>
+    </div>
+      {phase === 'done' && !isPaid && !isPaidStreaming && (
+        <div style={{
+          position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+          width: '100%', maxWidth: 480, zIndex: 999,
+          background: '#111', borderTop: '1px solid rgba(201,168,76,0.3)',
+          padding: '10px 16px 20px', boxSizing: 'border-box',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#CC2222', borderRadius: 6, padding: '5px 12px' }}>
+              <span style={{ fontSize: 14 }}>⏱</span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.05em' }}>{countdown}</span>
+            </div>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>오늘 자정까지만</span>
           </div>
           <button
             style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
             onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) handlePaidAnalyze(email); else alert('결제가 취소되었습니다.') }) }) }}>
             <span>지금 전체 분석 받기 →</span>
-<span style={{ fontSize: 16, fontWeight: 900 }}>1,900원</span>
-        </button>
-       </div>
+            <span style={{ fontSize: 16, fontWeight: 900 }}>1,900원</span>
+          </button>
+        </div>
       )}
     </div>
+  </div>
   )
 }
 
