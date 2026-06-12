@@ -1583,8 +1583,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         </div>
       </div>
     ))}
-   <div style={{ textAlign: 'center', marginTop: 20 }}>
-      <div style={{ fontSize: 38, fontWeight: 900, color: '#C9A84C' }}>1,900원</div>
+   <div style={{ textAlign: 'center', marginTop: 16 }}>
       <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>↓ 아래 버튼으로 결제하세요</p>
     </div>
   </div>
