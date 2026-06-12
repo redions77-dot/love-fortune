@@ -371,11 +371,14 @@ export default function App() {
     const next = prev + t
     
     // 점수 JSON 파싱 시도
-    const scoreMatch = next.match(new RegExp('===__운세점수__===([\\s\\S]*?)(?:===|$)'));
-if (scoreMatch) {
+   const sepIdx = next.indexOf('===__운세점수__===');
+if (sepIdx !== -1) {
   try {
-    const jsonStr = scoreMatch[1].match(/\{[\s\S]*?\}/)?.[0];
-    if (jsonStr) {
+    const after = next.slice(sepIdx + 16);
+    const start = after.indexOf('{');
+    const end = after.indexOf('}');
+    if (start !== -1 && end !== -1) {
+      const jsonStr = after.slice(start, end + 1);
       const parsed = JSON.parse(jsonStr);
       if (parsed.종합) setScoreData(parsed);
     }
