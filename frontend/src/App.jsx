@@ -1708,6 +1708,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
    </div>
   </>
   )}
+      </div>
       {phase === 'done' && !isPaid && !isPaidStreaming && (
         <div style={{
           position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
