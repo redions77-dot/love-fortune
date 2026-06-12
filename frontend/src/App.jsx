@@ -1534,33 +1534,52 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
         {/* 결제 유도 카드 */}
         {!loadingPhase && phase === 'done' && !isPaid && !isPaidStreaming && (
-          <div style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', borderRadius: 16, padding: '32px 24px', marginBottom: 16, textAlign: 'center', border: '1px solid rgba(201,168,76,0.3)' }}>
-            <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 20 }}>FULL ANALYSIS</p>
-            <p style={{ fontSize: 18, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 20, wordBreak: 'keep-all', lineHeight: 1.5 }}>
-              {serviceType === 'child' ? '아이의 타고난 운명을 전부 확인하세요' : serviceType === '노후' ? '당신의 노후를 미리 준비하세요' : '내 사주의 모든 것을 확인하세요'}
-            </p>
-            <div style={{ textAlign: 'left', marginBottom: 24 }}>
-              {(serviceType === 'child'
-                ? ['타고난 기질 · 성격 심층 분석','학습 스타일 · 공부가 잘 되는 환경','재능의 씨앗 · 빛나는 분야','진로 방향 · 어울리는 직업군','부모와의 관계 · 키우는 법','이 사주로 잘 크는 법']
-                : serviceType === '노후'
-                ? ['노후 재물 심화 분석','건강 심화 분석','황혼 인연 심화','인간관계 · 사람운','월별 운세 12개월','노후를 빛나게 하는 법']
-                : ['財運 · 인생 재물 전체','職 · 직업과 커리어','富 · 투자와 부동산','緣 · 사람과 인연','행운 아이템 전체 (색깔·방향·숫자·마스코트)','道 · 이 사주로 잘 사는 법']
-              ).map(item => (
-                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                  <span style={{ color: '#C9A84C', fontWeight: 700, fontSize: 14 }}>✦</span>
-                  <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16 }}>{item}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize: 44, fontWeight: 900, color: '#C9A84C', marginBottom: 6 }}>1,900원</div>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 20 }}>결제 후 즉시 사용 가능</p>
-            <button
-              style={{ width: '100%', padding: '20px', fontSize: 18, fontWeight: 700, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 14, cursor: 'pointer' }}
-              onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) handlePaidAnalyze(email); else alert('결제가 취소되었습니다.') }) }) }}>
-              지금 전체 분석 받기 →
-            </button>
-          </div>
-        )}
+  <div style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', borderRadius: 16, padding: '28px 20px', marginBottom: 16, border: '1px solid rgba(201,168,76,0.3)' }}>
+    <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 16, textAlign: 'center' }}>FULL ANALYSIS</p>
+    {(serviceType === 'child'
+      ? [
+          { title: '타고난 기질 · 성격 심층 분석', lines: [18, 14] },
+          { title: '학습 스타일 · 공부가 잘 되는 환경', lines: [16, 12] },
+          { title: '재능의 씨앗 · 빛나는 분야', lines: [20, 10] },
+          { title: '진로 방향 · 어울리는 직업군', lines: [15, 18] },
+          { title: '부모와의 관계 · 키우는 법', lines: [17, 13] },
+          { title: '이 사주로 잘 크는 법', lines: [19, 11] },
+        ]
+      : serviceType === '노후'
+      ? [
+          { title: '노후 재물 심화 분석', lines: [18, 14] },
+          { title: '건강 심화 분석', lines: [16, 20] },
+          { title: '황혼 인연 심화', lines: [20, 12] },
+          { title: '인간관계 · 사람운', lines: [15, 17] },
+          { title: '월별 운세', lines: [19, 13] },
+          { title: '노후를 빛나게 하는 법', lines: [17, 11] },
+        ]
+      : [
+          { title: '財運 · 인생 재물 전체', lines: [20, 14] },
+          { title: '職 · 직업과 커리어', lines: [16, 18] },
+          { title: '富 · 투자와 부동산', lines: [22, 12] },
+          { title: '緣 · 사람과 인연', lines: [15, 19] },
+          { title: '행운 아이템', lines: [18, 10] },
+          { title: '道 · 이 사주로 잘 사는 법', lines: [17, 14] },
+        ]
+    ).map((item, idx) => (
+      <div key={idx} style={{ marginBottom: 14, padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(201,168,76,0.1)' }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
+        <div style={{ height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.12)', marginBottom: 6, width: `${item.lines[0] * 4}px`, maxWidth: '100%', filter: 'blur(3px)' }} />
+        <div style={{ height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.08)', width: `${item.lines[1] * 4}px`, maxWidth: '85%', filter: 'blur(3px)' }} />
+      </div>
+    ))}
+    <div style={{ textAlign: 'center', marginTop: 20, marginBottom: 6 }}>
+      <div style={{ fontSize: 44, fontWeight: 900, color: '#C9A84C' }}>1,900원</div>
+      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>결제 후 즉시 확인</p>
+    </div>
+    <button
+      style={{ width: '100%', padding: '20px', fontSize: 18, fontWeight: 700, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 14, cursor: 'pointer' }}
+      onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) handlePaidAnalyze(email); else alert('결제가 취소되었습니다.') }) }) }}>
+      지금 전체 분석 받기 →
+    </button>
+  </div>
+)}
 
         {/* 유료 분석 타이머 */}
         {isPaidStreaming && (
