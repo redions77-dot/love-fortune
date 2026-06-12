@@ -1593,7 +1593,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         )}
 
 {!loadingPhase && (
-  <>
+  <div>
     {/* 심화분석 업셀 */}
     {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
       <div style={{ marginTop: 28, marginBottom: 10 }}>
@@ -1700,10 +1700,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             <span style={{ fontSize: 16, fontWeight: 900 }}>1,900원</span>
           </button>
         </div>
-      )}
+    }}
+      </div>
     </div>
   </div>
-  )
+    )
 } 
 
   // ── 약관/정책 화면들 ──
