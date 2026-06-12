@@ -1700,7 +1700,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             <span style={{ fontSize: 16, fontWeight: 900 }}>1,900원</span>
           </button>
         </div>
-    }}
+   )}   
       </div>
     </div>
   </div>
