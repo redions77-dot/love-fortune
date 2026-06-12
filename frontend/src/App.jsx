@@ -1554,19 +1554,20 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           { title: '월별 운세', lines: [19, 13] },
           { title: '노후를 빛나게 하는 법', lines: [17, 11] },
         ]
-      : [
-          { title: '財運 · 인생 재물 전체', lines: [20, 14] },
-          { title: '職 · 직업과 커리어', lines: [16, 18] },
-          { title: '富 · 투자와 부동산', lines: [22, 12] },
-          { title: '緣 · 사람과 인연', lines: [15, 19] },
-          { title: '행운 아이템', lines: [18, 10] },
-          { title: '道 · 이 사주로 잘 사는 법', lines: [17, 14] },
+     : [
+          { title: '財運 · 인생 재물 전체', preview: '돈이 들어오는 방식이 남들과 달라요. 20~30대는 흘러가는 구조였다면, 지금부터는 쌓이는 구조로 바뀌는 시기예요. 절대 하면 안 되는 돈 실수가 하나 있는데...' },
+          { title: '職 · 직업과 커리어', preview: '이 사주에 딱 맞는 직업이 있어요. 지금 하는 일이 맞는지 안 맞는지도 사주에서 보여요. 크게 도약할 수 있는 시기가 가까워지고 있는데...' },
+          { title: '富 · 투자와 부동산', preview: '이 사주에서 절대 손대면 안 되는 투자가 있어요. 반대로 지금 이 사주에 가장 잘 맞는 자산 방향은 따로 있고, 실거주 환경도...' },
+          { title: '緣 · 사람과 인연', preview: '진짜 내 편이 되어줄 사람의 특징이 이 사주에서 보여요. 반대로 곁에 두면 반드시 손해보는 사람 유형도 있는데...' },
+          { title: '행운 아이템 전체', preview: '이 사주의 행운 색깔, 마스코트, 방향, 숫자, 아이템이 따로 있어요. 생각보다 일상에서 바로 써먹을 수 있는 것들이에요...' },
+          { title: '道 · 이 사주로 잘 사는 법', preview: '이 사주가 잘 풀리는 조건이 딱 2가지예요. 이것만 지키면 돼요. 반대로 이 사주가 망하는 패턴도 하나 있는데...' },
         ]
-    ).map((item, idx) => (
-      <div key={idx} style={{ marginBottom: 14, padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(201,168,76,0.1)' }}>
+   ).map((item, idx) => (
+      <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(201,168,76,0.1)' }}>
         <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
-        <div style={{ height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.12)', marginBottom: 6, width: `${item.lines[0] * 4}px`, maxWidth: '100%', filter: 'blur(3px)' }} />
-        <div style={{ height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.08)', width: `${item.lines[1] * 4}px`, maxWidth: '85%', filter: 'blur(3px)' }} />
+        <div style={{ fontSize: 14, lineHeight: 1.9, color: 'rgba(255,255,255,0.75)', filter: 'blur(4px)', userSelect: 'none', pointerEvents: 'none', wordBreak: 'keep-all' }}>
+          {item.preview}
+        </div>
       </div>
     ))}
     <div style={{ textAlign: 'center', marginTop: 20, marginBottom: 6 }}>
