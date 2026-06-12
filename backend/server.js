@@ -295,6 +295,64 @@ async function getScoreOnly(sajuInfo) {
  return Promise.resolve(JSON.stringify(scores))
 }
 
+// 대운 계산 함수
+function getDaeun(year, month, day, gender, 년천간index, 월주간지) {
+  // 월주 천간/지지 인덱스 추출
+  const 월간한자 = 월주간지[0]
+  const 월지한자 = 월주간지.replace(/[가-힣]/g, '')[1]
+  const 월간index = 천간.findIndex(t => t[0] === 월간한자)
+  const 월지index = 지지.findIndex(t => t[0] === 월지한자)
+
+  // 순행/역행: 양간+남성 or 음간+여성 → 순행
+  const 양간index = [0,2,4,6,8]
+  const isYang = 양간index.includes(년천간index)
+  const isMale = gender === '남성'
+  const 순행 = (isYang && isMale) || (!isYang && !isMale)
+
+  // 가장 가까운 절기까지 날수 계산
+  const 절기일 = [6,4,6,5,6,6,7,7,8,8,7,7]
+  let 날수 = 0
+  if (순행) {
+    // 다음 절기까지
+    const 이번달절기 = 절기일[month - 1]
+    if (day < 이번달절기) {
+      날수 = 이번달절기 - day
+    } else {
+      const 다음달 = month % 12
+      const 다음달절기 = 절기일[다음달]
+      const 이번달말일 = new Date(year, month, 0).getDate()
+      날수 = (이번달말일 - day) + 다음달절기
+    }
+  } else {
+    // 이전 절기까지
+    const 이번달절기 = 절기일[month - 1]
+    if (day >= 이번달절기) {
+      날수 = day - 이번달절기
+    } else {
+      const 전달index = (month - 2 + 12) % 12
+      const 전달절기 = 절기일[전달index]
+      날수 = day + 전달절기
+    }
+  }
+
+  const 시작나이 = Math.max(1, Math.round(날수 / 3))
+
+  // 대운 목록 생성 (8개)
+  const 대운목록 = []
+  for (let i = 0; i < 8; i++) {
+    const 나이 = 시작나이 + (i * 10)
+    const 천간idx = 순행
+      ? (월간index + 1 + i) % 10
+      : ((월간index - 1 - i) % 10 + 10) % 10
+    const 지지idx = 순행
+      ? (월지index + 1 + i) % 12
+      : ((월지index - 1 - i) % 12 + 12) % 12
+    대운목록.push({ 나이, 간지: 천간[천간idx] + 지지[지지idx] })
+  }
+
+  return { 시작나이, 순행, 대운목록 }
+}
+
 // 사주 계산 공통 함수
 function calcSaju(birthdate, birthtime, isLunar) {
   const rawDate = new Date(birthdate);
@@ -317,7 +375,7 @@ function calcSaju(birthdate, birthtime, isLunar) {
   const 월주 = get월주(year, month, day, 년주obj.천간index);
   const 시주 = get시주(birthtime, 일주obj.천간index);
 
-  return { year, month, day, 일주, 년주, 월주, 시주, 일천간index: 일주obj.천간index };
+  return { year, month, day, 일주, 년주, 월주, 시주, 일천간index: 일주obj.천간index, 년천간index: 년주obj.천간index };
 }
 
 app.post('/api/analyze', async (req, res) => {
@@ -331,7 +389,23 @@ app.post('/api/analyze', async (req, res) => {
   res.flushHeaders();
 
   const saju = calcSaju(birthdate, birthtime, isLunar);
-  const { year, month, day, 일주, 년주, 월주, 시주 } = saju;
+  const { year, month, day, 일주, 년주, 월주, 시주, 년천간index } = saju;
+
+  // 대운 계산
+  const daeunInfo = getDaeun(year, month, day, gender, 년천간index, 월주)
+  const currentAge = 2026 - year
+  const currentDaeun = daeunInfo.대운목록.find((d, i) => {
+    const next = daeunInfo.대운목록[i + 1]
+    return currentAge >= d.나이 && (!next || currentAge < next.나이)
+  })
+  const nextDaeun = currentDaeun ? daeunInfo.대운목록[daeunInfo.대운목록.indexOf(currentDaeun) + 1] : null
+  const nextNextDaeun = nextDaeun ? daeunInfo.대운목록[daeunInfo.대운목록.indexOf(nextDaeun) + 1] : null
+
+  const daeunBlock = `[대운 정보]
+- 대운 시작 나이: ${daeunInfo.시작나이}세 (${daeunInfo.순행 ? '순행' : '역행'})
+- 현재 대운: ${currentDaeun ? `${currentDaeun.간지} (${currentDaeun.나이}세~${(currentDaeun.나이 + 9)}세)` : '미상'}
+- 다음 대운: ${nextDaeun ? `${nextDaeun.간지} (${nextDaeun.나이}세~${(nextDaeun.나이 + 9)}세)` : '미상'}
+- 그 다음 대운: ${nextNextDaeun ? `${nextNextDaeun.간지} (${nextNextDaeun.나이}세~${(nextNextDaeun.나이 + 9)}세)` : '미상'}`
   const 시지힌트 = get시지라벨(시주);
 
   const 투자거주힌트 = 시지힌트
@@ -349,7 +423,7 @@ app.post('/api/analyze', async (req, res) => {
     ageGroup: getAgeGroup(year),
   })}\n\n`);
 
-    const infoBlock = `[기본 정보]
+    cconst infoBlock = `[기본 정보]
 - 이름: ${userName}
 - 성별: ${gender || '미입력'}
 - 생년월일: ${year}년 ${month}월 ${day}일 (현재 ${2026 - year}세)
@@ -359,7 +433,9 @@ app.post('/api/analyze', async (req, res) => {
 - 결혼 상태: ${maritalStatus || '미입력'}
 
 [사주팔자]
-- 년주: ${년주} / 월주: ${월주} / 일주: ${일주} / 시주: ${시주 || '미입력'}`;
+- 년주: ${년주} / 월주: ${월주} / 일주: ${일주} / 시주: ${시주 || '미입력'}
+
+${daeunBlock}`;
 
 // ── 궁합 ──────────────────────────────────────────
   if (type === '궁합') {
