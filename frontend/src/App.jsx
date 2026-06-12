@@ -269,6 +269,8 @@ export default function App() {
   const [gililText, setGililText] = useState('')
   const [isGililStreaming, setIsGililStreaming] = useState(false)
   const [gililData, setGililData] = useState(null)
+  const [selMonth, setSelMonth] = useState(0)
+  const [selDay, setSelDay] = useState(null)
 
   const abortRef = useRef(null)
   const isPaidSectionRef = useRef(false)
@@ -620,10 +622,8 @@ loadingTimersRef.current.countdown = setInterval(() => {
   }
 
   // ── 길일 결과 ──
-  if (screen === 'gilil_result') {
+ if (screen === 'gilil_result') {
     const months = gililData ? Object.values(gililData) : []
-    const [selMonth, setSelMonth] = useState(0)
-    const [selDay, setSelDay] = useState(null)
     const cur = months[selMonth]
     return (
       <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
