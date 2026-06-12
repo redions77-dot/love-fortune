@@ -1695,8 +1695,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>오늘 자정까지만</span>
           </div>
           <button style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-            onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: 'saju_' + Date.now(), name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) handlePaidAnalyze(email); else alert('결제가 취소되었습니다.') }) }) }}>
-            <span>지금 전체 분석 받기</span>
+            onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: 'saju_' + Date.now(), name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) handlePaidAnalyze(email); else alert('결제가 취소되었습니다.') }) }) }}>            <span>지금 전체 분석 받기</span>
             <span style={{ fontSize: 16, fontWeight: 900 }}>1,900원</span>
           </button>
         </div>
