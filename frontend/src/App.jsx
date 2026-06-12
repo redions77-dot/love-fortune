@@ -1707,7 +1707,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             <span>지금 전체 분석 받기 →</span>
 <span style={{ fontSize: 16, fontWeight: 900 }}>1,900원</span>
           </button>
-        </div>
       )}
   
   )
