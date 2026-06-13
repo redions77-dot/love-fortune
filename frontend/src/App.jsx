@@ -626,8 +626,10 @@ loadingTimersRef.current.countdown = setInterval(() => {
           </div>
           <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await generatePDF('deep-result-content', '마이사주_심화분석_' + (myName || '결과')) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 심화 분석 저장하기 (PDF)</button>
           <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
-        </div>
+       </div>
       </div>
+    </div>
+  </div>
     )
   }
 
