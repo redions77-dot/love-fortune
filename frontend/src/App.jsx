@@ -824,7 +824,6 @@ loadingTimersRef.current.countdown = setInterval(() => {
           </button>
         </div>
       </div>
-    </div>
     )
   }
 
