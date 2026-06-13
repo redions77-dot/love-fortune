@@ -958,23 +958,46 @@ if (emailModal) {
           <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 48px', width: '100%', boxSizing: 'border-box' }}>
             <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', marginBottom: 4, fontWeight: 600, letterSpacing: '0.12em' }}>SERVICES</p>
             <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginBottom: 20, fontWeight: 700 }}>내 돈 버는 시기, 골라서 확인하세요</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-              {[
-                { type: 'saju', char: '命', label: '나의 사주', sub: '돈이 들어오는 시기\n사주에 다 나와 있어요', badge: 'FREE PREVIEW', border: 'rgba(201,168,76,0.3)', bg: 'rgba(201,168,76,0.06)' },
-                { type: 'gunghab', char: '合', label: '궁합', sub: '이 사람이 내 귀인인지\n사주로 확인', border: 'rgba(155,29,58,0.3)', bg: 'rgba(155,29,58,0.06)', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') } },
-                { type: 'child', char: '子', label: '혼냈던 게 재능이었어요', sub: '이 아이 재능\n돈 안 되는 데 쏟고 있어요', border: 'rgba(45,122,82,0.3)', bg: 'rgba(45,122,82,0.06)' },
-                { type: '노후', char: '老', label: '내 후반전', sub: '피할 수 있는 불행이 있어요\n내 사주에 나와 있어요', border: 'rgba(45,106,155,0.3)', bg: 'rgba(45,106,155,0.06)' },
-              ].map(({ type, char, label, sub, badge, border, bg, onClick }) => (
-                <button key={type} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', cursor: 'pointer', textAlign: 'center' }}
-                  onClick={onClick || (() => { setServiceType(type); setScreen('input') })}>
-                  {badge && <span style={{ display: 'inline-block', background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 2, marginBottom: 12, border: '1px solid rgba(201,168,76,0.3)', letterSpacing: '0.1em' }}>{badge}</span>}
-                  <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 12, marginTop: badge ? 0 : 22 }}>{char}</div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6 }}>{label}</div>
-<div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{sub}</div>
-<div style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginTop: 12 }}>1,900원</div>
-                </button>
-              ))}
-            </div>
+           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+  {[
+    {
+      type: 'saju', char: '命', label: '나의 사주',
+      badge: 'FREE PREVIEW',
+      hook: '지금 이 시기, 돈이 들어오는 구조인지\n아닌지도 모르고 열심히만 하고 있는 거 아니에요?',
+      border: 'rgba(201,168,76,0.3)', bg: 'rgba(201,168,76,0.06)'
+    },
+    {
+      type: 'gunghab', char: '合', label: '궁합',
+      hook: '내가 에너지 쏟는 그 사람,\n나한테 이득인 사람인지 사주에 나와요.',
+      border: 'rgba(155,29,58,0.3)', bg: 'rgba(155,29,58,0.06)',
+      onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') }
+    },
+    {
+      type: 'child', char: '子', label: '혼냈던 게 재능이었어요',
+      hook: '애한테 화냈던 거,\n성격 문제가 아니라 타고난 기질이 달랐던 거예요.',
+      border: 'rgba(45,122,82,0.3)', bg: 'rgba(45,122,82,0.06)'
+    },
+    {
+      type: '노후', char: '老', label: '내 후반전',
+      hook: '지금 버티는 게 맞는 건지,\n정리할 타이밍인 건지 사주에 다 나와요.',
+      border: 'rgba(45,106,155,0.3)', bg: 'rgba(45,106,155,0.06)'
+    },
+  ].map(({ type, char, label, hook, badge, border, bg, onClick }) => (
+    <div key={type} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {badge && (
+        <span style={{ display: 'inline-block', background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 2, marginBottom: 12, border: '1px solid rgba(201,168,76,0.3)', letterSpacing: '0.1em' }}>{badge}</span>
+      )}
+      <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10, marginTop: badge ? 0 : 22 }}>{char}</div>
+      <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 8, textAlign: 'center' }}>{label}</div>
+      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, whiteSpace: 'pre-line', textAlign: 'center', marginBottom: 14, wordBreak: 'keep-all' }}>{hook}</div>
+      <button
+        style={{ width: '100%', padding: '11px 0', fontSize: 14, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+        onClick={onClick || (() => { setServiceType(type); setScreen('input') })}>
+        지금 확인하기 1,900원
+      </button>
+    </div>
+  ))}
+</div>
             <div style={{ marginBottom: 12 }}>
               <button style={{ width: '100%', background: 'linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.06))', border: '1px solid rgba(201,168,76,0.5)', borderRadius: 10, padding: '20px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 20, justifyContent: 'center' }} onClick={() => { setServiceType('deep'); setScreen('input') }}>
                 <div style={{ fontSize: 40 }}>🔮</div>
