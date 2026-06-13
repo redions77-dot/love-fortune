@@ -991,7 +991,9 @@ if (emailModal) {
       <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 8, textAlign: 'center' }}>{label}</div>
       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, whiteSpace: 'pre-line', textAlign: 'center', marginBottom: 14, wordBreak: 'keep-all' }}>{hook}</div>
       <button
-        style={{ width: '100%', padding: '11px 0', fontSize: 14, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+        style={{ width: '100%', padding: '11px 0', fontSize: 14, fontWeight: 800, background: 'transparent',
+color: '#C9A84C',
+border: '1px solid rgba(201,168,76,0.5)', border: 'none', borderRadius: 8, cursor: 'pointer' }}
         onClick={onClick || (() => { setServiceType(type); setScreen('input') })}>
         지금 확인하기 1,900원
       </button>
