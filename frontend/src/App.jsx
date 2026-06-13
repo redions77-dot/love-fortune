@@ -628,6 +628,8 @@ loadingTimersRef.current.countdown = setInterval(() => {
           <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
       </div>
       </div>
+      </div>
+      </div>
     )
   }
   </div>
@@ -682,6 +684,8 @@ loadingTimersRef.current.countdown = setInterval(() => {
         </div>
         <div style={{ position: 'fixed', bottom: 0, width: '100%', background: '#050D1F', borderTop: '1px solid rgba(201,169,78,0.15)', padding: '12px 20px' }}>
           <button onClick={handleRestart} style={{ width: '100%', padding: '14px', borderRadius: 10, border: '1px solid rgba(201,169,78,0.3)', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: 14, cursor: 'pointer' }}>처음으로 돌아가기</button>
+      </div>
+      </div>
       </div>
       </div>
     )
