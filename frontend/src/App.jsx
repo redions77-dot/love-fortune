@@ -1815,9 +1815,10 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
               통신판매업신고: 제2026-별내-1183호<br/>
               이메일: redions77@naver.com
             </p>
-          </div>
-        </div>
 </div>
+      </div>
+    </div>
+  </div>
  )
 return null
  
