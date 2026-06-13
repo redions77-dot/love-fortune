@@ -826,7 +826,6 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </div>
     )
   }
-  </div>
 
   // ── 궁합 결과 ──
   if (screen === 'result' && serviceType === 'gunghab') {
