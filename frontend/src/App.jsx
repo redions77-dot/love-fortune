@@ -1005,27 +1005,7 @@ border: '1px solid rgba(201,168,76,0.5)', border: 'none', borderRadius: 8, curso
     </div>
   ))}
 </div>
-            <div style={{ marginBottom: 12 }}>
-              <button style={{ width: '100%', background: 'linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.06))', border: '1px solid rgba(201,168,76,0.5)', borderRadius: 10, padding: '20px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 20, justifyContent: 'center' }} onClick={() => { setServiceType('deep'); setScreen('input') }}>
-                <div style={{ fontSize: 40 }}>🔮</div>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: '#C9A84C', letterSpacing: '0.1em', marginBottom: 6, background: 'rgba(201,168,76,0.15)', display: 'inline-block', padding: '2px 8px', borderRadius: 2, border: '1px solid rgba(201,168,76,0.3)' }}>DEEP ANALYSIS</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: '#C9A84C', marginBottom: 4 }}>사주 심화 분석</div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>10년 대운 · 월별 운세 · 귀인 분석<br/>지금 해야 할 것 vs 하지 말아야 할 것</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginTop: 6 }}>9,900원</div>
-                </div>
-              </button>
-            </div>
-            <div style={{ marginBottom: 12, opacity: 0.5 }}>
-              <div style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '20px 16px', display: 'flex', alignItems: 'center', gap: 20, justifyContent: 'center' }}>
-                <div style={{ fontSize: 40, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif' }}>吉</div>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: '#C9A84C', marginBottom: 4 }}>길일 추천</div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', lineHeight: 1.6 }}>이사·계약·개업·결혼·수술</div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>🔜 준비중</div>
-                </div>
-              </div>
-            </div>
+           
             <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.15)', marginTop: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 24 }}>
                 {[['⭐','만족도 94%'],['🔒','안전한 결제'],['⚡','즉시 확인']].map(([e,t]) => (
