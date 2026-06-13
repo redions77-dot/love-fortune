@@ -683,11 +683,12 @@ loadingTimersRef.current.countdown = setInterval(() => {
         </div>
         <div style={{ position: 'fixed', bottom: 0, width: '100%', background: '#050D1F', borderTop: '1px solid rgba(201,169,78,0.15)', padding: '12px 20px' }}>
           <button onClick={handleRestart} style={{ width: '100%', padding: '14px', borderRadius: 10, border: '1px solid rgba(201,169,78,0.3)', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: 14, cursor: 'pointer' }}>처음으로 돌아가기</button>
-        </div>
       </div>
+      </div>
+    </div>
+  </div>
     )
   }
-
   // ── 궁합 입력 ──
   if (screen === 'gunghab_input') {
     const isStep0 = gunghabStep === 0
