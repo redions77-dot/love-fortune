@@ -629,7 +629,6 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </div>
       </div>
     )
-  </div>
   }
   // ── 길일 결과 ──
  if (screen === 'gilil_result') {
