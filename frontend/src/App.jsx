@@ -7,9 +7,8 @@ async function generatePDF(elementId, filename) {
       s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
       s.onload = resolve; s.onerror = () => reject(new Error('jsPDF 로드 실패'))
       document.head.appendChild(s)
-   })
+    })
   }
-
   if (!window.html2canvas) {
     await new Promise((resolve, reject) => {
       const s = document.createElement('script')
@@ -126,18 +125,14 @@ const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'b
 
 const LOADING_STAGES = ['사주 데이터를 읽고 있어요', '기운의 흐름을 분석하고 있어요', '당신만의 풀이를 만들고 있어요']
 
-  function removeMarkers(text) {
+function removeMarkers(text) {
   return text.split('===').filter((_, i) => i % 2 === 0).join('').replace(/\n{3,}/g, '\n\n').replace(/^#{1,6}\s*/gm, '').trim()
 }
-
-  
 function parseSections(text) {
   const sections = []
-  const raw = text.split('===')
-  if (raw[0]?.trim()) sections.push({ title: '분석 결과', content: raw[0].trim() })
-  for (let i = 1; i < raw.length; i += 2) {
-    if (raw[i]?.trim()) sections.push({ title: raw[i].trim(), content: raw[i+1]?.trim() || '' })
-  }
+  const parts = text.split(/===(.+?)===/s)
+  if (parts[0]?.trim()) sections.push({ title: '분석 결과', content: parts[0].trim() })
+  for (let i = 1; i < parts.length; i += 2) sections.push({ title: parts[i].trim(), content: parts[i + 1]?.trim() || '' })
   return sections
 }
 function getMidnightCountdown() {
@@ -194,11 +189,9 @@ function Accordion({ title, content, isPaid = false, isChild = false, isGunghab 
         <span style={{ fontSize: 17, fontWeight: 700, color: open ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
         <span style={{ fontSize: 14, color: 'rgba(201,168,76,0.5)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
       </div>
-     {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 17, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{content}</div>}
-    </div>
+      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 17, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)', fontSize: 17, lineHeight: 2.2 }}>{content}</div>}    </div>
   )
 }
- 
 
 export default function App() {
   const _qs = new URLSearchParams(window.location.search)
@@ -276,8 +269,6 @@ export default function App() {
   const [gililText, setGililText] = useState('')
   const [isGililStreaming, setIsGililStreaming] = useState(false)
   const [gililData, setGililData] = useState(null)
-  const [selMonth, setSelMonth] = useState(0)
-  const [selDay, setSelDay] = useState(null)
 
   const abortRef = useRef(null)
   const isPaidSectionRef = useRef(false)
@@ -378,14 +369,11 @@ export default function App() {
     const next = prev + t
     
     // 점수 JSON 파싱 시도
-   const sepIdx = next.indexOf('===__운세점수__===');
-if (sepIdx !== -1) {
+    const scoreMatch = next.match(/===__운세점수__===([\s\S]*?)(?:===|$)/);
+if (scoreMatch) {
   try {
-    const after = next.slice(sepIdx + 16);
-    const start = after.indexOf('{');
-    const end = after.indexOf('}');
-    if (start !== -1 && end !== -1) {
-      const jsonStr = after.slice(start, end + 1);
+    const jsonStr = scoreMatch[1].match(/\{[\s\S]*?\}/)?.[0];
+    if (jsonStr) {
       const parsed = JSON.parse(jsonStr);
       if (parsed.종합) setScoreData(parsed);
     }
@@ -624,17 +612,18 @@ loadingTimersRef.current.countdown = setInterval(() => {
             <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
           </div>
-          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await generatePDF('deep-result-content', '마이사주_심화분석_' + (myName || '결과')) } catch (e) { alert('PDF 오류: ' + e.message) } }}>📄 심화 분석 저장하기 (PDF)</button>
+          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await generatePDF('deep-result-content', '마이사주_심화분석_' + (myName || '결과')) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 심화 분석 저장하기 (PDF)</button>
           <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
-      </div>
+        </div>
       </div>
     )
   }
-  </div>
-  </div>
+
   // ── 길일 결과 ──
- if (screen === 'gilil_result') {
+  if (screen === 'gilil_result') {
     const months = gililData ? Object.values(gililData) : []
+    const [selMonth, setSelMonth] = useState(0)
+    const [selDay, setSelDay] = useState(null)
     const cur = months[selMonth]
     return (
       <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
@@ -682,14 +671,11 @@ loadingTimersRef.current.countdown = setInterval(() => {
         </div>
         <div style={{ position: 'fixed', bottom: 0, width: '100%', background: '#050D1F', borderTop: '1px solid rgba(201,169,78,0.15)', padding: '12px 20px' }}>
           <button onClick={handleRestart} style={{ width: '100%', padding: '14px', borderRadius: 10, border: '1px solid rgba(201,169,78,0.3)', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: 14, cursor: 'pointer' }}>처음으로 돌아가기</button>
-      </div>
-      </div>
-      </div>
+        </div>
       </div>
     )
   }
-  </div>
-  </div>
+
   // ── 궁합 입력 ──
   if (screen === 'gunghab_input') {
     const isStep0 = gunghabStep === 0
@@ -833,7 +819,6 @@ loadingTimersRef.current.countdown = setInterval(() => {
     )
   }
 
-  </div>
   // ── 궁합 결과 ──
   if (screen === 'result' && serviceType === 'gunghab') {
     const gunghabSections = parseSections(gunghabText)
@@ -871,7 +856,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
             <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
           </div>
-          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await generatePDF('gunghab-result-content', '마이사주_궁합분석_' + (myName || '결과')) } catch (e) { alert('PDF 오류: ' + e.message) } }}>📄 궁합 분석 저장하기 (PDF)</button>
+          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await generatePDF('gunghab-result-content', '마이사주_궁합분석_' + (myName || '결과')) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 궁합 분석 저장하기 (PDF)</button>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginTop: 6, lineHeight: 1.6 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요. PC에서 이용해주세요.</p>
           <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
           {preEmail ? (
@@ -896,12 +881,11 @@ loadingTimersRef.current.countdown = setInterval(() => {
               </div>
             </div>
           )}
-         </div>
+        </div>
       </div>
     )
   }
 
-  </div>
  // ── 이메일 모달 ──
 if (emailModal) {
   return (
@@ -1084,14 +1068,12 @@ if (emailModal) {
 <button onClick={() => setScreen('refund')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>환불정책</button>
 <button onClick={() => window.open('https://open.kakao.com/me/mysajushop', '_blank')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>고객문의</button>            </div>
             <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)', marginTop: 12 }}>© 2026 봄결. All rights reserved.</p>
-         </div>
+          </div>
         </div>
-     </div>
+      </div>
     )
   }
 
-  </div>
-  </div>
 // ── 입력 화면 ──
 if (screen === 'input') {
   const serviceNames = { saju: '나의 사주', child: '혼냈던 게 재능이었어요', 노후: '내 후반전, 어떻게 흘러갈까?', deep: '사주 심화 분석' }
@@ -1298,7 +1280,6 @@ if (screen === 'input') {
     </div>
   )
 }
-  </div>
 // ── 결과 화면 ──
 if (screen === 'result') {
   const baseSections = parseSections(baseText)
@@ -1512,7 +1493,25 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   return <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
 })}
 
-     
+        {/* 행운 아이템 미리보기 */}
+      
+              <p style={{ fontSize: 16, fontWeight: 700, color: '#C9A84C', marginBottom: 14 }}>나의 행운 아이템</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '14px', border: '1px solid rgba(201,168,76,0.15)' }}>
+                  <span style={{ fontSize: 12, color: '#C9A84C', fontWeight: 600, marginBottom: 6, display: 'block' }}>행운 색깔</span>
+                  <span style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 600 }}>{color}</span>
+                </div>
+                {['마스코트','행운 방향','행운 숫자'].map(label => (
+  <div key={label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '14px', border: '1px solid rgba(201,168,76,0.15)', position: 'relative', overflow: 'hidden' }}>
+    <span style={{ fontSize: 12, color: '#C9A84C', fontWeight: 600, marginBottom: 6, display: 'block' }}>{label}</span>
+    <div style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 600, filter: 'blur(6px)', userSelect: 'none' }}>▓▓▓▓</div>
+  </div>
+))}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* 유료 스트리밍 텍스트 */}
         {!loadingPhase && isPaidStreaming && paidText && (
           <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 17, lineHeight: 2.1, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
@@ -1551,33 +1550,32 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           { title: '노후를 빛나게 하는 법', lines: [17, 11] },
         ]
      : [
-        { title: '財運 · 인생 재물 전체',
+         { title: '財運 · 인생 재물 전체',
             first: '돈이 들어오는 방식이 남들과 달라요. ',
-            blurred: '20~30대는 흘러가는 구조였다면 지금부터는 쌓이는 구조로 바뀌는 시기예요. 이 사주에서 돈이 가장 크게 움직이는 나이대가 있고, 그 시기를 어떻게 준비하느냐에 따라 말년이 완전히 달라져요. 절대 하면 안 되는 돈 실수가 딱 하나 있는데, 이걸 모르고 그냥 지나치면 나중에 반드시 후회하게 돼요. 돈이 가장 잘 모이는 조건도 따로 있어요. 지금 이 시기에 재물을 어떻게 다루느냐가 앞으로 10년을 결정해요. 이 사주에서 돈복이 터지는 시기가 언제인지, 반대로 절대 큰돈 움직이면 안 되는 시기가 언제인지도 보여요. 지금 당장 알아야 할 게 있어요.' },
+            blurred: '20~30대는 흘러가는 구조였다면 지금부터는 쌓이는 구조로 바뀌는 시기예요. 이 사주에서 돈이 가장 크게 움직이는 나이대가 있고, 그 시기를 어떻게 준비하느냐에 따라 말년이 완전히 달라져요. 절대 하면 안 되는 돈 실수가 딱 하나 있는데, 이걸 모르고 그냥 지나치면 나중에 반드시 후회하게 돼요. 돈이 가장 잘 모이는 조건도 이 사주에서 보여요.' },
           { title: '職 · 직업과 커리어',
             first: '이 사주에 딱 맞는 직업이 따로 있어요. ',
-            blurred: '지금 하는 일이 맞는지 안 맞는지도 사주에서 보여요. 어떤 환경에서 능력이 폭발하는지, 직장인으로 갈지 자영업으로 갈지도 이 사주가 답을 갖고 있어요. 지금 이 시기에 커리어에서 절대 하면 안 되는 결정이 있고, 반대로 지금 당장 움직여야 할 타이밍도 보여요. 크게 도약할 수 있는 구체적인 시기가 생각보다 가까이 와 있어요. 이 사주에서 가장 잘 맞는 직업을 모르고 엉뚱한 방향으로 에너지를 쏟으면 아무리 열심히 해도 성과가 안 나요. 방향이 맞아야 결과가 나와요.' },
+            blurred: '지금 하는 일이 맞는지 안 맞는지도 사주에서 보여요. 어떤 환경에서 능력이 폭발하는지, 직장인으로 갈지 자영업으로 갈지도 이 사주가 답을 갖고 있어요. 지금 이 시기에 커리어에서 절대 하면 안 되는 결정이 있고, 반대로 지금 당장 움직여야 할 타이밍도 보여요. 크게 도약할 수 있는 구체적인 시기가 생각보다 가까이 와 있어요.' },
           { title: '富 · 투자와 부동산',
             first: '이 사주에서 절대 손대면 안 되는 투자가 있어요. ',
-            blurred: '반대로 지금 이 사주에 가장 잘 맞는 자산 방향은 따로 있어요. 부동산이냐 금융이냐, 지금 사야 하냐 기다려야 하냐 — 이 사주 기준으로 답이 나와요. 지금 급하게 움직이면 반드시 후회하는 시기인지, 아니면 지금이 딱 타이밍인지도 보여요. 실거주에 좋은 방향과 수익 파이프라인 전략도 구체적으로 알 수 있어요. 이 사주에서 투자로 돈을 잃는 패턴이 따로 있는데, 모르면 계속 같은 실수를 반복하게 돼요. 지금 이 사주에 맞는 핵심 투자 방식 딱 하나만 알아도 달라져요.' },
+            blurred: '반대로 지금 이 사주에 가장 잘 맞는 자산 방향은 따로 있어요. 부동산이냐 금융이냐, 지금 사야 하냐 기다려야 하냐 — 이 사주 기준으로 답이 나와요. 지금 급하게 움직이면 반드시 후회하는 시기인지, 아니면 지금이 딱 타이밍인지도 보여요. 실거주에 좋은 방향과 수익 파이프라인 전략도 구체적으로 알 수 있어요.' },
           { title: '緣 · 사람과 인연',
             first: '진짜 내 편이 되어줄 사람의 특징이 보여요. ',
-            blurred: '직업군, 성격, 나이대까지 구체적으로 나와요. 반대로 곁에 두면 반드시 손해보는 사람 유형도 딱 보여요. 이 사주에서 인간관계가 꼬이는 패턴이 있는데, 그걸 알면 같은 실수를 반복하지 않을 수 있어요. 귀인이 나타나는 구체적인 시기와 상황도 알 수 있어요. 이 사주에서 에너지를 빼앗아 가는 사람 유형이 있어요. 알고 나면 "아, 그 사람이 그래서 그랬구나" 싶을 거예요. 사람을 잘 만나는 것만으로도 인생이 완전히 달라질 수 있어요.' },
-          { title: '행운 아이템 전체', isLucky: true,
+            blurred: '직업군, 성격, 나이대까지 구체적으로 나와요. 반대로 곁에 두면 반드시 손해보는 사람 유형도 딱 보여요. 이 사주에서 인간관계가 꼬이는 패턴이 있는데, 그걸 알면 같은 실수를 반복하지 않을 수 있어요. 귀인이 나타나는 구체적인 시기와 상황도 알 수 있어요.' },
+        { title: '행운 아이템 전체', isLucky: true,
             first: '이 사주의 행운 색깔·마스코트·방향·숫자·아이템이 있어요. ',
-            blurred: '단순한 미신이 아니라 이 사주 기운과 맞는 환경을 만드는 거예요. 행운 색깔만 무료에서 공개됐는데, 나머지 4가지가 사실 더 중요해요. 마스코트는 지갑이나 가방에 달고 다니면 되고, 방향은 집 배치나 자리 선택에 쓸 수 있어요. 숫자는 비밀번호나 중요한 날짜 선택에 활용하면 돼요. 생각보다 일상에서 바로 써먹을 수 있는 것들이고, 실제로 운의 흐름이 달라지는 걸 느낄 수 있어요.' },
+            blurred: '단순한 미신이 아니라 이 사주 기운과 맞는 환경을 만드는 거예요. 행운 색깔만 무료에서 공개됐는데, 나머지 4가지가 사실 더 중요해요. 생각보다 일상에서 바로 써먹을 수 있는 것들이고, 실제로 운의 흐름이 달라지는 걸 느낄 수 있어요.' },
           { title: '道 · 이 사주로 잘 사는 법',
             first: '이 사주가 잘 풀리는 조건이 딱 2가지예요. ',
-            blurred: '이것만 지키면 된다는 게 있어요. 반대로 이 사주가 망하는 패턴도 하나 있는데, 듣고 나면 "아, 내가 그걸 하고 있었구나" 싶을 거예요. 지금 당장 오늘부터 바꿀 수 있는 행동 2가지가 있고, 아는 것과 모르는 것의 차이가 생각보다 훨씬 크게 나요. 이 사주로 잘 사는 사람들의 공통점이 있어요. 방향만 맞으면 이 사주는 정말 강한 사주예요. 지금 이 순간이 그 방향을 잡을 수 있는 타이밍이에요.' },
+            blurred: '이것만 지키면 된다는 게 있어요. 반대로 이 사주가 망하는 패턴도 하나 있는데, 듣고 나면 "아, 내가 그걸 하고 있었구나" 싶을 거예요. 지금 당장 오늘부터 바꿀 수 있는 행동 2가지가 있고, 아는 것과 모르는 것의 차이가 생각보다 훨씬 크게 나요.' },
         ]
    ).map((item, idx) => (
       <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(201,168,76,0.1)' }}>
         <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
       {item.isLucky && (() => {
-  const luckySec = baseSections.find(s => s.title.includes('행운미리보기'))
-  const colorLine = (luckySec?.content || '').split('\n').find(l => l.includes('색깔'))
-  const color = colorLine ? colorLine.split(':')[1]?.trim() : null
-  return color ? (
+          const luckySec = baseSections.find(s => s.title.includes('행운미리보기'))
+          const color = luckySec?.content?.match(/색깔[:\s]+([^\n]+)/)?.[1]?.trim()
+          return color ? (
             <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 8 }}>
               🎨 행운 색깔: <span style={{ color: '#FFFFFF' }}>{color}</span>
             </p>
@@ -1613,7 +1611,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         )}
 
 {!loadingPhase && (
-  <div>
+  <>
     {/* 심화분석 업셀 */}
     {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
       <div style={{ marginTop: 28, marginBottom: 10 }}>
@@ -1680,7 +1678,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
         <button
           style={{ flex: 1, padding: '14px', fontSize: 14, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C' }}
-          onClick={async () => { try { await generatePDF('result-content', '마이사주_분석결과_' + (myName || '결과')) } catch (e) { alert('PDF 오류: ' + e.message) } }}>
+          onClick={async () => { try { await generatePDF('result-content', '마이사주_분석결과_' + (myName || '결과')) } catch(e) { alert('PDF 오류: ' + e.message) } }}>
           📄 PDF 저장
         </button>
         <button
@@ -1690,30 +1688,52 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         </button>
       </div>
 
-         {phase === 'done' && !isPaid && !isPaidStreaming && (
-        <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, zIndex: 999, background: '#111', borderTop: '1px solid rgba(201,168,76,0.3)', padding: '10px 16px 20px', boxSizing: 'border-box' }}>
+      {/* 친구 공유 — 텍스트 링크 */}
+      <p style={{ textAlign: 'center', marginBottom: 8 }}>
+        <button
+          style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+          onClick={() => {
+            navigator.clipboard?.writeText('https://mysaju.shop').then(() => alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')).catch(() => {
+              const el = document.createElement('textarea'); el.value = 'https://mysaju.shop'
+              document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el)
+              alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')
+            })
+          }}>
+          친구에게 마이사주 알려주기
+        </button>
+      </p>
+
+      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>
+    </div>
+  </>
+)}
+      </div>
+      {phase === 'done' && !isPaid && !isPaidStreaming && (
+        <div style={{
+          position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+          width: '100%', maxWidth: 480, zIndex: 999,
+          background: '#111', borderTop: '1px solid rgba(201,168,76,0.3)',
+          padding: '10px 16px 20px', boxSizing: 'border-box',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#CC2222', borderRadius: 6, padding: '5px 12px' }}>
-              <span style={{ fontSize: 14 }}></span>
+              <span style={{ fontSize: 14 }}>⏱</span>
               <span style={{ fontSize: 15, fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.05em' }}>{countdown}</span>
             </div>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>오늘 자정까지만</span>
           </div>
-          <button style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-            onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: 'saju_' + Date.now(), name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) handlePaidAnalyze(email); else alert('결제가 취소되었습니다.') }) }) }}>            <span>지금 전체 분석 받기</span>
-            <span style={{ fontSize: 16, fontWeight: 900 }}>1,900원</span>
+          <button
+            style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+            onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) handlePaidAnalyze(email); else alert('결제가 취소되었습니다.') }) }) }}>
+            <span>지금 전체 분석 받기 →</span>
+<span style={{ fontSize: 16, fontWeight: 900 }}>1,900원</span>
           </button>
-      </div>
+        </div>
       )}
-</div>
-  </div>
+    </div>
   )
 }
-  </div>
-  </div>
-  </div>
-  </div>
-  </div>
+
   // ── 약관/정책 화면들 ──
   if (screen === 'refund') return (
   <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
@@ -1829,11 +1849,12 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
               통신판매업신고: 제2026-별내-1183호<br/>
               이메일: redions77@naver.com
             </p>
-</div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
- )
-return null
- 
+  )
+
+  return null
+  return null
 }
