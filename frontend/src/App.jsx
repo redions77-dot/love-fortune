@@ -1273,7 +1273,7 @@ if (screen === 'input') {
           style={{ flex: 1, padding: '18px', fontSize: 18, fontWeight: 700, background: !canGoNext() ? 'rgba(201,168,76,0.2)' : 'linear-gradient(135deg, #C9A84C, #F5E090)', color: !canGoNext() ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 14, cursor: !canGoNext() ? 'not-allowed' : 'pointer', letterSpacing: '0.02em' }}
           onClick={goNext} disabled={!canGoNext()}>
           {currentStepId === 'blood'
-            ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : '무료 사주 분석하기 ✨')
+            ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : '내 돈 버는 시기 확인하기 ✨')
             : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음 →'}
         </button>
       </div>
@@ -1721,7 +1721,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           <button
             style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
             onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) handlePaidAnalyze(email); else alert('결제가 취소되었습니다.') }) }) }}>
-            <span>지금 전체 분석 받기 →</span>
+            <span>지금 전체 확인하기 →</span>
 <span style={{ fontSize: 16, fontWeight: 900 }}>1,900원</span>
           </button>
         </div>
