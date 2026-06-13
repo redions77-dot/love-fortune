@@ -1076,11 +1076,9 @@ if (emailModal) {
 <button onClick={() => setScreen('refund')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>환불정책</button>
 <button onClick={() => window.open('https://open.kakao.com/me/mysajushop', '_blank')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>고객문의</button>            </div>
             <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)', marginTop: 12 }}>© 2026 봄결. All rights reserved.</p>
-          </div>
+         </div>
         </div>
      </div>
-    </div>
-  </div>
     )
   }
 
