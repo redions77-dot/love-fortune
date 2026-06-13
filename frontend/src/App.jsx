@@ -8,7 +8,7 @@ async function generatePDF(elementId, filename) {
       s.onload = resolve; s.onerror = () => reject(new Error('jsPDF 로드 실패'))
       document.head.appendChild(s)
    })
-  }
+  
 }
   if (!window.html2canvas) {
     await new Promise((resolve, reject) => {
