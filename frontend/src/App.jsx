@@ -7,8 +7,9 @@ async function generatePDF(elementId, filename) {
       s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
       s.onload = resolve; s.onerror = () => reject(new Error('jsPDF 로드 실패'))
       document.head.appendChild(s)
-    })
-
+   })
+  }
+}
   if (!window.html2canvas) {
     await new Promise((resolve, reject) => {
       const s = document.createElement('script')
@@ -192,7 +193,7 @@ function Accordion({ title, content, isPaid = false, isChild = false, isGunghab 
       {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 17, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)', fontSize: 17, lineHeight: 2.2 }}>{content}</div>}    </div>
   )
 }
-}  
+ 
 
 export default function App() {
   const _qs = new URLSearchParams(window.location.search)
