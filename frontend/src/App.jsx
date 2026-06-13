@@ -949,6 +949,11 @@ if (emailModal) {
             <p style={{ fontSize: 18, lineHeight: 1.75, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', fontWeight: 700 }}>내가 크게 벌 수 있는 시기가 따로 있어요.<br/>모르면, 남이 가져가요.</p>
             <div style={{ width: 30, height: 1, background: 'rgba(201,168,76,0.3)', margin: '20px auto' }}/>
             <p style={{ fontSize: 17, lineHeight: 1.75, color: '#C9A84C', wordBreak: 'keep-all', fontWeight: 700 }}>지금 내 사주, 1,900원이면 충분해요.<br/>철학관 가기 전에 먼저 보세요.</p>
+<button
+  style={{ marginTop: 20, width: '100%', padding: '16px', fontSize: 16, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer' }}
+  onClick={() => { setServiceType('saju'); setScreen('input') }}>
+  내 돈 버는 시기 지금 확인하기 →
+</button>
           </div>
         </div>
 
