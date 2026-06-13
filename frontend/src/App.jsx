@@ -955,7 +955,7 @@ if (emailModal) {
             <button
   style={{ marginTop: 20, width: '100%', padding: '16px', fontSize: 16, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer' }}
   onClick={() => { setServiceType('saju'); setScreen('input') }}>
-  내 돈 버는 시기 지금 확인하기 →
+  내 돈 버는 시기 지금 확인하기 ▶
 </button>
           </div>
         </div>
