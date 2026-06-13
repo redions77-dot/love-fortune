@@ -721,7 +721,10 @@ loadingTimersRef.current.countdown = setInterval(() => {
       <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="text" inputMode="numeric" pattern="[0-9]*" placeholder="월" value={month} onChange={e => setMonth(e.target.value.replace(/\D/g,'').slice(0,2))} />
       <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>월</span>
       <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="text" inputMode="numeric" pattern="[0-9]*" placeholder="일" value={day} onChange={e => setDay(e.target.value.replace(/\D/g,'').slice(0,2))} />
+      <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>일</span>
         </div>
+      </>
+    )
       </>
     )
 
