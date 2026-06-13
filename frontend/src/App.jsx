@@ -826,6 +826,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
           </button>
         </div>
       </div>
+    </div>
     )
   }
 
@@ -891,8 +892,9 @@ loadingTimersRef.current.countdown = setInterval(() => {
               </div>
             </div>
           )}
-        </div>
+         </div>
       </div>
+    </div>
     )
   }
 
@@ -1080,7 +1082,9 @@ if (emailModal) {
             <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)', marginTop: 12 }}>© 2026 봄결. All rights reserved.</p>
           </div>
         </div>
-      </div>
+     </div>
+    </div>
+  </div>
     )
   }
 
@@ -1288,6 +1292,7 @@ if (screen === 'input') {
         </button>
       </div>
     </div>
+  </div>
   )
 }
 // ── 결과 화면 ──
