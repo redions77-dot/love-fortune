@@ -946,7 +946,7 @@ if (emailModal) {
             </div>
           </div>
           <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 24px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: 18, lineHeight: 1.75, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', fontWeight: 700 }}>내가 크게 벌 수 있는 시기가 따로 있어요.<br/>모르고 지나치면, 그냥 흘러가요.</p>
+            <p style={{ fontSize: 18, lineHeight: 1.75, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', fontWeight: 700 }}>내가 크게 벌 수 있는 시기가 따로 있어요.<br/>모르면, 남이 가져가요.</p>
             <div style={{ width: 30, height: 1, background: 'rgba(201,168,76,0.3)', margin: '20px auto' }}/>
             <p style={{ fontSize: 17, lineHeight: 1.75, color: '#C9A84C', wordBreak: 'keep-all', fontWeight: 700 }}>지금 내 사주, 1,900원이면 충분해요.<br/>철학관 가기 전에 먼저 보세요.</p>
           </div>
