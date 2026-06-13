@@ -893,7 +893,6 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </div>
     )
   }
-  </div>
 
  // ── 이메일 모달 ──
 if (emailModal) {
