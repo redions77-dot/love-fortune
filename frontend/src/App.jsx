@@ -630,6 +630,8 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </div>
     )
   }
+  </div>
+  </div>
   // ── 길일 결과 ──
  if (screen === 'gilil_result') {
     const months = gililData ? Object.values(gililData) : []
@@ -684,6 +686,8 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </div>
     )
   }
+  </div>
+  </div>
   // ── 궁합 입력 ──
   if (screen === 'gunghab_input') {
     const isStep0 = gunghabStep === 0
@@ -827,6 +831,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
     )
   }
 
+  </div>
   // ── 궁합 결과 ──
   if (screen === 'result' && serviceType === 'gunghab') {
     const gunghabSections = parseSections(gunghabText)
@@ -894,6 +899,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
     )
   }
 
+  </div>
  // ── 이메일 모달 ──
 if (emailModal) {
   return (
@@ -1082,6 +1088,8 @@ if (emailModal) {
     )
   }
 
+  </div>
+  </div>
 // ── 입력 화면 ──
 if (screen === 'input') {
   const serviceNames = { saju: '나의 사주', child: '혼냈던 게 재능이었어요', 노후: '내 후반전, 어떻게 흘러갈까?', deep: '사주 심화 분석' }
@@ -1288,6 +1296,7 @@ if (screen === 'input') {
     </div>
   )
 }
+  </div>
 // ── 결과 화면 ──
 if (screen === 'result') {
   const baseSections = parseSections(baseText)
@@ -1698,6 +1707,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   </div>
   )
 }
+  </div>
+  </div>
+  </div>
+  </div>
+  </div>
   // ── 약관/정책 화면들 ──
   if (screen === 'refund') return (
   <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
