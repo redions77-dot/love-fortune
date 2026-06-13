@@ -1082,7 +1082,6 @@ if (emailModal) {
     )
   }
   </div>
-  </div>
 
 // ── 입력 화면 ──
 if (screen === 'input') {
