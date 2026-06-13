@@ -1494,7 +1494,12 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 })}
 
         {/* 행운 아이템 미리보기 */}
-      
+        {!loadingPhase && !isBaseStreaming && !paidSections.length && (() => {
+          const luckySec = baseSections.find(s => s.title.includes('행운미리보기'))
+          const color = luckySec?.content?.match(/색깔[:\s]+([^\n]+)/)?.[1]?.trim()
+          if (!color) return null
+          return (
+            <div style={{ background: 'linear-gradient(135deg, #0D1B3E, #1B2A4A)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 14, padding: '22px', marginBottom: 14 }}>
               <p style={{ fontSize: 16, fontWeight: 700, color: '#C9A84C', marginBottom: 14 }}>나의 행운 아이템</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '14px', border: '1px solid rgba(201,168,76,0.15)' }}>
@@ -1562,7 +1567,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           { title: '緣 · 사람과 인연',
             first: '진짜 내 편이 되어줄 사람의 특징이 보여요. ',
             blurred: '직업군, 성격, 나이대까지 구체적으로 나와요. 반대로 곁에 두면 반드시 손해보는 사람 유형도 딱 보여요. 이 사주에서 인간관계가 꼬이는 패턴이 있는데, 그걸 알면 같은 실수를 반복하지 않을 수 있어요. 귀인이 나타나는 구체적인 시기와 상황도 알 수 있어요.' },
-        { title: '행운 아이템 전체', isLucky: true,
+          { title: '행운 아이템 전체',
             first: '이 사주의 행운 색깔·마스코트·방향·숫자·아이템이 있어요. ',
             blurred: '단순한 미신이 아니라 이 사주 기운과 맞는 환경을 만드는 거예요. 행운 색깔만 무료에서 공개됐는데, 나머지 4가지가 사실 더 중요해요. 생각보다 일상에서 바로 써먹을 수 있는 것들이고, 실제로 운의 흐름이 달라지는 걸 느낄 수 있어요.' },
           { title: '道 · 이 사주로 잘 사는 법',
@@ -1572,15 +1577,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
    ).map((item, idx) => (
       <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(201,168,76,0.1)' }}>
         <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
-      {item.isLucky && (() => {
-          const luckySec = baseSections.find(s => s.title.includes('행운미리보기'))
-          const color = luckySec?.content?.match(/색깔[:\s]+([^\n]+)/)?.[1]?.trim()
-          return color ? (
-            <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 8 }}>
-              🎨 행운 색깔: <span style={{ color: '#FFFFFF' }}>{color}</span>
-            </p>
-          ) : null
-        })()}
         <div style={{ fontSize: 14, lineHeight: 1.9, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all' }}>
           <span>{item.first}</span>
           <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{item.blurred}</span>
