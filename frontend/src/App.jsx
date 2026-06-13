@@ -1559,7 +1559,8 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
       {item.isLucky && (() => {
           const luckySec = baseSections.find(s => s.title.includes('행운미리보기'))
-          const color = luckySec?.content?.match(/색깔[:\s]+([^\n]+)/)?.[1]?.trim()
+          const colorLine = (luckySec?.content || '').split('\n').find(l => l.includes('색깔'))
+          const color = colorLine ? colorLine.split(':')[1]?.trim() : null
           return color ? (
             <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 8 }}>
               🎨 행운 색깔: <span style={{ color: '#FFFFFF' }}>{color}</span>
