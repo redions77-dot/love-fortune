@@ -131,9 +131,11 @@ function removeMarkers(text) {
 }
 function parseSections(text) {
   const sections = []
-  const parts = text.split('===').reduce((a,p,i)=>i%2===0?[...a,p]:[...a.slice(0,-1),a[a.length-1]+'==='+p],[])
-  if (parts[0]?.trim()) sections.push({ title: '분석 결과', content: parts[0].trim() })
-  for (let i = 1; i < parts.length; i += 2) sections.push({ title: parts[i].trim(), content: parts[i + 1]?.trim() || '' })
+  const raw = text.split('===')
+  if (raw[0]?.trim()) sections.push({ title: '분석 결과', content: raw[0].trim() })
+  for (let i = 1; i < raw.length; i += 2) {
+    if (raw[i]?.trim()) sections.push({ title: raw[i].trim(), content: raw[i+1]?.trim() || '' })
+  }
   return sections
 }
 function getMidnightCountdown() {
