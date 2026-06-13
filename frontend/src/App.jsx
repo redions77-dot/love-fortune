@@ -716,12 +716,11 @@ loadingTimersRef.current.countdown = setInterval(() => {
           <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: lunar ? 600 : 400, border: `1px solid ${lunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: lunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: lunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setLunar(true)}>음력 🌙</button>
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 }}>
-          <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="년도" value={year} onChange={e => setYear(e.target.value.slice(0,4))} />
-          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>년</span>
-          <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="월" value={month} onChange={e => setMonth(e.target.value.slice(0,2))} />
-          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>월</span>
-          <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={day} onChange={e => setDay(e.target.value.slice(0,2))} />
-          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>일</span>
+<input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="text" inputMode="numeric" pattern="[0-9]*" placeholder="년도" value={year} onChange={e => setYear(e.target.value.replace(/\D/g,'').slice(0,4))} />
+      <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>년</span>
+      <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="text" inputMode="numeric" pattern="[0-9]*" placeholder="월" value={month} onChange={e => setMonth(e.target.value.replace(/\D/g,'').slice(0,2))} />
+      <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>월</span>
+      <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="text" inputMode="numeric" pattern="[0-9]*" placeholder="일" value={day} onChange={e => setDay(e.target.value.replace(/\D/g,'').slice(0,2))} />
         </div>
       </>
     )
