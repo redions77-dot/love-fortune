@@ -8,7 +8,7 @@ async function generatePDF(elementId, filename) {
       s.onload = resolve; s.onerror = () => reject(new Error('jsPDF 로드 실패'))
       document.head.appendChild(s)
     })
-  }
+  }const parts = text.split(new RegExp('===([\s\S]+?)==='))
   if (!window.html2canvas) {
     await new Promise((resolve, reject) => {
       const s = document.createElement('script')
@@ -130,7 +130,7 @@ function removeMarkers(text) {
 }
 function parseSections(text) {
   const sections = []
-  const parts = text.split(new RegExp('===([\s\S]+?)==='))
+  const parts = text.split('===').reduce((a,p,i)=>i%2===0?[...a,p]:[...a.slice(0,-1),a[a.length-1]+'==='+p],[])
   if (parts[0]?.trim()) sections.push({ title: '분석 결과', content: parts[0].trim() })
   for (let i = 1; i < parts.length; i += 2) sections.push({ title: parts[i].trim(), content: parts[i + 1]?.trim() || '' })
   return sections
