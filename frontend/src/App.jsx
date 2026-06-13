@@ -1286,7 +1286,6 @@ if (screen === 'input') {
         </button>
       </div>
     </div>
-  </div>
   )
 }
 // ── 결과 화면 ──
