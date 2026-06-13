@@ -630,6 +630,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </div>
       </div>
     )
+  </div>
   }
   // ── 길일 결과 ──
  if (screen === 'gilil_result') {
@@ -684,6 +685,8 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </div>
       </div>
     )
+  </div>
+  </div>
   }
   // ── 궁합 입력 ──
   if (screen === 'gunghab_input') {
@@ -827,6 +830,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </div>
     )
   }
+  </div>
 
   // ── 궁합 결과 ──
   if (screen === 'result' && serviceType === 'gunghab') {
@@ -894,6 +898,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </div>
     )
   }
+  </div>
 
  // ── 이메일 모달 ──
 if (emailModal) {
@@ -1082,6 +1087,8 @@ if (emailModal) {
      </div>
     )
   }
+  </div>
+  </div>
 
 // ── 입력 화면 ──
 if (screen === 'input') {
@@ -1699,6 +1706,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 </div>
   </div>
   )
+  </div>
+  </div>
+  </div>
+  </div>
+  </div>
 }
   // ── 약관/정책 화면들 ──
   if (screen === 'refund') return (
