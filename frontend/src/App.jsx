@@ -988,7 +988,7 @@ if (emailModal) {
       border: 'rgba(45,106,155,0.3)', bg: 'rgba(45,106,155,0.06)'
     },
   ].map(({ type, char, label, hook, badge, border, bg, onClick }) => (
-    <div key={type} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div key={type} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 220 }}>
       {badge && (
         <span style={{ display: 'inline-block', background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 2, marginBottom: 12, border: '1px solid rgba(201,168,76,0.3)', letterSpacing: '0.1em' }}>{badge}</span>
       )}
