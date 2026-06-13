@@ -9,7 +9,7 @@ async function generatePDF(elementId, filename) {
       document.head.appendChild(s)
    })
   }
-}
+
   if (!window.html2canvas) {
     await new Promise((resolve, reject) => {
       const s = document.createElement('script')
