@@ -1493,29 +1493,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   return <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
 })}
 
-        {/* 행운 아이템 미리보기 */}
-        {!loadingPhase && !isBaseStreaming && !paidSections.length && (() => {
-          const luckySec = baseSections.find(s => s.title.includes('행운미리보기'))
-          const color = luckySec?.content?.match(/색깔[:\s]+([^\n]+)/)?.[1]?.trim()
-          if (!color) return null
-          return (
-            <div style={{ background: 'linear-gradient(135deg, #0D1B3E, #1B2A4A)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 14, padding: '22px', marginBottom: 14 }}>
-              <p style={{ fontSize: 16, fontWeight: 700, color: '#C9A84C', marginBottom: 14 }}>나의 행운 아이템</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '14px', border: '1px solid rgba(201,168,76,0.15)' }}>
-                  <span style={{ fontSize: 12, color: '#C9A84C', fontWeight: 600, marginBottom: 6, display: 'block' }}>행운 색깔</span>
-                  <span style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 600 }}>{color}</span>
-                </div>
-                {['마스코트','행운 방향','행운 숫자'].map(label => (
-  <div key={label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '14px', border: '1px solid rgba(201,168,76,0.15)', position: 'relative', overflow: 'hidden' }}>
-    <span style={{ fontSize: 12, color: '#C9A84C', fontWeight: 600, marginBottom: 6, display: 'block' }}>{label}</span>
-    <div style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 600, filter: 'blur(6px)', userSelect: 'none' }}>▓▓▓▓</div>
-  </div>
-))}
-              </div>
-            </div>
-          )
-        })()}
 
         {/* 유료 스트리밍 텍스트 */}
         {!loadingPhase && isPaidStreaming && paidText && (
