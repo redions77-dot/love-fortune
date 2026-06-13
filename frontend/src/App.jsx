@@ -963,23 +963,23 @@ if (emailModal) {
     {
       type: 'saju', char: '命', label: '나의 사주',
       badge: 'FREE PREVIEW',
-      hook: '지금 이 시기, 돈이 들어오는 구조인지\n아닌지도 모르고 열심히만 하고 있는 거 아니에요?',
+      hook: '지금 돈이 들어오는 구조인지\n아직도 모르고 열심히만 하고 있어요?',
       border: 'rgba(201,168,76,0.3)', bg: 'rgba(201,168,76,0.06)'
     },
     {
       type: 'gunghab', char: '合', label: '궁합',
-      hook: '내가 에너지 쏟는 그 사람,\n나한테 이득인 사람인지 사주에 나와요.',
+      hook: '그 사람이 나한테\n이득인 사람인지 사주에 나와요.',
       border: 'rgba(155,29,58,0.3)', bg: 'rgba(155,29,58,0.06)',
       onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') }
     },
     {
       type: 'child', char: '子', label: '혼냈던 게 재능이었어요',
-      hook: '애한테 화냈던 거,\n성격 문제가 아니라 타고난 기질이 달랐던 거예요.',
+      hook: '화냈던 게 성격 문제가 아니에요.\n타고난 기질이 달랐던 거예요.',
       border: 'rgba(45,122,82,0.3)', bg: 'rgba(45,122,82,0.06)'
     },
     {
       type: '노후', char: '老', label: '내 후반전',
-      hook: '지금 버티는 게 맞는 건지,\n정리할 타이밍인 건지 사주에 다 나와요.',
+      hook: '버티는 게 맞는지, 정리할 타이밍인지\n사주에 다 나와요.',
       border: 'rgba(45,106,155,0.3)', bg: 'rgba(45,106,155,0.06)'
     },
   ].map(({ type, char, label, hook, badge, border, bg, onClick }) => (
