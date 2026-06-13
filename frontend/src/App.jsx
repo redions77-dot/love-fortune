@@ -962,8 +962,8 @@ if (emailModal) {
               {[
                 { type: 'saju', char: '命', label: '나의 사주', sub: '돈이 들어오는 시기\n사주에 다 나와 있어요', badge: 'FREE PREVIEW', border: 'rgba(201,168,76,0.3)', bg: 'rgba(201,168,76,0.06)' },
                 { type: 'gunghab', char: '合', label: '궁합', sub: '이 사람이 내 귀인인지\n사주로 확인', border: 'rgba(155,29,58,0.3)', bg: 'rgba(155,29,58,0.06)', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') } },
-                { type: 'child', char: '子', label: '혼냈던 게 재능이었어요', sub: '타고난 재능·진로\n미리 확인', border: 'rgba(45,122,82,0.3)', bg: 'rgba(45,122,82,0.06)' },
-                { type: '노후', char: '老', label: '내 후반전', sub: '말년 재물·건강\n황혼 인연 미리 확인', border: 'rgba(45,106,155,0.3)', bg: 'rgba(45,106,155,0.06)' },
+                { type: 'child', char: '子', label: '혼냈던 게 재능이었어요', sub: '이 아이 재능\n돈 안 되는 데 쏟고 있어요', border: 'rgba(45,122,82,0.3)', bg: 'rgba(45,122,82,0.06)' },
+                { type: '노후', char: '老', label: '내 후반전', sub: '피할 수 있는 불행이 있어요\n내 사주에 나와 있어요', border: 'rgba(45,106,155,0.3)', bg: 'rgba(45,106,155,0.06)' },
               ].map(({ type, char, label, sub, badge, border, bg, onClick }) => (
                 <button key={type} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', cursor: 'pointer', textAlign: 'center' }}
                   onClick={onClick || (() => { setServiceType(type); setScreen('input') })}>
