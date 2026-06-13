@@ -683,7 +683,6 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </div>
       </div>
     )
-  </div>
   }
   // ── 궁합 입력 ──
   if (screen === 'gunghab_input') {
