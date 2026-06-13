@@ -1681,21 +1681,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         </button>
       </div>
 
-      {/* 친구 공유 — 텍스트 링크 */}
-      <p style={{ textAlign: 'center', marginBottom: 8 }}>
-        <button
-          style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-          onClick={() => {
-            navigator.clipboard?.writeText('https://mysaju.shop').then(() => alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')).catch(() => {
-              const el = document.createElement('textarea'); el.value = 'https://mysaju.shop'
-              document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el)
-              alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')
-            })
-          }}>
-         친구에게 마이사주 알려주기
-        </button>
-      </p>
-
          {phase === 'done' && !isPaid && !isPaidStreaming && (
         <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, zIndex: 999, background: '#111', borderTop: '1px solid rgba(201,168,76,0.3)', padding: '10px 16px 20px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -1712,7 +1697,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       </div>
       )}
     </div>
-  </div>
   </div>
   )
 }
