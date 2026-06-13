@@ -1700,7 +1700,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, zIndex: 999, background: '#111', borderTop: '1px solid rgba(201,168,76,0.3)', padding: '10px 16px 20px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#CC2222', borderRadius: 6, padding: '5px 12px' }}>
-              <span style={{ fontSize: 14 }}>⏱</span>
+              <span style={{ fontSize: 14 }}></span>
               <span style={{ fontSize: 15, fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.05em' }}>{countdown}</span>
             </div>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>오늘 자정까지만</span>
