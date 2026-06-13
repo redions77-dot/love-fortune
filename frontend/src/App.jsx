@@ -192,6 +192,7 @@ function Accordion({ title, content, isPaid = false, isChild = false, isGunghab 
       {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 17, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)', fontSize: 17, lineHeight: 2.2 }}>{content}</div>}    </div>
   )
 }
+}  
 
 export default function App() {
   const _qs = new URLSearchParams(window.location.search)
