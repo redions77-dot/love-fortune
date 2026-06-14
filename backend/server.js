@@ -123,7 +123,8 @@ function get시주(birthtime, 일천간index) {
   if (!birthtime) return null;
   const [h] = birthtime.split(':').map(Number);
   // 정시 기준: 각 시의 시작은 홀수시 정각 (子=23시, 丑=01시, 寅=03시...)
-  const 시지index = Math.floor(((h + 1) % 24) / 2) % 12;
+  const 시간대 = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,0]
+  const 시지index = 시간대[h];
   const 시간시작표 = [0, 2, 4, 6, 8, 0, 2, 4, 6, 8];
   const 시천간index = (시간시작표[일천간index] + 시지index) % 10;
   return 천간[시천간index] + 지지[시지index];
