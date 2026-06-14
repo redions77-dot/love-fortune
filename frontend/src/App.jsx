@@ -798,6 +798,34 @@ loadingTimersRef.current.countdown = setInterval(() => {
               <TimeSelector ampm={partnerTimeAmPm} setAmpm={setPartnerTimeAmPm} hour={partnerTimeHour} setHour={setPartnerTimeHour} min={partnerTimeMin} setMin={setPartnerTimeMin} unknown={partnerTimeUnknown} setUnknown={setPartnerTimeUnknown} />
             </>
           )}
+       {!isStep0 && !isStep1 && (
+            <div style={{ marginTop: 32, background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', border: '1px solid rgba(155,29,58,0.4)', borderRadius: 16, padding: '24px 20px', marginBottom: 8 }}>
+              <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 14, textAlign: 'center' }}>💕 결제하면 이런 내용을 확인할 수 있어요</p>
+              {[
+                { title: '성격 궁합', preview: '두 사람은 겉으로 보기엔 달라 보이지만, 사주 구조상 서로의 빈자리를 채워주는 관계예요.', blurred: '한 사람이 불을 지피면 다른 한 사람이 방향을 잡아주는 구조라 함께할수록 시너지가 나요. 단, 속도 차이에서 오는 충돌이 생길 수 있고 이걸 어떻게 다루느냐가 관건이에요.' },
+                { title: '돈 궁합', preview: null, blurred: '두 사람이 같이 있을 때 돈이 모이는 구조인지, 아니면 쓰게 되는 구조인지 사주에 다 나와요. 공동 투자나 재정 운용 방향도 확인할 수 있어요.' },
+                { title: '결혼 궁합', preview: null, blurred: '이 관계가 인연으로 묶이는 사주인지, 결혼 후 운의 흐름이 어떻게 달라지는지 분석해드려요.' },
+                { title: '두 사람의 앞으로 3년', preview: null, blurred: '2025~2027년, 두 사람에게 가장 중요한 시기가 언제인지, 함께 올라타야 할 타이밍과 조심해야 할 구간이 나와요.' },
+                { title: '궁합 총평', preview: null, blurred: '이 사주 조합이 전체적으로 어떤 관계인지, 잘 맞는 이유와 주의할 점을 한 번에 정리해드려요.' },
+              ].map((item, idx) => (
+                <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(155,29,58,0.06)', borderRadius: 10, border: '1px solid rgba(155,29,58,0.2)' }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#E8728A', marginBottom: item.preview ? 8 : 0 }}>💕 {item.title}</p>
+                  {item.preview && (
+                    <div style={{ fontSize: 13, lineHeight: 1.9, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all' }}>
+                      <span>{item.preview}</span>
+                      <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{item.blurred}</span>
+                    </div>
+                  )}
+                  {!item.preview && (
+                    <div style={{ fontSize: 13, lineHeight: 1.9, color: 'rgba(255,255,255,0.3)', filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none', wordBreak: 'keep-all' }}>
+                      {item.blurred}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 12 }}>↓ 아래 버튼으로 1,900원에 전체 확인</p>
+            </div>
+          )}
         </div>
         <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
           <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => {
