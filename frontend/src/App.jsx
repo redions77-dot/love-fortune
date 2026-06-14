@@ -250,7 +250,7 @@ export default function App() {
   const [loadingStage, setLoadingStage] = useState(0)
 
   const [관계유형, set관계유형] = useState('연인')
-  const [gunghabStep, setGunghabStep] = useState(1)
+  const [gunghabStep, setGunghabStep] = useState(0)
   const [partnerGender, setPartnerGender] = useState(() => _qs.get('pg') || '')
   const [partnerBirthYear, setPartnerBirthYear] = useState(() => _qs.get('pby') || '')
   const [partnerBirthMonth, setPartnerBirthMonth] = useState(() => _qs.get('pbm') || '')
