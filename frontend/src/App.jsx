@@ -196,7 +196,7 @@ function DateRow({ year, setYear, month, setMonth, day, setDay, lunar, setLunar 
       </div>
     </>
    )
-  )
+}
 }
 
 function Accordion({
