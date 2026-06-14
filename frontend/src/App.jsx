@@ -800,7 +800,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
           )}
        {!isStep0 && !isStep1 && (
             <div style={{ marginTop: 32, background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', border: '1px solid rgba(155,29,58,0.4)', borderRadius: 16, padding: '24px 20px', marginBottom: 8 }}>
-              <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 14, textAlign: 'center' }}>💕 결제하면 이런 내용을 확인할 수 있어요</p>
+              <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 14, textAlign: 'center' }}>✦ 결제하면 이런 내용을 확인할 수 있어요</p>
               {[
                 { title: '성격 궁합', preview: '두 사람은 겉으로 보기엔 달라 보이지만, 사주 구조상 서로의 빈자리를 채워주는 관계예요.', blurred: '한 사람이 불을 지피면 다른 한 사람이 방향을 잡아주는 구조라 함께할수록 시너지가 나요. 단, 속도 차이에서 오는 충돌이 생길 수 있고 이걸 어떻게 다루느냐가 관건이에요.' },
                 { title: '돈 궁합', preview: null, blurred: '두 사람이 같이 있을 때 돈이 모이는 구조인지, 아니면 쓰게 되는 구조인지 사주에 다 나와요. 공동 투자나 재정 운용 방향도 확인할 수 있어요.' },
@@ -809,7 +809,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
                 { title: '궁합 총평', preview: null, blurred: '이 사주 조합이 전체적으로 어떤 관계인지, 잘 맞는 이유와 주의할 점을 한 번에 정리해드려요.' },
               ].map((item, idx) => (
                 <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(155,29,58,0.06)', borderRadius: 10, border: '1px solid rgba(155,29,58,0.2)' }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#E8728A', marginBottom: item.preview ? 8 : 0 }}>💕 {item.title}</p>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#E8728A', marginBottom: item.preview ? 8 : 0 }}>✦ {item.title}</p>
                   {item.preview && (
                     <div style={{ fontSize: 13, lineHeight: 1.9, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all' }}>
                       <span>{item.preview}</span>
