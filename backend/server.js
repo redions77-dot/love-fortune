@@ -336,7 +336,7 @@ function getDaeun(year, month, day, gender, 년천간index, 월주간지) {
     }
   }
 
-  const 시작나이 = Math.max(1, Math.round(날수 / 3))
+  const 시작나이 = Math.round(날수 / 3)
 
   // 대운 목록 생성 (8개)
   const 대운목록 = []
