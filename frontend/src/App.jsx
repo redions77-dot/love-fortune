@@ -800,7 +800,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
   else if (isStep1) setGunghabStep(0)
   else setGunghabStep(1)
 }}>←</button>
-          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: (isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: (isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: (isStep1 ? !canStep1Next : !canStep2Next) ? 'not-allowed' : 'pointer' }}
+          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: (isStep0 ? !관계유형 : isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: (isStep0 ? !관계유형 : isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: (isStep0 ? !관계유형 : isStep1 ? !canStep1Next : !canStep2Next) ? 'not-allowed' : 'pointer' }}
             disabled={isStep0 ? !관계유형 : isStep1 ? !canStep1Next : !canStep2Next}
            onClick={() => {
   if (isStep0) { setGunghabStep(1); return }
