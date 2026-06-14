@@ -179,6 +179,28 @@ function AnalysisLoading({ countdown, stageIndex }) {
   )
 }
 
+function DateRow({ year, setYear, month, setMonth, day, setDay, lunar, setLunar }) {
+  return (
+    <>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: !lunar ? 600 : 400, border: `1px solid ${!lunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: !lunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: !lunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setLunar(false)}>양력 🌞</button>
+        <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: lunar ? 600 : 400, border: `1px solid ${lunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: lunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: lunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setLunar(true)}>음력 🌙</button>
+      </div>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 }}>
+        <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="년도" value={year} onChange={e => setYear(e.target.value.slice(0,4))} />
+        <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>년</span>
+        <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="월" value={month} onChange={e => setMonth(e.target.value.slice(0,2))} />
+        <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>월</span>
+        <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={day} onChange={e => setDay(e.target.value.slice(0,2))} />
+        <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>일</span>
+      </div>
+    </>
+  )
+}
+
+function Accordion({
+
+
 function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, isGilil = false, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   const borderColor = isGunghab ? 'rgba(155,29,58,0.4)' : isChild ? 'rgba(45,122,82,0.4)' : isGilil ? 'rgba(201,168,76,0.4)' : isPaid ? 'rgba(201,168,76,0.4)' : 'rgba(201,168,76,0.15)'
@@ -709,23 +731,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </>
     )
 
-    const DateRow = ({ year, setYear, month, setMonth, day, setDay, lunar, setLunar }) => (
-      <>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: !lunar ? 600 : 400, border: `1px solid ${!lunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: !lunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: !lunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setLunar(false)}>양력 🌞</button>
-          <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: lunar ? 600 : 400, border: `1px solid ${lunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: lunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: lunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setLunar(true)}>음력 🌙</button>
-        </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 }}>
-          <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="text" inputMode="numeric" pattern="[0-9]*" placeholder="년도" value={year} onChange={e => { const v = e.target.value.replace(/[^0-9]/g, '').slice(0, 4); setYear(v) }} />
-          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>년</span>
-          <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="text" inputMode="numeric" pattern="[0-9]*" placeholder="월" value={month} onChange={e => { const v = e.target.value.replace(/[^0-9]/g, '').slice(0, 2); setMonth(v) }} />
-          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>월</span>
-          <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="text" inputMode="numeric" pattern="[0-9]*" placeholder="일" value={day} onChange={e => { const v = e.target.value.replace(/[^0-9]/g, '').slice(0, 2); setDay(v) }} />
-          <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>일</span>
-        </div>
-      </>
-    )
-    return (
+        return (
       <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
         <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
           <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>合</div>
