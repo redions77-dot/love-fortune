@@ -740,31 +740,31 @@ loadingTimersRef.current.countdown = setInterval(() => {
         </div>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
           {isStep0 && (
-  <>
-    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>어떤 관계인가요?</h2>
-    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 24 }}>관계에 맞는 분석을 해드려요</p>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {[
-        { value: '직장상사', emoji: '👔', label: '직장 상사', sub: '왜 이 상사가 나를 힘들게 하는지' },
-        { value: '직장동료', emoji: '🤝', label: '직장 동료', sub: '같이 일하면 어떤 팀이 되는지' },
-        { value: '가족', emoji: '👨‍👩‍👧', label: '가족', sub: '왜 가족인데 이렇게 힘든지' },
-        { value: '친구', emoji: '👫', label: '오랜 친구', sub: '이 친구가 진짜 내 편인지' },
-        { value: '연인', emoji: '💕', label: '연인 / 부부', sub: '우리 잘 맞는지 사주로 확인' },
-      ].map(({ value, emoji, label, sub }) => (
-        <button key={value}
-          style={{ padding: '18px 20px', border: `2px solid ${관계유형 === value ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: 관계유형 === value ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.15s' }}
-          onClick={() => set관계유형(value)}>
-          <span style={{ fontSize: 28 }}>{emoji}</span>
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 관계유형 === value ? '#C9A84C' : '#FFFFFF' }}>{label}</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{sub}</div>
-          </div>
-        </button>
-      ))}
-    </div>
-  </>
-)}
-         {!isStep0 && isStep1 ? (
+            <>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>어떤 관계인가요?</h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 24 }}>관계에 맞는 분석을 해드려요</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[
+                  { value: '직장상사', emoji: '👔', label: '직장 상사', sub: '왜 이 상사가 나를 힘들게 하는지' },
+                  { value: '직장동료', emoji: '🤝', label: '직장 동료', sub: '같이 일하면 어떤 팀이 되는지' },
+                  { value: '가족', emoji: '👨‍👩‍👧', label: '가족', sub: '왜 가족인데 이렇게 힘든지' },
+                  { value: '친구', emoji: '👫', label: '오랜 친구', sub: '이 친구가 진짜 내 편인지' },
+                  { value: '연인', emoji: '💕', label: '연인 / 부부', sub: '우리 잘 맞는지 사주로 확인' },
+                ].map(({ value, emoji, label, sub }) => (
+                  <button key={value}
+                    style={{ padding: '18px 20px', border: `2px solid ${관계유형 === value ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: 관계유형 === value ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.15s' }}
+                    onClick={() => set관계유형(value)}>
+                    <span style={{ fontSize: 28 }}>{emoji}</span>
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 관계유형 === value ? '#C9A84C' : '#FFFFFF' }}>{label}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{sub}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          {isStep1 && (
             <>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>나의 정보</h2>
               <div style={{ marginBottom: 16 }}>
@@ -778,7 +778,8 @@ loadingTimersRef.current.countdown = setInterval(() => {
               <DateRow year={birthYear} setYear={setBirthYear} month={birthMonth} setMonth={setBirthMonth} day={birthDay} setDay={setBirthDay} lunar={isLunar} setLunar={setIsLunar} />
               <TimeSelector ampm={timeAmPm} setAmpm={setTimeAmPm} hour={timeHour} setHour={setTimeHour} min={timeMin} setMin={setTimeMin} unknown={timeUnknown} setUnknown={setTimeUnknown} />
             </>
-          ) : (
+          )}
+          {!isStep0 && !isStep1 && (
             <>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>상대방 정보</h2>
               <div style={{ marginBottom: 16 }}>
