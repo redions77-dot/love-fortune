@@ -195,6 +195,7 @@ function DateRow({ year, setYear, month, setMonth, day, setDay, lunar, setLunar 
         <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>일</span>
       </div>
     </>
+   )
   )
 }
 
