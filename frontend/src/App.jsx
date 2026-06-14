@@ -1584,7 +1584,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.7)', textAlign: 'center', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 18 }}>더 깊이 알고 싶다면?</p>
         <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '22px', marginBottom: 12 }}>
           <p style={{ fontSize: 16, fontWeight: 700, color: '#C9A84C', marginBottom: 10 }}>🔮 사주 심화 분석</p>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.9, marginBottom: 16 }}>기본 분석엔 없어요. 2026 하반기, 내가 올라타야 할 달 vs 조심해야 할 달. 귀인이 오는 시기까지.</p>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.9, marginBottom: 16 }}>기본 분석에서 못 말한 게 있어요.<br/>이 사주에서 절대 하면 안 되는 결정이 하나 있고, 귀인이 나타나는 시기가 딱 찍혀요.<br/>2027년이 나한테 기회인지 위기인지도요.</p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 26, fontWeight: 900, color: '#C9A84C' }}>9,900원</span>
             <button style={{ padding: '14px 24px', fontSize: 15, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
