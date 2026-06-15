@@ -801,13 +801,23 @@ loadingTimersRef.current.countdown = setInterval(() => {
        {!isStep0 && !isStep1 && (
             <div style={{ marginTop: 32, background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', border: '1px solid rgba(155,29,58,0.4)', borderRadius: 16, padding: '24px 20px', marginBottom: 8 }}>
               <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 14, textAlign: 'center' }}>✦ 결제하면 이런 내용을 확인할 수 있어요</p>
-              {[
-                { title: '성격 궁합', preview: '두 사람은 겉으로 보기엔 달라 보이지만, 사주 구조상 서로의 빈자리를 채워주는 관계예요.', blurred: '한 사람이 불을 지피면 다른 한 사람이 방향을 잡아주는 구조라 함께할수록 시너지가 나요. 단, 속도 차이에서 오는 충돌이 생길 수 있고 이걸 어떻게 다루느냐가 관건이에요.' },
-                { title: '돈 궁합', preview: null, blurred: '두 사람이 같이 있을 때 돈이 모이는 구조인지, 아니면 쓰게 되는 구조인지 사주에 다 나와요. 공동 투자나 재정 운용 방향도 확인할 수 있어요.' },
-                { title: '결혼 궁합', preview: null, blurred: '이 관계가 인연으로 묶이는 사주인지, 결혼 후 운의 흐름이 어떻게 달라지는지 분석해드려요.' },
-                { title: '두 사람의 앞으로 3년', preview: null, blurred: '2025~2027년, 두 사람에게 가장 중요한 시기가 언제인지, 함께 올라타야 할 타이밍과 조심해야 할 구간이 나와요.' },
-                { title: '궁합 총평', preview: null, blurred: '이 사주 조합이 전체적으로 어떤 관계인지, 잘 맞는 이유와 주의할 점을 한 번에 정리해드려요.' },
-              ].map((item, idx) => (
+              {(() => {
+                const isLover = 관계유형 === '연인'
+                const thirdItem = isLover
+                  ? { title: '결혼 궁합', blurred: '이 관계가 인연으로 묶이는 사주인지, 결혼 후 운의 흐름이 어떻게 달라지는지 분석해드려요.' }
+                  : 관계유형 === '가족'
+                  ? { title: '가족 인연', blurred: '이 가족이 사주적으로 어떤 인연으로 묶여있는지, 서로에게 어떤 의미를 주는 존재인지 분석해드려요.' }
+                  : 관계유형 === '친구'
+                  ? { title: '우정의 깊이', blurred: '이 친구와의 인연이 사주적으로 얼마나 깊은지, 앞으로도 계속 함께할 인연인지 짚어드려요.' }
+                  : { title: '직장 내 영향력', blurred: '이 사람과의 관계가 회사 내에서 내 입지나 평판에 어떤 영향을 주는지, 함께 일할 때 주의해야 할 포인트를 짚어드려요.' }
+                return [
+                  { title: isLover ? '성격 궁합' : '성격 케미', preview: '두 사람은 겉으로 보기엔 달라 보이지만, 사주 구조상 서로의 빈자리를 채워주는 관계예요.', blurred: '한 사람이 불을 지피면 다른 한 사람이 방향을 잡아주는 구조라 함께할수록 시너지가 나요. 단, 속도 차이에서 오는 충돌이 생길 수 있고 이걸 어떻게 다루느냐가 관건이에요.' },
+                  { title: '돈 궁합', preview: null, blurred: '두 사람이 같이 있을 때 돈이 모이는 구조인지, 아니면 쓰게 되는 구조인지 사주에 다 나와요. 공동 투자나 재정 운용 방향도 확인할 수 있어요.' },
+                  { title: thirdItem.title, preview: null, blurred: thirdItem.blurred },
+                  { title: '두 사람의 앞으로 3년', preview: null, blurred: '2025~2027년, 두 사람에게 가장 중요한 시기가 언제인지, 함께 올라타야 할 타이밍과 조심해야 할 구간이 나와요.' },
+                  { title: isLover ? '궁합 총평' : '관계 총평', preview: null, blurred: '이 사주 조합이 전체적으로 어떤 관계인지, 잘 맞는 이유와 주의할 점을 한 번에 정리해드려요.' },
+                ]
+              })().map((item, idx) => (
                 <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(155,29,58,0.06)', borderRadius: 10, border: '1px solid rgba(155,29,58,0.2)' }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#E8728A', marginBottom: item.preview ? 8 : 0 }}>✦ {item.title}</p>
                   {item.preview && (
