@@ -858,8 +858,8 @@ loadingTimersRef.current.countdown = setInterval(() => {
       <div style={{ minHeight: '100vh', background: '#050D1F' }}>
         <div id="gunghab-result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box' }}>
           <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
-            <span style={{ fontSize: 36 }}>💕</span>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginTop: 8 }}>두 사람의 궁합 분석</h2>
+            {관계유형 === '연인' && <span style={{ fontSize: 36 }}>💕</span>}
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginTop: 8 }}>{관계유형 === '연인' ? '두 사람의 궁합 분석' : '두 사람의 사주 분석'}</h2>
           </div>
           {gunghabSajuData && (
             <div style={{ marginBottom: 16 }}>
