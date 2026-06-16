@@ -1030,7 +1030,7 @@ if (emailModal) {
       border: 'rgba(45,106,155,0.3)', bg: 'rgba(45,106,155,0.06)'
     },
   ].map(({ type, char, label, hook, badge, border, bg, onClick }) => (
-    <div key={type} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 220 }}>
+    <div key={type} onClick={onClick || (() => { setServiceType(type); setScreen('input') })} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 220, cursor: 'pointer' }}>
       {badge && (
         <span style={{ display: 'inline-block', background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 2, marginBottom: 12, border: '1px solid rgba(201,168,76,0.3)', letterSpacing: '0.1em' }}>{badge}</span>
       )}
@@ -1041,7 +1041,7 @@ if (emailModal) {
         style={{ width: '100%', padding: '11px 0', fontSize: 14, fontWeight: 800, background: 'transparent',
 color: '#C9A84C',
 border: '1px solid rgba(201,168,76,0.5)', border: 'none', borderRadius: 8, cursor: 'pointer' }}
-        onClick={onClick || (() => { setServiceType(type); setScreen('input') })}>
+        onClick={e => { e.stopPropagation(); (onClick || (() => { setServiceType(type); setScreen('input') }))() }}>
         지금 확인하기 1,900원
       </button>
     </div>
