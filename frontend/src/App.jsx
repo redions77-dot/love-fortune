@@ -1276,7 +1276,7 @@ if (screen === 'input') {
           style={{ flex: 1, padding: '18px', fontSize: 18, fontWeight: 700, background: !canGoNext() ? 'rgba(201,168,76,0.2)' : 'linear-gradient(135deg, #C9A84C, #F5E090)', color: !canGoNext() ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 14, cursor: !canGoNext() ? 'not-allowed' : 'pointer', letterSpacing: '0.02em' }}
           onClick={goNext} disabled={!canGoNext()}>
           {currentStepId === 'blood'
-            ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : serviceType === 'child' ? '우리 아이 재능 확인하기 👶' : '내 돈 버는 시기 확인하기 ✨')
+            ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : serviceType === 'child' ? '우리 아이 재능 확인하기 👶' : serviceType === '노후' ? '내 후반전, 지금 확인하기 →' : '내 돈 버는 시기 확인하기 ✨')
             : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음 →'}
         </button>
       </div>
