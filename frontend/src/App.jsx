@@ -229,26 +229,51 @@ export default function App() {
       return () => clearTimeout(t)
     }
     if (_mobilePayment === 'gunghab' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
+    if (_mobilePayment === 'paid' && _impSuccess === 'true') {
+      const t = setTimeout(() => { handlePaidAnalyze(null); window.history.replaceState({}, '', window.location.pathname) }, 300)
+      return () => clearTimeout(t)
+    }
+    if (_mobilePayment === 'paid' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
+    if (_mobilePayment === 'deep' && _impSuccess === 'true') {
+      const t = setTimeout(() => { handleDeepAnalyze(); window.history.replaceState({}, '', window.location.pathname) }, 300)
+      return () => clearTimeout(t)
+    }
+    if (_mobilePayment === 'deep' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
+    if (_mobilePayment === 'gilil' && _impSuccess === 'true') {
+      const t = setTimeout(() => { handleGililAnalyze(); window.history.replaceState({}, '', window.location.pathname) }, 300)
+      return () => clearTimeout(t)
+    }
+    if (_mobilePayment === 'gilil' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
   }, []) // eslint-disable-line
 
   const [countdown, setCountdown] = useState(getMidnightCountdown())
   useEffect(() => { const id = setInterval(() => setCountdown(getMidnightCountdown()), 1000); return () => clearInterval(id) }, [])
 
-  const [screen, setScreen] = useState(() => _mobilePayment === 'gunghab' && _impSuccess === 'true' ? 'result' : 'landing')
-  const [serviceType, setServiceType] = useState(() => _mobilePayment === 'gunghab' && _impSuccess === 'true' ? 'gunghab' : null)
+  const [screen, setScreen] = useState(() => {
+    if (_mobilePayment === 'gunghab' && _impSuccess === 'true') return 'result'
+    if (_mobilePayment === 'paid' && _impSuccess === 'true') return 'result'
+    if (_mobilePayment === 'deep' && _impSuccess === 'true') return 'deep_result'
+    if (_mobilePayment === 'gilil' && _impSuccess === 'true') return 'gilil_result'
+    return 'landing'
+  })
+  const [serviceType, setServiceType] = useState(() => {
+    if (_mobilePayment === 'gunghab' && _impSuccess === 'true') return 'gunghab'
+    if (_mobilePayment === 'paid' && _impSuccess === 'true') return _qs.get('st') || 'saju'
+    return null
+  })
   const [step, setStep] = useState(0)
   const [gender, setGender] = useState(() => _qs.get('g') || '')
-  const [maritalStatus, setMaritalStatus] = useState('')
+  const [maritalStatus, setMaritalStatus] = useState(() => _qs.get('ms') || '')
   const [birthYear, setBirthYear] = useState(() => _qs.get('by') || '')
   const [birthMonth, setBirthMonth] = useState(() => _qs.get('bm') || '')
   const [birthDay, setBirthDay] = useState(() => _qs.get('bd') || '')
-  const [isLunar, setIsLunar] = useState(false)
+  const [isLunar, setIsLunar] = useState(() => _qs.get('il') === '1')
   const [timeHour, setTimeHour] = useState('')
   const [timeMin, setTimeMin] = useState('')
   const [timeAmPm, setTimeAmPm] = useState('오전')
   const [timeUnknown, setTimeUnknown] = useState(false)
-  const [mbti, setMbti] = useState('')
-  const [blood, setBlood] = useState('')
+  const [mbti, setMbti] = useState(() => _qs.get('mbti') || '')
+  const [blood, setBlood] = useState(() => _qs.get('blood') || '')
   const [phase, setPhase] = useState('input')
   const [sajuData, setSajuData] = useState(null)
   const [baseText, setBaseText] = useState('')
@@ -285,7 +310,7 @@ export default function App() {
   const [gunghabText, setGunghabText] = useState('')
   const [isGunghabStreaming, setIsGunghabStreaming] = useState(false)
   const [gunghabSajuData, setGunghabSajuData] = useState(null)
-  const [gilil목적, setGilil목적] = useState('')
+  const [gilil목적, setGilil목적] = useState(() => _qs.get('gp') || '')
   const [gililText, setGililText] = useState('')
   const [isGililStreaming, setIsGililStreaming] = useState(false)
   const [gililData, setGililData] = useState(null)
@@ -415,17 +440,21 @@ if (scoreMatch) {
   }
 
   async function handlePaidAnalyze(emailOverride) {
+    const _paidQs = new URLSearchParams(window.location.search)
+    const _isMobilePaid = _paidQs.get('payment') === 'paid'
+    const _bt = _isMobilePaid ? (_paidQs.get('bt') || '') : birthtime
+    const _st = _isMobilePaid ? (_paidQs.get('st') || serviceType) : serviceType
     setPaidText(''); setIsPaidStreaming(true); isPaidSectionRef.current = false
 setLoadingCountdown(0)
 loadingTimersRef.current.countdown = setInterval(() => {
   setLoadingCountdown(prev => prev + 1)
 }, 1000)
-    const apiType = serviceType === 'child' ? '자녀천명' : serviceType === '노후' ? '노후' : '전체'
+    const apiType = _st === 'child' ? '자녀천명' : _st === '노후' ? '노후' : '전체'
     let _fullBase = '', _fullPaid = ''
     try {
       await streamAnalyze({
-        body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: true, isLunar, userName: myName },
-        onSaju: () => {},
+        body: { gender, maritalStatus, birthdate, birthtime: _bt, mbti, blood, type: apiType, isPaid: true, isLunar, userName: myName },
+        onSaju: (d) => { setSajuData(d) },
         onBaseText: (t) => { setBaseText(prev => prev + t); _fullBase += t },
         onPaidText: (t) => { setPaidText(prev => prev + t); _fullPaid += t },
         onDone: () => {}, onError: (e) => alert(e),
@@ -434,12 +463,15 @@ loadingTimersRef.current.countdown = setInterval(() => {
     clearLoadingTimers(); setIsPaidStreaming(false); setIsPaid(true)
     const _email = emailOverride || preEmail
     if (_email) {
-      const label = serviceType === 'child' ? '🌱 자녀 학운 분석' : serviceType === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'
+      const label = _st === 'child' ? '🌱 자녀 학운 분석' : _st === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'
       autoSendEmail({ email: _email, subject: `${label} - ${myName || ''}님의 결과`, sections: [...parseSections(_fullBase), ...parseSections(_fullPaid)], name: myName })
     }
   }
 
   async function handleDeepAnalyze() {
+    const _deepQs = new URLSearchParams(window.location.search)
+    const _isMobileDeep = _deepQs.get('payment') === 'deep'
+    const _bt = _isMobileDeep ? (_deepQs.get('bt') || '') : birthtime
     setDeepText(''); setIsDeepStreaming(true)
     setLoadingCountdown(0)
     loadingTimersRef.current.countdown = setInterval(() => {
@@ -447,7 +479,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
     }, 1000)
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
-      const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName }), signal: ctrl.signal })
+      const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime: _bt, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName }), signal: ctrl.signal })
       const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''
       while (true) {
         const { done, value } = await reader.read(); if (done) break
@@ -570,7 +602,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
         <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
           <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => setScreen('landing')}>←</button>
           <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: !canNext ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: !canNext ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: !canNext ? 'not-allowed' : 'pointer' }} disabled={!canNext}
-            onClick={() => { if (IS_ADMIN) { handleGililAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `gilil_${Date.now()}`, name: '마이사주 길일 추천', amount: 9900, buyer_name: '고객' }, (rsp) => { if (rsp.success) handleGililAnalyze(); else alert('결제가 취소되었습니다.') }) }}>
+            onClick={() => { if (IS_ADMIN) { handleGililAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); const _gililParams = new URLSearchParams({ payment: 'gilil', gp: gilil목적, by: birthYear, bm: birthMonth, bd: birthDay }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `gilil_${Date.now()}`, name: '마이사주 길일 추천', amount: 9900, buyer_name: '고객', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_gililParams}` }, (rsp) => { if (rsp.success) handleGililAnalyze(); else alert('결제가 취소되었습니다.') }) }}>
             📅 길일 찾기 (9,900원)
           </button>
         </div>
@@ -1598,7 +1630,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 26, fontWeight: 900, color: '#C9A84C' }}>9,900원</span>
             <button style={{ padding: '14px 24px', fontSize: 15, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
-              onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 9900, currency: 'KRW' }); setScreen('deep_result'); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>확인하기 →</button>
+              onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); const _deepParams = new URLSearchParams({ payment: 'deep', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_deepParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 9900, currency: 'KRW' }); setScreen('deep_result'); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>확인하기 →</button>
           </div>
         </div>
         <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 14, padding: '20px', marginBottom: 10, opacity: 0.7 }}>
@@ -1700,7 +1732,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           </div>
           <button
             style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-            onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '' }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 1900, currency: 'KRW' }); handlePaidAnalyze(email) } else alert('결제가 취소되었습니다.') }) }) }}>
+            onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 1900, currency: 'KRW' }); handlePaidAnalyze(email) } else alert('결제가 취소되었습니다.') }) }) }}>
             <span>지금 안 보면 남이 가져가요</span>
 <span style={{ fontSize: 16, fontWeight: 900 }}>1,900원</span>
           </button>
