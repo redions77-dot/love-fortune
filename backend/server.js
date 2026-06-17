@@ -391,6 +391,9 @@ app.post('/api/analyze', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
 
+  const keepalive = setInterval(() => { if (!res.writableEnded) res.write(': keepalive\n\n'); }, 20000);
+  res.on('close', () => clearInterval(keepalive));
+
   const saju = calcSaju(birthdate, birthtime, isLunar);
   const { year, month, day, 일주, 년주, 월주, 시주, 년천간index } = saju;
 
