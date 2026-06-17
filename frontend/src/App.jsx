@@ -130,9 +130,13 @@ function removeMarkers(text) {
 }
 function parseSections(text) {
   const sections = []
+  const seen = new Set()
   const parts = text.split(/===(.+?)===/s)
   if (parts[0]?.trim()) sections.push({ title: '분석 결과', content: parts[0].trim() })
-  for (let i = 1; i < parts.length; i += 2) sections.push({ title: parts[i].trim(), content: parts[i + 1]?.trim() || '' })
+  for (let i = 1; i < parts.length; i += 2) {
+    const title = parts[i].trim()
+    if (!seen.has(title)) { seen.add(title); sections.push({ title, content: parts[i + 1]?.trim() || '' }) }
+  }
   return sections
 }
 function getMidnightCountdown() {
