@@ -244,7 +244,9 @@ const 공통규칙 = `작성 규칙 (반드시 지킬 것):
 async function streamToClient(res, prompt, model, maxTokens = 4000) {
   const maxRetries = 3;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    let keepalive = null;
     try {
+      keepalive = setInterval(() => { try { res.write(': keepalive\n\n') } catch {} }, 10000);
       const stream = await anthropic.messages.stream({
         model,
         max_tokens: maxTokens,
@@ -255,8 +257,10 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
           res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
         }
       }
+      clearInterval(keepalive);
       return;
     } catch (e) {
+      clearInterval(keepalive);
       const isOverloaded = e?.error?.error?.type === 'overloaded_error' || e?.status === 529;
       if (isOverloaded && attempt < maxRetries) {
         const delay = attempt * 3000;
@@ -1043,7 +1047,7 @@ ${getAgeBasedPaidSection(year, maritalStatus)}
       // 유료: 무료 재호출 없이 바로 paid_start → 유료 전용만 스트리밍
       // (무료 결과는 프론트에서 그대로 유지됨)
       res.write(`data: ${JSON.stringify({ type: 'paid_start' })}\n\n`);
-      await streamToClient(res, paidOnlyPrompt, MODEL_PAID, 7000);
+      await streamToClient(res, paidOnlyPrompt, MODEL_PAID, 10000);
     }
     // 점수 별도 요청
 if (true) {
