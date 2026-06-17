@@ -20,7 +20,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const MODEL_FREE = 'claude-haiku-4-5-20251001';
 const MODEL_PAID = 'claude-sonnet-4-5-20250929';
 
-app.get('/ping', (req, res) => res.json({ ok: true }));
+app.get('/ping', (req, res) => res.json({ ok: true, v: '20260617-2' }));
 
 // 손없는 날 체크
 function getSonNobunNal(lunarDay) {
