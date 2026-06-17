@@ -244,9 +244,7 @@ const 공통규칙 = `작성 규칙 (반드시 지킬 것):
 async function streamToClient(res, prompt, model, maxTokens = 4000) {
   const maxRetries = 3;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    let keepalive = null;
     try {
-      keepalive = setInterval(() => { if (!res.destroyed) { try { res.write(': keepalive\n\n') } catch (e) {} } }, 10000);
       const stream = await anthropic.messages.stream({
         model,
         max_tokens: maxTokens,
@@ -257,10 +255,8 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
           res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
         }
       }
-      clearInterval(keepalive);
       return;
     } catch (e) {
-      clearInterval(keepalive);
       const isOverloaded = e?.error?.error?.type === 'overloaded_error' || e?.status === 529;
       if (isOverloaded && attempt < maxRetries) {
         const delay = attempt * 3000;
@@ -394,6 +390,9 @@ app.post('/api/analyze', async (req, res) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders();
+
+  const keepalive = setInterval(function() { if (!res.writableEnded) res.write(': keepalive\n\n'); }, 15000);
+  res.on('close', function() { clearInterval(keepalive); });
 
   const saju = calcSaju(birthdate, birthtime, isLunar);
   const { year, month, day, 일주, 년주, 월주, 시주, 년천간index } = saju;
