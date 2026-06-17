@@ -246,7 +246,7 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     let keepalive = null;
     try {
-      keepalive = setInterval(() => { try { res.write(': keepalive\n\n') } catch {} }, 10000);
+      keepalive = setInterval(() => { if (!res.destroyed) { try { res.write(': keepalive\n\n') } catch (e) {} } }, 10000);
       const stream = await anthropic.messages.stream({
         model,
         max_tokens: maxTokens,
