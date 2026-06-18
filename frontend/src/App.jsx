@@ -501,15 +501,22 @@ loadingTimersRef.current.countdown = setInterval(() => {
             if (json.text) {
               fullDeepText += json.text
               setDeepText(prev => prev + json.text)
-              const seasonMatch = fullDeepText.match(/===__운의계절__===([\s\S]*?)(?:===|$)/)
-              if (seasonMatch) {
-                try {
-                  const jsonStr = seasonMatch[1].match(/\{[\s\S]*?\}/)?.[0]
-                  if (jsonStr) {
-                    const parsed = JSON.parse(jsonStr)
-                    if (parsed.current) setSeasonData(parsed)
-                  }
-                } catch {}
+              if (!seasonData) {
+                const seasonMatch = fullDeepText.match(/===__운의계절__===([\s\S]*?)(?:===|$)/)
+                if (seasonMatch) {
+                  try {
+                    const raw = seasonMatch[1]
+                    let depth = 0, start = -1, end = -1
+                    for (let ci = 0; ci < raw.length; ci++) {
+                      if (raw[ci] === '{') { if (depth === 0) start = ci; depth++ }
+                      else if (raw[ci] === '}') { depth--; if (depth === 0 && start !== -1) { end = ci; break } }
+                    }
+                    if (start !== -1 && end !== -1) {
+                      const parsed = JSON.parse(raw.slice(start, end + 1))
+                      if (parsed.current) setSeasonData(parsed)
+                    }
+                  } catch {}
+                }
               }
             }
           } catch {}
