@@ -213,7 +213,7 @@ function Accordion({ title, content, isPaid = false, isChild = false, isGunghab 
         <span style={{ fontSize: 17, fontWeight: 700, color: open ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
         <span style={{ fontSize: 14, color: 'rgba(201,168,76,0.5)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
       </div>
-      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 17, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)', fontSize: 17, lineHeight: 2.2 }}>{content}</div>}    </div>
+      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{content}</div>}    </div>
   )
 }
 
@@ -292,6 +292,7 @@ export default function App() {
   const [deepText, setDeepText] = useState('')
   const [isDeepStreaming, setIsDeepStreaming] = useState(false)
   const [openCheongan, setOpenCheongan] = useState(null)
+  const [seasonData, setSeasonData] = useState(null)
 
   // ── 새로 추가된 로딩 state 3개 ──
   const [loadingPhase, setLoadingPhase] = useState(null)
@@ -380,7 +381,8 @@ export default function App() {
   async function streamAnalyze({ body, onSaju, onBaseText, onPaidText, onDone, onError }) {
     const ctrl = new AbortController(); abortRef.current = ctrl
     const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal })
-    const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''
+    if (!res.ok) { onError?.(`서버 오류가 발생했습니다 (${res.status})`); return }
+    const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''; let gotDone = false
     while (true) {
       const { done, value } = await reader.read(); if (done) break
       buf += decoder.decode(value, { stream: true })
@@ -392,12 +394,13 @@ export default function App() {
           if (json.type === 'saju') onSaju?.(json)
           else if (json.type === 'score') onBaseText?.(json.text)
           else if (json.type === 'paid_start') isPaidSectionRef.current = true
-          else if (json.type === 'done') onDone?.()
+          else if (json.type === 'done') { gotDone = true; onDone?.() }
           else if (json.error) onError?.(json.error)
           else if (json.text) { if (isPaidSectionRef.current) onPaidText?.(json.text); else onBaseText?.(json.text) }
         } catch {}
       }
     }
+    if (!gotDone) onError?.('서버 연결이 중단되었습니다. 다시 시도해주세요.')
   }
 
   // ── handleFreeAnalyze — 로딩 화면 추가 ──
@@ -435,9 +438,10 @@ if (scoreMatch) {
         onDone: () => {
           clearLoadingTimers(); setIsBaseStreaming(false); setPhase('done')
         },
-        onError: (e) => { alert(e); setPhase('input'); setIsBaseStreaming(false) },
+        onError: (e) => { clearLoadingTimers(); alert(e); setPhase('input'); setIsBaseStreaming(false) },
       })
     } catch (e) {
+      clearLoadingTimers()
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
       setPhase('input'); setIsBaseStreaming(false)
     }
@@ -476,11 +480,12 @@ loadingTimersRef.current.countdown = setInterval(() => {
     const _deepQs = new URLSearchParams(window.location.search)
     const _isMobileDeep = _deepQs.get('payment') === 'deep'
     const _bt = _isMobileDeep ? (_deepQs.get('bt') || '') : birthtime
-    setDeepText(''); setIsDeepStreaming(true)
+    setDeepText(''); setIsDeepStreaming(true); setSeasonData(null)
     setLoadingCountdown(0)
     loadingTimersRef.current.countdown = setInterval(() => {
       setLoadingCountdown(prev => prev + 1)
     }, 1000)
+    let fullDeepText = ''
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
       const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime: _bt, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName }), signal: ctrl.signal })
@@ -491,7 +496,23 @@ loadingTimersRef.current.countdown = setInterval(() => {
         const lines = buf.split('\n'); buf = lines.pop()
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
-          try { const json = JSON.parse(line.slice(6)); if (json.text) setDeepText(prev => prev + json.text) } catch {}
+          try {
+            const json = JSON.parse(line.slice(6))
+            if (json.text) {
+              fullDeepText += json.text
+              setDeepText(prev => prev + json.text)
+              const seasonMatch = fullDeepText.match(/===__운의계절__===([\s\S]*?)(?:===|$)/)
+              if (seasonMatch) {
+                try {
+                  const jsonStr = seasonMatch[1].match(/\{[\s\S]*?\}/)?.[0]
+                  if (jsonStr) {
+                    const parsed = JSON.parse(jsonStr)
+                    if (parsed.current) setSeasonData(parsed)
+                  }
+                } catch {}
+              }
+            }
+          } catch {}
         }
       }
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
@@ -522,6 +543,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
     setPartnerIsLunar(false); setPartnerTimeHour(''); setPartnerTimeMin(''); setPartnerTimeAmPm('오전'); setPartnerTimeUnknown(false)
     setMyName(''); setPartnerName(''); setGunghabText(''); setIsGunghabStreaming(false); setGunghabSajuData(null)
     setGilil목적(''); setGililText(''); setIsGililStreaming(false); isPaidSectionRef.current = false
+    setSeasonData(null); setDeepText(''); setIsDeepStreaming(false); setIsDeepPaid(false)
   }
 
   const partnerBirthdate = (partnerBirthYear.length === 4 && partnerBirthMonth && partnerBirthDay) ? `${partnerBirthYear}-${String(partnerBirthMonth).padStart(2,'0')}-${String(partnerBirthDay).padStart(2,'0')}` : ''
@@ -617,6 +639,13 @@ loadingTimersRef.current.countdown = setInterval(() => {
   // ── 심화 결과 ──
   if (screen === 'deep_result') {
     const deepSections = parseSections(deepText)
+    const seasonPhases = seasonData ? [
+      { key: 'wood', icon: '木', color: '#4ADE80', bgColor: 'rgba(74,222,128,0.08)', borderColor: 'rgba(74,222,128,0.3)' },
+      { key: 'fire', icon: '火', color: '#F87171', bgColor: 'rgba(248,113,113,0.08)', borderColor: 'rgba(248,113,113,0.3)' },
+      { key: 'earth', icon: '土', color: '#C9A84C', bgColor: 'rgba(201,168,76,0.08)', borderColor: 'rgba(201,168,76,0.3)' },
+      { key: 'metal', icon: '金', color: '#E8C96A', bgColor: 'rgba(232,201,106,0.08)', borderColor: 'rgba(232,201,106,0.3)' },
+      { key: 'water', icon: '水', color: '#60A5FA', bgColor: 'rgba(96,165,250,0.08)', borderColor: 'rgba(96,165,250,0.3)' },
+    ] : []
     return (
       <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
         <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
@@ -624,6 +653,32 @@ loadingTimersRef.current.countdown = setInterval(() => {
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>사주 심화 분석</h1>
         </div>
         <div id="deep-result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
+  {/* 사주팔자 카드 */}
+  {sajuData?.사주 && (
+    <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
+      <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        {[{ label: '시주(時)', value: sajuData.사주.시주 }, { label: '일주(日)', value: sajuData.사주.일주 }, { label: '월주(月)', value: sajuData.사주.월주 }, { label: '년주(年)', value: sajuData.사주.년주 }].map(({ label, value }) => {
+          const 오행색 = { '甲갑': '#4ADE80', '乙을': '#4ADE80', '丙병': '#F87171', '丁정': '#F87171', '戊무': '#C9A84C', '己기': '#C9A84C', '庚경': '#E8C96A', '辛신': '#E8C96A', '壬임': '#60A5FA', '癸계': '#60A5FA' }
+          const 색 = 오행색[value?.slice(0, 2)] || '#FFFFFF'
+          return (
+            <div key={label} style={{ textAlign: 'center', background: `${색}15`, borderRadius: 12, padding: '18px 4px', border: `2px solid ${색}50` }}>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 10, display: 'block' }}>{label}</span>
+              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <span style={{ fontSize: 22, fontWeight: 900, color: 색, lineHeight: 1.2 }}>{value?.slice(0,1) || '-'}</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: 색, opacity: 0.7, marginTop: 2 }}>{value?.slice(2,3) || ''}</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )}
+
+  {/* 운세 점수 카드 */}
   {scoreData && (
     <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -647,23 +702,112 @@ loadingTimersRef.current.countdown = setInterval(() => {
       </div>
     </div>
   )}
-         {isDeepStreaming && (
+
+          {isDeepStreaming && (
             <div style={{ textAlign: 'center', padding: '16px', marginBottom: 16, fontSize: 15, color: 'rgba(201,168,76,0.7)', fontWeight: 700 }}>
               ✦ 심화 분석 중 · {loadingCountdown}초 경과 ✦
             </div>
           )}
 
           {isDeepStreaming && !deepText && (
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
                 <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>🔮 심화 분석 중이에요...</span>
               </div>
             </div>
           )}
           {isDeepStreaming && deepText && (
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(deepText)}<span style={{ opacity: 0.4 }}>▌</span></div>
+            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(deepText)}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
-          {!isDeepStreaming && deepSections.filter(sec => sec.title !== '분석 결과' && sec.content?.trim()).map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />)}
+          {!isDeepStreaming && deepSections.filter(sec => sec.title !== '분석 결과' && !sec.title.includes('운의계절') && sec.content?.trim()).map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />)}
+
+          {/* 나의 운의 계절 타임라인 */}
+          {!isDeepStreaming && seasonData && (
+            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '28px 20px', marginTop: 20, marginBottom: 20 }}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 8 }}>CAREER SEASON</p>
+                <p style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF' }}>나의 운의 계절</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>사주와 수비학 기반 오행 커리어 흐름</p>
+              </div>
+
+              {seasonData.yearsToEarth > 0 && (
+                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 12 }}>
+                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>커리어/재물 정점까지</p>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
+                    <span style={{ fontSize: 40, fontWeight: 900, color: '#C9A84C', lineHeight: 1 }}>{seasonData.yearsToEarth}</span>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: 'rgba(201,168,76,0.7)' }}>년 남았어요</span>
+                  </div>
+                </div>
+              )}
+              {seasonData.yearsToEarth === 0 && seasonData.current === 'earth' && (
+                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12 }}>
+                  <p style={{ fontSize: 16, fontWeight: 800, color: '#C9A84C' }}>지금이 전성기입니다</p>
+                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>커리어와 재물의 정점을 지나고 있어요</p>
+                </div>
+              )}
+
+              <div style={{ position: 'relative', paddingLeft: 28 }}>
+                {/* 타임라인 세로 선 */}
+                <div style={{ position: 'absolute', left: 11, top: 24, bottom: 24, width: 2, background: 'rgba(201,168,76,0.15)' }} />
+
+                {seasonPhases.map((phase, idx) => {
+                  const data = seasonData[phase.key]
+                  if (!data) return null
+                  const isCurrent = seasonData.current === phase.key
+                  const isPast = seasonPhases.findIndex(p => p.key === seasonData.current) > idx
+                  return (
+                    <div key={phase.key} style={{ position: 'relative', marginBottom: idx < seasonPhases.length - 1 ? 16 : 0 }}>
+                      {/* 타임라인 점 */}
+                      <div style={{
+                        position: 'absolute', left: -22, top: 20,
+                        width: isCurrent ? 18 : 12, height: isCurrent ? 18 : 12,
+                        borderRadius: '50%',
+                        background: isCurrent ? phase.color : isPast ? 'rgba(255,255,255,0.15)' : '#0D1B3E',
+                        border: `2px solid ${isCurrent ? phase.color : isPast ? 'rgba(255,255,255,0.2)' : phase.borderColor}`,
+                        marginLeft: isCurrent ? -3 : 0, marginTop: isCurrent ? -3 : 0,
+                        boxShadow: isCurrent ? `0 0 12px ${phase.color}60` : 'none',
+                        zIndex: 1,
+                      }} />
+
+                      <div style={{
+                        background: isCurrent ? phase.bgColor : 'rgba(255,255,255,0.02)',
+                        border: `${isCurrent ? 2 : 1}px solid ${isCurrent ? phase.color + '80' : 'rgba(255,255,255,0.06)'}`,
+                        borderRadius: 14,
+                        padding: '18px 16px',
+                        opacity: isPast ? 0.5 : 1,
+                        transition: 'all 0.3s ease',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: 28, fontWeight: 900, color: isCurrent ? phase.color : 'rgba(255,255,255,0.3)', fontFamily: 'Georgia, serif' }}>{phase.icon}</span>
+                            <div>
+                              <p style={{ fontSize: 15, fontWeight: 700, color: isCurrent ? '#FFFFFF' : 'rgba(255,255,255,0.6)' }}>{data.label?.split(' · ')[1] || data.label}</p>
+                              <p style={{ fontSize: 12, color: isCurrent ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)', marginTop: 2 }}>{data.desc}</p>
+                            </div>
+                          </div>
+                          {isCurrent && (
+                            <span style={{ fontSize: 10, fontWeight: 700, color: phase.color, background: phase.color + '20', padding: '3px 8px', borderRadius: 10, border: `1px solid ${phase.color}40` }}>NOW</span>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
+                          <span style={{ fontSize: 12, color: isCurrent ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.2)' }}>{data.start}년 ~ {data.end}년</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div style={{ width: 60, height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${data.score}%`, background: isCurrent ? phase.color : 'rgba(255,255,255,0.2)', borderRadius: 99, transition: 'width 1s ease' }} />
+                            </div>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: isCurrent ? phase.color : 'rgba(255,255,255,0.3)' }}>{data.score}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 10 }}>
             <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
@@ -857,13 +1001,13 @@ loadingTimersRef.current.countdown = setInterval(() => {
                 <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(155,29,58,0.06)', borderRadius: 10, border: '1px solid rgba(155,29,58,0.2)' }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: item.preview ? 8 : 0 }}>✦ {item.title}</p>
                   {item.preview && (
-                    <div style={{ fontSize: 13, lineHeight: 1.9, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all' }}>
+                    <div style={{ fontSize: 16, lineHeight: 2.0, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all' }}>
                       <span>{item.preview}</span>
                       <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{item.blurred}</span>
                     </div>
                   )}
                   {!item.preview && (
-                    <div style={{ fontSize: 13, lineHeight: 1.9, color: 'rgba(255,255,255,0.3)', filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none', wordBreak: 'keep-all' }}>
+                    <div style={{ fontSize: 16, lineHeight: 2.0, color: 'rgba(255,255,255,0.3)', filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none', wordBreak: 'keep-all' }}>
                       {item.blurred}
                     </div>
                   )}
@@ -927,7 +1071,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
               </div>
             </div>
           )}
-          {isGunghabStreaming && gunghabText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 15, lineHeight: 1.9, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(gunghabText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
+          {isGunghabStreaming && gunghabText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(gunghabText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
           {isGunghabStreaming && !gunghabText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}><div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>{[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}<span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>💕 두 사람의 궁합을 분석하고 있어요...</span></div></div>}
           {!isGunghabStreaming && gunghabSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={i === 0} />)}
           <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 10, marginTop: 16 }}>
@@ -1494,36 +1638,36 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
         {/* 스트리밍 텍스트 */}
         {!loadingPhase && isBaseStreaming && baseText && (
-          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 17, lineHeight: 2.1, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
             {removeMarkers(baseText)}<span style={{ opacity: 0.4 }}>▌</span>
           </div>
         )}
 
         {/* 기본 분석 결과 아코디언 */}
 {!loadingPhase && !isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수')).map((sec, i) => {
-  const isBlurred = i >= 1 // Part 1부터 블러
-  const previewLines = sec.content.split('\n').slice(0, 3).join('\n')
-  const restLines = sec.content.split('\n').slice(3).join('\n')
+  const isBlurred = i >= 1
+  const lines = sec.content.split('\n')
+  const previewLines = lines.slice(0, 5).join('\n')
+  const restLines = lines.slice(5).join('\n')
 
   if (isBlurred && !isPaid) {
     return (
       <div key={i} style={{ marginBottom: 10, border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, overflow: 'hidden' }}>
-        {/* 제목 */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px', background: '#0D1B3E' }}>
           <span style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{sec.title}</span>
           <span style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', background: 'rgba(201,168,76,0.1)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(201,168,76,0.3)' }}>전체 분석 공개</span>
         </div>
-        {/* 미리보기 — 앞 3줄 */}
-        <div style={{ padding: '16px 20px 0', fontSize: 16, lineHeight: 2.1, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', background: '#050D1F' }}>
+        <div style={{ padding: '16px 20px 0', fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', background: '#050D1F' }}>
           {previewLines}
         </div>
-        {/* 블러 처리 나머지 */}
         <div style={{ position: 'relative', background: '#050D1F', padding: '0 20px 20px' }}>
-          <div style={{ fontSize: 16, lineHeight: 2.1, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>
-            {restLines || '이 내용은 전체 분석에서 확인할 수 있어요.'}
+          <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none', minHeight: 80 }}>
+            {restLines || '이 내용은 전체 분석에서 확인할 수 있어요. 이 사주에서 돈이 가장 크게 움직이는 나이대가 있고, 그 시기를 어떻게 준비하느냐에 따라 말년이 완전히 달라져요.'}
           </div>
-          {/* 그라데이션 오버레이 */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 0%, #050D1F 80%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 0%, #050D1F 75%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: 14, left: 0, right: 0, textAlign: 'center', zIndex: 2 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#C9A84C' }}>이 내용이 궁금하다면? ↓ 아래에서 전체 분석을 확인하세요</p>
+          </div>
         </div>
       </div>
     )
@@ -1535,7 +1679,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
         {/* 유료 스트리밍 텍스트 */}
         {!loadingPhase && isPaidStreaming && paidText && (
-          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 17, lineHeight: 2.1, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
             {removeMarkers(paidText)}<span style={{ opacity: 0.4 }}>▌</span>
           </div>
         )}
@@ -1554,53 +1698,74 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 16, textAlign: 'center' }}>FULL ANALYSIS</p>
     {(serviceType === 'child'
       ? [
-          { title: '타고난 기질 · 성격 심층 분석', lines: [18, 14] },
-          { title: '학습 스타일 · 공부가 잘 되는 환경', lines: [16, 12] },
-          { title: '재능의 씨앗 · 빛나는 분야', lines: [20, 10] },
-          { title: '진로 방향 · 어울리는 직업군', lines: [15, 18] },
-          { title: '부모와의 관계 · 키우는 법', lines: [17, 13] },
-          { title: '이 사주로 잘 크는 법', lines: [19, 11] },
+          { title: '타고난 기질 · 성격 심층 분석', first: '이 아이는 겉으로 보이는 것과 속마음이 완전히 달라요. ', blurred: '잘 웃고 사교적으로 보이지만, 실은 혼자만의 세계가 넓고 감정이 깊은 아이예요. 이 기질을 모르면 엉뚱한 방향으로 키울 수 있어요.' },
+          { title: '학습 스타일 · 공부가 잘 되는 환경', first: '이 아이는 시각적으로 배울 때 흡수가 가장 빨라요. ', blurred: '학원 수업보다 영상이나 그림으로 이해하는 타입이에요. 오전 시간대에 집중력이 최고조인 사주 구조를 갖고 있어요.' },
+          { title: '재능의 씨앗 · 빛나는 분야', first: '이 아이가 반복해도 안 지치는 것이 진짜 재능이에요. ', blurred: '부모가 보기엔 놀이 같지만, 이 사주에서는 그게 나중에 돈이 되는 분야와 직접 연결돼요. 방향만 잡아주면 빛나요.' },
+          { title: '진로 방향 · 어울리는 직업군', first: '이 사주에 딱 맞는 직업이 6가지 보여요. ', blurred: '창의력과 분석력이 동시에 필요한 분야에서 두각을 나타내는 사주예요. 이과/문과/예체능 중 어디로 가야 하는지도 나와요.' },
+          { title: '또래 관계 · 친구 패턴', first: '이 아이가 친구 사이에서 어떤 역할인지 보여요. ', blurred: '리더형인지 참모형인지, 갈등이 생기는 패턴과 부모가 도와줄 수 있는 방법이 나와요.' },
+          { title: '부모와의 관계 · 키우는 법', first: '이 아이에게 절대 하면 안 되는 말이 있어요. ', blurred: '사주 구조상 이 아이가 스트레스받는 상황이 정해져 있어요. 반항기가 오는 시기와 대응법도 미리 알 수 있어요.' },
+          { title: '이 아이의 인생 흐름', first: '지금부터 20대까지, 30대까지의 흐름이 보여요. ', blurred: '이 사주가 꽃피는 시기가 언제인지, 지금 무엇에 집중해야 하는지 단계별로 나와요.' },
+          { title: '입시 · 취업 유리한 시기', first: '시험 운이 가장 강한 나이대가 따로 있어요. ', blurred: '이 사주에서 합격 확률이 높은 시기와 반대로 조심해야 할 시기가 구체적으로 나와요.' },
+          { title: '이 아이가 빛나는 조건', first: '어떤 환경에서 집중력과 자신감이 올라가는지 보여요. ', blurred: '선생님 스타일, 공부 공간, 루틴까지 부모가 오늘 당장 바꿔볼 수 있는 구체적인 조건이 나와요.' },
+          { title: '키우는 핵심 비법', first: '이 아이의 잠재력을 최대로 끌어내는 조건이 있어요. ', blurred: '해야 할 것과 절대 하면 안 되는 것, 오늘 바로 써먹을 수 있는 구체적 조언이 나와요.' },
         ]
       : serviceType === '노후'
       ? [
-          { title: '노후 재물 심화 분석', lines: [18, 14] },
-          { title: '건강 심화 분석', lines: [16, 20] },
-          { title: '황혼 인연 심화', lines: [20, 12] },
-          { title: '인간관계 · 사람운', lines: [15, 17] },
-          { title: '월별 운세', lines: [19, 13] },
-          { title: '노후를 빛나게 하는 법', lines: [17, 11] },
+          { title: '노후 재물 심화 분석', first: '노후에 자산이 안정적으로 유지되는 구조인지 보여요. ', blurred: '수익형 자산 방향, 절대 하면 안 되는 투자 실수, 재물이 안정되는 구체적 나이대가 나와요.' },
+          { title: '건강 심화 분석', first: '건강 위기가 올 수 있는 나이대가 따로 있어요. ', blurred: '특히 챙겨야 할 신체 부위와 관리법, 오래 건강하게 사는 이 사주만의 생활 습관이 나와요.' },
+          { title: '황혼 인연 심화', first: '노후에 진짜 의지가 되는 사람의 특징이 보여요. ', blurred: '자녀와의 관계 흐름, 새로운 인연이 생기는 시기와 조건이 구체적으로 나와요.' },
+          { title: '노후 투자 · 부동산', first: '이 사주에 맞는 노후 자산 운용 방향이 나와요. ', blurred: '부동산/금융/현금 비중, 절대 하면 안 되는 투자 실수, 노후 수익 파이프라인 전략이 보여요.' },
+          { title: '緣 · 사람과 인연', first: '노후에 진짜 내 편이 되는 사람의 특징이 나와요. ', blurred: '독이 되는 사람 유형, 황혼기 귀인이 나타나는 상황, 인간관계에서 조심해야 할 패턴이 보여요.' },
+          { title: '月運 · 월별 운세', first: '앞으로 12개월의 운세 흐름이 한눈에 보여요. ', blurred: '매달 좋은 시기와 조심할 시기가 다르기 때문에 타이밍을 아는 것이 가장 중요해요.' },
+          { title: '幸 · 나를 돕는 것들', first: '행운 색깔·마스코트·방향·숫자·아이템이 나와요. ', blurred: '노후 시기에 특히 도움이 되는 아이템 기준으로 선별된 행운 요소예요.' },
+          { title: '노후를 빛나게 하는 법', first: '이 사주가 노후에 진짜 행복해지는 조건이 있어요. ', blurred: '지금부터 준비하면 달라지는 것들, 오늘 바로 실천할 수 있는 구체적 행동 조언이 나와요.' },
+          { title: '道 · 이 사주로 잘 사는 법', first: '이 사주가 잘 풀리는 조건이 딱 2가지예요. ', blurred: '반대로 망하는 패턴도 있는데, 아는 것과 모르는 것의 차이가 생각보다 크게 나요.' },
+          { title: '총운 정리', first: '전체 분석을 한 문장으로 정리해드려요. ', blurred: '이 사주의 핵심 키워드와 앞으로 가장 중요한 시기, 지금 당장 해야 할 한 가지가 나와요.' },
         ]
      : [
          { title: '財運 · 인생 재물 전체',
-            first: '돈이 들어오는 방식이 남들과 달라요. ',
-            blurred: '20~30대는 흘러가는 구조였다면 지금부터는 쌓이는 구조로 바뀌는 시기예요. 이 사주에서 돈이 가장 크게 움직이는 나이대가 있고, 그 시기를 어떻게 준비하느냐에 따라 말년이 완전히 달라져요. 절대 하면 안 되는 돈 실수가 딱 하나 있는데, 이걸 모르고 그냥 지나치면 나중에 반드시 후회하게 돼요. 돈이 가장 잘 모이는 조건도 이 사주에서 보여요.' },
+            first: '돈이 들어오는 방식이 남들과 달라요. 이 사주는 돈을 벌 때와 잃을 때의 패턴이 뚜렷해요.',
+            blurred: '20~30대는 흘러가는 구조였다면 지금부터는 쌓이는 구조로 바뀌는 시기예요. 이 사주에서 돈이 가장 크게 움직이는 나이대가 있고, 그 시기를 어떻게 준비하느냐에 따라 말년이 완전히 달라져요. 절대 하면 안 되는 돈 실수가 딱 하나 있는데, 이걸 모르고 그냥 지나치면 나중에 반드시 후회하게 돼요.' },
           { title: '職 · 직업과 커리어',
-            first: '이 사주에 딱 맞는 직업이 따로 있어요. ',
-            blurred: '지금 하는 일이 맞는지 안 맞는지도 사주에서 보여요. 어떤 환경에서 능력이 폭발하는지, 직장인으로 갈지 자영업으로 갈지도 이 사주가 답을 갖고 있어요. 지금 이 시기에 커리어에서 절대 하면 안 되는 결정이 있고, 반대로 지금 당장 움직여야 할 타이밍도 보여요. 크게 도약할 수 있는 구체적인 시기가 생각보다 가까이 와 있어요.' },
+            first: '이 사주에 딱 맞는 직업이 따로 있어요. 지금 하는 일이 맞는지 안 맞는지도 사주에서 보여요.',
+            blurred: '어떤 환경에서 능력이 폭발하는지, 직장인으로 갈지 자영업으로 갈지도 이 사주가 답을 갖고 있어요. 지금 이 시기에 커리어에서 절대 하면 안 되는 결정이 있고, 반대로 지금 당장 움직여야 할 타이밍도 보여요. 크게 도약할 수 있는 구체적인 시기가 생각보다 가까이 와 있어요.' },
           { title: '富 · 투자와 부동산',
-            first: '이 사주에서 절대 손대면 안 되는 투자가 있어요. ',
-            blurred: '반대로 지금 이 사주에 가장 잘 맞는 자산 방향은 따로 있어요. 부동산이냐 금융이냐, 지금 사야 하냐 기다려야 하냐 — 이 사주 기준으로 답이 나와요. 지금 급하게 움직이면 반드시 후회하는 시기인지, 아니면 지금이 딱 타이밍인지도 보여요. 실거주에 좋은 방향과 수익 파이프라인 전략도 구체적으로 알 수 있어요.' },
+            first: '이 사주에서 절대 손대면 안 되는 투자가 있어요. 부동산이냐 금융이냐, 지금이 타이밍인지도 나와요.',
+            blurred: '반대로 지금 이 사주에 가장 잘 맞는 자산 방향은 따로 있어요. 지금 급하게 움직이면 반드시 후회하는 시기인지, 아니면 지금이 딱 타이밍인지도 보여요. 실거주에 좋은 방향과 수익 파이프라인 전략도 구체적으로 알 수 있어요.' },
           { title: '緣 · 사람과 인연',
-            first: '진짜 내 편이 되어줄 사람의 특징이 보여요. ',
-            blurred: '직업군, 성격, 나이대까지 구체적으로 나와요. 반대로 곁에 두면 반드시 손해보는 사람 유형도 딱 보여요. 이 사주에서 인간관계가 꼬이는 패턴이 있는데, 그걸 알면 같은 실수를 반복하지 않을 수 있어요. 귀인이 나타나는 구체적인 시기와 상황도 알 수 있어요.' },
+            first: '진짜 내 편이 되어줄 사람의 특징이 보여요. 직업군, 성격, 나이대까지 구체적으로 나와요.',
+            blurred: '반대로 곁에 두면 반드시 손해보는 사람 유형도 딱 보여요. 이 사주에서 인간관계가 꼬이는 패턴이 있는데, 그걸 알면 같은 실수를 반복하지 않을 수 있어요. 귀인이 나타나는 구체적인 시기와 상황도 알 수 있어요.' },
+          { title: '月運 · 월별 운세',
+            first: '앞으로 12개월, 매달 운세 흐름이 다 달라요. 좋은 달과 조심할 달이 따로 있어요.',
+            blurred: '7월부터 내년 6월까지, 재물이 들어오는 달, 인간관계 조심해야 할 달, 결정을 내려야 할 달이 구체적으로 나와요. 타이밍을 아는 것과 모르는 것의 차이가 크게 나요.' },
           { title: '幸 · 나를 돕는 것들',
-            first: '이 사주의 행운 색깔·마스코트·방향·숫자·아이템이 있어요. ',
-            blurred: '단순한 미신이 아니라 이 사주 기운과 맞는 환경을 만드는 거예요. 행운 색깔만 무료에서 공개됐는데, 나머지 4가지가 사실 더 중요해요. 생각보다 일상에서 바로 써먹을 수 있는 것들이고, 실제로 운의 흐름이 달라지는 걸 느낄 수 있어요.' },
+            first: '이 사주의 행운 색깔 · 마스코트 · 방향 · 숫자 · 아이템이 있어요.',
+            blurred: '단순한 미신이 아니라 이 사주 기운과 맞는 환경을 만드는 거예요. 행운 색깔만 무료에서 공개됐는데, 나머지 4가지가 사실 더 중요해요. 실제로 운의 흐름이 달라지는 걸 느낄 수 있어요.' },
           { title: '道 · 이 사주로 잘 사는 법',
-            first: '이 사주가 잘 풀리는 조건이 딱 2가지예요. ',
-            blurred: '이것만 지키면 된다는 게 있어요. 반대로 이 사주가 망하는 패턴도 하나 있는데, 듣고 나면 "아, 내가 그걸 하고 있었구나" 싶을 거예요. 지금 당장 오늘부터 바꿀 수 있는 행동 2가지가 있고, 아는 것과 모르는 것의 차이가 생각보다 훨씬 크게 나요.' },
+            first: '이 사주가 잘 풀리는 조건이 딱 2가지예요. 이것만 지키면 인생이 달라져요.',
+            blurred: '반대로 이 사주가 망하는 패턴도 하나 있는데, 듣고 나면 "아, 내가 그걸 하고 있었구나" 싶을 거예요. 지금 당장 오늘부터 바꿀 수 있는 행동 2가지가 있어요.' },
+          { title: '직업 · 진로 심화 / 인연운 심화',
+            first: '나이대별로 가장 중요한 운이 따로 있어요. 지금 이 시기에 집중해야 할 영역이 보여요.',
+            blurred: '20대는 진로, 30대 미혼은 인연, 기혼은 부부운 — 사주 구조에서 실제로 보이는 흐름 기준으로 가장 중요한 분석이 나와요.' },
+          { title: '大運 · 앞으로의 큰 흐름',
+            first: '지금 어떤 대운을 타고 있는지, 다음 대운은 언제 바뀌는지 나와요.',
+            blurred: '현재 대운이 득인지 실인지, 다음 전환점이 언제인지 정확한 연도로 찍어드려요. 이 흐름을 아느냐 모르느냐가 앞으로 10년을 바꿔요.' },
+          { title: '총운 · 이 사주의 핵심 한마디',
+            first: '전체 분석을 관통하는 핵심 키워드가 있어요.',
+            blurred: '이 사주를 한 문장으로 정리하면 뭔지, 앞으로 가장 중요한 해가 언제인지, 지금 당장 해야 할 한 가지가 나와요.' },
         ]
    ).map((item, idx) => (
       <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(201,168,76,0.1)' }}>
-        <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
-        <div style={{ fontSize: 14, lineHeight: 1.9, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all' }}>
+        <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
+        <div style={{ fontSize: 17, lineHeight: 2.0, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all' }}>
           <span>{item.first}</span>
           <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{item.blurred}</span>
         </div>
       </div>
     ))}
-   <div style={{ textAlign: 'center', marginTop: 16 }}>
-      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>↓ 아래 버튼으로 결제하세요</p>
+    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 10 }}>총 {serviceType === 'child' ? 10 : serviceType === '노후' ? 10 : 10}개 섹션 · 이 모든 내용이 1,900원</p>
+    <div style={{ textAlign: 'center', marginTop: 12 }}>
+      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>↓ 아래 버튼으로 결제하세요</p>
     </div>
   </div>
 )}
@@ -1627,25 +1792,53 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     {/* 심화분석 업셀 */}
     {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
       <div style={{ marginTop: 28, marginBottom: 10 }}>
-        <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.7)', textAlign: 'center', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 18 }}>더 깊이 알고 싶다면?</p>
-        <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '22px', marginBottom: 12 }}>
-          <p style={{ fontSize: 16, fontWeight: 700, color: '#C9A84C', marginBottom: 10 }}>🔮 사주 심화 분석</p>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.9, marginBottom: 16 }}>기본 분석에서 못 말한 게 있어요.<br/>이 사주에서 절대 하면 안 되는 결정이 하나 있고, 귀인이 나타나는 시기가 딱 찍혀요.<br/>2027년이 나한테 기회인지 위기인지도요.</p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 26, fontWeight: 900, color: '#C9A84C' }}>9,900원</span>
-            <button style={{ padding: '14px 24px', fontSize: 15, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
-              onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); const _deepParams = new URLSearchParams({ payment: 'deep', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_deepParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 9900, currency: 'KRW' }); setScreen('deep_result'); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>확인하기 →</button>
+        <div style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.15) 0%, rgba(10,22,40,0.95) 50%, rgba(201,168,76,0.08) 100%)', border: '2px solid rgba(201,168,76,0.5)', borderRadius: 20, padding: '32px 22px', marginBottom: 12, position: 'relative', overflow: 'hidden' }}>
+          {/* 배경 장식 */}
+          <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: 'rgba(201,168,76,0.06)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: -30, left: -30, width: 80, height: 80, borderRadius: '50%', background: 'rgba(201,168,76,0.04)', pointerEvents: 'none' }} />
+
+          {/* 타이머 뱃지 */}
+          <div style={{ position: 'absolute', top: 0, right: 0, background: 'rgba(204,34,34,0.15)', padding: '8px 16px', borderRadius: '0 18px 0 16px', border: '1px solid rgba(204,34,34,0.3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 12, color: '#FF4444' }}>⏱</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#FF4444', letterSpacing: '0.05em' }}>{countdown}</span>
+              <span style={{ fontSize: 11, color: 'rgba(255,68,68,0.6)' }}>까지</span>
+            </div>
           </div>
-        </div>
-        <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 14, padding: '20px', marginBottom: 10, opacity: 0.7 }}>
-          <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>🌟 인생 전략 풀패키지 — 29,900원</p>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>심화 분석 + 6개월 길일 + 직업/투자 타이밍 + 고급 PDF</p>
-          <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
-        </div>
-        <div style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, opacity: 0.5 }}>
-          <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>💎 AI 사주 상담 — 49,900원</p>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>풀패키지 + 내 고민 3가지 사주 맞춤 답변</p>
-          <p style={{ fontSize: 13, color: 'rgba(201,168,76,0.5)', marginTop: 8 }}>🔜 준비 중</p>
+
+          <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', fontWeight: 600, letterSpacing: '0.18em', marginBottom: 14 }}>DEEP ANALYSIS</p>
+
+          {/* 훅 문구 */}
+          <p style={{ fontSize: 22, fontWeight: 900, color: '#FFFFFF', marginBottom: 8, lineHeight: 1.4 }}>기본 분석에서<br/>말 못한 게 있어요</p>
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 22, wordBreak: 'keep-all' }}>이 사주에서 <span style={{ color: '#C9A84C', fontWeight: 700 }}>절대 하면 안 되는 결정 1가지</span>,{'\n'}<span style={{ color: '#C9A84C', fontWeight: 700 }}>귀인이 나타나는 시기</span>, 지금이 <span style={{ color: '#C9A84C', fontWeight: 700 }}>기회인지 위기인지</span></p>
+
+          {/* 체크리스트 */}
+          <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '18px 16px', marginBottom: 24 }}>
+            {[
+              '재물 · 커리어 심층 분석',
+              '대운 흐름 + 전환점 정확한 연도',
+              '수비학 운명수 분석',
+              '오행으로 본 나의 커리어 계절 (木火土金水)',
+              '귀인 만나는 시기 + 구체적 행동 전략',
+              '절대 하면 안 되는 결정 1가지',
+            ].map((t, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < 5 ? 12 : 0 }}>
+                <span style={{ fontSize: 14, color: '#C9A84C', marginTop: 1, flexShrink: 0 }}>✓</span>
+                <span style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{t}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* 가격 */}
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through', marginRight: 10 }}>19,900원</span>
+            <span style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C' }}>9,900원</span>
+          </div>
+
+          <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: '0 4px 20px rgba(201,168,76,0.3)' }}
+            onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); const _deepParams = new URLSearchParams({ payment: 'deep', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_deepParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 9900, currency: 'KRW' }); setScreen('deep_result'); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>지금 심화분석 확인하기 →</button>
+
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 10 }}>결제 즉시 분석이 시작돼요</p>
         </div>
       </div>
     )}

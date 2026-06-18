@@ -251,6 +251,7 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
         messages: [{ role: 'user', content: prompt }],
       });
       for await (const chunk of stream) {
+        if (res.destroyed) { stream.controller?.abort(); return; }
         if (chunk.type === 'content_block_delta' && chunk.delta?.text) {
           res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
         }
@@ -258,8 +259,10 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
       return;
     } catch (e) {
       const isOverloaded = e?.error?.error?.type === 'overloaded_error' || e?.status === 529;
-      if (isOverloaded && attempt < maxRetries) {
+      const isRateLimit = e?.status === 429;
+      if ((isOverloaded || isRateLimit) && attempt < maxRetries) {
         const delay = attempt * 3000;
+        console.error(`[streamToClient] 재시도 ${attempt}/${maxRetries} (${isOverloaded ? 'overloaded' : 'rate_limit'}), ${delay}ms 대기`);
         await new Promise(r => setTimeout(r, delay));
         continue;
       }
@@ -618,7 +621,8 @@ ${관계프롬프트[관계유형] || 관계프롬프트['연인']}`
       await streamToClient(res, prompt, MODEL_PAID, 6000);
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     } catch (e) {
-      res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
+      console.error('[궁합 분석 오류]', e?.status, e?.error?.error?.type, e?.message || e);
+      if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
     }
     return res.end();
   }
@@ -732,7 +736,8 @@ ${관계프롬프트[관계유형] || 관계프롬프트['연인']}`
       }
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     } catch (e) {
-      res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
+      console.error('[자녀천명 분석 오류]', e?.status, e?.error?.error?.type, e?.message || e);
+      if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
     }
     return res.end();
   }
@@ -831,7 +836,8 @@ ${공통규칙}
     }
     res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
   } catch (e) {
-    res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
+    console.error('[노후 분석 오류]', e?.status, e?.error?.error?.type, e?.message || e);
+    if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
   }
   return res.end();
   // ── 길일 추천 ──────────────────────────────────
@@ -893,7 +899,8 @@ ${목적}
       await streamToClient(res, gililPrompt, MODEL_PAID, 4000);
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     } catch (e) {
-      res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
+      console.error('[길일 분석 오류]', e?.status, e?.error?.error?.type, e?.message || e);
+      if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
     }
     return res.end();
   }
@@ -905,6 +912,12 @@ ${목적}
 MBTI는 반드시 영문 대문자로 표기하세요. (예: ESFJ, INTJ, ENFP) 절대로 한글로 풀어쓰지 마세요.
 문장은 자연스러운 한국어로 써주세요. 어색하거나 번역투 표현은 절대 사용하지 마세요.
 
+[대운 표기 규칙 — 반드시 지킬 것]
+대운을 언급할 때는 반드시 '몇 년부터'로만 표현하세요. 나이 기준 표현은 절대 사용하지 마세요.
+사용자의 생년월일로 실제 대운 시작 연도를 정확히 계산해서 사용하세요.
+예시: '51세부터 기유대운' (X) → '2026년부터 기유대운' (O)
+예시: '40대 중반 대운' (X) → '2031년부터 시작되는 대운' (O)
+
 ${infoBlock}
 
 ${공통규칙}
@@ -912,6 +925,17 @@ ${공통규칙}
 각 섹션은 ===섹션제목=== 형태로 구분하세요.
 
 [중요] 각 섹션은 서로 내용이 겹치면 안 됩니다. 大運은 큰 흐름만, 運路는 현재 대운 디테일만, 年運은 2027년만, 貴人은 기본 분석 緣 섹션과 완전히 다른 각도(귀인을 만나는 구체적 상황·시기 중심)로 작성하세요.
+
+===🔢 수비학으로 본 당신의 운명수===
+(400~500자) 분석 시작 전, 사용자의 생년월일로 수비학 운명수를 계산해줘.
+계산법: 생년월일 각 숫자를 모두 더한 후 한 자리가 될 때까지 반복해서 더함.
+예) 1977년 4월 3일 → 1+9+7+7+0+4+0+3 = 31 → 3+1 = 4 → 운명수 4
+올해의 수: 2+0+2+6=10 → 1+0 = 1 → 2026년은 1의 해
+
+첫 문단: 이 사람의 운명수가 몇인지 계산 과정을 보여주고, 이 운명수의 핵심 의미를 설명해줘. 이 숫자가 가진 에너지와 이 사람의 성향이 어떻게 연결되는지 구체적으로.
+두 번째 문단: 이 운명수가 재물운과 커리어에 미치는 영향. 돈을 버는 방식, 적합한 직업 방향이 이 숫자에서 어떻게 나오는지.
+세 번째 문단: 2026년(1의 해)과 이 운명수의 궁합. 올해가 이 사람에게 새로운 시작의 해인지, 수확의 해인지, 준비의 해인지 수비학 관점에서 콕 찍어서.
+마지막 줄: 이 운명수를 가진 사람이 인생에서 가장 빛나는 순간은 언제인지, 따뜻하고 희망적으로 마무리.
 
 ===大運 · 10년 대운 흐름===
 (900~1000자) 이 사람의 앞으로 10년 대운을 3단계로 나눠서.
@@ -944,14 +968,29 @@ ${공통규칙}
 (900~1000자) 이 사주 기준으로 지금 이 시기에 맞는 행동 전략.
 첫 문단: 지금 당장 시작해야 할 것 2~3가지를 콕 찍어서. 추상적인 말 금지 — "매일 OO하세요" 수준으로 구체적으로. 왜 지금이 타이밍인지 단호하게.
 두 번째 문단: 지금 절대 하면 안 되는 것 2~3가지 콕 찍어서. "지금 이걸 하면 반드시 후회해요" 수준으로 단호하게. 사주 근거도 붙여서.
-마지막 줄: 2027년을 맞이하기 위해 지금 가장 중요한 한 가지. 따뜻하고 희망적으로 마무리.`;
+마지막 줄: 2027년을 맞이하기 위해 지금 가장 중요한 한 가지. 따뜻하고 희망적으로 마무리.
+
+===__운의계절__===
+사용자의 사주와 수비학(생년월일 숫자 합산)을 기반으로 오행 커리어 흐름을 계산해줘.
+
+木(씨앗기) → 火(성장기) → 土(전성기) → 金(수확기) → 水(지혜기)
+한 단계는 12년, 土가 커리어/재물 정점기(고정값)
+
+1) 각 단계가 몇 년도~몇 년도인지
+2) 현재 어느 단계에 있는지
+3) 土(전성기)까지 몇 년 남았는지 (이미 지났으면 0)
+4) 각 단계별 커리어/재물 운 점수 (0~100점)
+
+반드시 아래 JSON 형식으로만 반환하세요 (다른 텍스트 없이 JSON만):
+{"wood":{"label":"木 · 씨앗기","desc":"뿌리내리는 시간","start":년도,"end":년도,"score":점수},"fire":{"label":"火 · 성장기","desc":"에너지가 피어오르는 시간","start":년도,"end":년도,"score":점수},"earth":{"label":"土 · 전성기","desc":"결실을 맺는 시간","start":년도,"end":년도,"score":점수},"metal":{"label":"金 · 수확기","desc":"쌓아온 것을 거두는 시간","start":년도,"end":년도,"score":점수},"water":{"label":"水 · 지혜기","desc":"다음을 준비하는 시간","start":년도,"end":년도,"score":점수},"current":"wood|fire|earth|metal|water","yearsToEarth":숫자}`;
 
     try {
       res.write(`data: ${JSON.stringify({ type: 'paid_start' })}\n\n`);
       await streamToClient(res, deepPrompt, MODEL_PAID, 8000);
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     } catch (e) {
-      res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
+      console.error('[심화 분석 오류]', e?.status, e?.error?.error?.type, e?.message || e);
+      if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
     }
     return res.end();
   }
@@ -1058,8 +1097,8 @@ if (true) {
 }
 res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
   } catch (e) {
-    console.error(e);
-    res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
+    console.error('[기본 분석 오류]', e?.status, e?.error?.error?.type, e?.message || e);
+    if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
   }
 
   res.end();
