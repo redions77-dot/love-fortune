@@ -1159,39 +1159,15 @@ loadingTimersRef.current.countdown = setInterval(() => {
           )}
           {isGunghabStreaming && gunghabText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(gunghabText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
           {isGunghabStreaming && !gunghabText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}><div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>{[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}<span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>💕 두 사람의 궁합을 분석하고 있어요...</span></div></div>}
-          {!isGunghabStreaming && gunghabSections.length > 0 && (() => {
-            const extractScore = (text) => {
-              for (const m of text.matchAll(/(\d{2,3})\s*점/g)) {
-                const n = parseInt(m[1])
-                if (n >= 50 && n <= 100) return n
-              }
-              return null
-            }
-            const totalSec = gunghabSections.find(s => s.title.includes('총평'))
-            const totalScore = totalSec ? extractScore(totalSec.content) : null
-            if (!totalScore) return null
-            const colors = ['#D4537E', '#7F77DD', '#1D9E75', '#BA7517']
-            const shortLabel = (title) => {
-              if (title.includes('성격')) return '성격'
-              if (title.includes('돈') || title.includes('재물')) return '재물'
-              if (title.includes('결혼')) return '결혼'
-              if (title.includes('3년') || title.includes('앞으로')) return '미래'
-              if (title.includes('안 맞') || title.includes('힘들')) return '갈등'
-              if (title.includes('잘 지낼') || title.includes('이해')) return '소통'
-              if (title.includes('같이 일') || title.includes('편으로')) return '협업'
-              if (title.includes('성장') || title.includes('받을 수')) return '성장'
-              if (title.includes('오래된') || title.includes('진짜 편')) return '인연'
-              if (title.includes('흔들리') || title.includes('나아지')) return '전망'
-              return title.replace(/[^가-힣]/g, '').slice(0, 2)
-            }
-            const nonTotal = gunghabSections.filter(s => !s.title.includes('총평'))
-            const spreadOffsets = [-5, 3, -8, 6]
-            const categories = nonTotal.map((s, i) => ({
-              label: shortLabel(s.title),
-              score: Math.min(100, Math.max(50, totalScore + spreadOffsets[i % spreadOffsets.length])),
-              color: colors[i % colors.length],
-            }))
-            categories.push({ label: '총합', score: totalScore, color: '#C9A84C' })
+          {!isGunghabStreaming && gunghabSajuData?.scores && (() => {
+            const s = gunghabSajuData.scores
+            const categories = [
+              { label: '성격', score: s.성격, color: '#D4537E' },
+              { label: '재물', score: s.재물, color: '#7F77DD' },
+              { label: '결혼', score: s.결혼, color: '#1D9E75' },
+              { label: '미래', score: s.미래, color: '#BA7517' },
+              { label: '총합', score: s.total, color: '#C9A84C' },
+            ]
             return <GunghabRadarChart categories={categories} />
           })()}
           {!isGunghabStreaming && gunghabSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={i === 0} />)}

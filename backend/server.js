@@ -301,6 +301,63 @@ async function getScoreOnly(sajuInfo) {
  return Promise.resolve(JSON.stringify(scores))
 }
 
+function calcGunghabScores(saju1, saju2) {
+  const 천간한자 = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸']
+  const 지지한자 = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']
+  const 오행 = { '甲':'목','乙':'목','丙':'화','丁':'화','戊':'토','己':'토','庚':'금','辛':'금','壬':'수','癸':'수' }
+  const 지지오행 = { '子':'수','丑':'토','寅':'목','卯':'목','辰':'토','巳':'화','午':'화','未':'토','申':'금','酉':'금','戌':'토','亥':'수' }
+  const parse간지 = (str) => {
+    if (!str || str === '-') return { 간: null, 지: null }
+    const 간 = 천간한자.find(c => str.includes(c))
+    const 지 = 지지한자.find(c => str.includes(c))
+    return { 간, 지 }
+  }
+  const 상생 = { '목':'화','화':'토','토':'금','금':'수','수':'목' }
+  const 상극 = { '목':'토','토':'수','수':'화','화':'금','금':'목' }
+
+  const a일 = parse간지(saju1.일주), b일 = parse간지(saju2.일주)
+  const a월 = parse간지(saju1.월주), b월 = parse간지(saju2.월주)
+  const a년 = parse간지(saju1.년주), b년 = parse간지(saju2.년주)
+
+  let score = 70
+
+  if (a일.간 && b일.간) {
+    const a오 = 오행[a일.간], b오 = 오행[b일.간]
+    if (a오 === b오) score += 3
+    else if (상생[a오] === b오 || 상생[b오] === a오) score += 8
+    else if (상극[a오] === b오 || 상극[b오] === a오) score -= 5
+  }
+  if (a일.지 && b일.지) {
+    const a오 = 지지오행[a일.지], b오 = 지지오행[b일.지]
+    if (상생[a오] === b오 || 상생[b오] === a오) score += 5
+    else if (상극[a오] === b오 || 상극[b오] === a오) score -= 3
+    const 육합 = [['子','丑'],['寅','亥'],['卯','戌'],['辰','酉'],['巳','申'],['午','未']]
+    if (육합.some(p => (p[0]===a일.지 && p[1]===b일.지) || (p[1]===a일.지 && p[0]===b일.지))) score += 6
+    const 충 = [['子','午'],['丑','未'],['寅','申'],['卯','酉'],['辰','戌'],['巳','亥']]
+    if (충.some(p => (p[0]===a일.지 && p[1]===b일.지) || (p[1]===a일.지 && p[0]===b일.지))) score -= 4
+  }
+  if (a월.지 && b월.지) {
+    const a오 = 지지오행[a월.지], b오 = 지지오행[b월.지]
+    if (상생[a오] === b오 || 상생[b오] === a오) score += 3
+    else if (상극[a오] === b오 || 상극[b오] === a오) score -= 2
+  }
+  if (a년.지 && b년.지) {
+    const a오 = 지지오행[a년.지], b오 = 지지오행[b년.지]
+    if (상생[a오] === b오 || 상생[b오] === a오) score += 2
+    else if (상극[a오] === b오 || 상극[b오] === a오) score -= 1
+  }
+
+  const total = Math.min(95, Math.max(65, score))
+  const offsets = { 성격: -5, 재물: 3, 결혼: -8, 미래: 6 }
+  return {
+    total,
+    성격: Math.min(95, Math.max(50, total + offsets.성격)),
+    재물: Math.min(95, Math.max(50, total + offsets.재물)),
+    결혼: Math.min(95, Math.max(50, total + offsets.결혼)),
+    미래: Math.min(95, Math.max(50, total + offsets.미래)),
+  }
+}
+
 // 대운 계산 함수
 function getDaeun(year, month, day, gender, 년천간index, 월주간지) {
   // 월주 천간/지지 인덱스 추출
@@ -457,6 +514,7 @@ ${daeunBlock}`;
     const nameB = partnerName || 'B'
     const pSaju = calcSaju(partnerBirthdate, partnerBirthtime, partnerIsLunar);
     const 관계유형 = req.body.관계유형 || '연인'
+    const gunghabScores = calcGunghabScores(saju, pSaju)
 
 const 관계프롬프트 = {
   연인: `===성격 궁합===
@@ -485,8 +543,8 @@ const 관계프롬프트 = {
 마지막 줄: 앞으로 3년 중 가장 중요한 해 하나.
 
 ===궁합 총평===
-(300~400자) 궁합 점수는 반드시 65점 이상.
-첫 문단: 궁합 점수를 100점 만점으로 표현하고 이유 설명.
+(300~400자) 궁합 점수는 ${gunghabScores.total}점입니다 (100점 만점). 이 점수를 반드시 그대로 사용하세요.
+첫 문단: "${gunghabScores.total}점"이라고 정확히 표기하고, 이 점수가 나온 이유를 사주 근거로 설명.
 두 번째 문단: 잘 살기 위한 핵심 조언 2가지.`,
 
   직장상사: `===왜 이 상사가 나를 힘들게 하는가===
@@ -514,8 +572,8 @@ const 관계프롬프트 = {
 마지막 줄: 이 상사와의 관계에서 ${nameA}님이 놓치지 말아야 할 것.
 
 ===관계 총평===
-(300~400자)
-첫 문단: 이 조합을 100점 만점으로 표현하고 (직장 궁합 기준), 이유를 따뜻하게.
+(300~400자) 궁합 점수는 ${gunghabScores.total}점입니다 (100점 만점). 이 점수를 반드시 그대로 사용하세요.
+첫 문단: "${gunghabScores.total}점"이라고 정확히 표기하고 (직장 궁합 기준), 이유를 따뜻하게.
 두 번째 문단: ${nameA}님에게 전하는 위로와 핵심 조언.
 마지막 줄: 이 관계에서 ${nameA}님이 기억해야 할 한 문장.`,
 
@@ -541,7 +599,7 @@ const 관계프롬프트 = {
 (300~400자) 직장에서 이 관계가 어떻게 흘러가는지. 좋아지는 시기, 조심해야 할 시기.
 
 ===관계 총평===
-(300~400자) 직장 동료 궁합 점수와 핵심 조언.`,
+(300~400자) 궁합 점수는 ${gunghabScores.total}점입니다 (100점 만점). 이 점수를 반드시 "${gunghabScores.total}점"으로 정확히 표기하고 핵심 조언.`,
 
   친구: `===우리가 오래된 친구인 이유===
 (500~600자)
@@ -565,7 +623,7 @@ const 관계프롬프트 = {
 (300~400자) 2027~2029년 이 우정의 흐름.
 
 ===관계 총평===
-(300~400자) 우정 궁합 점수와 핵심 조언.`,
+(300~400자) 궁합 점수는 ${gunghabScores.total}점입니다 (100점 만점). 이 점수를 반드시 "${gunghabScores.total}점"으로 정확히 표기하고 핵심 조언.`,
 
   가족: `===왜 가족인데 이렇게 힘들까===
 (500~600자)
@@ -589,7 +647,7 @@ const 관계프롬프트 = {
 (300~400자) 힘든 관계지만 이 인연에서 ${nameA}님이 얻을 수 있는 것. 사주적으로 이 관계가 ${nameA}님에게 주는 의미.
 
 ===관계 총평===
-(300~400자) 가족 궁합 점수와 따뜻한 위로.`,
+(300~400자) 궁합 점수는 ${gunghabScores.total}점입니다 (100점 만점). 이 점수를 반드시 "${gunghabScores.total}점"으로 정확히 표기하고 따뜻한 위로.`,
 }
 
 const prompt = `당신은 한국의 사주·명리학 전문가입니다.
@@ -614,7 +672,8 @@ ${관계프롬프트[관계유형] || 관계프롬프트['연인']}`
     res.write(`data: ${JSON.stringify({
       type: 'gunghab_saju',
       my: { name: nameA, 년주, 월주, 일주, 시주: 시주 || '-' },
-      partner: { name: nameB, 년주: pSaju.년주, 월주: pSaju.월주, 일주: pSaju.일주, 시주: pSaju.시주 || '-' }
+      partner: { name: nameB, 년주: pSaju.년주, 월주: pSaju.월주, 일주: pSaju.일주, 시주: pSaju.시주 || '-' },
+      scores: gunghabScores
     })}\n\n`);
 
     try {
