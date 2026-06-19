@@ -155,14 +155,14 @@ function GunghabRadarChart({ categories, blurred }) {
   }
   const dataPoints = categories.map((c, i) => getPoint(i, c.score / 100))
   const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
-  const avg = Math.round(categories.reduce((s, c) => s + c.score, 0) / categories.length)
+  const mainScore = categories.find(c => c.label === '총합')?.score ?? Math.round(categories.reduce((s, c) => s + c.score, 0) / categories.length)
   return (
     <div style={{ position: 'relative', marginBottom: 16 }}>
       <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', ...(blurred ? { filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' } : {}) }}>
         <div style={{ textAlign: 'center', marginBottom: 8 }}>
           <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>💕 궁합 스탯</p>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-            <span style={{ fontSize: 52, fontWeight: 800, color: '#C9A84C', lineHeight: 1 }}>{avg}</span>
+            <span style={{ fontSize: 52, fontWeight: 800, color: '#C9A84C', lineHeight: 1 }}>{mainScore}</span>
             <span style={{ fontSize: 20, color: 'rgba(255,255,255,0.5)' }}>점</span>
           </div>
         </div>
@@ -1185,10 +1185,10 @@ loadingTimersRef.current.countdown = setInterval(() => {
               return title.replace(/[^가-힣]/g, '').slice(0, 2)
             }
             const nonTotal = gunghabSections.filter(s => !s.title.includes('총평'))
-            const offsets = [-3, 5, -7, 4]
+            const spreadOffsets = [-5, 3, -8, 6]
             const categories = nonTotal.map((s, i) => ({
               label: shortLabel(s.title),
-              score: extractScore(s.content) || Math.min(100, Math.max(50, totalScore + offsets[i % offsets.length])),
+              score: Math.min(100, Math.max(50, totalScore + spreadOffsets[i % spreadOffsets.length])),
               color: colors[i % colors.length],
             }))
             categories.push({ label: '총합', score: totalScore, color: '#C9A84C' })
