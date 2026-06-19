@@ -139,6 +139,78 @@ function parseSections(text) {
   }
   return sections
 }
+function GunghabRadarChart({ categories, blurred }) {
+  const size = 260
+  const cx = size / 2, cy = size / 2, r = 95
+  const levels = [0.2, 0.4, 0.6, 0.8, 1.0]
+  const n = categories.length
+  const angleOffset = -Math.PI / 2
+  const getPoint = (i, ratio) => {
+    const angle = angleOffset + (2 * Math.PI * i) / n
+    return { x: cx + r * ratio * Math.cos(angle), y: cy + r * ratio * Math.sin(angle) }
+  }
+  const getLabelPoint = (i) => {
+    const angle = angleOffset + (2 * Math.PI * i) / n
+    return { x: cx + (r + 22) * Math.cos(angle), y: cy + (r + 22) * Math.sin(angle) }
+  }
+  const dataPoints = categories.map((c, i) => getPoint(i, c.score / 100))
+  const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
+  const avg = Math.round(categories.reduce((s, c) => s + c.score, 0) / categories.length)
+  return (
+    <div style={{ position: 'relative', marginBottom: 16 }}>
+      <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', ...(blurred ? { filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' } : {}) }}>
+        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+          <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>💕 궁합 스탯</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
+            <span style={{ fontSize: 52, fontWeight: 800, color: '#C9A84C', lineHeight: 1 }}>{avg}</span>
+            <span style={{ fontSize: 20, color: 'rgba(255,255,255,0.5)' }}>점</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
+          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+            {levels.map((level, li) => {
+              const pts = categories.map((_, i) => getPoint(i, level))
+              const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
+              return <path key={li} d={path} fill="none" stroke="rgba(201,168,76,0.12)" strokeWidth="1" />
+            })}
+            {categories.map((_, i) => {
+              const outer = getPoint(i, 1.0)
+              return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="rgba(201,168,76,0.15)" strokeWidth="1" />
+            })}
+            <path d={dataPath} fill="rgba(201,168,76,0.15)" stroke="#C9A84C" strokeWidth="2" />
+            {dataPoints.map((p, i) => (
+              <circle key={i} cx={p.x} cy={p.y} r="4" fill={categories[i].color} stroke="#0D1B3E" strokeWidth="2" />
+            ))}
+            {categories.map((c, i) => {
+              const lp = getLabelPoint(i)
+              return (
+                <g key={i}>
+                  <text x={lp.x} y={lp.y - 6} textAnchor="middle" fontSize="11" fill="rgba(255,255,255,0.6)" fontWeight="600">{c.label}</text>
+                  <text x={lp.x} y={lp.y + 8} textAnchor="middle" fontSize="12" fill={c.color} fontWeight="800">{c.score}</text>
+                </g>
+              )
+            })}
+          </svg>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: 14 }}>
+          {categories.filter(c => c.label !== '총합').map(({ label, score, color }) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{label}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginLeft: 'auto' }}>{score}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {blurred && (
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 1 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', textShadow: '0 0 20px rgba(0,0,0,0.8)', whiteSpace: 'nowrap' }}>✦ 결제 후 실제 점수를 확인하세요</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function getMidnightCountdown() {
   const now = new Date(), midnight = new Date()
   midnight.setHours(24, 0, 0, 0)
@@ -470,7 +542,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
     clearLoadingTimers(); setIsPaidStreaming(false); setIsPaid(true)
     const _email = emailOverride || preEmail
-    if (_email) {
+    if (_email && (_fullBase.trim() || _fullPaid.trim())) {
       const label = _st === 'child' ? '🌱 자녀 학운 분석' : _st === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'
       autoSendEmail({ email: _email, subject: `${label} - ${myName || ''}님의 결과`, sections: [...parseSections(_fullBase), ...parseSections(_fullPaid)], name: myName })
     }
@@ -587,7 +659,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
     setIsGunghabStreaming(false)
     const _email = emailOverride || preEmail
-    if (_email) autoSendEmail({ email: _email, subject: `💕 ${myName || 'A'}님 & ${partnerName || 'B'}님 궁합 분석 결과`, sections: parseSections(_fullGunghabText), name: myName })
+    if (_email && _fullGunghabText.trim()) autoSendEmail({ email: _email, subject: `💕 ${myName || 'A'}님 & ${partnerName || 'B'}님 궁합 분석 결과`, sections: parseSections(_fullGunghabText), name: myName })
   }
 
   async function handleGililAnalyze() {
@@ -988,21 +1060,28 @@ loadingTimersRef.current.countdown = setInterval(() => {
        {!isStep0 && !isStep1 && (
             <div style={{ marginTop: 32, background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', border: '1px solid rgba(155,29,58,0.4)', borderRadius: 16, padding: '24px 20px', marginBottom: 8 }}>
               <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 14, textAlign: 'center' }}>✦ 결제하면 이런 내용을 확인할 수 있어요</p>
+              <GunghabRadarChart blurred categories={[
+                { label: '성격', score: 78, color: '#D4537E' },
+                { label: '재물', score: 65, color: '#7F77DD' },
+                { label: '결혼', score: 82, color: '#1D9E75' },
+                { label: '미래', score: 70, color: '#BA7517' },
+                { label: '총합', score: 74, color: '#C9A84C' },
+              ]} />
               {(() => {
                 const isLover = 관계유형 === '연인'
                 const thirdItem = isLover
-                  ? { title: '결혼 궁합', blurred: '이 관계가 인연으로 묶이는 사주인지, 결혼 후 운의 흐름이 어떻게 달라지는지 분석해드려요.' }
+                  ? { title: '결혼 궁합', blurred: '이 관계가 인연으로 묶이는 사주인지, 결혼 후 운의 흐름이 어떻게 달라지는지 분석해드려요. 사주에서 보이는 혼인 시기와 실제로 결혼했을 때 두 사람의 운이 올라가는지 내려가는지가 확인돼요. 결혼 후 첫 3년의 흐름이 특히 중요한데, 이 시기에 생기는 갈등 패턴과 해결법이 구체적으로 나와요. 자녀 운과 시댁·처가 관계에서의 역학 관계도 사주에서 읽을 수 있어요. 이 조합이 결혼으로 갔을 때 가장 행복해지는 조건과 반대로 피해야 할 상황도 짚어드려요.' }
                   : 관계유형 === '가족'
-                  ? { title: '가족 인연', blurred: '이 가족이 사주적으로 어떤 인연으로 묶여있는지, 서로에게 어떤 의미를 주는 존재인지 분석해드려요.' }
+                  ? { title: '가족 인연', blurred: '이 가족이 사주적으로 어떤 인연으로 묶여있는지, 서로에게 어떤 의미를 주는 존재인지 분석해드려요. 전생에서 이어진 인연의 깊이가 어느 정도인지, 이번 생에서 서로에게 주는 영향이 긍정적인지 부정적인지도 나와요. 가족 간 갈등이 생기는 근본 원인이 사주 구조에 있는 경우가 많은데, 그 패턴을 알면 관계가 훨씬 편해져요. 서로에게 가장 도움이 되는 소통 방식과 절대 하면 안 되는 말이 따로 있어요. 나이가 들수록 이 관계가 어떻게 변하는지도 구체적으로 확인할 수 있어요.' }
                   : 관계유형 === '친구'
-                  ? { title: '우정의 깊이', blurred: '이 친구와의 인연이 사주적으로 얼마나 깊은지, 앞으로도 계속 함께할 인연인지 짚어드려요.' }
-                  : { title: '직장 내 영향력', blurred: '이 사람과의 관계가 회사 내에서 내 입지나 평판에 어떤 영향을 주는지, 함께 일할 때 주의해야 할 포인트를 짚어드려요.' }
+                  ? { title: '우정의 깊이', blurred: '이 친구와의 인연이 사주적으로 얼마나 깊은지, 앞으로도 계속 함께할 인연인지 짚어드려요. 단순한 친구인지 인생 전체를 함께하는 지기(知己)인지 사주에서 구분할 수 있어요. 이 친구와 사업이나 프로젝트를 같이 해도 되는 궁합인지, 돈이 오가면 관계가 틀어지는 구조인지도 확인돼요. 우정이 깊어지는 시기와 소원해지기 쉬운 시기가 따로 있는데, 그 흐름을 알면 관계를 더 오래 유지할 수 있어요. 이 친구가 내 인생에서 어떤 역할을 하는 존재인지 한마디로 정리해드려요.' }
+                  : { title: '직장 내 영향력', blurred: '이 사람과의 관계가 회사 내에서 내 입지나 평판에 어떤 영향을 주는지, 함께 일할 때 주의해야 할 포인트를 짚어드려요. 이 사람이 내 승진이나 평가에 도움이 되는 구조인지 방해가 되는 구조인지 사주에서 확인할 수 있어요. 함께 프로젝트를 하면 시너지가 나는 분야와 절대 같이 하면 안 되는 업무 유형이 따로 있어요. 직장 내 갈등이 생겼을 때 이 사람과의 최적 대응 전략이 나오고, 관계를 유리하게 이끄는 타이밍도 구체적으로 짚어드려요. 이직이나 부서 이동 시 이 관계가 어떻게 변하는지도 확인할 수 있어요.' }
                 return [
-                  { title: isLover ? '성격 궁합' : '성격 케미', preview: '두 사람은 겉으로 보기엔 달라 보이지만, 사주 구조상 서로의 빈자리를 채워주는 관계예요.', blurred: '한 사람이 불을 지피면 다른 한 사람이 방향을 잡아주는 구조라 함께할수록 시너지가 나요. 단, 속도 차이에서 오는 충돌이 생길 수 있고 이걸 어떻게 다루느냐가 관건이에요.' },
-                  { title: 관계유형 === '연인' ? '돈 궁합' : '재물 운', preview: null, blurred: '두 사람이 같이 있을 때 돈이 모이는 구조인지, 아니면 쓰게 되는 구조인지 사주에 다 나와요. 공동 투자나 재정 운용 방향도 확인할 수 있어요.' },
+                  { title: isLover ? '성격 궁합' : '성격 케미', preview: '두 사람은 겉으로 보기엔 달라 보이지만, 사주 구조상 서로의 빈자리를 채워주는 관계예요.', blurred: '한 사람이 불을 지피면 다른 한 사람이 방향을 잡아주는 구조라 함께할수록 시너지가 나요. 단, 속도 차이에서 오는 충돌이 생길 수 있고 이걸 어떻게 다루느냐가 관건이에요. 특히 감정 표현 방식이 정반대라 한쪽은 말로 풀려 하고 다른 한쪽은 행동으로 보여주려 해요. 이 차이를 이해하면 싸움이 줄고, 모르면 같은 패턴이 반복돼요. 두 사람의 일간 조합에서 목화(木火)의 기운이 강하게 작용하고 있어서 초반 끌림은 강하지만 유지하려면 서로의 리듬을 맞추는 연습이 필요해요. 실제로 이 조합은 3년 차에 가장 큰 고비가 오는데, 그 시기를 어떻게 넘기느냐가 이 관계의 수명을 결정해요.' },
+                  { title: 관계유형 === '연인' ? '돈 궁합' : '재물 운', preview: null, blurred: '두 사람이 같이 있을 때 돈이 모이는 구조인지, 아니면 쓰게 되는 구조인지 사주에 다 나와요. 공동 투자나 재정 운용 방향도 확인할 수 있어요. 한 사람은 모으는 데 강하고 다른 한 사람은 불리는 데 강한 구조인데, 이 역할 분담이 자연스럽게 맞아떨어지면 재산이 빠르게 늘어나는 조합이에요. 단, 큰 지출에 대한 기준이 다를 수 있어서 미리 합의하지 않으면 돈 문제로 감정이 상할 수 있어요. 특히 부동산이나 목돈이 움직이는 시기에 의견 충돌이 생기기 쉬운 구조예요. 두 사람이 함께 투자하면 안 되는 분야가 따로 있고, 반대로 같이 하면 시너지가 나는 재테크 방향도 구체적으로 나와요. 공동 재정을 운용할 때 절대 하면 안 되는 실수 한 가지도 짚어드려요.' },
                   { title: thirdItem.title, preview: null, blurred: thirdItem.blurred },
-                  { title: '두 사람의 앞으로 3년', preview: null, blurred: '2025~2027년, 두 사람에게 가장 중요한 시기가 언제인지, 함께 올라타야 할 타이밍과 조심해야 할 구간이 나와요.' },
-                  { title: isLover ? '궁합 총평' : '관계 총평', preview: null, blurred: '이 사주 조합이 전체적으로 어떤 관계인지, 잘 맞는 이유와 주의할 점을 한 번에 정리해드려요.' },
+                  { title: '두 사람의 앞으로 3년', preview: null, blurred: '2025~2027년, 두 사람에게 가장 중요한 시기가 언제인지, 함께 올라타야 할 타이밍과 조심해야 할 구간이 나와요. 2025년 하반기에 관계의 전환점이 한 번 오고, 2026년 봄에는 함께 큰 결정을 내려야 할 상황이 생겨요. 이 시기를 잘 넘기면 2027년에 두 사람의 관계가 한 단계 깊어지는 구조예요. 반대로 2026년 여름~가을은 서로 지치기 쉬운 시기라 의식적으로 거리를 좁히려는 노력이 필요해요. 각 시기별로 조심해야 할 행동과 반드시 해야 할 대화 주제가 따로 있어요. 특히 두 사람의 대운 흐름이 교차하는 지점이 있는데, 그 시기가 이 관계의 가장 큰 기회이자 위기가 될 수 있어요. 3년간의 월별 흐름도 구체적으로 확인할 수 있어요.' },
+                  { title: isLover ? '궁합 총평' : '관계 총평', preview: null, blurred: '이 사주 조합이 전체적으로 어떤 관계인지, 잘 맞는 이유와 주의할 점을 한 번에 정리해드려요. 두 사람의 오행 균형을 종합하면 서로에게 필요한 기운을 주고받는 상보적 관계예요. 다만 한쪽이 지나치게 맞추는 구조가 되면 균형이 깨지기 쉬워서 대등한 관계 유지가 핵심이에요. 이 조합의 가장 큰 강점은 위기 상황에서 오히려 단단해지는 구조라는 거예요. 반대로 평화로운 시기에 권태가 올 수 있는데, 그걸 방지하는 구체적인 방법도 나와요. 장기적으로 이 관계가 유지되려면 반드시 지켜야 할 규칙이 하나 있고, 그걸 알면 10년 후에도 지금처럼 가까운 사이로 남을 수 있어요. 전체 궁합 점수와 영역별 세부 점수도 한눈에 정리해드려요.' },
                 ]
               })().map((item, idx) => (
                 <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(155,29,58,0.06)', borderRadius: 10, border: '1px solid rgba(155,29,58,0.2)' }}>
@@ -1080,6 +1159,41 @@ loadingTimersRef.current.countdown = setInterval(() => {
           )}
           {isGunghabStreaming && gunghabText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(gunghabText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
           {isGunghabStreaming && !gunghabText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}><div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>{[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}<span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>💕 두 사람의 궁합을 분석하고 있어요...</span></div></div>}
+          {!isGunghabStreaming && gunghabSections.length > 0 && (() => {
+            const extractScore = (text) => {
+              for (const m of text.matchAll(/(\d{2,3})\s*점/g)) {
+                const n = parseInt(m[1])
+                if (n >= 50 && n <= 100) return n
+              }
+              return null
+            }
+            const totalSec = gunghabSections.find(s => s.title.includes('총평'))
+            const totalScore = totalSec ? extractScore(totalSec.content) : null
+            if (!totalScore) return null
+            const colors = ['#D4537E', '#7F77DD', '#1D9E75', '#BA7517']
+            const shortLabel = (title) => {
+              if (title.includes('성격')) return '성격'
+              if (title.includes('돈') || title.includes('재물')) return '재물'
+              if (title.includes('결혼')) return '결혼'
+              if (title.includes('3년') || title.includes('앞으로')) return '미래'
+              if (title.includes('안 맞') || title.includes('힘들')) return '갈등'
+              if (title.includes('잘 지낼') || title.includes('이해')) return '소통'
+              if (title.includes('같이 일') || title.includes('편으로')) return '협업'
+              if (title.includes('성장') || title.includes('받을 수')) return '성장'
+              if (title.includes('오래된') || title.includes('진짜 편')) return '인연'
+              if (title.includes('흔들리') || title.includes('나아지')) return '전망'
+              return title.replace(/[^가-힣]/g, '').slice(0, 2)
+            }
+            const nonTotal = gunghabSections.filter(s => !s.title.includes('총평'))
+            const offsets = [-3, 5, -7, 4]
+            const categories = nonTotal.map((s, i) => ({
+              label: shortLabel(s.title),
+              score: extractScore(s.content) || Math.min(100, Math.max(50, totalScore + offsets[i % offsets.length])),
+              color: colors[i % colors.length],
+            }))
+            categories.push({ label: '총합', score: totalScore, color: '#C9A84C' })
+            return <GunghabRadarChart categories={categories} />
+          })()}
           {!isGunghabStreaming && gunghabSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={i === 0} />)}
           <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 10, marginTop: 16 }}>
             <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
