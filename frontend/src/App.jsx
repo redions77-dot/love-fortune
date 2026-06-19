@@ -151,7 +151,7 @@ function GunghabRadarChart({ categories, blurred }) {
   }
   const getLabelPoint = (i) => {
     const angle = angleOffset + (2 * Math.PI * i) / n
-    return { x: cx + (r + 22) * Math.cos(angle), y: cy + (r + 22) * Math.sin(angle) }
+    return { x: cx + (r + 26) * Math.cos(angle), y: cy + (r + 26) * Math.sin(angle) }
   }
   const dataPoints = categories.map((c, i) => getPoint(i, c.score / 100))
   const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
@@ -185,8 +185,8 @@ function GunghabRadarChart({ categories, blurred }) {
               const lp = getLabelPoint(i)
               return (
                 <g key={i}>
-                  <text x={lp.x} y={lp.y - 6} textAnchor="middle" fontSize="11" fill="rgba(255,255,255,0.6)" fontWeight="600">{c.label}</text>
-                  <text x={lp.x} y={lp.y + 8} textAnchor="middle" fontSize="12" fill={c.color} fontWeight="800">{c.score}</text>
+                  <text x={lp.x} y={lp.y - 7} textAnchor="middle" fontSize="13" fill="rgba(255,255,255,0.6)" fontWeight="600">{c.label}</text>
+                  <text x={lp.x} y={lp.y + 9} textAnchor="middle" fontSize="15" fill={c.color} fontWeight="800">{c.score}</text>
                 </g>
               )
             })}
@@ -195,9 +195,9 @@ function GunghabRadarChart({ categories, blurred }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: 14 }}>
           {categories.filter(c => c.label !== '총합').map(({ label, score, color }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{label}</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginLeft: 'auto' }}>{score}</span>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)' }}>{label}</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', marginLeft: 'auto' }}>{score}</span>
             </div>
           ))}
         </div>
@@ -1139,16 +1139,16 @@ loadingTimersRef.current.countdown = setInterval(() => {
           </div>
           {gunghabSajuData && (
             <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: '#C9A84C', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 10 }}>💕 두 사람의 사주팔자</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#C9A84C', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 10 }}>💕 두 사람의 사주팔자</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {[{ label: gunghabSajuData.my.name + '님', data: gunghabSajuData.my }, { label: gunghabSajuData.partner.name + '님', data: gunghabSajuData.partner }].map(({ label, data }) => (
-                  <div key={label} style={{ background: '#1B2A4A', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, padding: '12px 10px' }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: '#C9A84C', textAlign: 'center', marginBottom: 8 }}>{label}</p>
+                  <div key={label} style={{ background: '#1B2A4A', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, padding: '14px 10px' }}>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', textAlign: 'center', marginBottom: 8 }}>{label}</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                       {[{ k: '시주(時)', v: data.시주 }, { k: '일주(日)', v: data.일주 }, { k: '월주(月)', v: data.월주 }, { k: '년주(年)', v: data.년주 }].map(({ k, v }) => (
-                        <div key={k} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.06)', borderRadius: 7, padding: '8px 4px', border: '1px solid rgba(201,168,76,0.15)' }}>
-                          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 3 }}>{k}</span>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: '#FFFFFF' }}>{v}</span>
+                        <div key={k} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.06)', borderRadius: 7, padding: '10px 4px', border: '1px solid rgba(201,168,76,0.15)' }}>
+                          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 4 }}>{k}</span>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF' }}>{v}</span>
                         </div>
                       ))}
                     </div>
