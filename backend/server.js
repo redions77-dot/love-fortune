@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const Anthropic = require('@anthropic-ai/sdk');
 const KoreanLunarCalendar = require('korean-lunar-calendar');
+const { Pool } = require('pg');
 require('dotenv').config();
 
 const app = express();
@@ -16,6 +17,30 @@ app.use(cors({
 }));
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS results (
+        id SERIAL PRIMARY KEY,
+        email TEXT NOT NULL,
+        type TEXT NOT NULL,
+        result_text TEXT NOT NULL,
+        user_name TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_results_email ON results(email);
+    `);
+    console.log('[DB] results 테이블 준비 완료');
+  } catch (e) {
+    console.error('[DB] 테이블 생성 실패:', e.message);
+  }
+})();
 
 const MODEL_FREE = 'claude-haiku-4-5-20251001';
 const MODEL_PAID = 'claude-sonnet-4-5-20250929';
@@ -677,7 +702,7 @@ ${관계프롬프트[관계유형] || 관계프롬프트['연인']}`
     })}\n\n`);
 
     try {
-      await streamToClient(res, prompt, MODEL_PAID, 6000);
+      await streamToClient(res, prompt, MODEL_PAID, 10000);
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     } catch (e) {
       console.error('[궁합 분석 오류]', e?.status, e?.error?.error?.type, e?.message || e);
@@ -1229,6 +1254,51 @@ app.post('/api/send-email', async (req, res) => {
   } catch (e) {
     console.error('이메일 발송 오류:', e);
     res.status(500).json({ error: '이메일 발송 실패' });
+  }
+});
+
+// ── 결과 저장 API ──────────────────────────────────────
+app.post('/api/save-result', async (req, res) => {
+  const { email, type, resultText, userName } = req.body;
+  if (!email || !type || !resultText) {
+    return res.status(400).json({ error: 'email, type, resultText는 필수입니다.' });
+  }
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO results (email, type, result_text, user_name) VALUES ($1, $2, $3, $4) RETURNING id',
+      [email, type, resultText, userName || null]
+    );
+    res.json({ success: true, id: rows[0].id });
+  } catch (e) {
+    console.error('[DB] 결과 저장 실패:', e.message);
+    res.status(500).json({ error: '결과 저장에 실패했습니다.' });
+  }
+});
+
+// ── 결과 조회 API ──────────────────────────────────────
+app.get('/api/get-results', async (req, res) => {
+  const { email } = req.query;
+  if (!email) {
+    return res.status(400).json({ error: 'email 파라미터가 필요합니다.' });
+  }
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, type, result_text, user_name, created_at FROM results WHERE email = $1 ORDER BY created_at DESC',
+      [email]
+    );
+    res.json({
+      success: true,
+      results: rows.map(r => ({
+        id: r.id,
+        type: r.type,
+        resultText: r.result_text,
+        userName: r.user_name,
+        createdAt: r.created_at,
+      })),
+    });
+  } catch (e) {
+    console.error('[DB] 결과 조회 실패:', e.message);
+    res.status(500).json({ error: '결과 조회에 실패했습니다.' });
   }
 });
 

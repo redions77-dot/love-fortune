@@ -14,6 +14,7 @@
     "express": "^4.19.2",
     "korean-lunar-calendar": "*",
     "nodemailer": "^6.9.0",
+    "pg": "^8.22.0",
     "puppeteer-core": "^22.0.0"
   },
   "devDependencies": {
