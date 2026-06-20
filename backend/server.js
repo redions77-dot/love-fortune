@@ -425,17 +425,18 @@ function getDaeun(year, month, day, gender, 년천간index, 월주간지) {
 
   const 시작나이 = Math.round(날수 / 3)
 
-  // 대운 목록 생성 (8개)
+  // 대운 목록 생성 (8개) — 나이와 시작 연도를 함께 저장
   const 대운목록 = []
   for (let i = 0; i < 8; i++) {
     const 나이 = 시작나이 + (i * 10)
+    const 시작연도 = year + 나이
     const 천간idx = 순행
       ? (월간index + 1 + i) % 10
       : ((월간index - 1 - i) % 10 + 10) % 10
     const 지지idx = 순행
       ? (월지index + 1 + i) % 12
       : ((월지index - 1 - i) % 12 + 12) % 12
-    대운목록.push({ 나이, 간지: 천간[천간idx] + 지지[지지idx] })
+    대운목록.push({ 나이, 시작연도, 간지: 천간[천간idx] + 지지[지지idx] })
   }
 
   return { 시작나이, 순행, 대운목록 }
@@ -484,19 +485,27 @@ app.post('/api/analyze', async (req, res) => {
 
   // 대운 계산
   const daeunInfo = getDaeun(year, month, day, gender, 년천간index, 월주)
-  const currentAge = 2026 - year
+  const thisYear = new Date().getFullYear()
   const currentDaeun = daeunInfo.대운목록.find((d, i) => {
     const next = daeunInfo.대운목록[i + 1]
-    return currentAge >= d.나이 && (!next || currentAge < next.나이)
+    return thisYear >= d.시작연도 && (!next || thisYear < next.시작연도)
   })
-  const nextDaeun = currentDaeun ? daeunInfo.대운목록[daeunInfo.대운목록.indexOf(currentDaeun) + 1] : null
-  const nextNextDaeun = nextDaeun ? daeunInfo.대운목록[daeunInfo.대운목록.indexOf(nextDaeun) + 1] : null
+  const currentIdx = currentDaeun ? daeunInfo.대운목록.indexOf(currentDaeun) : -1
+  const nextDaeun = currentIdx >= 0 ? daeunInfo.대운목록[currentIdx + 1] : null
+  const nextNextDaeun = currentIdx >= 0 ? daeunInfo.대운목록[currentIdx + 2] : null
+
+  const currentStartYear = currentDaeun?.시작연도
+  const currentEndYear = nextDaeun ? nextDaeun.시작연도 - 1 : (currentStartYear ? currentStartYear + 9 : null)
+  const nextStartYear = nextDaeun?.시작연도
+  const nextEndYear = nextNextDaeun ? nextNextDaeun.시작연도 - 1 : (nextStartYear ? nextStartYear + 9 : null)
+  const nextNextStartYear = nextNextDaeun?.시작연도
+  const nextNextIdx = currentIdx >= 0 ? currentIdx + 3 : -1
+  const nextNextEndYear = (nextNextIdx >= 0 && daeunInfo.대운목록[nextNextIdx]) ? daeunInfo.대운목록[nextNextIdx].시작연도 - 1 : (nextNextStartYear ? nextNextStartYear + 9 : null)
 
   const daeunBlock = `[대운 정보]
-- 대운 시작 나이: ${daeunInfo.시작나이}세 (${daeunInfo.순행 ? '순행' : '역행'})
-- 현재 대운: ${currentDaeun ? `${currentDaeun.간지} (${currentDaeun.나이}세~${(currentDaeun.나이 + 9)}세)` : '미상'}
-- 다음 대운: ${nextDaeun ? `${nextDaeun.간지} (${nextDaeun.나이}세~${(nextDaeun.나이 + 9)}세)` : '미상'}
-- 그 다음 대운: ${nextNextDaeun ? `${nextNextDaeun.간지} (${nextNextDaeun.나이}세~${(nextNextDaeun.나이 + 9)}세)` : '미상'}`
+- 현재 대운: ${currentDaeun ? `${currentDaeun.간지} (${currentStartYear}년 ~ ${currentEndYear}년)` : '미상'}
+- 다음 대운: ${nextDaeun ? `${nextDaeun.간지} (${nextStartYear}년 ~ ${nextEndYear}년)` : '미상'}
+- 그 다음 대운: ${nextNextDaeun ? `${nextNextDaeun.간지} (${nextNextStartYear}년 ~ ${nextNextEndYear}년)` : '미상'}`
   const 시지힌트 = get시지라벨(시주);
 
   const 투자거주힌트 = 시지힌트
@@ -517,7 +526,7 @@ app.post('/api/analyze', async (req, res) => {
     const infoBlock = `[기본 정보]
 - 이름: ${userName}
 - 성별: ${gender || '미입력'}
-- 생년월일: ${year}년 ${month}월 ${day}일 (현재 ${2026 - year}세)
+- 생년월일: ${year}년 ${month}월 ${day}일 (현재 ${thisYear - year}세)
 - 태어난 시간: ${birthtime || '미입력'}
 - MBTI: ${mbti || '미입력'}
 - 혈액형: ${blood ? blood + '형' : '미입력'}
@@ -992,15 +1001,14 @@ ${목적}
   // ── 9900원 심화 분석 ──────────────────────────────────
   if (type === '심화') {
    const deepPrompt = `당신은 한국의 사주·명리학 전문가입니다.
-쉽고 따뜻한 말투로 분석해주세요. 현재는 2026년입니다.
+쉽고 따뜻한 말투로 분석해주세요. 현재는 ${thisYear}년입니다.
 MBTI는 반드시 영문 대문자로 표기하세요. (예: ESFJ, INTJ, ENFP) 절대로 한글로 풀어쓰지 마세요.
 문장은 자연스러운 한국어로 써주세요. 어색하거나 번역투 표현은 절대 사용하지 마세요.
 
 [대운 표기 규칙 — 반드시 지킬 것]
-대운을 언급할 때는 반드시 '몇 년부터'로만 표현하세요. 나이 기준 표현은 절대 사용하지 마세요.
-사용자의 생년월일로 실제 대운 시작 연도를 정확히 계산해서 사용하세요.
-예시: '51세부터 기유대운' (X) → '2026년부터 기유대운' (O)
-예시: '40대 중반 대운' (X) → '2031년부터 시작되는 대운' (O)
+위 [대운 정보]에 이미 정확한 연도가 계산되어 있습니다.
+대운을 언급할 때는 반드시 위에 주어진 연도를 그대로 사용하세요.
+나이로 직접 계산하거나 연도를 임의로 추정하지 마세요.
 
 ${infoBlock}
 
@@ -1023,24 +1031,24 @@ ${공통규칙}
 
 ===大運 · 10년 대운 흐름===
 (900~1000자) 이 사람의 앞으로 10년 대운을 3단계로 나눠서.
-첫 문단: 지금 이 시기(2026~2028) — 기회인지 준비 시기인지 단호하게 콕 찍어서. 지금 당장 해야 할 것과 절대 하면 안 되는 것을 구체적으로.
-두 번째 문단: 중간 시기(2029~2031) — 재물·직업·인간관계 중 가장 크게 움직이는 영역 하나만 콕 찍어서. 이 시기를 어떻게 준비하느냐가 인생을 바꾼다는 걸 단호하게.
-세 번째 문단: 후반 시기(2032~2036) — 이 사주가 꽃피는 시기가 언제인지 구체적으로. 지금부터 뭘 준비하면 달라지는지 행동 단위로.
+첫 문단: 현재 대운 시기(${currentStartYear}~${currentEndYear}년) — 기회인지 준비 시기인지 단호하게 콕 찍어서. 지금 당장 해야 할 것과 절대 하면 안 되는 것을 구체적으로.
+두 번째 문단: 다음 대운 시기(${nextStartYear || (thisYear + 4)}~${nextEndYear || (thisYear + 8)}년) — 재물·직업·인간관계 중 가장 크게 움직이는 영역 하나만 콕 찍어서. 이 시기를 어떻게 준비하느냐가 인생을 바꾼다는 걸 단호하게.
+세 번째 문단: 그 다음 대운 시기(${nextNextStartYear || (thisYear + 9)}~${nextNextEndYear || (thisYear + 14)}년) — 이 사주가 꽃피는 시기가 언제인지 구체적으로. 지금부터 뭘 준비하면 달라지는지 행동 단위로.
 마지막 줄: 앞으로 10년 중 가장 중요한 해 하나만 콕 찍고, 그 해를 잘 보내기 위한 핵심 한 가지. 따뜻하고 희망적으로 마무리.
 
 ===運路 · 대운 상세 분석===
 (900~1000자) 이 사람의 대운 흐름을 구체적으로.
-첫 문단: 현재 대운 기운을 콕 찍어서 — 이 대운이 이 사람에게 득인지 실인지 단호하게. 재물·직업·인간관계 중 지금 가장 크게 움직이는 영역 하나만.
+첫 문단: 현재 대운(${currentDaeun ? currentDaeun.간지 : ''}, ${currentStartYear}~${currentEndYear}년) 기운을 콕 찍어서 — 이 대운이 이 사람에게 득인지 실인지 단호하게. 재물·직업·인간관계 중 지금 가장 크게 움직이는 영역 하나만.
 두 번째 문단: 현재 대운에서 가장 좋은 시기 콕 찍어서, 절대 조심해야 할 시기도 콕 찍어서. "이 시기에 이걸 하면 후회해요" 수준으로 단호하게.
-세 번째 문단: 다음 대운이 언제 시작되는지, 어떤 기운으로 바뀌는지. 지금부터 뭘 준비하면 달라지는지 행동 단위로.
+세 번째 문단: 다음 대운(${nextDaeun ? nextDaeun.간지 : ''}, ${nextStartYear}년 시작)이 어떤 기운으로 바뀌는지. 지금부터 뭘 준비하면 달라지는지 행동 단위로.
 마지막 줄: 이 대운을 가장 잘 활용하는 핵심 한 가지. 따뜻하고 희망적으로 마무리.
 
-===年運 · 2027년 흐름===
-(900~1000자) 2027년 전체 흐름.
-첫 문단: 2027년이 이 사람에게 상승인지 안정인지 전환점인지 단호하게 콕 찍어서. 두루뭉술하게 말하지 말고 "2027년은 OO의 해예요" 수준으로.
-두 번째 문단: 2027년 상반기(1~6월) — 재물·직업·인간관계 중 가장 중요한 것 하나만 콕 찍어서 구체적으로.
-세 번째 문단: 2027년 하반기(7~12월) — 절대 조심해야 할 달 하나, 적극적으로 움직여야 할 달 하나 콕 찍어서.
-마지막 줄: 2027년 핵심 조언 한 문장. 따뜻하고 희망적으로 마무리.
+===年運 · ${thisYear + 1}년 흐름===
+(900~1000자) ${thisYear + 1}년 전체 흐름.
+첫 문단: ${thisYear + 1}년이 이 사람에게 상승인지 안정인지 전환점인지 단호하게 콕 찍어서. 두루뭉술하게 말하지 말고 "${thisYear + 1}년은 OO의 해예요" 수준으로.
+두 번째 문단: ${thisYear + 1}년 상반기(1~6월) — 재물·직업·인간관계 중 가장 중요한 것 하나만 콕 찍어서 구체적으로.
+세 번째 문단: ${thisYear + 1}년 하반기(7~12월) — 절대 조심해야 할 달 하나, 적극적으로 움직여야 할 달 하나 콕 찍어서.
+마지막 줄: ${thisYear + 1}년 핵심 조언 한 문장. 따뜻하고 희망적으로 마무리.
 
 ===貴人 · 귀인 분석===
 (900~1000자) 기본 분석에서 귀인의 특징은 이미 다뤘어요. 여기서는 절대 반복하지 마세요. 대신 이것만:
@@ -1052,7 +1060,7 @@ ${공통규칙}
 (900~1000자) 이 사주 기준으로 지금 이 시기에 맞는 행동 전략.
 첫 문단: 지금 당장 시작해야 할 것 2~3가지를 콕 찍어서. 추상적인 말 금지 — "매일 OO하세요" 수준으로 구체적으로. 왜 지금이 타이밍인지 단호하게.
 두 번째 문단: 지금 절대 하면 안 되는 것 2~3가지 콕 찍어서. "지금 이걸 하면 반드시 후회해요" 수준으로 단호하게. 사주 근거도 붙여서.
-마지막 줄: 2027년을 맞이하기 위해 지금 가장 중요한 한 가지. 따뜻하고 희망적으로 마무리.
+마지막 줄: ${thisYear + 1}년을 맞이하기 위해 지금 가장 중요한 한 가지. 따뜻하고 희망적으로 마무리.
 
 ===__운의계절__===
 사용자의 사주와 수비학(생년월일 숫자 합산)을 기반으로 오행 커리어 흐름을 계산해줘.
