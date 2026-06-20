@@ -545,6 +545,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
     if (_email && (_fullBase.trim() || _fullPaid.trim())) {
       const label = _st === 'child' ? '🌱 자녀 학운 분석' : _st === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'
       autoSendEmail({ email: _email, subject: `${label} - ${myName || ''}님의 결과`, sections: [...parseSections(_fullBase), ...parseSections(_fullPaid)], name: myName })
+      saveResult({ email: _email, type: _st === 'child' ? 'child' : _st === '노후' ? 'nohu' : 'base', resultText: _fullBase + '\n' + _fullPaid, userName: myName })
     }
   }
 
@@ -596,6 +597,12 @@ loadingTimersRef.current.countdown = setInterval(() => {
       }
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
     clearLoadingTimers(); setIsDeepStreaming(false); setIsDeepPaid(true)
+    if (preEmail && fullDeepText.trim()) saveResult({ email: preEmail, type: 'deep', resultText: fullDeepText, userName: myName })
+  }
+
+  async function saveResult({ email, type, resultText, userName }) {
+    if (!email || !resultText) return
+    try { await fetch(`${API_URL}/api/save-result`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, type, resultText, userName }) }) } catch {}
   }
 
   async function autoSendEmail({ email, subject, sections, name }) {
@@ -659,7 +666,10 @@ loadingTimersRef.current.countdown = setInterval(() => {
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
     setIsGunghabStreaming(false)
     const _email = emailOverride || preEmail
-    if (_email && _fullGunghabText.trim()) autoSendEmail({ email: _email, subject: `💕 ${myName || 'A'}님 & ${partnerName || 'B'}님 궁합 분석 결과`, sections: parseSections(_fullGunghabText), name: myName })
+    if (_email && _fullGunghabText.trim()) {
+      autoSendEmail({ email: _email, subject: `💕 ${myName || 'A'}님 & ${partnerName || 'B'}님 궁합 분석 결과`, sections: parseSections(_fullGunghabText), name: myName })
+      saveResult({ email: _email, type: 'gunghab', resultText: _fullGunghabText, userName: myName })
+    }
   }
 
   async function handleGililAnalyze() {
