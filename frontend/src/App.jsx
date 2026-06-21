@@ -538,7 +538,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
     clearLoadingTimers(); setIsPaidStreaming(false); setIsPaid(true)
     const _email = emailOverride || preEmail
     if (_email && (_fullBase.trim() || _fullPaid.trim())) {
-      const label = _st === 'child' ? '🌱 자녀 학운 분석' : _st === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'
+      const label = _st === 'child' ? '🌱 우리 아이 진로·학과 프리미엄' : _st === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'
       autoSendEmail({ email: _email, subject: `${label} - ${myName || ''}님의 결과`, sections: [...parseSections(_fullBase), ...parseSections(_fullPaid)], name: myName })
       saveResult({ email: _email, type: _st === 'child' ? 'child' : _st === '노후' ? 'nohu' : 'base', resultText: _fullBase + '\n' + _fullPaid, userName: myName })
     }
@@ -1189,7 +1189,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
                   )}
                 </div>
               ))}
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 12 }}>↓ 아래 버튼으로 1,900원에 전체 확인</p>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 12 }}>↓ 아래 버튼으로 1,990원에 전체 확인</p>
             </div>
           )}
         </div>
@@ -1208,9 +1208,9 @@ loadingTimersRef.current.countdown = setInterval(() => {
               const IMP = window.IMP; IMP.init('imp87662575')
               const _pbt = (() => { if (partnerTimeUnknown) return ''; if (!partnerTimeHour || !partnerTimeMin) return ''; let h = Number(partnerTimeHour); if (partnerTimeAmPm === '오전' && h === 12) h = 0; if (partnerTimeAmPm === '오후' && h !== 12) h += 12; return `${String(h).padStart(2,'0')}:${String(partnerTimeMin).padStart(2,'0')}` })()
               const _params = new URLSearchParams({ payment: 'gunghab', imp_success: 'true', g: gender, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mn: myName || '', pn: partnerName || '', pg: partnerGender, pby: partnerBirthYear, pbm: partnerBirthMonth, pbd: partnerBirthDay, ptu: partnerTimeUnknown ? '1' : '0', pil: partnerIsLunar ? '1' : '0', pbt: _pbt, ptap: partnerTimeAmPm }).toString()
-              IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `gunghab_${Date.now()}`, name: '마이사주 궁합 분석', amount: 1900, buyer_name: myName || '고객', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_params}` }, (rsp) => { if (rsp.success) handleGunghabAnalyze(null); else alert('결제가 취소되었습니다.') })
+              IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `gunghab_${Date.now()}`, name: '마이사주 궁합 분석', amount: 1990, buyer_name: myName || '고객', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_params}` }, (rsp) => { if (rsp.success) handleGunghabAnalyze(null); else alert('결제가 취소되었습니다.') })
             }}>
-            {isStep0 ? '다음 — 내 정보 입력' : isStep1 ? '다음 — 상대방 정보 입력' : '💕 관계 분석받기 (1,900원)'}
+            {isStep0 ? '다음 — 내 정보 입력' : isStep1 ? '다음 — 상대방 정보 입력' : '💕 관계 분석받기 (1,990원)'}
           </button>
         </div>
       </div>
@@ -1384,13 +1384,13 @@ if (emailModal) {
             <h1 style={{ wordBreak: 'keep-all', fontSize: 34, fontWeight: 800, color: '#FFFFFF', marginBottom: 12, lineHeight: 1.25, letterSpacing: '-0.02em' }}>나는 죽어도 안되는 게,<br/>쟤는 왜 쉽게 될까</h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, marginBottom: 24 }}>타이밍이 달랐던 거예요.<br/><span style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15 }}>사주가 찍어드릴게요.</span></p>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.5)', padding: '9px 22px', borderRadius: 20, fontSize: 13, color: '#C9A84C', fontWeight: 600 }}>
-              <span>⏰</span><span>오늘만 <span style={{ fontWeight: 800 }}>1,900원</span></span>
+              <span>⏰</span><span>오늘만 <span style={{ fontWeight: 800 }}>1,990원</span></span>
             </div>
           </div>
           <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 24px 16px', textAlign: 'center' }}>
             <p style={{ fontSize: 18, lineHeight: 1.75, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', fontWeight: 700 }}>내가 크게 벌 수 있는 시기가 따로 있어요.<br/>모르면, 남이 가져가요.</p>
             <div style={{ width: 30, height: 1, background: 'rgba(201,168,76,0.3)', margin: '20px auto' }}/>
-            <p style={{ fontSize: 17, lineHeight: 1.75, color: '#C9A84C', wordBreak: 'keep-all', fontWeight: 700 }}>지금 내 사주, 1,900원이면 충분해요.<br/>철학관 가기 전에 먼저 보세요.</p>
+            <p style={{ fontSize: 17, lineHeight: 1.75, color: '#C9A84C', wordBreak: 'keep-all', fontWeight: 700 }}>지금 내 사주, 1,990원이면 충분해요.<br/>철학관 가기 전에 먼저 보세요.</p>
 <button
   style={{ marginTop: 20, width: '100%', padding: '16px', fontSize: 16, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer' }}
   onClick={() => { setServiceType('saju'); setScreen('input') }}>
@@ -1419,16 +1419,6 @@ if (emailModal) {
       border: 'rgba(155,29,58,0.3)', bg: 'rgba(155,29,58,0.06)',
       onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') }
     },
-    {
-      type: 'child', char: '子', label: '혼냈던 게 재능이었어요',
-      hook: '화냈던 게 성격 문제가 아니에요.\n타고난 기질이 달랐던 거예요.',
-      border: 'rgba(45,122,82,0.3)', bg: 'rgba(45,122,82,0.06)'
-    },
-    {
-      type: '노후', char: '老', label: '내 후반전',
-      hook: '버티는 게 맞는지, 정리할 타이밍인지\n사주에 다 나와요.',
-      border: 'rgba(45,106,155,0.3)', bg: 'rgba(45,106,155,0.06)'
-    },
   ].map(({ type, char, label, hook, badge, border, bg, onClick }) => (
     <div key={type} onClick={onClick || (() => { setServiceType(type); setScreen('input') })} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 220, cursor: 'pointer' }}>
       {badge && (
@@ -1442,10 +1432,26 @@ if (emailModal) {
 color: '#C9A84C',
 border: '1px solid rgba(201,168,76,0.5)', border: 'none', borderRadius: 8, cursor: 'pointer' }}
         onClick={e => { e.stopPropagation(); (onClick || (() => { setServiceType(type); setScreen('input') }))() }}>
-        지금 확인하기 1,900원
+        지금 확인하기 1,990원
       </button>
     </div>
   ))}
+
+  {/* 자녀운 프리미엄 카드 */}
+  <div onClick={() => { setServiceType('child'); setScreen('input') }} style={{ gridColumn: '1 / -1', background: 'rgba(45,122,82,0.06)', border: '2px solid #C9A84C', borderRadius: 14, padding: '24px 20px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
+    <span style={{ display: 'inline-block', background: '#C9474A', color: '#FFFFFF', fontSize: 11, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 12 }}>여름방학 특가</span>
+    <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>子</div>
+    <div style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, textAlign: 'center' }}>우리 아이 진로·학과 프리미엄</div>
+    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 14 }}>맞는 직업 · 추천학과 5개 · 공부법까지</div>
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10, marginBottom: 14 }}>
+      <span style={{ fontSize: 14, textDecoration: 'line-through', color: 'rgba(255,255,255,0.35)' }}>19,900원</span>
+      <span style={{ fontSize: 28, fontWeight: 900, color: '#C9A84C' }}>9,900원</span>
+    </div>
+    <button style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
+      onClick={e => { e.stopPropagation(); setServiceType('child'); setScreen('input') }}>
+      방학 전 특가로 확인하기 →
+    </button>
+  </div>
 </div>
            
             <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.15)', marginTop: 8 }}>
@@ -1479,8 +1485,8 @@ border: '1px solid rgba(201,168,76,0.5)', border: 'none', borderRadius: 8, curso
 
 // ── 입력 화면 ──
 if (screen === 'input') {
-  const serviceNames = { saju: '나의 사주', child: '혼냈던 게 재능이었어요', 노후: '내 후반전, 어떻게 흘러갈까?', deep: '사주 심화 분석' }
-  const serviceChar = { saju: '命', child: '子', 노후: '老', deep: '🔮' }
+  const serviceNames = { saju: '나의 사주', child: '우리 아이 진로·학과 프리미엄', deep: '사주 심화 분석' }
+  const serviceChar = { saju: '命', child: '子', deep: '🔮' }
 
   return (
     <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
@@ -1676,7 +1682,7 @@ if (screen === 'input') {
           style={{ flex: 1, padding: '18px', fontSize: 18, fontWeight: 700, background: !canGoNext() ? 'rgba(201,168,76,0.2)' : 'linear-gradient(135deg, #C9A84C, #F5E090)', color: !canGoNext() ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 14, cursor: !canGoNext() ? 'not-allowed' : 'pointer', letterSpacing: '0.02em' }}
           onClick={goNext} disabled={!canGoNext()}>
           {currentStepId === 'blood'
-            ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : serviceType === 'child' ? '우리 아이 재능 확인하기 👶' : serviceType === '노후' ? '내 후반전, 지금 확인하기 →' : '내 돈 버는 시기, 지금 확인하기 →')
+            ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : serviceType === 'child' ? '방학 전 특가로 확인하기 (9,900원) 👶' : '내 돈 버는 시기, 지금 확인하기 →')
             : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음 →'}
         </button>
       </div>
@@ -1983,7 +1989,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         </div>
       </div>
     ))}
-    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 10 }}>총 {serviceType === 'child' ? 10 : serviceType === '노후' ? 10 : 10}개 섹션 · 이 모든 내용이 1,900원</p>
+    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 10 }}>총 10개 섹션 · 이 모든 내용이 {serviceType === 'child' ? '9,900원' : '1,990원'}</p>
     <div style={{ textAlign: 'center', marginTop: 12 }}>
       <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>↓ 아래 버튼으로 결제하세요</p>
     </div>
@@ -2109,7 +2115,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
                   if (!email || !email.includes('@')) { alert('이메일 주소를 확인해주세요.'); return }
                   const btn = document.querySelector('#result-email-input + button'); btn.textContent = '발송 중...'; btn.disabled = true
                   const allSections = [...parseSections(baseText), ...parseSections(paidText)]
-                  const htmlContent = `<div style="font-family:'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#0D1B3E;color:#FFFFFF;box-sizing:border-box;"><h1 style="color:#C9A84C;text-align:center;font-size:22px;margin-bottom:8px;">${serviceType === 'child' ? '🌱 자녀 학운 분석' : serviceType === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'}</h1><p style="text-align:center;color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:24px;">${myName || ''}님의 분석 결과</p><hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:24px 0;">${allSections.map(s => `<div style="margin-bottom:32px;"><h2 style="color:#C9A84C;font-size:18px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(201,168,76,0.15);">${s.title}</h2><p style="color:rgba(255,255,255,0.85);font-size:17px;line-height:1.8;white-space:pre-wrap;word-break:keep-all;margin:0;">${s.content}</p></div>`).join('')}<hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:32px 0 16px;"><p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p></div>`
+                  const htmlContent = `<div style="font-family:'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#0D1B3E;color:#FFFFFF;box-sizing:border-box;"><h1 style="color:#C9A84C;text-align:center;font-size:22px;margin-bottom:8px;">${serviceType === 'child' ? '🌱 우리 아이 진로·학과 프리미엄' : serviceType === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'}</h1><p style="text-align:center;color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:24px;">${myName || ''}님의 분석 결과</p><hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:24px 0;">${allSections.map(s => `<div style="margin-bottom:32px;"><h2 style="color:#C9A84C;font-size:18px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(201,168,76,0.15);">${s.title}</h2><p style="color:rgba(255,255,255,0.85);font-size:17px;line-height:1.8;white-space:pre-wrap;word-break:keep-all;margin:0;">${s.content}</p></div>`).join('')}<hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:32px 0 16px;"><p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p></div>`
                   try {
                     const res = await fetch(`${API_URL}/api/send-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: email, subject: `✨ ${myName || ''}님의 사주 분석 결과`, html: htmlContent }) })
                     if (!res.ok) throw new Error('실패')
@@ -2173,9 +2179,9 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           </div>
           <button
             style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-            onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1900, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 1900, currency: 'KRW' }); handlePaidAnalyze(email) } else alert('결제가 취소되었습니다.') }) }) }}>
-            <span>지금 안 보면 남이 가져가요</span>
-<span style={{ fontSize: 16, fontWeight: 900 }}>1,900원</span>
+            onClick={() => { requestPayWithEmail(serviceType === 'child' ? '자녀운 프리미엄' : '전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `${serviceType === 'child' ? 'child' : 'saju'}_${Date.now()}`, name: serviceType === 'child' ? '마이사주 자녀운 프리미엄' : '마이사주 전체 분석', amount: serviceType === 'child' ? 9900 : 1990, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: serviceType === 'child' ? 9900 : 1990, currency: 'KRW' }); handlePaidAnalyze(email) } else alert('결제가 취소되었습니다.') }) }) }}>
+            <span>{serviceType === 'child' ? '방학 전 특가로 확인하기 →' : '지금 안 보면 남이 가져가요'}</span>
+<span style={{ fontSize: 16, fontWeight: 900 }}>{serviceType === 'child' ? '9,900원' : '1,990원'}</span>
           </button>
         </div>
       )}
