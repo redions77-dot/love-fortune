@@ -1329,6 +1329,19 @@ if (emailModal) {
             </div>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 20 }}>한 번 결제하면 이 결과를 계속 볼 수 있어요</p>
           </>
+        ) : emailModal.productName === '자녀운 프리미엄' ? (
+          <>
+            <p style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', textAlign: 'center', marginBottom: 8, lineHeight: 1.5 }}>이 아이, 어떤 학과가<br/>맞는지 알려드릴게요</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginBottom: 18, lineHeight: 1.6 }}>추천학과 5개 · 맞는 직업 방향 · 입시 유리한 시기 · 공부가 잘 되는 방법까지</p>
+            <div style={{ textAlign: 'center', marginBottom: 16 }}>
+              <span style={{ display: 'inline-block', background: '#C9474A', color: '#FFFFFF', fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 8 }}>여름방학 특가</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10 }}>
+                <span style={{ fontSize: 14, textDecoration: 'line-through', color: 'rgba(255,255,255,0.4)' }}>19,900원</span>
+                <span style={{ fontSize: 32, fontWeight: 800, color: '#C9A84C' }}>9,900원</span>
+              </div>
+            </div>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 20 }}>한 번 결제하면 이 결과를 계속 볼 수 있어요</p>
+          </>
         ) : (
           <>
             <p style={{ fontSize: 32, textAlign: 'center', marginBottom: 10 }}>📧</p>
@@ -1352,7 +1365,7 @@ if (emailModal) {
         <button
           style={{ width: '100%', padding: '18px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', marginBottom: 12, letterSpacing: '0.02em' }}
           onClick={() => { if (!preEmail || !preEmail.includes('@')) { alert('이메일 주소를 확인해주세요.'); return } const cb = emailModal.onConfirm; setEmailModal(null); cb(preEmail) }}>
-          {emailModal.productName === '심화 분석' ? '9,900원 결제하기 →' : '결제하기 →'}
+          {emailModal.productName === '심화 분석' || emailModal.productName === '자녀운 프리미엄' ? '9,900원 결제하기 →' : '결제하기 →'}
         </button>
         <button
           style={{ width: '100%', padding: '14px', fontSize: 15, background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}
