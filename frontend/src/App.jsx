@@ -1974,57 +1974,63 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
 {!loadingPhase && (
   <>
-    {/* 심화분석 업셀 */}
+    {/* 심화분석 업셀 — 미리보기 인라인 */}
     {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
       <div style={{ marginTop: 28, marginBottom: 10 }}>
-        <div style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.15) 0%, rgba(10,22,40,0.95) 50%, rgba(201,168,76,0.08) 100%)', border: '2px solid rgba(201,168,76,0.5)', borderRadius: 20, padding: '32px 22px', marginBottom: 12, position: 'relative', overflow: 'hidden' }}>
-          {/* 배경 장식 */}
-          <div style={{ position: 'absolute', top: -40, right: -40, width: 120, height: 120, borderRadius: '50%', background: 'rgba(201,168,76,0.06)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: -30, left: -30, width: 80, height: 80, borderRadius: '50%', background: 'rgba(201,168,76,0.04)', pointerEvents: 'none' }} />
-
-          {/* 타이머 뱃지 */}
-          <div style={{ position: 'absolute', top: 0, right: 0, background: 'rgba(204,34,34,0.15)', padding: '8px 16px', borderRadius: '0 18px 0 16px', border: '1px solid rgba(204,34,34,0.3)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 12, color: '#FF4444' }}>⏱</span>
-              <span style={{ fontSize: 13, fontWeight: 800, color: '#FF4444', letterSpacing: '0.05em' }}>{countdown}</span>
-              <span style={{ fontSize: 11, color: 'rgba(255,68,68,0.6)' }}>까지</span>
+        {/* 페인포인트 후킹 박스 */}
+        <div style={{ background: '#0D1B3E', border: '1.5px solid rgba(201,168,76,0.4)', borderRadius: 16, padding: '28px 22px', marginBottom: 20 }}>
+          <p style={{ fontSize: 19, fontWeight: 700, color: '#FFFFFF', marginBottom: 16, lineHeight: 1.5 }}>혹시, 이런 순간 없으셨어요?</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <span style={{ fontSize: 14, color: '#C9A84C', marginTop: 2, flexShrink: 0 }}>•</span>
+              <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>돈이 언제쯤 풀릴지 막막할 때</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <span style={{ fontSize: 14, color: '#C9A84C', marginTop: 2, flexShrink: 0 }}>•</span>
+              <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>이 선택이 맞는지 흔들릴 때</span>
             </div>
           </div>
-
-          <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', fontWeight: 600, letterSpacing: '0.18em', marginBottom: 14 }}>DEEP ANALYSIS</p>
-
-          {/* 훅 문구 */}
-          <p style={{ fontSize: 22, fontWeight: 900, color: '#FFFFFF', marginBottom: 8, lineHeight: 1.4 }}>기본 분석에서<br/>말 못한 게 있어요</p>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 22, wordBreak: 'keep-all' }}>이 사주에서 <span style={{ color: '#C9A84C', fontWeight: 700 }}>절대 하면 안 되는 결정 1가지</span>,{'\n'}<span style={{ color: '#C9A84C', fontWeight: 700 }}>귀인이 나타나는 시기</span>, 지금이 <span style={{ color: '#C9A84C', fontWeight: 700 }}>기회인지 위기인지</span></p>
-
-          {/* 체크리스트 */}
-          <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '18px 16px', marginBottom: 24 }}>
-            {[
-              '재물 · 커리어 심층 분석',
-              '대운 흐름 + 전환점 정확한 연도',
-              '수비학 운명수 분석',
-              '오행으로 본 나의 커리어 계절 (木火土金水)',
-              '귀인 만나는 시기 + 구체적 행동 전략',
-              '절대 하면 안 되는 결정 1가지',
-            ].map((t, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < 5 ? 12 : 0 }}>
-                <span style={{ fontSize: 14, color: '#C9A84C', marginTop: 1, flexShrink: 0 }}>✓</span>
-                <span style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{t}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* 가격 */}
-          <div style={{ textAlign: 'center', marginBottom: 16 }}>
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through', marginRight: 10 }}>19,900원</span>
-            <span style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C' }}>9,900원</span>
-          </div>
-
-          <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: '0 4px 20px rgba(201,168,76,0.3)' }}
-            onClick={() => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } setScreen('deep_result') }}>지금 심화분석 확인하기 →</button>
-
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 10 }}>미리보기 → 결제 → 즉시 분석</p>
         </div>
+
+        {/* 블러+컷오프 샘플 텍스트 */}
+        <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px 18px', marginBottom: 20, overflow: 'hidden' }}>
+          <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+{`이 사주는 재물의 흐름이 일정하지 않고 큰 파도처럼 밀려왔다 빠지는 구조를 가지고 있어요. 지금까지 돈이 모이다가도 어느 순간 빠져나가는 경험을 반복하셨을 거예요.
+
+하지만 이 구조는 약점이 아니에요. 오히려 큰 기회를 잡을 수 있는 타이밍이 분명하게 존재하는 사주예요. 지금 이 시기의 에너지 흐름을 보면, 곧 재물운이 크게 열리는 전환점이 다가오고 있어요.
+
+커리어 방향도 흥미로운 흐름이 보여요. 타고난 기질상`}
+          </div>
+          <div style={{ position: 'relative' }}>
+            <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>
+{`조직보다는 자율적인 환경에서 능력이 폭발하는 구조인데, 특히 올해 하반기부터 귀인의 기운이 강하게 들어오고 있어요. 이 귀인은 직장 상사일 수도 있고, 뜻밖의 인연을 통해 새로운 기회로 연결될 수 있어요.
+
+대운의 흐름을 보면, 앞으로 3년 안에 반드시 잡아야 할 타이밍이 하나 있어요. 이 시기를 놓치면 다음 기회는 꽤 오래 기다려야 합니다.`}
+            </div>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(13,27,62,0) 0%, rgba(13,27,62,0.7) 30%, rgba(13,27,62,0.95) 70%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(201,168,76,0.8)', textAlign: 'center', lineHeight: 1.6, padding: '0 20px' }}>여기서부터는 더 자세히 봐드려야 해요</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 혜택 3종 세트 */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          {[
+            { icon: '⚡', label: '즉시 열림' },
+            { icon: '📄', label: 'PDF 저장' },
+            { icon: '♾️', label: '평생 재열람' },
+          ].map(({ icon, label }) => (
+            <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 10 }}>
+              <span style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>{icon}</span>
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* 결제 버튼 */}
+        <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: '0 4px 20px rgba(201,168,76,0.3)', marginBottom: 8 }}
+          onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); const _deepParams = new URLSearchParams({ payment: 'deep', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_deepParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 9900, currency: 'KRW' }); setScreen('deep_result'); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>지금 심화분석 확인하기 →</button>
+        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textAlign: 'center' }}>결제 즉시 분석이 시작돼요</p>
       </div>
     )}
 
