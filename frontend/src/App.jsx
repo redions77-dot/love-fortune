@@ -1298,8 +1298,25 @@ if (emailModal) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 24 }}>
       <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 20, padding: '36px 28px', maxWidth: 380, width: '100%' }}>
-        <p style={{ fontSize: 32, textAlign: 'center', marginBottom: 10 }}>📧</p>
-        <p style={{ fontSize: 20, fontWeight: 800, color: '#C9A84C', textAlign: 'center', marginBottom: 20, wordBreak: 'keep-all', lineHeight: 1.4 }}>결과 받을 이메일을<br/>입력해주세요</p>
+        {emailModal.productName === '심화 분석' ? (
+          <>
+            <p style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', textAlign: 'center', marginBottom: 8, lineHeight: 1.5 }}>막혔던 부분,<br/>지금 다 풀어드릴게요</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginBottom: 18, lineHeight: 1.6 }}>재물·커리어 심층 분석 · 대운 흐름 · 수비학 운명수 · 귀인 시기 · 행동 전략</p>
+            <div style={{ textAlign: 'center', marginBottom: 16 }}>
+              <span style={{ display: 'inline-block', background: '#C9474A', color: '#FFFFFF', fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 8 }}>50% 할인</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10 }}>
+                <span style={{ fontSize: 14, textDecoration: 'line-through', color: 'rgba(255,255,255,0.4)' }}>19,900원</span>
+                <span style={{ fontSize: 32, fontWeight: 800, color: '#C9A84C' }}>9,900원</span>
+              </div>
+            </div>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 20 }}>한 번 결제하면 이 결과를 계속 볼 수 있어요</p>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: 32, textAlign: 'center', marginBottom: 10 }}>📧</p>
+            <p style={{ fontSize: 20, fontWeight: 800, color: '#C9A84C', textAlign: 'center', marginBottom: 20, wordBreak: 'keep-all', lineHeight: 1.4 }}>결과 받을 이메일을<br/>입력해주세요</p>
+          </>
+        )}
         <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2.2, margin: 0 }}>
             📱 모바일에서는 결과 저장이 안 될 수 있어요.<br/>
@@ -1317,7 +1334,7 @@ if (emailModal) {
         <button
           style={{ width: '100%', padding: '18px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', marginBottom: 12, letterSpacing: '0.02em' }}
           onClick={() => { if (!preEmail || !preEmail.includes('@')) { alert('이메일 주소를 확인해주세요.'); return } const cb = emailModal.onConfirm; setEmailModal(null); cb(preEmail) }}>
-          결제하기 →
+          {emailModal.productName === '심화 분석' ? '9,900원 결제하기 →' : '결제하기 →'}
         </button>
         <button
           style={{ width: '100%', padding: '14px', fontSize: 15, background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}
