@@ -2030,6 +2030,24 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           </div>
         </div>
 
+        {/* 받는 것 리스트 */}
+        <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 16, padding: '22px 20px', marginBottom: 20 }}>
+          <p style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', marginBottom: 16 }}>9,900원 결제하면 이렇게 받아요</p>
+          {[
+            '재물·커리어 심층 분석',
+            '대운 흐름 + 전환점 정확한 연도',
+            '수비학 운명수 분석',
+            '오행으로 본 나의 커리어 계절 (木火土金水)',
+            '귀인 만나는 시기 + 구체적 행동 전략',
+            '절대 하면 안 되는 결정 1가지',
+          ].map((t, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < 5 ? 12 : 0 }}>
+              <span style={{ fontSize: 14, color: '#C9A84C', marginTop: 1, flexShrink: 0 }}>✓</span>
+              <span style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{t}</span>
+            </div>
+          ))}
+        </div>
+
         {/* 혜택 3종 세트 */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           {[
