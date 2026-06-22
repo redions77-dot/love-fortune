@@ -275,17 +275,29 @@ function DateRow({ year, setYear, month, setMonth, day, setDay, lunar, setLunar 
 }
 
 
+function renderBracketItems(text) {
+  const parts = text.split(/(\[.+?\]\n)/g)
+  return parts.map((part, i) => {
+    const m = part.match(/^\[(.+?)\]\n$/)
+    if (m) return <div key={i} style={{ fontWeight: 700, color: '#C9A84C', marginTop: i > 0 ? 16 : 0 }}>✦ {m[1]}</div>
+    if (!part.trim()) return null
+    return <span key={i}>{part}</span>
+  })
+}
+const BRACKET_SECTIONS = new Set(['이 아이에게 맞는 직업 방향', '추천학과 5개'])
 function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, isGilil = false, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   const borderColor = isGunghab ? 'rgba(155,29,58,0.4)' : isChild ? 'rgba(45,122,82,0.4)' : isGilil ? 'rgba(201,168,76,0.4)' : isPaid ? 'rgba(201,168,76,0.4)' : 'rgba(201,168,76,0.15)'
   const openBg = isGunghab ? 'rgba(155,29,58,0.1)' : isChild ? 'rgba(45,122,82,0.1)' : 'rgba(201,168,76,0.08)'
+  const useBracket = BRACKET_SECTIONS.has(title)
   return (
     <div style={{ marginBottom: 10, border: `1px solid ${borderColor}`, borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px', cursor: 'pointer', background: open ? openBg : '#0D1B3E', transition: 'all 0.2s' }} onClick={() => setOpen(o => !o)}>
         <span style={{ fontSize: 17, fontWeight: 700, color: open ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
         <span style={{ fontSize: 14, color: 'rgba(201,168,76,0.5)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
       </div>
-      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{content}</div>}    </div>
+      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{useBracket ? renderBracketItems(content) : content}</div>}
+    </div>
   )
 }
 
