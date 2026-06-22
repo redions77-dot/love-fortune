@@ -1687,7 +1687,13 @@ if (screen === 'input') {
       </div>
 
       {/* 하단 버튼 */}
-      <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '14px 20px 30px', display: 'flex', gap: 12, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+      <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '14px 20px 30px', maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+        {currentStepId === 'blood' && serviceType === 'child' && (
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#C9A84C', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 8, padding: '10px 16px', textAlign: 'center', marginBottom: 8 }}>
+            ✦ 입력하면 무료로 일부 먼저 확인할 수 있어요
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 12 }}>
         <button
           style={{ flex: '0 0 auto', padding: '18px 24px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 14, background: 'rgba(255,255,255,0.03)', fontSize: 20, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }}
           onClick={goBack}>←</button>
@@ -1698,6 +1704,7 @@ if (screen === 'input') {
             ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : serviceType === 'child' ? '방학 전 특가로 확인하기 (9,900원) 👶' : '내 돈 버는 시기, 지금 확인하기 →')
             : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음 →'}
         </button>
+        </div>
       </div>
     </div>
   )
