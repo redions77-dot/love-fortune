@@ -2010,7 +2010,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         </div>
       </div>
     ))}
-    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 10 }}>총 10개 섹션 · 이 모든 내용이 {serviceType === 'child' ? '9,900원' : '1,990원'}</p>
+    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 10 }}>총 {serviceType === 'child' ? '11' : '10'}개 섹션 · 이 모든 내용이 {serviceType === 'child' ? '9,900원' : '1,990원'}</p>
     <div style={{ textAlign: 'center', marginTop: 12 }}>
       <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>↓ 아래 버튼으로 결제하세요</p>
     </div>
