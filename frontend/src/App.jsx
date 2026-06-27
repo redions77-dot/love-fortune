@@ -133,6 +133,7 @@ function renderFormattedContent(text) {
   return text.split('\n').map((line, i) => {
     const t = line.trim()
     if (!t) return <div key={i} style={{ height: 8 }} />
+    if (/^#{1,6}\s/.test(t)) return null
     if (SUBHEAD_EMOJIS.some(e => t.startsWith(e))) {
       return <div key={i} style={{ fontWeight: 700, color: '#C9A84C', marginTop: 16, marginBottom: 4, lineHeight: 1.6 }}>{line}</div>
     }
