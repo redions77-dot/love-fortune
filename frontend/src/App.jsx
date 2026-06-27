@@ -485,6 +485,7 @@ if (scoreMatch) {
     const _bt = _isMobileDeep ? (_deepQs.get('bt') || '') : birthtime
     setDeepText(''); setIsDeepStreaming(true); setSeasonData(null)
     let fullDeepText = ''
+    let seasonSet = false
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
       const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime: _bt, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName }), signal: ctrl.signal })
@@ -497,10 +498,12 @@ if (scoreMatch) {
           if (!line.startsWith('data: ')) continue
           try {
             const json = JSON.parse(line.slice(6))
-            if (json.text) {
+            if (json.type === 'saju') {
+              setSajuData(json.사주 ? { 사주: json.사주, 생년월일: json.생년월일 } : null)
+            } else if (json.text) {
               fullDeepText += json.text
               setDeepText(prev => prev + json.text)
-              if (!seasonData) {
+              if (!seasonSet) {
                 const seasonMatch = fullDeepText.match(/===__운의계절__===([\s\S]*?)(?:===|$)/)
                 if (seasonMatch) {
                   try {
@@ -512,7 +515,7 @@ if (scoreMatch) {
                     }
                     if (start !== -1 && end !== -1) {
                       const parsed = JSON.parse(raw.slice(start, end + 1))
-                      if (parsed.current) setSeasonData(parsed)
+                      if (parsed.current) { setSeasonData(parsed); seasonSet = true }
                     }
                   } catch {}
                 }
@@ -522,8 +525,11 @@ if (scoreMatch) {
         }
       }
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
-    setIsDeepStreaming(false); setIsDeepPaid(true)
-    if (preEmail && fullDeepText.trim()) saveResult({ email: preEmail, type: 'deep', resultText: fullDeepText, userName: myName })
+    setIsDeepStreaming(false)
+    if (fullDeepText.trim()) {
+      setIsDeepPaid(true)
+      if (preEmail) saveResult({ email: preEmail, type: 'deep', resultText: fullDeepText, userName: myName })
+    }
   }
 
   async function saveResult({ email, type, resultText, userName }) {
@@ -811,7 +817,12 @@ if (scoreMatch) {
           {isDeepStreaming && deepText && (
             <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(deepText)}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
-          {!isDeepStreaming && deepSections.filter(sec => sec.title !== '분석 결과' && !sec.title.includes('운의계절') && sec.content?.trim()).map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />)}
+          {!isDeepStreaming && (() => {
+            const filtered = deepSections.filter(sec => sec.title !== '분석 결과' && !sec.title.includes('운의계절') && sec.content?.trim())
+            if (filtered.length > 0) return filtered.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />)
+            if (isDeepPaid && deepText.trim()) return <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(deepText)}</div>
+            return null
+          })()}
 
           {/* 나의 운의 계절 타임라인 */}
           {!isDeepStreaming && seasonData && (
