@@ -126,6 +126,8 @@ const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'b
 const LOADING_STAGES = ['사주 데이터를 읽고 있어요', '기운의 흐름을 분석하고 있어요', '당신만의 풀이를 만들고 있어요']
 
 const SUBHEAD_EMOJIS = ['📌', '✅', '⚠️', '🔑', '💡', '🌟']
+const MONTH_RE = /^(\d{1,4}년?\s*\d{1,2}월):\s*(.*)/
+const ITEM_RE = /^(색깔|마스코트|방향|숫자|아이템):\s*(.*)/
 function renderFormattedContent(text) {
   if (!text?.trim()) return null
   return text.split('\n').map((line, i) => {
@@ -139,6 +141,14 @@ function renderFormattedContent(text) {
     }
     if (t.startsWith('🔒')) {
       return <div key={i} style={{ color: 'rgba(201,168,76,0.65)', marginTop: 12, lineHeight: 1.8 }}>{line}</div>
+    }
+    const monthMatch = t.match(MONTH_RE)
+    if (monthMatch) {
+      return <div key={i} style={{ lineHeight: 1.9, marginBottom: 4 }}><span style={{ fontWeight: 700, color: '#C9A84C' }}>{monthMatch[1]}:</span> {monthMatch[2]}</div>
+    }
+    const itemMatch = t.match(ITEM_RE)
+    if (itemMatch) {
+      return <div key={i} style={{ lineHeight: 1.9, marginBottom: 4 }}><span style={{ fontWeight: 700, color: '#C9A84C' }}>{itemMatch[1]}:</span> {itemMatch[2]}</div>
     }
     return <div key={i} style={{ lineHeight: 1.9, marginBottom: 2 }}>{line}</div>
   })
