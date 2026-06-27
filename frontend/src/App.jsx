@@ -1394,7 +1394,10 @@ border: '1px solid rgba(201,168,76,0.5)', border: 'none', borderRadius: 8, curso
     </div>
     <button style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
       onClick={e => { e.stopPropagation(); setServiceType('child'); setScreen('input') }}>
-      방학 전 특가로 확인하기 →
+      <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
+        <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>19,900원</span>
+        <span>방학 전 특가로 확인하기 →</span>
+      </span>
     </button>
   </div>
 </div>
