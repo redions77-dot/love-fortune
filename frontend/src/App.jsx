@@ -1322,7 +1322,11 @@ if (emailModal) {
             <h1 style={{ wordBreak: 'keep-all', fontSize: 34, fontWeight: 800, color: '#FFFFFF', marginBottom: 12, lineHeight: 1.25, letterSpacing: '-0.02em' }}>나는 죽어도 안되는 게,<br/>쟤는 왜 쉽게 될까</h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, marginBottom: 24 }}>타이밍이 달랐던 거예요.<br/><span style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15 }}>사주가 찍어드릴게요.</span></p>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.5)', padding: '9px 22px', borderRadius: 20, fontSize: 13, color: '#C9A84C', fontWeight: 600 }}>
-              <span>⏰</span><span>오늘만 <span style={{ fontWeight: 800 }}>1,990원</span></span>
+              <span>⏰</span>
+              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.3 }}>
+                <span style={{ fontSize: 10, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>9,900원</span>
+                <span style={{ fontWeight: 800 }}>오늘만 1,990원</span>
+              </span>
             </div>
           </div>
           <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 24px 16px', textAlign: 'center' }}>
@@ -1370,7 +1374,10 @@ if (emailModal) {
 color: '#C9A84C',
 border: '1px solid rgba(201,168,76,0.5)', border: 'none', borderRadius: 8, cursor: 'pointer' }}
         onClick={e => { e.stopPropagation(); (onClick || (() => { setServiceType(type); setScreen('input') }))() }}>
-        지금 확인하기 1,990원
+        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
+          <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>9,900원</span>
+          <span>지금 확인하기 1,990원</span>
+        </span>
       </button>
     </div>
   ))}
