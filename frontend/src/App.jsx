@@ -155,7 +155,7 @@ function renderFormattedContent(text) {
   })
 }
 function removeMarkers(text) {
-  return text.split('===').filter((_, i) => i % 2 === 0).join('').replace(/\n{3,}/g, '\n\n').replace(/^#{1,6}\s*/gm, '').trim()
+  return text.split('===').filter((_, i) => i % 2 === 0).join('').replace(/^#{1,6}\s+.+$/gm, '').replace(/\n{3,}/g, '\n\n').trim()
 }
 function parseSections(text) {
   const sections = []
