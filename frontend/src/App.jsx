@@ -211,49 +211,6 @@ function GunghabRadarChart({ categories, blurred }) {
   )
 }
 
-function getMidnightCountdown() {
-  const now = new Date(), midnight = new Date()
-  midnight.setHours(24, 0, 0, 0)
-  const diff = midnight - now
-  const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000)
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-}
-
-// ── 로딩 화면 컴포넌트 ──
-function AnalysisLoading({ countdown, stageIndex }) {
-  const circumference = 2 * Math.PI * 70
-  return (
-    <div style={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 36, padding: '40px 24px' }}>
-      <div style={{ position: 'relative', width: 180, height: 180 }}>
-        <svg width="180" height="180" style={{ transform: 'rotate(-90deg)', position: 'absolute', top: 0, left: 0 }}>
-          <circle cx="90" cy="90" r="70" fill="none" stroke="rgba(201,168,76,0.12)" strokeWidth="6" />
-          <circle cx="90" cy="90" r="70" fill="none" stroke="#C9A84C" strokeWidth="6"
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference * (countdown / 30)}
-            strokeLinecap="round"
-            style={{ transition: 'stroke-dashoffset 1s linear' }}
-          />
-        </svg>
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: 44, fontWeight: 800, color: '#C9A84C', lineHeight: 1 }}>{countdown}</span>
-          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: 6 }}>초 남았어요</span>
-        </div>
-      </div>
-      <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {LOADING_STAGES.map((text, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
-            <span style={{ fontSize: 14, color: stageIndex > i ? '#4ADE80' : stageIndex === i ? '#C9A84C' : 'rgba(255,255,255,0.2)', fontWeight: stageIndex === i ? 700 : 400, transition: 'all 0.5s' }}>
-              {stageIndex > i ? '✓' : stageIndex === i ? '→' : '·'}
-            </span>
-            <span style={{ fontSize: 14, color: stageIndex > i ? 'rgba(255,255,255,0.5)' : stageIndex === i ? '#C9A84C' : 'rgba(255,255,255,0.2)', fontWeight: stageIndex === i ? 700 : 400, transition: 'all 0.5s' }}>
-              {text}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 function DateRow({ year, setYear, month, setMonth, day, setDay, lunar, setLunar }) {
   return (
@@ -334,9 +291,6 @@ export default function App() {
     if (_mobilePayment === 'gilil' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
   }, []) // eslint-disable-line
 
-  const [countdown, setCountdown] = useState(getMidnightCountdown())
-  useEffect(() => { const id = setInterval(() => setCountdown(getMidnightCountdown()), 1000); return () => clearInterval(id) }, [])
-
   const [screen, setScreen] = useState(() => {
     if (_mobilePayment === 'gunghab' && _impSuccess === 'true') return 'result'
     if (_mobilePayment === 'paid' && _impSuccess === 'true') return 'result'
@@ -378,11 +332,6 @@ export default function App() {
   const [openCheongan, setOpenCheongan] = useState(null)
   const [seasonData, setSeasonData] = useState(null)
 
-  // ── 새로 추가된 로딩 state 3개 ──
-  const [loadingPhase, setLoadingPhase] = useState(null)
-  const [loadingCountdown, setLoadingCountdown] = useState(30)
-  const [loadingStage, setLoadingStage] = useState(0)
-
   const [관계유형, set관계유형] = useState('연인')
   const [gunghabStep, setGunghabStep] = useState(0)
   const [partnerGender, setPartnerGender] = useState(() => _qs.get('pg') || '')
@@ -406,7 +355,6 @@ export default function App() {
 
   const abortRef = useRef(null)
   const isPaidSectionRef = useRef(false)
-  const loadingTimersRef = useRef({ countdown: null, stage: null })
 
   const currentStepId = STEPS[step]
   const progress = (step / STEPS.length) * 100
@@ -421,22 +369,6 @@ export default function App() {
     return `${String(h).padStart(2,'0')}:${String(timeMin).padStart(2,'0')}`
   })()
   const birthtimeValid = timeUnknown || (timeHour !== '' && timeMin !== '')
-
-  // ── 로딩 타이머 헬퍼 ──
-  function clearLoadingTimers() {
-    if (loadingTimersRef.current.countdown) clearInterval(loadingTimersRef.current.countdown)
-    if (loadingTimersRef.current.stage) clearInterval(loadingTimersRef.current.stage)
-  }
-  function startLoadingTimers() {
-    setLoadingCountdown(30); setLoadingStage(0); setLoadingPhase('loading')
-    loadingTimersRef.current.countdown = setInterval(() => {
-      setLoadingCountdown(prev => { if (prev <= 1) { clearInterval(loadingTimersRef.current.countdown); return 0 } return prev - 1 })
-    }, 1000)
-    loadingTimersRef.current.stage = setInterval(() => {
-      setLoadingStage(prev => Math.min(prev + 1, LOADING_STAGES.length - 1))
-    }, 8000)
-  }
-  function stopLoading() { clearLoadingTimers(); setLoadingPhase(null) }
 
   function canGoNext() {
     if (currentStepId === 'gender') return gender !== ''
@@ -486,10 +418,6 @@ export default function App() {
   async function handleFreeAnalyze() {
     setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null)
     setIsBaseStreaming(true); isPaidSectionRef.current = false; setScreen('result')
-    setLoadingCountdown(0)
-    loadingTimersRef.current.countdown = setInterval(() => {
-      setLoadingCountdown(prev => prev + 1)
-    }, 1000)
     const apiType = serviceType === 'child' ? '자녀천명' : serviceType === '노후' ? '노후' : '기본'
     try {
       await streamAnalyze({
@@ -515,12 +443,11 @@ if (scoreMatch) {
 },
         onPaidText: () => {},
         onDone: () => {
-          clearLoadingTimers(); setIsBaseStreaming(false); setPhase('done')
+          setIsBaseStreaming(false); setPhase('done')
         },
-        onError: (e) => { clearLoadingTimers(); alert(e); setPhase('input'); setIsBaseStreaming(false) },
+        onError: (e) => { alert(e); setPhase('input'); setIsBaseStreaming(false) },
       })
     } catch (e) {
-      clearLoadingTimers()
       if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
       setPhase('input'); setIsBaseStreaming(false)
     }
@@ -532,10 +459,6 @@ if (scoreMatch) {
     const _bt = _isMobilePaid ? (_paidQs.get('bt') || '') : birthtime
     const _st = _isMobilePaid ? (_paidQs.get('st') || serviceType) : serviceType
     setPaidText(''); setIsPaidStreaming(true); isPaidSectionRef.current = false
-setLoadingCountdown(0)
-loadingTimersRef.current.countdown = setInterval(() => {
-  setLoadingCountdown(prev => prev + 1)
-}, 1000)
     const apiType = _st === 'child' ? '자녀천명' : _st === '노후' ? '노후' : '전체'
     let _fullBase = '', _fullPaid = ''
     try {
@@ -547,7 +470,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
         onDone: () => {}, onError: (e) => alert(e),
       })
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
-    clearLoadingTimers(); setIsPaidStreaming(false); setIsPaid(true)
+    setIsPaidStreaming(false); setIsPaid(true)
     const _email = emailOverride || preEmail
     if (_email && (_fullBase.trim() || _fullPaid.trim())) {
       const label = _st === 'child' ? '🌱 우리 아이 진로·학과 프리미엄' : _st === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'
@@ -561,10 +484,6 @@ loadingTimersRef.current.countdown = setInterval(() => {
     const _isMobileDeep = _deepQs.get('payment') === 'deep'
     const _bt = _isMobileDeep ? (_deepQs.get('bt') || '') : birthtime
     setDeepText(''); setIsDeepStreaming(true); setSeasonData(null)
-    setLoadingCountdown(0)
-    loadingTimersRef.current.countdown = setInterval(() => {
-      setLoadingCountdown(prev => prev + 1)
-    }, 1000)
     let fullDeepText = ''
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
@@ -603,7 +522,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
         }
       }
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
-    clearLoadingTimers(); setIsDeepStreaming(false); setIsDeepPaid(true)
+    setIsDeepStreaming(false); setIsDeepPaid(true)
     if (preEmail && fullDeepText.trim()) saveResult({ email: preEmail, type: 'deep', resultText: fullDeepText, userName: myName })
   }
 
@@ -626,7 +545,7 @@ loadingTimersRef.current.countdown = setInterval(() => {
   function handleRestart() {
     const wasEmailSent = document.getElementById('result-email-input')?.dataset?.sent === 'true' || document.getElementById('gunghab-email-input')?.dataset?.sent === 'true'
     if (isPaid && !wasEmailSent) { const confirmed = window.confirm('📧 이메일로 결과를 받으셨나요?\n\n[취소] 돌아가서 이메일 받기\n[확인] 그냥 나가기'); if (!confirmed) return }
-    abortRef.current?.abort(); stopLoading()
+    abortRef.current?.abort()
     setScreen('landing'); setServiceType(null); setStep(0)
     setGender(''); setMaritalStatus(''); setBirthYear(''); setBirthMonth(''); setBirthDay('')
     setIsLunar(false); setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
@@ -880,11 +799,6 @@ loadingTimersRef.current.countdown = setInterval(() => {
           )}
 
           {/* ── 실제 결과 모드 (결제 후) ── */}
-          {isDeepStreaming && (
-            <div style={{ textAlign: 'center', padding: '16px', marginBottom: 16, fontSize: 15, color: 'rgba(201,168,76,0.7)', fontWeight: 700 }}>
-              ✦ 심화 분석 중 · {loadingCountdown}초 경과 ✦
-            </div>
-          )}
 
           {isDeepStreaming && !deepText && (
             <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>
@@ -1728,15 +1642,8 @@ if (screen === 'result') {
     <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
       <div id="result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 20px 120px', boxSizing: 'border-box', width: '100%' }}>
 
-        {/* 로딩 카운터 */}
-        {isBaseStreaming && (
-          <div style={{ textAlign: 'center', padding: '16px', marginBottom: 16, fontSize: 15, color: 'rgba(201,168,76,0.7)', fontWeight: 700 }}>
-            ✦ 분석 중 · {loadingCountdown}초 경과 ✦
-          </div>
-        )}
-
         {/* 사주팔자 카드 */}
-        {!loadingPhase && sajuData?.사주 && (
+        {sajuData?.사주 && (
   <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
     <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
     <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
@@ -1761,7 +1668,7 @@ if (screen === 'result') {
 )}
 
 {/* 일주 타입 카드 */}
-{!loadingPhase && sajuData?.사주?.일주 && (() => {
+{sajuData?.사주?.일주 && (() => {
   const 일주원문 = sajuData.사주.일주  // 예: "辛신亥해"
 const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   const 타입 = 일주타입명[일주키]
@@ -1784,7 +1691,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 })()}
 
 {/* 운세 점수 카드 — 레이더 차트 */}
-{!loadingPhase && scoreData && (() => {
+{scoreData && (() => {
   const categories = [
     { label: '재물운', score: scoreData.재물, color: '#7F77DD' },
     { label: '애정운', score: scoreData.애정, color: '#D4537E' },
@@ -1894,14 +1801,14 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 })()}
 
         {/* 스트리밍 텍스트 */}
-        {!loadingPhase && isBaseStreaming && baseText && (
+        {isBaseStreaming && baseText && (
           <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
             {removeMarkers(baseText)}<span style={{ opacity: 0.4 }}>▌</span>
           </div>
         )}
 
         {/* 기본 분석 결과 아코디언 */}
-{!loadingPhase && !isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수')).map((sec, i) => {
+{!isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수')).map((sec, i) => {
   const isBlurred = i >= 1
   const lines = sec.content.split('\n')
   const previewLines = lines.slice(0, 5).join('\n')
@@ -1935,14 +1842,14 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
 
         {/* 유료 스트리밍 텍스트 */}
-        {!loadingPhase && isPaidStreaming && paidText && (
+        {isPaidStreaming && paidText && (
           <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
             {removeMarkers(paidText)}<span style={{ opacity: 0.4 }}>▌</span>
           </div>
         )}
 
         {/* 유료 분석 아코디언 */}
-        {!loadingPhase && !isPaidStreaming && paidSections.length > 0 && (
+        {!isPaidStreaming && paidSections.length > 0 && (
           <>
             <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', textAlign: 'center', margin: '20px 0 12px', letterSpacing: '0.08em' }}>✦ 전체 분석 결과 ✦</p>
             {paidSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />)}
@@ -1950,7 +1857,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         )}
 
         {/* 결제 유도 카드 */}
-        {!loadingPhase && phase === 'done' && !isPaid && !isPaidStreaming && (
+        {phase === 'done' && !isPaid && !isPaidStreaming && (
   <div style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', borderRadius: 16, padding: '28px 20px', marginBottom: 16, border: '1px solid rgba(201,168,76,0.3)' }}>
     <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 16, textAlign: 'center' }}>FULL ANALYSIS</p>
     {(serviceType === 'child'
@@ -2028,15 +1935,8 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   </div>
 )}
 
-        {/* 유료 분석 타이머 */}
-        {isPaidStreaming && (
-          <div style={{ textAlign: 'center', padding: '16px', marginBottom: 16, fontSize: 15, color: 'rgba(201,168,76,0.7)', fontWeight: 700 }}>
-            ✦ 전체 분석 중 · {loadingCountdown}초 경과 ✦
-          </div>
-        )}
-
         {/* 유료 분석 로딩 */}
-        {!loadingPhase && isPaidStreaming && !paidText && (
+        {isPaidStreaming && !paidText && (
           <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '28px 20px', marginBottom: 14 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
@@ -2045,9 +1945,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           </div>
         )}
 
-{!loadingPhase && (
-  <>
-    {/* 심화분석 업셀 — 미리보기 인라인 */}
+{/* 심화분석 업셀 — 미리보기 인라인 */}
     {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
       <div style={{ marginTop: 28, marginBottom: 10 }}>
         {/* 페인포인트 후킹 박스 */}
@@ -2192,8 +2090,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
       <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>
     </div>
-  </>
-)}
       </div>
       {phase === 'done' && !isPaid && !isPaidStreaming && (
         <div style={{
@@ -2202,13 +2098,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           background: '#111', borderTop: '1px solid rgba(201,168,76,0.3)',
           padding: '10px 16px 20px', boxSizing: 'border-box',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#CC2222', borderRadius: 6, padding: '5px 12px' }}>
-              <span style={{ fontSize: 14 }}>⏱</span>
-              <span style={{ fontSize: 15, fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.05em' }}>{countdown}</span>
-            </div>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>오늘 자정까지만</span>
-          </div>
           <button
             style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
             onClick={() => { requestPayWithEmail(serviceType === 'child' ? '자녀운 프리미엄' : '전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `${serviceType === 'child' ? 'child' : 'saju'}_${Date.now()}`, name: serviceType === 'child' ? '마이사주 자녀운 프리미엄' : '마이사주 전체 분석', amount: serviceType === 'child' ? 9900 : 1990, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: serviceType === 'child' ? 9900 : 1990, currency: 'KRW' }); handlePaidAnalyze(email) } else alert('결제가 취소되었습니다.') }) }) }}>
