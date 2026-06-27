@@ -327,6 +327,53 @@ async function getScoreOnly(sajuInfo) {
  return Promise.resolve(JSON.stringify(scores))
 }
 
+function calcSeasonData(year, month, day) {
+  const digits = `${year}${String(month).padStart(2,'0')}${String(day).padStart(2,'0')}`
+  let s = digits.split('').reduce((a, c) => a + parseInt(c), 0)
+  while (s >= 10) s = String(s).split('').reduce((a, c) => a + parseInt(c), 0)
+  const destiny = s || 9
+
+  // 운명수로 태어날 때의 오행 위상 결정 (0=木,1=火,2=土,3=金,4=水)
+  const birthPhaseIdx = (destiny - 1) % 5
+  // 木 시작 기준연도 (출생 시점 기준)
+  const woodStart0 = year - birthPhaseIdx * 12
+
+  const thisYear = new Date().getFullYear()
+  // 현재 연도가 속한 60년 주기 탐색
+  const cycleNum = Math.max(0, Math.floor((thisYear - woodStart0) / 60))
+  const woodStart = woodStart0 + cycleNum * 60
+
+  // 점수 계산 (土 고정 최고, 사람마다 차별화)
+  const db = destiny % 5           // 0~4
+  const yb = ((year % 7) + 7) % 7 // 0~6
+  const baseScores = [48, 62, 84, 68, 53]
+  const bonuses = [
+    db * 3 + yb * 2,
+    db * 2 + yb * 2,
+    db * 2 + Math.floor(yb / 2),
+    db * 2 + yb,
+    db * 3 + yb,
+  ]
+
+  const keys = ['wood','fire','earth','metal','water']
+  const labels = ['木 · 씨앗기','火 · 성장기','土 · 전성기','金 · 수확기','水 · 지혜기']
+  const descs = ['뿌리내리는 시간','에너지가 피어오르는 시간','결실을 맺는 시간','쌓아온 것을 거두는 시간','다음을 준비하는 시간']
+
+  const result = {}
+  let current = null
+  for (let i = 0; i < 5; i++) {
+    const start = woodStart + i * 12
+    const end = start + 11
+    const score = Math.min(99, Math.max(20, baseScores[i] + bonuses[i]))
+    result[keys[i]] = { label: labels[i], desc: descs[i], start, end, score }
+    if (thisYear >= start && thisYear <= end) current = keys[i]
+  }
+
+  const earthStart = woodStart + 24
+  const yearsToEarth = earthStart > thisYear ? earthStart - thisYear : 0
+  return { ...result, current: current || 'wood', yearsToEarth }
+}
+
 function calcGunghabScores(saju1, saju2) {
   const 천간한자 = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸']
   const 지지한자 = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']
@@ -1153,23 +1200,11 @@ ${공통규칙}
 
 2. (구체적 상황과 이유)
 
-🔑 ${thisYear + 1}년을 맞이하기 위해 지금 가장 중요한 한 가지. 따뜻하고 희망적으로.
-
-===__운의계절__===
-사용자의 사주와 수비학(생년월일 숫자 합산)을 기반으로 오행 커리어 흐름을 계산해줘.
-
-木(씨앗기) → 火(성장기) → 土(전성기) → 金(수확기) → 水(지혜기)
-한 단계는 12년, 土가 커리어/재물 정점기(고정값)
-
-1) 각 단계가 몇 년도~몇 년도인지
-2) 현재 어느 단계에 있는지
-3) 土(전성기)까지 몇 년 남았는지 (이미 지났으면 0)
-4) 각 단계별 커리어/재물 운 점수 (0~100점)
-
-반드시 아래 JSON 형식으로만 반환하세요 (다른 텍스트 없이 JSON만):
-{"wood":{"label":"木 · 씨앗기","desc":"뿌리내리는 시간","start":년도,"end":년도,"score":점수},"fire":{"label":"火 · 성장기","desc":"에너지가 피어오르는 시간","start":년도,"end":년도,"score":점수},"earth":{"label":"土 · 전성기","desc":"결실을 맺는 시간","start":년도,"end":년도,"score":점수},"metal":{"label":"金 · 수확기","desc":"쌓아온 것을 거두는 시간","start":년도,"end":년도,"score":점수},"water":{"label":"水 · 지혜기","desc":"다음을 준비하는 시간","start":년도,"end":년도,"score":점수},"current":"wood|fire|earth|metal|water","yearsToEarth":숫자}`;
+🔑 ${thisYear + 1}년을 맞이하기 위해 지금 가장 중요한 한 가지. 따뜻하고 희망적으로.`;
 
     try {
+      const seasonData = calcSeasonData(year, month, day);
+      res.write(`data: ${JSON.stringify({ type: 'season', data: seasonData })}\n\n`);
       res.write(`data: ${JSON.stringify({ type: 'paid_start' })}\n\n`);
       await streamToClient(res, deepPrompt, MODEL_PAID, 8000);
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);

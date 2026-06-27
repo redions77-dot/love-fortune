@@ -485,7 +485,6 @@ if (scoreMatch) {
     const _bt = _isMobileDeep ? (_deepQs.get('bt') || '') : birthtime
     setDeepText(''); setIsDeepStreaming(true); setSeasonData(null)
     let fullDeepText = ''
-    let seasonSet = false
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
       const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime: _bt, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName }), signal: ctrl.signal })
@@ -500,26 +499,11 @@ if (scoreMatch) {
             const json = JSON.parse(line.slice(6))
             if (json.type === 'saju') {
               setSajuData(json.사주 ? { 사주: json.사주, 생년월일: json.생년월일 } : null)
+            } else if (json.type === 'season') {
+              setSeasonData(json.data)
             } else if (json.text) {
               fullDeepText += json.text
               setDeepText(prev => prev + json.text)
-              if (!seasonSet) {
-                const seasonMatch = fullDeepText.match(/===__운의계절__===([\s\S]*?)(?:===|$)/)
-                if (seasonMatch) {
-                  try {
-                    const raw = seasonMatch[1]
-                    let depth = 0, start = -1, end = -1
-                    for (let ci = 0; ci < raw.length; ci++) {
-                      if (raw[ci] === '{') { if (depth === 0) start = ci; depth++ }
-                      else if (raw[ci] === '}') { depth--; if (depth === 0 && start !== -1) { end = ci; break } }
-                    }
-                    if (start !== -1 && end !== -1) {
-                      const parsed = JSON.parse(raw.slice(start, end + 1))
-                      if (parsed.current) { setSeasonData(parsed); seasonSet = true }
-                    }
-                  } catch {}
-                }
-              }
             }
           } catch {}
         }
