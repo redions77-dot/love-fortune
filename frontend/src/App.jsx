@@ -1362,10 +1362,9 @@ if (emailModal) {
         )}
         <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2.2, margin: 0 }}>
-            📱 모바일에서는 결과 저장이 안 될 수 있어요.<br/>
-            💻 PC에서는 PDF로 저장 가능해요.<br/>
-            📩 이메일로 결과를 보내드릴게요.<br/>
-            🔒 이메일은 결과 발송에만 사용됩니다.
+            📧 결과는 이메일로 바로 전송돼요<br/>
+            🔒 이메일은 결과 발송에만 사용돼요<br/>
+            ♾️ 언제든 다시 볼 수 있어요
           </p>
         </div>
         <input
