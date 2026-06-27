@@ -125,6 +125,24 @@ const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'b
 
 const LOADING_STAGES = ['사주 데이터를 읽고 있어요', '기운의 흐름을 분석하고 있어요', '당신만의 풀이를 만들고 있어요']
 
+const SUBHEAD_EMOJIS = ['📌', '✅', '⚠️', '🔑', '💡', '🌟']
+function renderFormattedContent(text) {
+  if (!text?.trim()) return null
+  return text.split('\n').map((line, i) => {
+    const t = line.trim()
+    if (!t) return <div key={i} style={{ height: 8 }} />
+    if (SUBHEAD_EMOJIS.some(e => t.startsWith(e))) {
+      return <div key={i} style={{ fontWeight: 700, color: '#C9A84C', marginTop: 16, marginBottom: 4, lineHeight: 1.6 }}>{line}</div>
+    }
+    if (/^\d+\./.test(t)) {
+      return <div key={i} style={{ paddingLeft: 4, marginBottom: 6, lineHeight: 1.9 }}>{line}</div>
+    }
+    if (t.startsWith('🔒')) {
+      return <div key={i} style={{ color: 'rgba(201,168,76,0.65)', marginTop: 12, lineHeight: 1.8 }}>{line}</div>
+    }
+    return <div key={i} style={{ lineHeight: 1.9, marginBottom: 2 }}>{line}</div>
+  })
+}
 function removeMarkers(text) {
   return text.split('===').filter((_, i) => i % 2 === 0).join('').replace(/\n{3,}/g, '\n\n').replace(/^#{1,6}\s*/gm, '').trim()
 }
@@ -253,7 +271,7 @@ function Accordion({ title, content, isPaid = false, isChild = false, isGunghab 
         <span style={{ fontSize: 17, fontWeight: 700, color: open ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
         <span style={{ fontSize: 14, color: 'rgba(201,168,76,0.5)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
       </div>
-      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{useBracket ? renderBracketItems(content) : content}</div>}
+      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 18, color: 'rgba(255,255,255,0.88)', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{useBracket ? renderBracketItems(content) : renderFormattedContent(content)}</div>}
     </div>
   )
 }
@@ -1826,8 +1844,8 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           <span style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{sec.title}</span>
           <span style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', background: 'rgba(201,168,76,0.1)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(201,168,76,0.3)' }}>전체 분석 공개</span>
         </div>
-        <div style={{ padding: '16px 20px 0', fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', background: '#050D1F' }}>
-          {previewLines}
+        <div style={{ padding: '16px 20px 0', fontSize: 18, color: 'rgba(255,255,255,0.7)', wordBreak: 'keep-all', background: '#050D1F' }}>
+          {renderFormattedContent(previewLines)}
         </div>
         <div style={{ position: 'relative', background: '#050D1F', padding: '0 20px 20px' }}>
           <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none', minHeight: 80 }}>
