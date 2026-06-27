@@ -1122,22 +1122,25 @@ if (scoreMatch) {
                   { title: '두 사람의 앞으로 3년', preview: null, blurred: '2025~2027년, 두 사람에게 가장 중요한 시기가 언제인지, 함께 올라타야 할 타이밍과 조심해야 할 구간이 나와요. 2025년 하반기에 관계의 전환점이 한 번 오고, 2026년 봄에는 함께 큰 결정을 내려야 할 상황이 생겨요. 이 시기를 잘 넘기면 2027년에 두 사람의 관계가 한 단계 깊어지는 구조예요. 반대로 2026년 여름~가을은 서로 지치기 쉬운 시기라 의식적으로 거리를 좁히려는 노력이 필요해요. 각 시기별로 조심해야 할 행동과 반드시 해야 할 대화 주제가 따로 있어요. 특히 두 사람의 대운 흐름이 교차하는 지점이 있는데, 그 시기가 이 관계의 가장 큰 기회이자 위기가 될 수 있어요. 3년간의 월별 흐름도 구체적으로 확인할 수 있어요.' },
                   { title: isLover ? '궁합 총평' : '관계 총평', preview: null, blurred: '이 사주 조합이 전체적으로 어떤 관계인지, 잘 맞는 이유와 주의할 점을 한 번에 정리해드려요. 두 사람의 오행 균형을 종합하면 서로에게 필요한 기운을 주고받는 상보적 관계예요. 다만 한쪽이 지나치게 맞추는 구조가 되면 균형이 깨지기 쉬워서 대등한 관계 유지가 핵심이에요. 이 조합의 가장 큰 강점은 위기 상황에서 오히려 단단해지는 구조라는 거예요. 반대로 평화로운 시기에 권태가 올 수 있는데, 그걸 방지하는 구체적인 방법도 나와요. 장기적으로 이 관계가 유지되려면 반드시 지켜야 할 규칙이 하나 있고, 그걸 알면 10년 후에도 지금처럼 가까운 사이로 남을 수 있어요. 전체 궁합 점수와 영역별 세부 점수도 한눈에 정리해드려요.' },
                 ]
-              })().map((item, idx) => (
-                <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(155,29,58,0.06)', borderRadius: 10, border: '1px solid rgba(155,29,58,0.2)' }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: item.preview ? 8 : 0 }}>✦ {item.title}</p>
-                  {item.preview && (
-                    <div style={{ fontSize: 16, lineHeight: 2.0, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all' }}>
-                      <span>{item.preview}</span>
-                      <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{item.blurred}</span>
+              })().map((item, idx) => {
+                const blurredText = item.blurred || ''
+                let cut = -1, count = 0
+                for (let i = 0; i < blurredText.length - 1; i++) {
+                  if (blurredText[i] === '.' && blurredText[i + 1] === ' ') { count++; if (count === 2) { cut = i + 2; break } }
+                }
+                const visibleBlur = cut > 0 ? blurredText.slice(0, cut).trim() : ''
+                const hiddenBlur = cut > 0 ? blurredText.slice(cut).trim() : blurredText
+                return (
+                  <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(155,29,58,0.06)', borderRadius: 10, border: '1px solid rgba(155,29,58,0.2)' }}>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
+                    <div style={{ fontSize: 16, lineHeight: 2.0, wordBreak: 'keep-all' }}>
+                      {item.preview && <span style={{ color: 'rgba(255,255,255,0.75)' }}>{item.preview} </span>}
+                      {visibleBlur && <span style={{ color: 'rgba(255,255,255,0.75)' }}>{visibleBlur} </span>}
+                      {hiddenBlur && <span style={{ color: 'rgba(255,255,255,0.6)', filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{hiddenBlur}</span>}
                     </div>
-                  )}
-                  {!item.preview && (
-                    <div style={{ fontSize: 16, lineHeight: 2.0, color: 'rgba(255,255,255,0.3)', filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none', wordBreak: 'keep-all' }}>
-                      {item.blurred}
-                    </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                )
+              })}
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 12 }}>{관계유형 === '친구' ? '두 사람의 우정이 어디까지 가는지 전부 나와요 👇' : 관계유형 === '연인' ? '이 사람과 돈·미래·궁합이 맞는 구조인지 사주에서 확인하세요 👇' : '두 사람의 결혼·돈·미래 궁합까지 전부 나와요 👇'}</p>
             </div>
           )}
