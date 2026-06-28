@@ -1351,7 +1351,7 @@ if (emailModal) {
               </svg>
             </div>
             <h1 style={{ wordBreak: 'keep-all', fontSize: 34, fontWeight: 800, color: '#FFFFFF', marginBottom: 12, lineHeight: 1.25, letterSpacing: '-0.02em' }}>나는 죽어도 안되는 게,<br/>쟤는 왜 쉽게 될까</h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, marginBottom: 24 }}>타이밍이 달랐던 거예요.<br/><span style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15 }}>사주가 찍어드릴게요.</span></p>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, marginBottom: 24 }}>노력 차이가 아니에요. 타이밍을 몰랐던 거예요.<br/><span style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15 }}>내 사주에 답이 있어요.</span></p>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.5)', padding: '9px 22px', borderRadius: 20, fontSize: 13, color: '#C9A84C', fontWeight: 600 }}>
               <span>⏰</span>
               <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.3 }}>
@@ -1361,7 +1361,7 @@ if (emailModal) {
             </div>
           </div>
           <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 24px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: 18, lineHeight: 1.75, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', fontWeight: 700 }}>내가 크게 벌 수 있는 시기가 따로 있어요.<br/>모르면, 남이 가져가요.</p>
+            <p style={{ fontSize: 18, lineHeight: 1.75, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', fontWeight: 700 }}>내 사주엔 돈 버는 시기가 따로 있어요.<br/>그 타이밍만 알아도 달라져요.</p>
             <div style={{ width: 30, height: 1, background: 'rgba(201,168,76,0.3)', margin: '20px auto' }}/>
             <p style={{ fontSize: 17, lineHeight: 1.75, color: '#C9A84C', wordBreak: 'keep-all', fontWeight: 700 }}>지금 내 사주, 1,990원이면 충분해요.<br/>철학관 가기 전에 먼저 보세요.</p>
 <button
