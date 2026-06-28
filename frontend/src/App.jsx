@@ -1335,6 +1335,9 @@ if (emailModal) {
   if (screen === 'landing') {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#050D1F' }}>
+        <div style={{ background: 'linear-gradient(90deg, #7B5C10, #C9A84C, #7B5C10)', textAlign: 'center', padding: '9px 16px', fontSize: 12, fontWeight: 600, color: '#0A1628', letterSpacing: '0.01em' }}>
+          ✨ 기본 사주는 무료예요 — 결제 없이 먼저 확인하세요
+        </div>
         <div style={{ position: 'relative' }}>          <div style={{ position: 'relative', textAlign: 'center', padding: '52px 24px 36px', margin: '20px 16px 0', borderRadius: 16, border: '1px solid rgba(201,168,76,0.5)', background: 'rgba(5,13,31,0.6)', backdropFilter: 'blur(8px)', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
             <div style={{ marginBottom: 20 }}>
               <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
@@ -1353,7 +1356,7 @@ if (emailModal) {
               <span>⏰</span>
               <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.3 }}>
                 <span style={{ fontSize: 10, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>9,900원</span>
-                <span style={{ fontWeight: 800 }}>오늘만 1,990원</span>
+                <span style={{ fontWeight: 800 }}>무료로 먼저 보기 →</span>
               </span>
             </div>
           </div>
@@ -1392,7 +1395,10 @@ if (emailModal) {
   ].map(({ type, char, label, hook, badge, border, bg, onClick }) => (
     <div key={type} onClick={onClick || (() => { setServiceType(type); setScreen('input') })} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 220, cursor: 'pointer' }}>
       {badge && (
-        <span style={{ display: 'inline-block', background: 'rgba(201,168,76,0.15)', color: '#C9A84C', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 2, marginBottom: 12, border: '1px solid rgba(201,168,76,0.3)', letterSpacing: '0.1em' }}>{badge}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, marginBottom: 10 }}>
+          <span style={{ display: 'inline-block', background: 'rgba(201,168,76,0.2)', color: '#F5E090', fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 4, border: '1px solid rgba(201,168,76,0.6)', letterSpacing: '0.12em' }}>{badge}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#C9A84C' }}>기본 사주 무료 공개</span>
+        </div>
       )}
       <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10, marginTop: badge ? 0 : 22 }}>{char}</div>
       <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 8, textAlign: 'center' }}>{label}</div>
