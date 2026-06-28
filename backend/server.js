@@ -510,7 +510,8 @@ function getDaeun(year, month, day, gender, 년천간index, 월주간지) {
     } else {
       const 전달index = (month - 2 + 12) % 12
       const 전달절기 = 절기일[전달index]
-      날수 = day + 전달절기
+      const 전달말일 = new Date(year, month - 1, 0).getDate()
+      날수 = (전달말일 - 전달절기) + day
     }
   }
 
@@ -549,7 +550,8 @@ function calcSaju(birthdate, birthtime, isLunar) {
 
   const birthdate_solar = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
   const 일주obj = get일주(birthdate_solar);
-  const 년주obj = get년주(year);
+  const 사주년 = (month < 2 || (month === 2 && day < 절기시작일[1])) ? year - 1 : year;
+  const 년주obj = get년주(사주년);
   const 일주 = 일주obj.간지;
   const 년주 = 년주obj.간지;
   const 월주 = get월주(year, month, day, 년주obj.천간index);
