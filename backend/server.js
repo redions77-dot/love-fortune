@@ -514,7 +514,7 @@ function getDaeun(year, month, day, gender, 년천간index, 월주간지) {
     }
   }
 
-  const 시작나이 = Math.round(날수 / 3)
+  const 시작나이 = Math.floor(날수 / 3)
 
   // 대운 목록 생성 (8개) — 나이와 시작 연도를 함께 저장
   const 대운목록 = []
