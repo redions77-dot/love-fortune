@@ -1607,6 +1607,98 @@ if (emailModal) {
 
 
 
+        {/* 서비스 카드 */}
+        <div style={{ background: '#0A1628' }}>
+          <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 48px', width: '100%', boxSizing: 'border-box' }}>
+            <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', marginBottom: 4, fontWeight: 600, letterSpacing: '0.12em' }}>SERVICES</p>
+            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginBottom: 20, fontWeight: 700 }}>내 돈 버는 시기, 골라서 확인하세요</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+
+              {/* ① 나의 사주  ② 궁합 */}
+              {[
+                {
+                  type: 'saju', char: '命', label: '나의 사주',
+                  badge: 'FREE PREVIEW',
+                  hook: '지금 돈이 들어오는 구조인지\n아직도 모르고 열심히만 하고 있어요?',
+                  border: 'rgba(201,168,76,0.3)', bg: 'rgba(201,168,76,0.06)'
+                },
+                {
+                  type: 'gunghab', char: '合', label: '궁합',
+                  hook: '그 사람이 나한테\n이득인 사람인지 사주에 나와요.',
+                  border: 'rgba(155,29,58,0.3)', bg: 'rgba(155,29,58,0.06)',
+                  onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') }
+                },
+              ].map(({ type, char, label, hook, badge, border, bg, onClick }) => (
+                <div key={type} onClick={onClick || (() => { setServiceType(type); setScreen('input') })} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 220, cursor: 'pointer' }}>
+                  {badge && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, marginBottom: 10 }}>
+                      <span style={{ display: 'inline-block', background: 'rgba(201,168,76,0.2)', color: '#F5E090', fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 4, border: '1px solid rgba(201,168,76,0.6)', letterSpacing: '0.12em' }}>{badge}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#C9A84C' }}>기본 사주 무료 공개</span>
+                    </div>
+                  )}
+                  <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10, marginTop: badge ? 0 : 22 }}>{char}</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 8, textAlign: 'center' }}>{label}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, whiteSpace: 'pre-line', textAlign: 'center', marginBottom: 14, wordBreak: 'keep-all' }}>{hook}</div>
+                  <button
+                    style={{ width: '100%', padding: '11px 0', fontSize: 14, fontWeight: 800, background: 'transparent', color: '#C9A84C', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                    onClick={e => { e.stopPropagation(); (onClick || (() => { setServiceType(type); setScreen('input') }))() }}>
+                    <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
+                      <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>9,900원</span>
+                      <span>지금 확인하기 1,990원</span>
+                    </span>
+                  </button>
+                </div>
+              ))}
+
+              {/* ③ 자녀 9,900원 */}
+              <div onClick={() => { setServiceType('child'); setScreen('input') }} style={{ gridColumn: '1 / -1', background: 'rgba(45,122,82,0.06)', border: '2px solid #C9A84C', borderRadius: 14, padding: '24px 20px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
+                <span style={{ display: 'inline-block', background: '#C9474A', color: '#FFFFFF', fontSize: 11, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 12 }}>여름방학 특가</span>
+                <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>子</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, textAlign: 'center' }}>우리 아이 진로·학과 프리미엄</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 14 }}>맞는 직업 · 추천학과 5개 · 공부법까지</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10, marginBottom: 14 }}>
+                  <span style={{ fontSize: 14, textDecoration: 'line-through', color: 'rgba(255,255,255,0.35)' }}>19,900원</span>
+                  <span style={{ fontSize: 28, fontWeight: 900, color: '#C9A84C' }}>9,900원</span>
+                </div>
+                <button style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
+                  onClick={e => { e.stopPropagation(); setServiceType('child'); setScreen('input') }}>
+                  <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
+                    <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>19,900원</span>
+                    <span>방학 전 특가로 확인하기 →</span>
+                  </span>
+                </button>
+              </div>
+
+              {/* ④ 100년 사주 99,000원 */}
+              <div onClick={() => setScreen('백년_input')} style={{ gridColumn: '1 / -1', background: 'rgba(201,168,76,0.04)', border: '2px solid rgba(201,168,76,0.5)', borderRadius: 14, padding: '24px 20px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
+                <span style={{ display: 'inline-block', background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', fontSize: 11, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 12 }}>한정 특가</span>
+                <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>百</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, textAlign: 'center' }}>100년 사주 인생 꿀팁</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 14 }}>지금부터 100세까지 · 매년 재물운·관계운·건강운</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10, marginBottom: 14 }}>
+                  <span style={{ fontSize: 14, textDecoration: 'line-through', color: 'rgba(255,255,255,0.35)' }}>300,000원</span>
+                  <span style={{ fontSize: 28, fontWeight: 900, color: '#C9A84C' }}>99,000원</span>
+                </div>
+                <button style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
+                  onClick={e => { e.stopPropagation(); setScreen('백년_input') }}>
+                  🌟 100년 꿀팁 받기 →
+                </button>
+              </div>
+
+            </div>
+            <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.15)', marginTop: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 24 }}>
+                {[['⭐','만족도 94%'],['🔒','안전한 결제'],['⚡','즉시 확인']].map(([e,t]) => (
+                  <div key={t} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 20 }}>{e}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>{t}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* 푸터 */}
 <div style={{ borderTop: '1px solid rgba(201,168,76,0.2)', padding: '28px 20px 44px', background: '#050D1F' }}>
   <div style={{ maxWidth: 480, margin: '0 auto' }}>
