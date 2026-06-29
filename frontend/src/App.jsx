@@ -1567,7 +1567,7 @@ if (emailModal) {
   // ── 랜딩 ──
   if (screen === 'landing') {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#050D1F' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', background: '#050D1F' }}>
         <div style={{ background: 'linear-gradient(90deg, #7B5C10, #C9A84C, #7B5C10)', textAlign: 'center', padding: '9px 16px', fontSize: 12, fontWeight: 600, color: '#0A1628', letterSpacing: '0.01em' }}>
           ✨ 기본 사주는 무료예요 — 결제 없이 먼저 확인하세요
         </div>
