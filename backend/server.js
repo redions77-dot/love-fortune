@@ -1096,6 +1096,42 @@ vs 이 아이에게 실제로 통하는 대응 방식.
     return res.end();
   }
 
+  // ── 100년 사주 인생 꿀팁 ──────────────────────────────────
+  if (type === '100년꿀팁') {
+    const currentAge = thisYear - year;
+    const endCalYear = year + 100;
+
+    const hundredPrompt = `당신은 한국의 사주·명리학 전문가입니다.
+현재는 ${thisYear}년입니다.
+
+${infoBlock}
+
+${공통규칙}
+
+이 사람의 사주를 바탕으로 현재 나이(${currentAge}세)부터 100세까지 매년 인생 꿀팁을 생성하세요.
+각 년도는 반드시 아래 형식으로 작성하세요:
+
+[연도]년 ([나이]세) ━━━━━━━━━━━━━
+재물운: [키워드1·키워드2] | 관계운: [키워드1·키워드2] | 건강운: [키워드1·키워드2]
+
+[사주 전문 용어를 포함한 2~3문단 분량의 구체적 분석과 실용 꿀팁. 대운·세운·형충파해·귀인·역마살 등 전문 용어와 실생활 조언을 자연스럽게 섞어서.]
+
+규칙:
+- ${thisYear}년(${currentAge}세)부터 ${endCalYear}년(100세)까지 빠짐없이 모든 해를 작성
+- 매년 재물운/관계운/건강운 키워드 먼저, 이후 2~3문단 꿀팁
+- 어두운 해도 솔직하게 알리되 극복 방법과 대비책 포함
+- 무게감 있되 읽기 쉽게, 따뜻하고 희망적인 말투`;
+
+    try {
+      await streamToClient(res, hundredPrompt, MODEL_PAID, 16000);
+      res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+    } catch (e) {
+      console.error('[100년꿀팁 오류]', e?.message || e);
+      if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
+    }
+    return res.end();
+  }
+
   // ── 노후 분석 ──────────────────────────────────
 if (type === '노후') {
   const nohuBasePrompt = `당신은 한국의 사주·명리학 전문가입니다.

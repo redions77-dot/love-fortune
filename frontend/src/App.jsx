@@ -318,6 +318,11 @@ export default function App() {
       return () => clearTimeout(t)
     }
     if (_mobilePayment === 'gilil' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
+    if (_mobilePayment === '백년' && _impSuccess === 'true') {
+      const t = setTimeout(() => { handle백년Analyze(); window.history.replaceState({}, '', window.location.pathname) }, 300)
+      return () => clearTimeout(t)
+    }
+    if (_mobilePayment === '백년' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
   }, []) // eslint-disable-line
 
   const [screen, setScreen] = useState(() => {
@@ -325,6 +330,7 @@ export default function App() {
     if (_mobilePayment === 'paid' && _impSuccess === 'true') return 'result'
     if (_mobilePayment === 'deep' && _impSuccess === 'true') return 'deep_result'
     if (_mobilePayment === 'gilil' && _impSuccess === 'true') return 'gilil_result'
+    if (_mobilePayment === '백년' && _impSuccess === 'true') return '백년_result'
     return 'landing'
   })
   const [serviceType, setServiceType] = useState(() => {
@@ -381,6 +387,21 @@ export default function App() {
   const [gililText, setGililText] = useState('')
   const [isGililStreaming, setIsGililStreaming] = useState(false)
   const [gililData, setGililData] = useState(null)
+
+  const [백년Name, set백년Name] = useState(() => _qs.get('hn') || '')
+  const [백년BirthYear, set백년BirthYear] = useState(() => _qs.get('hby') || '')
+  const [백년BirthMonth, set백년BirthMonth] = useState(() => _qs.get('hbm') || '')
+  const [백년BirthDay, set백년BirthDay] = useState(() => _qs.get('hbd') || '')
+  const [백년IsLunar, set백년IsLunar] = useState(false)
+  const [백년TimeHour, set백년TimeHour] = useState(() => _qs.get('hth') || '')
+  const [백년TimeMin, set백년TimeMin] = useState(() => _qs.get('htm') || '')
+  const [백년TimeAmPm, set백년TimeAmPm] = useState('오전')
+  const [백년TimeUnknown, set백년TimeUnknown] = useState(false)
+  const [백년Text, set백년Text] = useState('')
+  const [is백년Streaming, setIs백년Streaming] = useState(false)
+  const [백년Email, set백년Email] = useState('')
+  const [백년EmailSent, set백년EmailSent] = useState(false)
+  const [백년EmailInput, set백년EmailInput] = useState('')
 
   const abortRef = useRef(null)
   const isPaidSectionRef = useRef(false)
@@ -575,7 +596,13 @@ if (scoreMatch) {
     setMyName(''); setPartnerName(''); setGunghabText(''); setIsGunghabStreaming(false); setGunghabSajuData(null)
     setGilil목적(''); setGililText(''); setIsGililStreaming(false); isPaidSectionRef.current = false
     setSeasonData(null); setDeepText(''); setIsDeepStreaming(false); setIsDeepPaid(false)
+    set백년Text(''); setIs백년Streaming(false); set백년Name(''); set백년BirthYear(''); set백년BirthMonth(''); set백년BirthDay(''); set백년TimeHour(''); set백년TimeMin(''); set백년TimeAmPm('오전'); set백년TimeUnknown(false); set백년Email(''); set백년EmailSent(false); set백년EmailInput('')
   }
+
+  const 백년Birthdate = (백년BirthYear.length === 4 && 백년BirthMonth && 백년BirthDay) ? `${백년BirthYear}-${String(백년BirthMonth).padStart(2,'0')}-${String(백년BirthDay).padStart(2,'0')}` : ''
+  const 백년BirthdateValid = 백년BirthYear.length === 4 && Number(백년BirthMonth) >= 1 && Number(백년BirthMonth) <= 12 && Number(백년BirthDay) >= 1 && Number(백년BirthDay) <= 31
+  const 백년Birthtime = 백년TimeUnknown ? '' : (() => { if (!백년TimeHour || !백년TimeMin) return ''; let h = Number(백년TimeHour); if (백년TimeAmPm === '오전' && h === 12) h = 0; if (백년TimeAmPm === '오후' && h !== 12) h += 12; return `${String(h).padStart(2,'0')}:${String(백년TimeMin).padStart(2,'0')}` })()
+  const 백년BirthtimeValid = 백년TimeUnknown || (백년TimeHour !== '' && 백년TimeMin !== '')
 
   const partnerBirthdate = (partnerBirthYear.length === 4 && partnerBirthMonth && partnerBirthDay) ? `${partnerBirthYear}-${String(partnerBirthMonth).padStart(2,'0')}-${String(partnerBirthDay).padStart(2,'0')}` : ''
   const partnerBirthtime = partnerTimeUnknown ? '' : (() => {
@@ -624,6 +651,208 @@ if (scoreMatch) {
       const data = await res.json(); if (data.success) setGililData(data.data)
     } catch (e) { alert('서버에 연결할 수 없습니다.') }
     setIsGililStreaming(false)
+  }
+
+  async function handle백년Analyze(emailOverride) {
+    const _qs2 = new URLSearchParams(window.location.search)
+    const _isMobileReturn = _qs2.get('payment') === '백년'
+    const _by = _isMobileReturn ? (_qs2.get('hby') || '') : 백년BirthYear
+    const _bm = _isMobileReturn ? (_qs2.get('hbm') || '') : 백년BirthMonth
+    const _bd = _isMobileReturn ? (_qs2.get('hbd') || '') : 백년BirthDay
+    const _bt = _isMobileReturn ? (_qs2.get('hth') ? `${_qs2.get('hth')}:${_qs2.get('htm')||'00'}` : '') : 백년Birthtime
+    const _hn = _isMobileReturn ? (_qs2.get('hn') || '') : 백년Name
+    const _bd_str = (_by.length === 4 && _bm && _bd) ? `${_by}-${String(_bm).padStart(2,'0')}-${String(_bd).padStart(2,'0')}` : 백년Birthdate
+    set백년Text(''); setIs백년Streaming(true); setScreen('백년_result')
+    let fullText = ''
+    try {
+      const ctrl = new AbortController(); abortRef.current = ctrl
+      const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender: '미입력', birthdate: _bd_str, birthtime: _bt, type: '100년꿀팁', isPaid: true, isLunar: false, userName: _hn }), signal: ctrl.signal })
+      const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''
+      while (true) {
+        const { done, value } = await reader.read(); if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split('\n'); buf = lines.pop()
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const json = JSON.parse(line.slice(6))
+            if (json.text) { fullText += json.text; set백년Text(prev => prev + json.text) }
+          } catch {}
+        }
+      }
+    } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
+    setIs백년Streaming(false)
+    const _email = emailOverride || 백년Email
+    if (_email && fullText.trim()) {
+      autoSendEmail({ email: _email, subject: `🌟 ${_hn || ''}님의 100년 사주 인생 꿀팁`, sections: [{ title: '100년 인생 꿀팁', content: fullText }], name: _hn })
+      saveResult({ email: _email, type: '100년꿀팁', resultText: fullText, userName: _hn })
+    }
+  }
+
+  // ── 100년 입력 ──
+  if (screen === '백년_input') {
+    const canNext = 백년BirthdateValid && 백년BirthtimeValid && 백년Name.trim().length > 0
+    return (
+      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
+          <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>百</div>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>100년 사주 인생 꿀팁</h1>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>지금부터 100세까지, 매년 사주 꿀팁을 드려요</p>
+        </div>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>이름을 알려주세요</h2>
+          <input style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 600, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box', marginBottom: 24 }} placeholder="이름 (예: 홍길동)" value={백년Name} onChange={e => set백년Name(e.target.value)} />
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>생년월일을 알려주세요</h2>
+          <DateRow year={백년BirthYear} setYear={set백년BirthYear} month={백년BirthMonth} setMonth={set백년BirthMonth} day={백년BirthDay} setDay={set백년BirthDay} lunar={백년IsLunar} setLunar={set백년IsLunar} />
+          {백년BirthdateValid && <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 20 }}>✓ {백년BirthYear}년 {백년BirthMonth}월 {백년BirthDay}일</p>}
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', marginTop: 8, marginBottom: 6 }}>태어난 시간을 알려주세요</h2>
+          <button style={{ width: '100%', padding: '12px', fontSize: 13, border: `1px solid ${백년TimeUnknown ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: 백년TimeUnknown ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: 백년TimeUnknown ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', marginBottom: 10 }} onClick={() => set백년TimeUnknown(v => !v)}>
+            {백년TimeUnknown ? '✓ 모름으로 입력' : '시간을 모르는 경우 클릭'}
+          </button>
+          {!백년TimeUnknown && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <select style={{ flex: 1, padding: '14px 8px', fontSize: 15, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: '#0D1B3E', color: '#FFFFFF' }} value={백년TimeAmPm} onChange={e => set백년TimeAmPm(e.target.value)}>
+                <option value="오전">오전</option><option value="오후">오후</option>
+              </select>
+              <input style={{ flex: 1, padding: '14px 8px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="시" min="1" max="12" value={백년TimeHour} onChange={e => set백년TimeHour(e.target.value.slice(0,2))} />
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 18 }}>:</span>
+              <input style={{ flex: 1, padding: '14px 8px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="분" min="0" max="59" value={백년TimeMin} onChange={e => set백년TimeMin(e.target.value.slice(0,2))} />
+            </div>
+          )}
+        </div>
+        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => setScreen('landing')}>←</button>
+          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: !canNext ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: !canNext ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: !canNext ? 'not-allowed' : 'pointer' }} disabled={!canNext} onClick={() => setScreen('백년_payment')}>
+            다음 — 결제하기
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── 100년 결제 ──
+  if (screen === '백년_payment') {
+    function doPay() {
+      if (IS_ADMIN) {
+        const email = window.prompt('이메일 주소를 입력하세요 (결과 발송용):')
+        if (email) set백년Email(email)
+        handle백년Analyze(email || '')
+        return
+      }
+      const IMP = window.IMP; IMP.init('imp87662575')
+      const _params = new URLSearchParams({ payment: '백년', hn: 백년Name, hby: 백년BirthYear, hbm: 백년BirthMonth, hbd: 백년BirthDay, hth: 백년TimeHour || '', htm: 백년TimeMin || '' }).toString()
+      IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `baek_${Date.now()}`, name: '마이사주 100년 사주 인생 꿀팁', amount: 99000, buyer_name: 백년Name || '고객', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_params}` }, (rsp) => {
+        if (rsp.success) {
+          const email = window.prompt('이메일 주소를 입력하세요 (결과가 이메일로 발송됩니다):')
+          if (email) set백년Email(email)
+          handle백년Analyze(email || '')
+        } else { alert('결제가 취소되었습니다.') }
+      })
+    }
+    return (
+      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
+          <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>百</div>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>100년 사주 인생 꿀팁</h1>
+        </div>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 120px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
+          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '24px 20px', marginBottom: 20 }}>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>이름: {백년Name}</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>생년월일: {백년BirthYear}년 {백년BirthMonth}월 {백년BirthDay}일{백년Birthtime ? ` · ${백년TimeAmPm} ${백년TimeHour}시 ${백년TimeMin}분` : ' · 시간 미입력'}</p>
+          </div>
+          <div style={{ background: '#0D1B3E', border: '2px solid rgba(201,168,76,0.5)', borderRadius: 14, padding: '28px 24px', textAlign: 'center', marginBottom: 20 }}>
+            <span style={{ display: 'inline-block', background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', fontSize: 12, fontWeight: 800, borderRadius: 20, padding: '4px 16px', marginBottom: 16 }}>한정 특가</span>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', textDecoration: 'line-through', marginBottom: 6 }}>정가 300,000원</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 6, marginBottom: 16 }}>
+              <span style={{ fontSize: 40, fontWeight: 900, color: '#C9A84C' }}>99,000</span>
+              <span style={{ fontSize: 18, color: '#C9A84C', fontWeight: 700 }}>원</span>
+            </div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8 }}>
+              ✦ 현재 나이부터 100세까지 매년 꿀팁<br/>
+              ✦ 재물운·관계운·건강운 키워드 매년 제공<br/>
+              ✦ 이메일로 전체 결과 발송
+            </div>
+          </div>
+        </div>
+        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => setScreen('백년_input')}>←</button>
+          <button style={{ flex: 1, padding: '14px', fontSize: 16, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }} onClick={doPay}>
+            🌟 99,000원 결제하고 받기
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ── 100년 결과 ──
+  if (screen === '백년_result') {
+    const yearBlocks = []
+    if (백년Text) {
+      const parts = 백년Text.split(/(?=\d{4}년\s*\(\d+세\)\s*━)/g)
+      parts.forEach(block => {
+        const headerMatch = block.match(/^(\d{4}년\s*\(\d+세\))\s*━+/)
+        if (headerMatch) {
+          const header = headerMatch[1]
+          const body = block.slice(headerMatch[0].length).trim()
+          yearBlocks.push({ header, body })
+        } else if (block.trim() && yearBlocks.length === 0) {
+          yearBlocks.push({ header: '', body: block.trim() })
+        }
+      })
+    }
+    function send백년Email() {
+      if (!백년EmailInput.includes('@')) { alert('이메일 주소를 확인해주세요'); return }
+      set백년Email(백년EmailInput)
+      autoSendEmail({ email: 백년EmailInput, subject: `🌟 ${백년Name || ''}님의 100년 사주 인생 꿀팁`, sections: [{ title: '100년 인생 꿀팁', content: 백년Text }], name: 백년Name })
+      saveResult({ email: 백년EmailInput, type: '100년꿀팁', resultText: 백년Text, userName: 백년Name })
+      set백년EmailSent(true)
+    }
+    return (
+      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '28px 24px 16px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
+          <div style={{ fontSize: 32, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 8 }}>百</div>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 4 }}>100년 사주 인생 꿀팁</h1>
+          {백년Name && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{백년Name}님 · {백년BirthYear}년생</p>}
+        </div>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 80px', width: '100%', boxSizing: 'border-box' }}>
+          {is백년Streaming && yearBlocks.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.5)' }}>
+              <div style={{ fontSize: 36, marginBottom: 16 }}>🌟</div>
+              <p style={{ fontSize: 15, fontWeight: 600, color: '#C9A84C' }}>{백년Name || ''}님의 100년 인생 꿀팁 생성 중...</p>
+              <p style={{ fontSize: 13, marginTop: 8 }}>지금부터 100세까지 매년 분석 중이에요</p>
+            </div>
+          )}
+          {!is백년Streaming && !백년EmailSent && 백년Text && (
+            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px', marginBottom: 20 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>📧 이메일로 전체 결과 받기</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 8, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={백년EmailInput} onChange={e => set백년EmailInput(e.target.value)} />
+                <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={send백년Email}>발송</button>
+              </div>
+            </div>
+          )}
+          {백년EmailSent && <p style={{ textAlign: 'center', fontSize: 13, color: '#C9A84C', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>}
+          {yearBlocks.length > 0 ? yearBlocks.map((block, i) => (
+            <div key={i} style={{ marginBottom: 20, background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 12, overflow: 'hidden' }}>
+              {block.header && (
+                <div style={{ background: 'rgba(201,168,76,0.08)', borderBottom: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px' }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#C9A84C' }}>{block.header}</span>
+                </div>
+              )}
+              <div style={{ padding: '16px', fontSize: 15, color: 'rgba(255,255,255,0.85)', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{block.body}</div>
+            </div>
+          )) : (백년Text && !is백년Streaming && (
+            <div style={{ padding: '16px', fontSize: 15, color: 'rgba(255,255,255,0.85)', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{백년Text}</div>
+          ))}
+          {is백년Streaming && yearBlocks.length > 0 && (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>⟳ 계속 생성 중...</div>
+          )}
+        </div>
+        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+          <button style={{ width: '100%', padding: '14px', fontSize: 14, fontWeight: 600, background: 'rgba(201,168,76,0.1)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer' }} onClick={handleRestart}>← 처음으로</button>
+        </div>
+      </div>
+    )
   }
 
   // ── 길일 입력 ──
@@ -1432,6 +1661,22 @@ border: '1px solid rgba(201,168,76,0.5)', border: 'none', borderRadius: 8, curso
         <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>19,900원</span>
         <span>방학 전 특가로 확인하기 →</span>
       </span>
+    </button>
+  </div>
+
+  {/* 100년 사주 인생 꿀팁 카드 */}
+  <div onClick={() => setScreen('백년_input')} style={{ gridColumn: '1 / -1', background: 'rgba(201,168,76,0.04)', border: '2px solid rgba(201,168,76,0.5)', borderRadius: 14, padding: '24px 20px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
+    <span style={{ display: 'inline-block', background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', fontSize: 11, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 12 }}>한정 특가</span>
+    <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>百</div>
+    <div style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, textAlign: 'center' }}>100년 사주 인생 꿀팁</div>
+    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 14 }}>지금부터 100세까지 · 매년 재물운·관계운·건강운</div>
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10, marginBottom: 14 }}>
+      <span style={{ fontSize: 14, textDecoration: 'line-through', color: 'rgba(255,255,255,0.35)' }}>300,000원</span>
+      <span style={{ fontSize: 28, fontWeight: 900, color: '#C9A84C' }}>99,000원</span>
+    </div>
+    <button style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
+      onClick={e => { e.stopPropagation(); setScreen('백년_input') }}>
+      🌟 100년 꿀팁 받기 →
     </button>
   </div>
 </div>
