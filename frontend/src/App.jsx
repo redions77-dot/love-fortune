@@ -1645,27 +1645,34 @@ if (emailModal) {
                 </div>
               ))}
 
-              {/* ③ 자녀 9,900원 */}
-              <div onClick={() => { setServiceType('child'); setScreen('input') }} style={{ gridColumn: '1 / -1', background: 'rgba(45,122,82,0.06)', border: '2px solid #C9A84C', borderRadius: 14, padding: '24px 20px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>子</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, textAlign: 'center' }}>우리 아이 진로·학과 프리미엄</div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 14 }}>맞는 직업 · 추천학과 5개 · 공부법까지</div>
-                <button style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
-                  onClick={e => { e.stopPropagation(); setServiceType('child'); setScreen('input') }}>
-                  확인하기 →
-                </button>
-              </div>
-
-              {/* ④ 100년 사주 99,000원 */}
-              <div onClick={() => setScreen('백년_input')} style={{ gridColumn: '1 / -1', background: 'rgba(201,168,76,0.04)', border: '2px solid rgba(201,168,76,0.5)', borderRadius: 14, padding: '24px 20px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>百</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, textAlign: 'center' }}>100년 사주 인생 꿀팁</div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 14 }}>지금부터 100세까지 · 매년 재물운·관계운·건강운</div>
-                <button style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
-                  onClick={e => { e.stopPropagation(); setScreen('백년_input') }}>
-                  🌟 100년 꿀팁 받기 →
-                </button>
-              </div>
+              {/* ③ 자녀  ④ 100년 */}
+              {[
+                {
+                  char: '子', label: '우리 아이 진로·학과',
+                  hook: '맞는 직업 · 추천학과 5개\n공부법까지',
+                  border: 'rgba(45,122,82,0.3)', bg: 'rgba(45,122,82,0.06)',
+                  btn: '확인하기 →',
+                  onClick: () => { setServiceType('child'); setScreen('input') }
+                },
+                {
+                  char: '百', label: '100년 사주 인생 꿀팁',
+                  hook: '지금부터 100세까지\n매년 재물운·관계운·건강운',
+                  border: 'rgba(201,168,76,0.3)', bg: 'rgba(201,168,76,0.06)',
+                  btn: '🌟 꿀팁 받기 →',
+                  onClick: () => setScreen('백년_input')
+                },
+              ].map(({ char, label, hook, border, bg, btn, onClick }) => (
+                <div key={char} onClick={onClick} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 220, cursor: 'pointer' }}>
+                  <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10, marginTop: 22 }}>{char}</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 8, textAlign: 'center' }}>{label}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, whiteSpace: 'pre-line', textAlign: 'center', marginBottom: 14, wordBreak: 'keep-all' }}>{hook}</div>
+                  <button
+                    style={{ width: '100%', padding: '11px 0', fontSize: 14, fontWeight: 800, background: 'transparent', color: '#C9A84C', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                    onClick={e => { e.stopPropagation(); onClick() }}>
+                    {btn}
+                  </button>
+                </div>
+              ))}
 
             </div>
             <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.15)', marginTop: 8 }}>
