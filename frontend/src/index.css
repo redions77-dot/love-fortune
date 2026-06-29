@@ -20,7 +20,7 @@
 
 body {
   font-family: var(--font-body);
-  background: var(--color-bg);
+  background: #050D1F;
   color: var(--color-text);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
