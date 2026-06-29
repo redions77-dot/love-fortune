@@ -1642,10 +1642,7 @@ if (emailModal) {
                   <button
                     style={{ width: '100%', padding: '11px 0', fontSize: 14, fontWeight: 800, background: 'transparent', color: '#C9A84C', border: 'none', borderRadius: 8, cursor: 'pointer' }}
                     onClick={e => { e.stopPropagation(); (onClick || (() => { setServiceType(type); setScreen('input') }))() }}>
-                    <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
-                      <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>9,900원</span>
-                      <span>지금 확인하기 1,990원</span>
-                    </span>
+                    지금 확인하기 →
                   </button>
                 </div>
               ))}
@@ -1656,16 +1653,9 @@ if (emailModal) {
                 <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>子</div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, textAlign: 'center' }}>우리 아이 진로·학과 프리미엄</div>
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 14 }}>맞는 직업 · 추천학과 5개 · 공부법까지</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10, marginBottom: 14 }}>
-                  <span style={{ fontSize: 14, textDecoration: 'line-through', color: 'rgba(255,255,255,0.35)' }}>19,900원</span>
-                  <span style={{ fontSize: 28, fontWeight: 900, color: '#C9A84C' }}>9,900원</span>
-                </div>
                 <button style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
                   onClick={e => { e.stopPropagation(); setServiceType('child'); setScreen('input') }}>
-                  <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
-                    <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>19,900원</span>
-                    <span>방학 전 특가로 확인하기 →</span>
-                  </span>
+                  확인하기 →
                 </button>
               </div>
 
@@ -1675,10 +1665,6 @@ if (emailModal) {
                 <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>百</div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, textAlign: 'center' }}>100년 사주 인생 꿀팁</div>
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 14 }}>지금부터 100세까지 · 매년 재물운·관계운·건강운</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10, marginBottom: 14 }}>
-                  <span style={{ fontSize: 14, textDecoration: 'line-through', color: 'rgba(255,255,255,0.35)' }}>300,000원</span>
-                  <span style={{ fontSize: 28, fontWeight: 900, color: '#C9A84C' }}>99,000원</span>
-                </div>
                 <button style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}
                   onClick={e => { e.stopPropagation(); setScreen('백년_input') }}>
                   🌟 100년 꿀팁 받기 →
