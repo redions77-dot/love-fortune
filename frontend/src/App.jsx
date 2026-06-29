@@ -1647,7 +1647,6 @@ if (emailModal) {
 
               {/* ③ 자녀 9,900원 */}
               <div onClick={() => { setServiceType('child'); setScreen('input') }} style={{ gridColumn: '1 / -1', background: 'rgba(45,122,82,0.06)', border: '2px solid #C9A84C', borderRadius: 14, padding: '24px 20px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
-                <span style={{ display: 'inline-block', background: '#C9474A', color: '#FFFFFF', fontSize: 11, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 12 }}>여름방학 특가</span>
                 <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>子</div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, textAlign: 'center' }}>우리 아이 진로·학과 프리미엄</div>
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 14 }}>맞는 직업 · 추천학과 5개 · 공부법까지</div>
@@ -1659,7 +1658,6 @@ if (emailModal) {
 
               {/* ④ 100년 사주 99,000원 */}
               <div onClick={() => setScreen('백년_input')} style={{ gridColumn: '1 / -1', background: 'rgba(201,168,76,0.04)', border: '2px solid rgba(201,168,76,0.5)', borderRadius: 14, padding: '24px 20px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
-                <span style={{ display: 'inline-block', background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', fontSize: 11, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 12 }}>한정 특가</span>
                 <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>百</div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 6, textAlign: 'center' }}>100년 사주 인생 꿀팁</div>
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 14 }}>지금부터 100세까지 · 매년 재물운·관계운·건강운</div>
