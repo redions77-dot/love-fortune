@@ -2316,6 +2316,22 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       </div>
     )}
 
+    {/* 업셀 카드 — 무료 결과 후 1,990원 유도 */}
+    {!isPaid && phase === 'done' && serviceType === 'saju' && (
+      <div style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.04))', border: '2px solid rgba(201,168,76,0.45)', borderRadius: 16, padding: '28px 20px', marginBottom: 24, textAlign: 'center' }}>
+        <p style={{ fontSize: 19, fontWeight: 800, color: '#FFFFFF', marginBottom: 8, lineHeight: 1.5, wordBreak: 'keep-all' }}>내 사주, 더 자세히 보고 싶다면?</p>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 22, lineHeight: 1.7, wordBreak: 'keep-all' }}>돈 버는 타이밍 · 귀인 만나는 시기<br/>절대 하면 안 되는 결정까지</p>
+        <button
+          style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 900, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', boxShadow: '0 4px 20px rgba(201,168,76,0.35)' }}
+          onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1990, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 1990, currency: 'KRW' }); handlePaidAnalyze(email) } else alert('결제가 취소되었습니다.') }) }) }}>
+          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
+            <span style={{ fontSize: 12, textDecoration: 'line-through', opacity: 0.55, fontWeight: 400 }}>9,900원</span>
+            <span>지금 확인하기 1,990원 →</span>
+          </span>
+        </button>
+      </div>
+    )}
+
     {/* 하단 액션 영역 */}
     <div style={{ borderTop: '1px solid rgba(201,168,76,0.1)', marginTop: 32, paddingTop: 24 }}>
 
