@@ -1569,7 +1569,7 @@ if (emailModal) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', background: '#050D1F' }}>
         <div style={{ background: 'linear-gradient(90deg, #7B5C10, #C9A84C, #7B5C10)', textAlign: 'center', padding: '9px 16px', fontSize: 12, fontWeight: 600, color: '#0A1628', letterSpacing: '0.01em' }}>
-          ✨ 기본 사주는 무료예요 — 결제 없이 먼저 확인하세요
+          ✨ 회원가입 없이 바로 확인 — 무료로 먼저 보세요
         </div>
         <div style={{ position: 'relative' }}>          <div style={{ position: 'relative', textAlign: 'center', padding: '52px 24px 36px', margin: '20px 16px 0', borderRadius: 16, border: '1px solid rgba(201,168,76,0.5)', background: 'rgba(5,13,31,0.6)', backdropFilter: 'blur(8px)', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
             <div style={{ marginBottom: 20 }}>
