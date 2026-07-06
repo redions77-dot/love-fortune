@@ -170,6 +170,48 @@ function parseSections(text) {
   }
   return sections
 }
+// 섹션 본문을 📌 소제목 단위 블록으로 분리 (🔒 잠금 문구는 별도 블록)
+function splitSectionBlocks(content) {
+  const lines = (content || '').split('\n')
+  const blocks = []
+  let current = null
+  for (const line of lines) {
+    const t = line.trim()
+    if (!t) continue
+    if (t.startsWith('🔒')) {
+      if (current) { blocks.push(current); current = null }
+      blocks.push({ header: null, bodyLines: [line], isLock: true })
+    } else if (SUBHEAD_EMOJIS.some(e => t.startsWith(e))) {
+      if (current) blocks.push(current)
+      current = { header: line, bodyLines: [] }
+    } else {
+      if (!current) current = { header: null, bodyLines: [] }
+      current.bodyLines.push(line)
+    }
+  }
+  if (current) blocks.push(current)
+  return blocks
+}
+// 문장 끝부분(핵심 결론) 1~2문장만 블러 대상으로 분리하고, 그 앞의 설명·서사는 전부 선명하게 유지
+function splitLastSentences(text, hideCount = 2) {
+  const clean = (text || '').trim()
+  if (!clean) return { visible: '', hidden: '' }
+  const boundaries = []
+  for (let i = 0; i < clean.length - 1; i++) {
+    if (clean[i] === '.' && clean[i + 1] === ' ') boundaries.push(i + 1)
+  }
+  boundaries.push(clean.length)
+  const totalSentences = boundaries.length
+  if (totalSentences <= 1) return { visible: '', hidden: clean }
+  const keepCount = Math.max(totalSentences - hideCount, 1)
+  const cut = boundaries[keepCount - 1]
+  return { visible: clean.slice(0, cut).trim(), hidden: clean.slice(cut).trim() }
+}
+// 무료 결과에서 "결론만 블러" 처리할 섹션별 📌 소제목 인덱스(0부터)
+const CONCLUSION_BLUR_INDEX = {
+  '돈의 흐름': [1, 2],
+  '지금 이 시기': [1],
+}
 function GunghabRadarChart({ categories, blurred }) {
   const size = 260
   const cx = size / 2, cy = size / 2, r = 95
@@ -2093,28 +2135,36 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         {/* 기본 분석 결과 아코디언 */}
 {!isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수')).map((sec, i) => {
   const isBlurred = i >= 1
-  const lines = sec.content.split('\n')
-  const previewLines = lines.slice(0, 5).join('\n')
-  const restLines = lines.slice(5).join('\n')
 
   if (isBlurred && !isPaid) {
+    const blurIdx = CONCLUSION_BLUR_INDEX[sec.title] || []
+    const blocks = splitSectionBlocks(sec.content)
+    let headerCount = -1
     return (
       <div key={i} style={{ marginBottom: 10, border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px', background: '#0D1B3E' }}>
           <span style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{sec.title}</span>
           <span style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', background: 'rgba(201,168,76,0.1)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(201,168,76,0.3)' }}>전체 분석 공개</span>
         </div>
-        <div style={{ padding: '16px 20px 0', fontSize: 18, color: 'rgba(255,255,255,0.7)', wordBreak: 'keep-all', background: '#050D1F' }}>
-          {renderFormattedContent(previewLines)}
-        </div>
-        <div style={{ position: 'relative', background: '#050D1F', padding: '0 20px 20px' }}>
-          <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none', minHeight: 80 }}>
-            {restLines || '이 내용은 전체 분석에서 확인할 수 있어요. 이 사주에서 돈이 가장 크게 움직이는 나이대가 있고, 그 시기를 어떻게 준비하느냐에 따라 말년이 완전히 달라져요.'}
-          </div>
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 0%, #050D1F 75%)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: 14, left: 0, right: 0, textAlign: 'center', zIndex: 2 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: '#C9A84C' }}>이 내용이 궁금하다면? ↓ 아래에서 전체 분석을 확인하세요</p>
-          </div>
+        <div style={{ padding: '16px 20px 20px', fontSize: 18, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', background: '#050D1F' }}>
+          {blocks.map((block, bi) => {
+            if (block.isLock) {
+              return <div key={bi} style={{ color: 'rgba(201,168,76,0.65)', marginTop: 12, lineHeight: 1.8 }}>{block.bodyLines.join('\n')}</div>
+            }
+            headerCount++
+            const bodyText = block.bodyLines.join(' ').replace(/\s+/g, ' ').trim()
+            const shouldBlur = blurIdx.includes(headerCount) && bodyText
+            const { visible, hidden } = shouldBlur ? splitLastSentences(bodyText, 2) : { visible: bodyText, hidden: '' }
+            return (
+              <div key={bi} style={{ marginTop: 16, marginBottom: 4 }}>
+                {block.header && <div style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 4, lineHeight: 1.6 }}>{block.header}</div>}
+                <div style={{ lineHeight: 1.9 }}>
+                  {visible && <span>{visible} </span>}
+                  {hidden && <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{hidden}</span>}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     )
