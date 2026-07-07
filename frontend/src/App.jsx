@@ -120,7 +120,7 @@ const 일주타입명 = {
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
 const STEPS = ['gender', 'marital', 'birthdate', 'birthtime', 'mbti', 'blood']
-const API_URL = 'https://love-fortune.onrender.com'
+const API_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname) ? '' : 'https://love-fortune.onrender.com'
 const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'bomgyeol2026'
 
 const LOADING_STAGES = ['사주 데이터를 읽고 있어요', '기운의 흐름을 분석하고 있어요', '당신만의 풀이를 만들고 있어요']
@@ -370,6 +370,7 @@ export default function App() {
   }, []) // eslint-disable-line
 
   const [screen, setScreen] = useState(() => {
+    if (IS_ADMIN && _qs.get('view') === 'email') return 'admin_email'
     if (_mobilePayment === 'gunghab' && _impSuccess === 'true') return 'result'
     if (_mobilePayment === 'paid' && _impSuccess === 'true') return 'result'
     if (_mobilePayment === 'deep' && _impSuccess === 'true') return 'deep_result'
@@ -410,6 +411,8 @@ export default function App() {
   const [isDeepStreaming, setIsDeepStreaming] = useState(false)
   const [openCheongan, setOpenCheongan] = useState(null)
   const [seasonData, setSeasonData] = useState(null)
+  const [deepEmailInput, setDeepEmailInput] = useState('')
+  const [deepEmailSent, setDeepEmailSent] = useState(false)
 
   const [관계유형, set관계유형] = useState('연인')
   const [gunghabStep, setGunghabStep] = useState(0)
@@ -640,7 +643,7 @@ if (scoreMatch) {
     setPartnerIsLunar(false); setPartnerTimeHour(''); setPartnerTimeMin(''); setPartnerTimeAmPm('오전'); setPartnerTimeUnknown(false)
     setMyName(''); setPartnerName(''); setGunghabText(''); setIsGunghabStreaming(false); setGunghabSajuData(null)
     setGilil목적(''); setGililText(''); setIsGililStreaming(false); isPaidSectionRef.current = false
-    setSeasonData(null); setDeepText(''); setIsDeepStreaming(false); setIsDeepPaid(false)
+    setSeasonData(null); setDeepText(''); setIsDeepStreaming(false); setIsDeepPaid(false); setDeepEmailInput(''); setDeepEmailSent(false)
     set백년Text(''); setIs백년Streaming(false); set백년Name(''); set백년BirthYear(''); set백년BirthMonth(''); set백년BirthDay(''); set백년TimeHour(''); set백년TimeMin(''); set백년TimeAmPm('오전'); set백년TimeUnknown(false); set백년Email(''); set백년EmailSent(false); set백년EmailInput(''); set백년Gender('')
   }
 
@@ -948,6 +951,13 @@ if (scoreMatch) {
   // ── 심화 결과 ──
   if (screen === 'deep_result') {
     const deepSections = parseSections(deepText)
+    function sendDeepEmail() {
+      if (!deepEmailInput.includes('@')) { alert('이메일 주소를 확인해주세요'); return }
+      const emailSections = deepSections.filter(sec => sec.title !== '분석 결과' && !sec.title.includes('운의계절') && sec.content?.trim())
+      autoSendEmail({ email: deepEmailInput, subject: `🔮 ${myName || ''}님의 사주 심화 분석 결과`, sections: emailSections.length > 0 ? emailSections : [{ title: '심화 분석', content: deepText }], name: myName })
+      saveResult({ email: deepEmailInput, type: 'deep', resultText: deepText, userName: myName })
+      setDeepEmailSent(true)
+    }
     const seasonPhases = seasonData ? [
       { key: 'wood', icon: '木', color: '#4ADE80', bgColor: 'rgba(74,222,128,0.08)', borderColor: 'rgba(74,222,128,0.3)' },
       { key: 'fire', icon: '火', color: '#F87171', bgColor: 'rgba(248,113,113,0.08)', borderColor: 'rgba(248,113,113,0.3)' },
@@ -1200,6 +1210,17 @@ if (scoreMatch) {
 
           {isDeepPaid && (
             <>
+              {!deepEmailSent ? (
+                <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px', marginBottom: 16 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>📧 이메일로 결과 받기</p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 8, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={deepEmailInput} onChange={e => setDeepEmailInput(e.target.value)} />
+                    <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={sendDeepEmail}>발송</button>
+                  </div>
+                </div>
+              ) : (
+                <p style={{ textAlign: 'center', fontSize: 13, color: '#C9A84C', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>
+              )}
               <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 10 }}>
                 <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
                 <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
@@ -2461,6 +2482,75 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     </div>
   )
 }
+
+  // ── 관리자: 심화분석 결과 이메일 발송 ──
+  if (screen === 'admin_email') {
+    const [adminEmail, setAdminEmail] = useState('')
+    const [adminResults, setAdminResults] = useState([])
+    const [adminLoading, setAdminLoading] = useState(false)
+    const [adminSendingId, setAdminSendingId] = useState(null)
+    const [adminStatus, setAdminStatus] = useState({})
+
+    async function fetchAdminResults() {
+      if (!adminEmail.includes('@')) { alert('이메일 주소를 확인해주세요'); return }
+      setAdminLoading(true); setAdminResults([]); setAdminStatus({})
+      try {
+        const res = await fetch(`${API_URL}/api/get-results?email=${encodeURIComponent(adminEmail)}`)
+        const data = await res.json()
+        if (data.success) setAdminResults(data.results.filter(r => r.type === 'deep'))
+        else alert(data.error || '조회 실패')
+      } catch (e) { alert('서버에 연결할 수 없습니다.') }
+      setAdminLoading(false)
+    }
+
+    async function sendAdminResult(result) {
+      setAdminSendingId(result.id)
+      const htmlContent = `<div style="font-family:'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#0D1B3E;color:#FFFFFF;box-sizing:border-box;"><h1 style="color:#C9A84C;text-align:center;font-size:22px;margin-bottom:8px;">🔮 사주 심화 분석 결과</h1><p style="text-align:center;color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:24px;">${result.userName || ''}님의 분석 결과</p><hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:24px 0;"><p style="color:rgba(255,255,255,0.85);font-size:17px;line-height:1.8;white-space:pre-wrap;word-break:keep-all;margin:0;">${result.resultText}</p><hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:32px 0 16px;"><p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p></div>`
+      try {
+        const res = await fetch(`${API_URL}/api/send-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: adminEmail, subject: '🔮 마이사주 심화 분석 결과', html: htmlContent }) })
+        const data = await res.json()
+        setAdminStatus(prev => ({ ...prev, [result.id]: data.success ? 'sent' : 'error' }))
+      } catch (e) {
+        setAdminStatus(prev => ({ ...prev, [result.id]: 'error' }))
+      }
+      setAdminSendingId(null)
+    }
+
+    return (
+      <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 16px' }}>
+        <div style={{ maxWidth: 480, margin: '0 auto' }}>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#C9A84C', marginBottom: 20, textAlign: 'center' }}>🔮 심화분석 결과 발송</h1>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+            <input
+              style={{ flex: 1, padding: '12px 14px', fontSize: 14, border: '1px solid rgba(201,168,76,0.3)', borderRadius: 8, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box' }}
+              type="email" placeholder="고객 이메일 주소" value={adminEmail}
+              onChange={e => setAdminEmail(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') fetchAdminResults() }}
+            />
+            <button style={{ padding: '12px 18px', fontSize: 14, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={fetchAdminResults} disabled={adminLoading}>
+              {adminLoading ? '조회 중...' : '조회'}
+            </button>
+          </div>
+          {adminLoading && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>조회 중...</p>}
+          {!adminLoading && adminResults.length === 0 && (
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>이메일을 입력하고 조회하면 심화분석 결과 목록이 나타나요.</p>
+          )}
+          {adminResults.map(r => (
+            <div key={r.id} style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 12, padding: '16px', marginBottom: 12 }}>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>{r.userName || '이름 없음'} · {new Date(r.createdAt).toLocaleString('ko-KR')}</p>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', maxHeight: 60, overflow: 'hidden', marginBottom: 12, whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{r.resultText.slice(0, 120)}...</p>
+              <button
+                style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 700, background: adminStatus[r.id] === 'sent' ? 'rgba(74,222,128,0.15)' : '#C9A84C', color: adminStatus[r.id] === 'sent' ? '#4ADE80' : '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                onClick={() => sendAdminResult(r)} disabled={adminSendingId === r.id}
+              >
+                {adminSendingId === r.id ? '발송 중...' : adminStatus[r.id] === 'sent' ? '✅ 발송 완료' : adminStatus[r.id] === 'error' ? '⚠️ 발송 실패 · 재발송' : '📧 이 결과 이메일로 발송'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   // ── 약관/정책 화면들 ──
   if (screen === 'refund') return (
