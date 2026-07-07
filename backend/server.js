@@ -577,7 +577,12 @@ function calcSaju(birthdate, birthtime, isLunar) {
 }
 
 app.post('/api/analyze', async (req, res) => {
-  const { gender, birthdate, birthtime, mbti, blood, type, isPaid, isLunar, maritalStatus, userName } = req.body;
+  const { gender, birthdate, birthtime, mbti, blood, type, isPaid, isLunar, maritalStatus, userName, previousText } = req.body;
+
+  // 이미 생성되어 사용자에게 보여준 이전(무료) 분석 결과와 모순되지 않도록 유료/심화 프롬프트에 공통으로 붙일 블록
+  const 일관성블록 = (previousText && previousText.trim())
+    ? `\n[절대 규칙 — 이전 분석과의 일관성]\n아래는 이미 생성되어 사용자에게 보여준 이전 분석 결과입니다. 지금 작성하는 내용은 이 결과와 절대 모순되면 안 됩니다.\n특히 재물 패턴(한방형/꾸준형/말년형 등), 성향, 시기 판단처럼 이미 특정 방향으로 확정된 내용은 그대로 유지한 채로만 확장하세요. 새로운 반대 패턴을 만들지 마세요.\n(이미 다룬 내용을 그대로 반복하지는 말고, 같은 결론 위에서 더 깊게 들어가세요.)\n\n--- 이전 분석 결과 ---\n${previousText.slice(0, 6000)}\n--- 이전 분석 결과 끝 ---\n`
+    : '';
 
   if (!birthdate) return res.status(400).json({ error: '생년월일을 입력해주세요.' });
 
@@ -1344,7 +1349,7 @@ MBTI는 반드시 영문 대문자로 표기하세요. (예: ESFJ, INTJ, ENFP) �
 ${infoBlock}
 
 ${공통규칙}
-
+${일관성블록}
 각 섹션은 ===섹션제목=== 형태로 구분하세요.
 
 [출력 형식 규칙 — 반드시 지킬 것]
@@ -1565,7 +1570,7 @@ ${getAgeBasedFreeSection(year, maritalStatus)}
 ${infoBlock}
 
 ${공통규칙}
-
+${일관성블록}
 [중요] 무료 분석에서 이미 다룬 내용 (사주 기운, 재물 패턴 힌트, 나이대별 핵심운 방향)은 절대 반복하지 마세요.
 
 각 섹션은 ===섹션제목=== 형태로 구분하세요.

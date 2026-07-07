@@ -1,5 +1,39 @@
 import { useEffect, useState, useRef } from 'react'
 
+// 아코디언이 펼쳐지며 요소 높이가 바뀌는 게 끝날 때까지 기다린다 (rAF로 scrollHeight가
+// 몇 프레임 연속 그대로일 때 "안정됐다"고 판단 — 고정 setTimeout 대신 실제 레이아웃 완료를 감지).
+function waitForStableLayout(element, { stableFrames = 4, timeout = 4000 } = {}) {
+  return new Promise(resolve => {
+    const start = performance.now()
+    let lastHeight = -1
+    let count = 0
+    function tick() {
+      const h = element.scrollHeight
+      if (h === lastHeight) count++
+      else { count = 0; lastHeight = h }
+      if (count >= stableFrames || performance.now() - start > timeout) resolve()
+      else requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
+}
+
+// PDF 저장 버튼 클릭 시 호출: 아코디언을 전부 강제로 펼친 뒤(setForceOpen(true)),
+// React 렌더 반영 + 레이아웃 안정 + 폰트 로딩까지 기다리고 나서 캡처한다.
+async function exportResultPDF(elementId, filename, setForceOpen) {
+  setForceOpen(true)
+  try {
+    // React가 forceOpen 상태를 반영해 실제로 DOM에 커밋될 시간을 준다.
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+    const element = document.getElementById(elementId)
+    if (element) await waitForStableLayout(element)
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready } catch {} }
+    await generatePDF(elementId, filename)
+  } finally {
+    setForceOpen(false)
+  }
+}
+
 async function generatePDF(elementId, filename) {
   if (!window.jspdf) {
     await new Promise((resolve, reject) => {
@@ -27,7 +61,7 @@ async function generatePDF(elementId, filename) {
   element.style.color = '#1A1A1A'
   allEls.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
   try {
-    const canvas = await window.html2canvas(element, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false, windowWidth: element.scrollWidth, windowHeight: element.scrollHeight })
+    const canvas = await window.html2canvas(element, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false, windowWidth: element.scrollWidth, windowHeight: element.scrollHeight, ignoreElements: (el) => el.getAttribute && el.getAttribute('data-pdf-exclude') === 'true' })
     const { jsPDF } = window.jspdf
     const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
     const pageW = pdf.internal.pageSize.getWidth()
@@ -158,6 +192,48 @@ function renderFormattedContent(text) {
 }
 function removeMarkers(text) {
   return text.split('===').filter((_, i) => i % 2 === 0).join('').replace(/^#{1,6}\s+.+$/gm, '').replace(/\n{3,}/g, '\n\n').trim()
+}
+// 이미 생성된 무료/유료 분석에서 어떤 재물 패턴(꾸준형/한방형 등)이 나왔는지 감지해서,
+// 심화분석 유도 티저가 그 패턴과 반대되는 내용을 새로 지어내지 않도록 맞는 버전을 고른다.
+function getMoneyTeaserVariant(refText) {
+  const t = refText || ''
+  const steady = /꾸준|차곡차곡|안정형/.test(t)
+  const volatile = /한방|파도|기복|굴곡/.test(t)
+  if (steady && !volatile) return 'steady'
+  if (volatile && !steady) return 'volatile'
+  return 'neutral'
+}
+const MONEY_TEASER_VARIANTS = {
+  steady: {
+    visible: `이 사주는 재물이 한 번에 크게 들어오기보다 꾸준히 쌓이는 안정형 구조를 가지고 있어요. 지금까지도 큰 사고 없이 차곡차곡 모아온 편이었을 거예요.
+
+다만 이 구조에서 진짜 중요한 건 "얼마나 버느냐"가 아니라 "어디서 새느냐"예요. 감정적인 지출이나 주변 사람 때문에 나가는 돈이 분명히 있어요.
+
+커리어 방향도 흥미로운 흐름이 보여요. 타고난 기질상`,
+    blurred: `조직보다는 자율적인 환경에서 능력이 폭발하는 구조인데, 특히 올해 하반기부터 귀인의 기운이 강하게 들어오고 있어요. 이 귀인은 직장 상사일 수도 있고, 뜻밖의 인연을 통해 새로운 기회로 연결될 수 있어요.
+
+장기적으로 이 재물을 제대로 쌓으려면 반드시 지켜야 할 관리법이 하나 있어요. 이걸 놓치면 지금까지 모은 게 흔들릴 수 있습니다.`,
+  },
+  volatile: {
+    visible: `이 사주는 재물의 흐름이 일정하지 않고 큰 파도처럼 밀려왔다 빠지는 구조를 가지고 있어요. 지금까지 돈이 모이다가도 어느 순간 빠져나가는 경험을 반복하셨을 거예요.
+
+하지만 이 구조는 약점이 아니에요. 오히려 큰 기회를 잡을 수 있는 타이밍이 분명하게 존재하는 사주예요. 지금 이 시기의 에너지 흐름을 보면, 곧 재물운이 크게 열리는 전환점이 다가오고 있어요.
+
+커리어 방향도 흥미로운 흐름이 보여요. 타고난 기질상`,
+    blurred: `조직보다는 자율적인 환경에서 능력이 폭발하는 구조인데, 특히 올해 하반기부터 귀인의 기운이 강하게 들어오고 있어요. 이 귀인은 직장 상사일 수도 있고, 뜻밖의 인연을 통해 새로운 기회로 연결될 수 있어요.
+
+대운의 흐름을 보면, 앞으로 3년 안에 반드시 잡아야 할 타이밍이 하나 있어요. 이 시기를 놓치면 다음 기회는 꽤 오래 기다려야 합니다.`,
+  },
+  neutral: {
+    visible: `이 사주는 커리어 방향에서 뚜렷한 신호가 먼저 보여요. 타고난 기질상 조직보다는 자율적인 환경에서 능력이 폭발하는 구조예요.
+
+특히 올해 하반기부터 귀인의 기운이 강하게 들어오고 있어요. 이 귀인은 직장 상사일 수도 있고, 뜻밖의 인연을 통해 새로운 기회로 연결될 수 있어요.
+
+재물의 흐름도 이 사주만의 뚜렷한 패턴이 있는데, 앞서 나온 분석과 이어서 보면`,
+    blurred: `왜 지금이 중요한 시기인지 훨씬 더 확실해져요.
+
+대운의 흐름을 보면, 앞으로 3년 안에 반드시 잡아야 할 타이밍이 하나 있어요. 이 시기를 놓치면 다음 기회는 꽤 오래 기다려야 합니다.`,
+  },
 }
 function parseSections(text) {
   const sections = []
@@ -315,18 +391,19 @@ function renderBracketItems(text) {
   })
 }
 const BRACKET_SECTIONS = new Set(['이 아이에게 맞는 직업 방향', '추천학과 5개'])
-function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, isGilil = false, defaultOpen = false }) {
+function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, isGilil = false, defaultOpen = false, forceOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
+  const isOpen = open || forceOpen
   const borderColor = isGunghab ? 'rgba(155,29,58,0.4)' : isChild ? 'rgba(45,122,82,0.4)' : isGilil ? 'rgba(201,168,76,0.4)' : isPaid ? 'rgba(201,168,76,0.4)' : 'rgba(201,168,76,0.15)'
   const openBg = isGunghab ? 'rgba(155,29,58,0.1)' : isChild ? 'rgba(45,122,82,0.1)' : 'rgba(201,168,76,0.08)'
   const useBracket = BRACKET_SECTIONS.has(title)
   return (
     <div style={{ marginBottom: 10, border: `1px solid ${borderColor}`, borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px', cursor: 'pointer', background: open ? openBg : '#0D1B3E', transition: 'all 0.2s' }} onClick={() => setOpen(o => !o)}>
-        <span style={{ fontSize: 17, fontWeight: 700, color: open ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
-        <span style={{ fontSize: 14, color: 'rgba(201,168,76,0.5)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px', cursor: 'pointer', background: isOpen ? openBg : '#0D1B3E', transition: 'all 0.2s' }} onClick={() => setOpen(o => !o)}>
+        <span style={{ fontSize: 17, fontWeight: 700, color: isOpen ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
+        <span style={{ fontSize: 14, color: 'rgba(201,168,76,0.5)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
       </div>
-      {open && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 18, color: 'rgba(255,255,255,0.88)', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{useBracket ? renderBracketItems(content) : renderFormattedContent(content)}</div>}
+      {isOpen && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 18, color: 'rgba(255,255,255,0.88)', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{useBracket ? renderBracketItems(content) : renderFormattedContent(content)}</div>}
     </div>
   )
 }
@@ -406,6 +483,7 @@ export default function App() {
   const [isDeepPaid, setIsDeepPaid] = useState(false)
   const [scoreData, setScoreData] = useState(null)
   const [emailModal, setEmailModal] = useState(null)
+  const [pdfCapturing, setPdfCapturing] = useState(false)
   const [preEmail, setPreEmail] = useState('')
   const [deepText, setDeepText] = useState('')
   const [isDeepStreaming, setIsDeepStreaming] = useState(false)
@@ -561,7 +639,7 @@ if (scoreMatch) {
     let _fullBase = '', _fullPaid = ''
     try {
       await streamAnalyze({
-        body: { gender, maritalStatus, birthdate, birthtime: _bt, mbti, blood, type: apiType, isPaid: true, isLunar, userName: myName },
+        body: { gender, maritalStatus, birthdate, birthtime: _bt, mbti, blood, type: apiType, isPaid: true, isLunar, userName: myName, previousText: baseText },
         onSaju: (d) => { setSajuData(d) },
         onBaseText: (t) => { setBaseText(prev => prev + t); _fullBase += t },
         onPaidText: (t) => { setPaidText(prev => prev + t); _fullPaid += t },
@@ -585,7 +663,8 @@ if (scoreMatch) {
     let fullDeepText = ''
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
-      const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime: _bt, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName }), signal: ctrl.signal })
+      const _prevText = [baseText, paidText].filter(t => t && t.trim()).join('\n\n')
+      const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime: _bt, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName, previousText: _prevText }), signal: ctrl.signal })
       const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''
       while (true) {
         const { done, value } = await reader.read(); if (done) break
@@ -1040,26 +1119,21 @@ if (scoreMatch) {
                 </div>
               </div>
 
-              {/* 블러+컷오프 샘플 텍스트 */}
-              <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px 18px', marginBottom: 20, overflow: 'hidden' }}>
-                <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
-{`이 사주는 재물의 흐름이 일정하지 않고 큰 파도처럼 밀려왔다 빠지는 구조를 가지고 있어요. 지금까지 돈이 모이다가도 어느 순간 빠져나가는 경험을 반복하셨을 거예요.
-
-하지만 이 구조는 약점이 아니에요. 오히려 큰 기회를 잡을 수 있는 타이밍이 분명하게 존재하는 사주예요. 지금 이 시기의 에너지 흐름을 보면, 곧 재물운이 크게 열리는 전환점이 다가오고 있어요.
-
-커리어 방향도 흥미로운 흐름이 보여요. 타고난 기질상`}
-                </div>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>
-{`조직보다는 자율적인 환경에서 능력이 폭발하는 구조인데, 특히 올해 하반기부터 귀인의 기운이 강하게 들어오고 있어요. 이 귀인은 직장 상사일 수도 있고, 뜻밖의 인연을 통해 새로운 기회로 연결될 수 있어요.
-
-대운의 흐름을 보면, 앞으로 3년 안에 반드시 잡아야 할 타이밍이 하나 있어요. 이 시기를 놓치면 다음 기회는 꽤 오래 기다려야 합니다.`}
+              {/* 블러+컷오프 샘플 텍스트 — 이미 생성된 무료 분석과 같은 재물 패턴으로 표시 */}
+              {(() => {
+                const _teaser = MONEY_TEASER_VARIANTS[getMoneyTeaserVariant(baseText)]
+                return (
+                  <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px 18px', marginBottom: 20, overflow: 'hidden' }}>
+                    <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{_teaser.visible}</div>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>{_teaser.blurred}</div>
+                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(13,27,62,0) 0%, rgba(13,27,62,0.7) 30%, rgba(13,27,62,0.95) 70%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(201,168,76,0.8)', textAlign: 'center', lineHeight: 1.6, padding: '0 20px' }}>여기서부터는 더 자세히 봐드려야 해요</p>
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(13,27,62,0) 0%, rgba(13,27,62,0.7) 30%, rgba(13,27,62,0.95) 70%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(201,168,76,0.8)', textAlign: 'center', lineHeight: 1.6, padding: '0 20px' }}>여기서부터는 더 자세히 봐드려야 해요</p>
-                  </div>
-                </div>
-              </div>
+                )
+              })()}
 
               {/* 받는 것 리스트 */}
               <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 16, padding: '22px 20px', marginBottom: 20 }}>
@@ -1117,7 +1191,7 @@ if (scoreMatch) {
           )}
           {!isDeepStreaming && (() => {
             const filtered = deepSections.filter(sec => sec.title !== '분석 결과' && !sec.title.includes('운의계절') && sec.content?.trim())
-            if (filtered.length > 0) return filtered.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />)
+            if (filtered.length > 0) return filtered.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} forceOpen={pdfCapturing} />)
             if (isDeepPaid && deepText.trim()) return <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(deepText)}</div>
             return null
           })()}
@@ -1221,11 +1295,7 @@ if (scoreMatch) {
               ) : (
                 <p style={{ textAlign: 'center', fontSize: 13, color: '#C9A84C', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>
               )}
-              <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 10 }}>
-                <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
-              </div>
-              <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await generatePDF('deep-result-content', '마이사주_심화분석_' + (myName || '결과')) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 심화 분석 저장하기 (PDF)</button>
+              <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await exportResultPDF('deep-result-content', '마이사주_심화분석_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 심화 분석 저장하기 (PDF)</button>
               <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
             </>
           )}
@@ -1526,12 +1596,8 @@ if (scoreMatch) {
               { label: '총합', score: totalScore, color: '#C9A84C' },
             ]} />
           })()}
-          {!isGunghabStreaming && gunghabSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={i === 0} />)}
-          <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, padding: '14px 16px', marginBottom: 10, marginTop: 16 }}>
-            <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 6 }}>📄 PDF 저장 전에 확인해주세요!</p>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8 }}>각 항목을 모두 펼친 후 저장하면 전체 내용이 PDF에 담겨요.</p>
-          </div>
-          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await generatePDF('gunghab-result-content', '마이사주_궁합분석_' + (myName || '결과')) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 궁합 분석 저장하기 (PDF)</button>
+          {!isGunghabStreaming && gunghabSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={i === 0} forceOpen={pdfCapturing} />)}
+          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await exportResultPDF('gunghab-result-content', '마이사주_궁합분석_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 궁합 분석 저장하기 (PDF)</button>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginTop: 6, lineHeight: 1.6 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요. PC에서 이용해주세요.</p>
           <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
           {preEmail ? (
@@ -2191,7 +2257,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     )
   }
 
-  return <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} />
+  return <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} forceOpen={pdfCapturing} />
 })}
 
 
@@ -2299,9 +2365,9 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           </div>
         )}
 
-{/* 심화분석 업셀 — 미리보기 인라인 */}
+{/* 심화분석 업셀 — 미리보기 인라인. PDF에는 포함하지 않음(data-pdf-exclude) */}
     {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
-      <div style={{ marginTop: 28, marginBottom: 10 }}>
+      <div data-pdf-exclude="true" style={{ marginTop: 28, marginBottom: 10 }}>
         {/* 페인포인트 후킹 박스 */}
         <div style={{ background: '#0D1B3E', border: '1.5px solid rgba(201,168,76,0.4)', borderRadius: 16, padding: '28px 22px', marginBottom: 20 }}>
           <p style={{ fontSize: 19, fontWeight: 700, color: '#FFFFFF', marginBottom: 16, lineHeight: 1.5 }}>혹시, 이런 순간 없으셨어요?</p>
@@ -2317,26 +2383,18 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           </div>
         </div>
 
-        {/* 블러+컷오프 샘플 텍스트 */}
+        {/* 블러+컷오프 샘플 텍스트 — 이미 생성된 무료/유료 분석과 같은 재물 패턴으로 표시 */}
+        {(() => { const _teaser = MONEY_TEASER_VARIANTS[getMoneyTeaserVariant(baseText + '\n' + paidText)]; return (
         <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px 18px', marginBottom: 20, overflow: 'hidden' }}>
-          <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
-{`이 사주는 재물의 흐름이 일정하지 않고 큰 파도처럼 밀려왔다 빠지는 구조를 가지고 있어요. 지금까지 돈이 모이다가도 어느 순간 빠져나가는 경험을 반복하셨을 거예요.
-
-하지만 이 구조는 약점이 아니에요. 오히려 큰 기회를 잡을 수 있는 타이밍이 분명하게 존재하는 사주예요. 지금 이 시기의 에너지 흐름을 보면, 곧 재물운이 크게 열리는 전환점이 다가오고 있어요.
-
-커리어 방향도 흥미로운 흐름이 보여요. 타고난 기질상`}
-          </div>
+          <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{_teaser.visible}</div>
           <div style={{ position: 'relative' }}>
-            <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>
-{`조직보다는 자율적인 환경에서 능력이 폭발하는 구조인데, 특히 올해 하반기부터 귀인의 기운이 강하게 들어오고 있어요. 이 귀인은 직장 상사일 수도 있고, 뜻밖의 인연을 통해 새로운 기회로 연결될 수 있어요.
-
-대운의 흐름을 보면, 앞으로 3년 안에 반드시 잡아야 할 타이밍이 하나 있어요. 이 시기를 놓치면 다음 기회는 꽤 오래 기다려야 합니다.`}
-            </div>
+            <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>{_teaser.blurred}</div>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(13,27,62,0) 0%, rgba(13,27,62,0.7) 30%, rgba(13,27,62,0.95) 70%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(201,168,76,0.8)', textAlign: 'center', lineHeight: 1.6, padding: '0 20px' }}>여기서부터는 더 자세히 봐드려야 해요</p>
             </div>
           </div>
         </div>
+        ) })()}
 
         {/* 받는 것 리스트 */}
         <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 16, padding: '22px 20px', marginBottom: 20 }}>
@@ -2433,7 +2491,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       {isPaid && <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
         <button
           style={{ flex: 1, padding: '14px', fontSize: 14, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C' }}
-          onClick={async () => { try { await generatePDF('result-content', '마이사주_분석결과_' + (myName || '결과')) } catch(e) { alert('PDF 오류: ' + e.message) } }}>
+          onClick={async () => { try { await exportResultPDF('result-content', '마이사주_분석결과_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>
           📄 PDF 저장
         </button>
         <button
