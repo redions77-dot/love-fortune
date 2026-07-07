@@ -69,18 +69,23 @@ async function generatePDF(elementId, filename) {
     const margin = 10
     const imgW = pageW - margin * 2
     const imgH = (canvas.height * imgW) / canvas.width
-    let y = margin, remainH = imgH
-    while (remainH > 0) {
-      const sliceH = Math.min(remainH, pageH - margin * 2)
-      const srcY = ((imgH - remainH) / imgH) * canvas.height
+    const usableH = pageH - margin * 2
+    // 페이지 수를 미리 ceil로 확정하고 각 페이지 슬라이스를 절대 위치(page * usableH)로 계산한다.
+    // 이전에는 remainH를 매 반복 빼나가는 방식이라 부동소수점 오차가 누적되어, 마지막에
+    // remainH가 0에 아주 가까운 양수로 남아 빈 페이지가 하나 더 추가되는 문제가 있었다.
+    const totalPages = Math.max(1, Math.ceil(imgH / usableH - 1e-6))
+    for (let page = 0; page < totalPages; page++) {
+      const sliceTop = page * usableH
+      const sliceH = Math.min(usableH, imgH - sliceTop)
+      if (sliceH <= 0) break
+      const srcY = (sliceTop / imgH) * canvas.height
       const srcH = (sliceH / imgH) * canvas.height
       const sliceCanvas = document.createElement('canvas')
       sliceCanvas.width = canvas.width; sliceCanvas.height = srcH
       const ctx = sliceCanvas.getContext('2d')
       ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH)
-      pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', margin, y, imgW, sliceH)
-      remainH -= sliceH
-      if (remainH > 0) { pdf.addPage(); y = margin }
+      pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, imgW, sliceH)
+      if (page < totalPages - 1) pdf.addPage()
     }
     pdf.save(filename + '.pdf')
   } finally {
@@ -2272,7 +2277,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         {!isPaidStreaming && paidSections.length > 0 && (
           <>
             <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', textAlign: 'center', margin: '20px 0 12px', letterSpacing: '0.08em' }}>✦ 전체 분석 결과 ✦</p>
-            {paidSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} />)}
+            {paidSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} forceOpen={pdfCapturing} />)}
           </>
         )}
 

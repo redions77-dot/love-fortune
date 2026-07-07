@@ -338,7 +338,9 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
       for await (const chunk of stream) {
         if (res.destroyed) { stream.controller?.abort(); return; }
         if (chunk.type === 'content_block_delta' && chunk.delta?.text) {
-          res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
+          // 모델 출력에 간혹 섞여 나오는 깨진 유니코드 대체 문자(U+FFFD)를 제거해 결과지에 □가 남지 않게 한다.
+          const safeText = chunk.delta.text.replace(/�/g, '');
+          if (safeText) res.write(`data: ${JSON.stringify({ text: safeText })}\n\n`);
         }
       }
       return;
