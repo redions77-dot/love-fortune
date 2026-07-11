@@ -1,5 +1,15 @@
 import { useEffect, useState, useRef } from 'react'
 
+// 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
+// 없으면 조용히 무시한다. 나중에 다른 분석 도구를 붙일 때도 호출부는 바꿀 필요 없이 이 함수만 확장하면 된다.
+function trackEvent(name, params = {}) {
+  try {
+    if (typeof window === 'undefined') return
+    if (typeof window.gtag === 'function') window.gtag('event', name, params)
+    if (typeof window.fbq === 'function') window.fbq('trackCustom', name, params)
+  } catch {}
+}
+
 // 아코디언이 펼쳐지며 요소 높이가 바뀌는 게 끝날 때까지 기다린다 (rAF로 scrollHeight가
 // 몇 프레임 연속 그대로일 때 "안정됐다"고 판단 — 고정 setTimeout 대신 실제 레이아웃 완료를 감지).
 function waitForStableLayout(element, { stableFrames = 4, timeout = 4000 } = {}) {
@@ -18,20 +28,68 @@ function waitForStableLayout(element, { stableFrames = 4, timeout = 4000 } = {})
   })
 }
 
+// forceOpen을 켠 뒤에도 실제로 모든 아코디언이 DOM에 "펼쳐진 상태"로 커밋됐는지
+// 직접 확인한다 (타이밍을 추측하지 않고 data-accordion-open 속성으로 검증).
+function waitForAccordionsOpen(element, { timeout = 4000 } = {}) {
+  return new Promise(resolve => {
+    const start = performance.now()
+    function tick() {
+      const stillClosed = element.querySelectorAll('[data-accordion="true"][data-accordion-open="0"]').length
+      if (stillClosed === 0 || performance.now() - start > timeout) resolve()
+      else requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  })
+}
+
 // PDF 저장 버튼 클릭 시 호출: 아코디언을 전부 강제로 펼친 뒤(setForceOpen(true)),
-// React 렌더 반영 + 레이아웃 안정 + 폰트 로딩까지 기다리고 나서 캡처한다.
+// 실제로 펼쳐졌는지 확인 + 레이아웃 안정 + 폰트 로딩까지 기다리고 나서 캡처한다.
 async function exportResultPDF(elementId, filename, setForceOpen) {
   setForceOpen(true)
   try {
     // React가 forceOpen 상태를 반영해 실제로 DOM에 커밋될 시간을 준다.
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
     const element = document.getElementById(elementId)
-    if (element) await waitForStableLayout(element)
+    if (element) {
+      await waitForAccordionsOpen(element)
+      await waitForStableLayout(element)
+    }
     if (document.fonts && document.fonts.ready) { try { await document.fonts.ready } catch {} }
     await generatePDF(elementId, filename)
   } finally {
     setForceOpen(false)
   }
+}
+
+// element의 직계 자식(카드/아코디언/차트 등 하나의 "블록" 단위)의 상대 위치 범위를 구한다.
+// 페이지를 나눌 때 이 블록 중간을 자르지 않기 위해 사용한다.
+function getBlockRanges(element) {
+  const containerTop = element.getBoundingClientRect().top
+  return Array.from(element.children)
+    .map(child => {
+      const r = child.getBoundingClientRect()
+      return { top: r.top - containerTop, bottom: r.bottom - containerTop }
+    })
+    .filter(b => b.bottom > b.top)
+}
+
+// 블록 경계를 넘지 않는 선에서 페이지 컷 지점을 계산한다.
+// 컷 지점이 어떤 블록의 중간에 걸리면, 그 블록의 시작 지점으로 컷을 당겨서
+// 블록 전체를 다음 페이지로 넘긴다. (단, 블록 하나가 페이지보다 큰 경우는 예외적으로 자른다)
+function computePageBreaks(blockRanges, totalHeight, pageHeight) {
+  const breaks = [0]
+  let cursor = 0
+  let guard = 0
+  while (cursor < totalHeight - 0.5 && guard < 500) {
+    guard++
+    let target = Math.min(cursor + pageHeight, totalHeight)
+    const straddler = blockRanges.find(b => b.top < target - 0.5 && b.bottom > target + 0.5 && b.top >= cursor - 0.5)
+    if (straddler && straddler.top > cursor + 0.5) target = straddler.top
+    if (target <= cursor + 0.5) target = Math.min(cursor + pageHeight, totalHeight)
+    breaks.push(target)
+    cursor = target
+  }
+  return breaks
 }
 
 async function generatePDF(elementId, filename) {
@@ -60,8 +118,17 @@ async function generatePDF(elementId, filename) {
   element.style.background = '#FFFFFF'
   element.style.color = '#1A1A1A'
   allEls.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
+  // PDF에 넣지 않을 요소(마케팅 배너 등)는 캡처 직전 실제로 display:none 처리해서
+  // 레이아웃 공간 자체를 없앤다 — html2canvas의 ignoreElements는 내부 clone에서만
+  // 요소를 빼서 caption 대상 실제 DOM(getBlockRanges 측정 대상)과 높이가 어긋났었다.
+  const excludedEls = element.querySelectorAll('[data-pdf-exclude="true"]')
+  const excludedOrigDisplay = []
+  excludedEls.forEach(el => { excludedOrigDisplay.push(el.style.display); el.style.display = 'none' })
   try {
-    const canvas = await window.html2canvas(element, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false, windowWidth: element.scrollWidth, windowHeight: element.scrollHeight, ignoreElements: (el) => el.getAttribute && el.getAttribute('data-pdf-exclude') === 'true' })
+    // 블록(카드/아코디언/차트 등) 경계는 제외 요소를 실제로 숨긴 뒤의 레이아웃 기준으로 측정해야
+    // 캡처될 캔버스 좌표와 정확히 일치한다.
+    const blockRangesDom = getBlockRanges(element)
+    const canvas = await window.html2canvas(element, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false, windowWidth: element.scrollWidth, windowHeight: element.scrollHeight })
     const { jsPDF } = window.jspdf
     const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
     const pageW = pdf.internal.pageSize.getWidth()
@@ -70,27 +137,29 @@ async function generatePDF(elementId, filename) {
     const imgW = pageW - margin * 2
     const imgH = (canvas.height * imgW) / canvas.width
     const usableH = pageH - margin * 2
-    // 페이지 수를 미리 ceil로 확정하고 각 페이지 슬라이스를 절대 위치(page * usableH)로 계산한다.
-    // 이전에는 remainH를 매 반복 빼나가는 방식이라 부동소수점 오차가 누적되어, 마지막에
-    // remainH가 0에 아주 가까운 양수로 남아 빈 페이지가 하나 더 추가되는 문제가 있었다.
-    const totalPages = Math.max(1, Math.ceil(imgH / usableH - 1e-6))
-    for (let page = 0; page < totalPages; page++) {
-      const sliceTop = page * usableH
-      const sliceH = Math.min(usableH, imgH - sliceTop)
-      if (sliceH <= 0) break
-      const srcY = (sliceTop / imgH) * canvas.height
-      const srcH = (sliceH / imgH) * canvas.height
+    const pxScale = canvas.height / element.scrollHeight
+    const blockRangesCanvasPx = blockRangesDom.map(b => ({ top: b.top * pxScale, bottom: b.bottom * pxScale }))
+    const usableHCanvasPx = usableH * (canvas.height / imgH)
+    // 페이지 컷 지점을 블록 경계에 맞춰 계산한다 — 카드/아코디언/차트 중간이 잘리지 않도록.
+    const breaksCanvasPx = computePageBreaks(blockRangesCanvasPx, canvas.height, usableHCanvasPx)
+    const pageCount = breaksCanvasPx.length - 1
+    for (let i = 0; i < pageCount; i++) {
+      const srcY = breaksCanvasPx[i]
+      const srcH = breaksCanvasPx[i + 1] - srcY
+      if (srcH <= 0) continue
+      const sliceHmm = srcH * (imgH / canvas.height)
       const sliceCanvas = document.createElement('canvas')
       sliceCanvas.width = canvas.width; sliceCanvas.height = srcH
       const ctx = sliceCanvas.getContext('2d')
       ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH)
-      pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, imgW, sliceH)
-      if (page < totalPages - 1) pdf.addPage()
+      pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, imgW, sliceHmm)
+      if (i < pageCount - 1) pdf.addPage()
     }
     pdf.save(filename + '.pdf')
   } finally {
     element.style.background = origElementBg; element.style.color = origElementColor
     allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
+    excludedEls.forEach((el, i) => { el.style.display = excludedOrigDisplay[i] })
   }
 }
 
@@ -403,12 +472,94 @@ function Accordion({ title, content, isPaid = false, isChild = false, isGunghab 
   const openBg = isGunghab ? 'rgba(155,29,58,0.1)' : isChild ? 'rgba(45,122,82,0.1)' : 'rgba(201,168,76,0.08)'
   const useBracket = BRACKET_SECTIONS.has(title)
   return (
-    <div style={{ marginBottom: 10, border: `1px solid ${borderColor}`, borderRadius: 14, overflow: 'hidden' }}>
+    <div data-accordion="true" data-accordion-open={isOpen ? '1' : '0'} style={{ marginBottom: 10, border: `1px solid ${borderColor}`, borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px', cursor: 'pointer', background: isOpen ? openBg : '#0D1B3E', transition: 'all 0.2s' }} onClick={() => setOpen(o => !o)}>
         <span style={{ fontSize: 17, fontWeight: 700, color: isOpen ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
         <span style={{ fontSize: 14, color: 'rgba(201,168,76,0.5)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
       </div>
       {isOpen && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 18, color: 'rgba(255,255,255,0.88)', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{useBracket ? renderBracketItems(content) : renderFormattedContent(content)}</div>}
+    </div>
+  )
+}
+
+// 섹션이 화면에 실제로 노출됐을 때 한 번만 이벤트를 쏘는 감지용 마커.
+// 레이아웃에 영향을 주지 않도록 높이 1px짜리 요소를 섹션 바로 앞에 둔다.
+function SectionViewTracker({ eventName, params }) {
+  const ref = useRef(null)
+  const firedRef = useRef(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || firedRef.current || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !firedRef.current) {
+          firedRef.current = true
+          trackEvent(eventName, params)
+          io.disconnect()
+        }
+      })
+    }, { threshold: 0.3 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [eventName])
+  return <div ref={ref} style={{ height: 1 }} aria-hidden="true" />
+}
+
+// B. '돈의 흐름' 섹션 teaser — 구체적 연도/나이/투자 지침은 전체 분석에서만 공개
+function MoneyTeaserCard({ onCtaClick }) {
+  return (
+    <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '20px 18px', marginBottom: 10 }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 14, wordBreak: 'keep-all' }}>내 돈의 전환점은 언제일까요?</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
+        {['돈이 크게 움직이는 연도와 나이', '그 전에 준비해야 할 것', '반복하면 안 되는 돈 실수'].map(t => (
+          <div key={t} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <span style={{ color: '#C9A84C', fontSize: 13, marginTop: 2, flexShrink: 0 }}>✓</span>
+            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, wordBreak: 'keep-all' }}>{t}</span>
+          </div>
+        ))}
+      </div>
+      <button onClick={onCtaClick} style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}>
+        내 돈의 전환 시기 확인하기 · 1,990원
+      </button>
+    </div>
+  )
+}
+
+// C. '지금 이 시기' 섹션 teaser — 다음 흐름이 시작되는 정확한 시기는 전체 분석에서만 공개
+function CurrentPeriodTeaserCard({ onCtaClick }) {
+  return (
+    <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '20px 18px', marginBottom: 10 }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 10, wordBreak: 'keep-all' }}>다음 흐름이 시작되는 정확한 시기</p>
+      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, wordBreak: 'keep-all', marginBottom: 16 }}>
+        현재 흐름이 끝나는 때와 새로운 기회가 열리는 연도, 그 시기에 해야 할 선택을 전체 분석에서 확인할 수 있습니다.
+      </p>
+      <button onClick={onCtaClick} style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}>
+        내 다음 전환점 확인하기 · 1,990원
+      </button>
+    </div>
+  )
+}
+
+// D. FULL ANALYSIS 미리보기 카드 목록 — 핵심 4개는 항상 보여주고, 나머지 4개는 아코디언으로 접어둔다.
+// 유료 본문 문장을 그대로 블러 처리해 길게 나열하지 않고, 짧은 미리보기 두 줄만 노출한다.
+const FULL_ANALYSIS_PRIMARY = [
+  { title: '돈이 가장 크게 움직이는 시기', line1: '이 사주에서 돈이 가장 크게 들어오는 나이가 따로 정해져 있어요.', line2: '정확한 연도와 그 전에 준비해야 할 것은 전체 분석에서 확인할 수 있어요.' },
+  { title: '나에게 맞는 직업과 돈 버는 방식', line1: '어떤 환경에서 능력이 폭발하는지 이 사주가 답을 갖고 있어요.', line2: '구체적인 직업 방향과 지금 움직여야 할 타이밍은 전체 분석에서 공개돼요.' },
+  { title: '투자·부동산에서 피해야 할 선택', line1: '지금 이 사주에서 절대 손대면 안 되는 투자가 따로 있어요.', line2: '어떤 선택을 피해야 하는지는 전체 분석에서 확인할 수 있어요.' },
+  { title: '사람과 인연의 변화 시기', line1: '곁에 두면 손해 보는 사람과 진짜 내 편의 특징이 따로 있어요.', line2: '귀인을 만나는 구체적인 시기는 전체 분석에서 공개돼요.' },
+]
+const FULL_ANALYSIS_MORE = [
+  { title: '月運 · 월별 운세', line1: '앞으로 12개월, 좋은 달과 조심할 달이 따로 있어요.', line2: '이번 달과 다음 달의 흐름은 전체 분석에서 확인할 수 있어요.' },
+  { title: '幸 · 나를 돕는 것들', line1: '이 사주와 맞는 행운 마스코트·방향·숫자·아이템이 있어요.', line2: '행운 색깔 외 나머지 4가지는 전체 분석에서 공개돼요.' },
+  { title: '道 · 사주를 잘 쓰는 법', line1: '이 사주가 잘 풀리는 조건이 딱 2가지예요.', line2: '반대로 망하는 패턴도 전체 분석에서 확인할 수 있어요.' },
+  { title: '진로 · 인연 심화', line1: '나이대별로 지금 집중해야 할 영역이 따로 있어요.', line2: '지금 시기에 맞는 진로·인연 심화 분석이 전체 분석에 있어요.' },
+]
+function FullAnalysisPreviewCard({ title, line1, line2 }) {
+  return (
+    <div style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(201,168,76,0.1)' }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {title}</p>
+      <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(255,255,255,0.8)', wordBreak: 'keep-all', margin: 0, marginBottom: 4 }}>{line1}</p>
+      <p style={{ fontSize: 13, lineHeight: 1.7, color: 'rgba(255,255,255,0.45)', wordBreak: 'keep-all', margin: 0 }}>{line2}</p>
     </div>
   )
 }
@@ -496,6 +647,7 @@ export default function App() {
   const [seasonData, setSeasonData] = useState(null)
   const [deepEmailInput, setDeepEmailInput] = useState('')
   const [deepEmailSent, setDeepEmailSent] = useState(false)
+  const [moreAnalysisOpen, setMoreAnalysisOpen] = useState(false)
 
   const [관계유형, set관계유형] = useState('연인')
   const [gunghabStep, setGunghabStep] = useState(0)
@@ -536,6 +688,14 @@ export default function App() {
 
   const abortRef = useRef(null)
   const isPaidSectionRef = useRef(false)
+  const freeResultViewedRef = useRef(false)
+
+  useEffect(() => {
+    if (screen === 'result' && phase === 'done' && !isPaid && !freeResultViewedRef.current) {
+      freeResultViewedRef.current = true
+      trackEvent('free_result_viewed', { service_type: serviceType })
+    }
+  }, [screen, phase, isPaid, serviceType])
 
   const currentStepId = STEPS[step]
   const progress = (step / STEPS.length) * 100
@@ -558,6 +718,7 @@ export default function App() {
     return true
   }
   function goNext() {
+    trackEvent('input_step_completed', { step: step + 1, step_id: currentStepId, service_type: serviceType })
     if (currentStepId === 'gender' && (serviceType === 'child' || serviceType === '노후')) { setStep(s => s + 2); return }
     if (step < STEPS.length - 1) setStep(s => s + 1)
     else if (serviceType === 'deep') {
@@ -597,6 +758,7 @@ export default function App() {
 
   // ── handleFreeAnalyze — 로딩 화면 추가 ──
   async function handleFreeAnalyze() {
+    trackEvent('free_analysis_started', { service_type: serviceType })
     setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null)
     setIsBaseStreaming(true); isPaidSectionRef.current = false; setScreen('result')
     const apiType = serviceType === 'child' ? '자녀천명' : serviceType === '노후' ? '노후' : '기본'
@@ -714,10 +876,27 @@ if (scoreMatch) {
     setEmailModal({ productName, onConfirm: (email) => { if (email) setPreEmail(email); onConfirm(email) } })
   }
 
+  // 무료 결과 페이지의 '전체 분석 1,990원' 결제 진입점 — 기존 결제 로직(PG/파라미터/성공 처리)은 그대로 두고,
+  // 어느 teaser에서 눌렀는지(location)만 추가로 기록한다.
+  function openFullAnalysisCheckout(location) {
+    trackEvent('paid_teaser_clicked', { location })
+    requestPayWithEmail('전체 분석', (email) => {
+      if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return }
+      trackEvent('payment_page_opened', { location })
+      const IMP = window.IMP; IMP.init('imp87662575')
+      const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString()
+      IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1990, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => {
+        if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 1990, currency: 'KRW' }); trackEvent('payment_completed', { location, amount: 1990 }); handlePaidAnalyze(email) }
+        else alert('결제가 취소되었습니다.')
+      })
+    })
+  }
+
   function handleRestart() {
     const wasEmailSent = document.getElementById('result-email-input')?.dataset?.sent === 'true' || document.getElementById('gunghab-email-input')?.dataset?.sent === 'true'
     if (isPaid && !wasEmailSent) { const confirmed = window.confirm('📧 이메일로 결과를 받으셨나요?\n\n[취소] 돌아가서 이메일 받기\n[확인] 그냥 나가기'); if (!confirmed) return }
     abortRef.current?.abort()
+    freeResultViewedRef.current = false
     setScreen('landing'); setServiceType(null); setStep(0)
     setGender(''); setMaritalStatus(''); setBirthYear(''); setBirthMonth(''); setBirthDay('')
     setIsLunar(false); setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
@@ -1288,7 +1467,7 @@ if (scoreMatch) {
           )}
 
           {isDeepPaid && (
-            <>
+            <div data-pdf-exclude="true">
               {!deepEmailSent ? (
                 <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px', marginBottom: 16 }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>📧 이메일로 결과 받기</p>
@@ -1302,7 +1481,7 @@ if (scoreMatch) {
               )}
               <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await exportResultPDF('deep-result-content', '마이사주_심화분석_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 심화 분석 저장하기 (PDF)</button>
               <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
-            </>
+            </div>
           )}
         </div>
       </div>
@@ -1602,6 +1781,7 @@ if (scoreMatch) {
             ]} />
           })()}
           {!isGunghabStreaming && gunghabSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={i === 0} forceOpen={pdfCapturing} />)}
+          <div data-pdf-exclude="true">
           <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await exportResultPDF('gunghab-result-content', '마이사주_궁합분석_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 궁합 분석 저장하기 (PDF)</button>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginTop: 6, lineHeight: 1.6 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요. PC에서 이용해주세요.</p>
           <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
@@ -1627,6 +1807,7 @@ if (scoreMatch) {
               </div>
             </div>
           )}
+          </div>
         </div>
       </div>
     )
@@ -2232,37 +2413,62 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     const blurIdx = CONCLUSION_BLUR_INDEX[sec.title] || []
     const blocks = splitSectionBlocks(sec.content)
     let headerCount = -1
+    const isMoneySection = sec.title === '돈의 흐름'
+    const isCurrentPeriodSection = sec.title === '지금 이 시기'
     return (
-      <div key={i} style={{ marginBottom: 10, border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px', background: '#0D1B3E' }}>
-          <span style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{sec.title}</span>
-          <span style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', background: 'rgba(201,168,76,0.1)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(201,168,76,0.3)' }}>전체 분석 공개</span>
-        </div>
-        <div style={{ padding: '16px 20px 20px', fontSize: 18, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', background: '#050D1F' }}>
-          {blocks.map((block, bi) => {
-            if (block.isLock) {
-              return <div key={bi} style={{ color: 'rgba(201,168,76,0.65)', marginTop: 12, lineHeight: 1.8 }}>{block.bodyLines.join('\n')}</div>
-            }
-            headerCount++
-            const bodyText = block.bodyLines.join(' ').replace(/\s+/g, ' ').trim()
-            const shouldBlur = blurIdx.includes(headerCount) && bodyText
-            const { visible, hidden } = shouldBlur ? splitLastSentences(bodyText, 2) : { visible: bodyText, hidden: '' }
-            return (
-              <div key={bi} style={{ marginTop: 16, marginBottom: 4 }}>
-                {block.header && <div style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 4, lineHeight: 1.6 }}>{block.header}</div>}
-                <div style={{ lineHeight: 1.9 }}>
-                  {visible && <span>{visible} </span>}
-                  {hidden && <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{hidden}</span>}
+      <div key={i}>
+        {isMoneySection && <SectionViewTracker eventName="money_section_viewed" params={{ service_type: serviceType }} />}
+        {isCurrentPeriodSection && <SectionViewTracker eventName="current_period_section_viewed" params={{ service_type: serviceType }} />}
+        <div style={{ marginBottom: 10, border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px', background: '#0D1B3E' }}>
+            <span style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{sec.title}</span>
+            <span style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', background: 'rgba(201,168,76,0.1)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(201,168,76,0.3)' }}>전체 분석 공개</span>
+          </div>
+          <div style={{ padding: '16px 20px 20px', fontSize: 18, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', background: '#050D1F' }}>
+            {blocks.map((block, bi) => {
+              if (block.isLock) {
+                return <div key={bi} style={{ color: 'rgba(201,168,76,0.65)', marginTop: 12, lineHeight: 1.8 }}>{block.bodyLines.join('\n')}</div>
+              }
+              headerCount++
+              const bodyText = block.bodyLines.join(' ').replace(/\s+/g, ' ').trim()
+              const shouldBlur = blurIdx.includes(headerCount) && bodyText
+              const { visible, hidden } = shouldBlur ? splitLastSentences(bodyText, 2) : { visible: bodyText, hidden: '' }
+              return (
+                <div key={bi} style={{ marginTop: 16, marginBottom: 4 }}>
+                  {block.header && <div style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 4, lineHeight: 1.6 }}>{block.header}</div>}
+                  <div style={{ lineHeight: 1.9 }}>
+                    {visible && <span>{visible} </span>}
+                    {hidden && <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{hidden}</span>}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
+        {isMoneySection && <MoneyTeaserCard onCtaClick={() => openFullAnalysisCheckout('money_teaser')} />}
+        {isCurrentPeriodSection && <CurrentPeriodTeaserCard onCtaClick={() => openFullAnalysisCheckout('current_period_teaser')} />}
       </div>
     )
   }
 
-  return <Accordion key={i} title={sec.title} content={sec.content} defaultOpen={i === 0} forceOpen={pdfCapturing} />
+  return (
+    <div key={i}>
+      {i === 0 && (
+        <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.55)', fontWeight: 600, letterSpacing: '0.04em', margin: '0 2px 6px' }}>
+          🔮 사주 분석으로 읽는 나의 성향{mbti ? ' (MBTI 교차분석 포함)' : ''}
+        </p>
+      )}
+      <Accordion title={sec.title} content={sec.content} defaultOpen={i === 0} forceOpen={pdfCapturing} />
+      {i === 0 && (
+        <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 12, padding: '16px 18px', marginBottom: 10 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 6 }}>이 성향이 반복시키는 관계 패턴</p>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, wordBreak: 'keep-all', margin: 0 }}>
+            강점으로 작용하는 성향이 특정 관계에서는 오해를 만들기도 합니다. 어떤 유형의 사람과 부딪히는지는 전체 분석에서 확인할 수 있습니다.
+          </p>
+        </div>
+      )}
+    </div>
+  )
 })}
 
 
@@ -2285,74 +2491,53 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         {phase === 'done' && !isPaid && !isPaidStreaming && (
   <div style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', borderRadius: 16, padding: '28px 20px', marginBottom: 16, border: '1px solid rgba(201,168,76,0.3)' }}>
     <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 16, textAlign: 'center' }}>FULL ANALYSIS</p>
-    {(serviceType === 'child'
-      ? [
-          { title: '타고난 기질 · 성격 심층 분석', first: '이 아이는 겉으로 보이는 것과 속마음이 완전히 달라요. ', blurred: '잘 웃고 사교적으로 보이지만, 실은 혼자만의 세계가 넓고 감정이 깊은 아이예요. 이 기질을 모르면 엉뚱한 방향으로 키울 수 있어요.' },
-          { title: '학습 스타일 · 공부가 잘 되는 환경', first: '이 아이는 시각적으로 배울 때 흡수가 가장 빨라요. ', blurred: '학원 수업보다 영상이나 그림으로 이해하는 타입이에요. 오전 시간대에 집중력이 최고조인 사주 구조를 갖고 있어요.' },
-          { title: '재능의 씨앗 · 빛나는 분야', first: '이 아이가 반복해도 안 지치는 것이 진짜 재능이에요. ', blurred: '부모가 보기엔 놀이 같지만, 이 사주에서는 그게 나중에 돈이 되는 분야와 직접 연결돼요. 방향만 잡아주면 빛나요.' },
-          { title: '이 아이에게 맞는 직업 방향', first: '이 사주에 딱 맞는 직업이 6가지 보여요. ', blurred: '창의력과 분석력이 동시에 필요한 분야에서 두각을 나타내는 사주예요. 이과/문과/예체능 중 어디로 가야 하는지도 나와요.' },
-          { title: '추천학과 5개', first: '이 아이의 사주 구조에 딱 맞는 학과가 있어요. ', blurred: '기질과 오행을 근거로 구체적 학과명 5개를 이유와 함께 알려드려요. 추상적 표현 없이 정확한 학과명으로 나와요.' },
-          { title: '또래 관계 · 친구 패턴', first: '이 아이가 친구 사이에서 어떤 역할인지 보여요. ', blurred: '리더형인지 참모형인지, 갈등이 생기는 패턴과 부모가 도와줄 수 있는 방법이 나와요.' },
-          { title: '부모와의 관계 · 키우는 법', first: '이 아이에게 절대 하면 안 되는 말이 있어요. ', blurred: '사주 구조상 이 아이가 스트레스받는 상황이 정해져 있어요. 반항기가 오는 시기와 대응법도 미리 알 수 있어요.' },
-          { title: '이 아이의 인생 흐름', first: '지금부터 20대까지, 30대까지의 흐름이 보여요. ', blurred: '이 사주가 꽃피는 시기가 언제인지, 지금 무엇에 집중해야 하는지 단계별로 나와요.' },
-          { title: '입시 · 취업 유리한 시기', first: '시험 운이 가장 강한 나이대가 따로 있어요. ', blurred: '이 사주에서 합격 확률이 높은 시기와 반대로 조심해야 할 시기가 구체적으로 나와요.' },
-          { title: '이 아이가 빛나는 조건', first: '어떤 환경에서 집중력과 자신감이 올라가는지 보여요. ', blurred: '선생님 스타일, 공부 공간, 루틴까지 부모가 오늘 당장 바꿔볼 수 있는 구체적인 조건이 나와요.' },
-          { title: '키우는 핵심 비법', first: '이 아이의 잠재력을 최대로 끌어내는 조건이 있어요. ', blurred: '해야 할 것과 절대 하면 안 되는 것, 오늘 바로 써먹을 수 있는 구체적 조언이 나와요.' },
-        ]
-      : serviceType === '노후'
-      ? [
-          { title: '노후 재물 심화 분석', first: '노후에 자산이 안정적으로 유지되는 구조인지 보여요. ', blurred: '수익형 자산 방향, 절대 하면 안 되는 투자 실수, 재물이 안정되는 구체적 나이대가 나와요.' },
-          { title: '건강 심화 분석', first: '건강 위기가 올 수 있는 나이대가 따로 있어요. ', blurred: '특히 챙겨야 할 신체 부위와 관리법, 오래 건강하게 사는 이 사주만의 생활 습관이 나와요.' },
-          { title: '황혼 인연 심화', first: '노후에 진짜 의지가 되는 사람의 특징이 보여요. ', blurred: '자녀와의 관계 흐름, 새로운 인연이 생기는 시기와 조건이 구체적으로 나와요.' },
-          { title: '노후 투자 · 부동산', first: '이 사주에 맞는 노후 자산 운용 방향이 나와요. ', blurred: '부동산/금융/현금 비중, 절대 하면 안 되는 투자 실수, 노후 수익 파이프라인 전략이 보여요.' },
-          { title: '緣 · 사람과 인연', first: '노후에 진짜 내 편이 되는 사람의 특징이 나와요. ', blurred: '독이 되는 사람 유형, 황혼기 귀인이 나타나는 상황, 인간관계에서 조심해야 할 패턴이 보여요.' },
-          { title: '月運 · 월별 운세', first: '앞으로 12개월의 운세 흐름이 한눈에 보여요. ', blurred: '매달 좋은 시기와 조심할 시기가 다르기 때문에 타이밍을 아는 것이 가장 중요해요.' },
-          { title: '幸 · 나를 돕는 것들', first: '행운 색깔·마스코트·방향·숫자·아이템이 나와요. ', blurred: '노후 시기에 특히 도움이 되는 아이템 기준으로 선별된 행운 요소예요.' },
-          { title: '노후를 빛나게 하는 법', first: '이 사주가 노후에 진짜 행복해지는 조건이 있어요. ', blurred: '지금부터 준비하면 달라지는 것들, 오늘 바로 실천할 수 있는 구체적 행동 조언이 나와요.' },
-          { title: '道 · 이 사주로 잘 사는 법', first: '이 사주가 잘 풀리는 조건이 딱 2가지예요. ', blurred: '반대로 망하는 패턴도 있는데, 아는 것과 모르는 것의 차이가 생각보다 크게 나요.' },
-          { title: '총운 정리', first: '전체 분석을 한 문장으로 정리해드려요. ', blurred: '이 사주의 핵심 키워드와 앞으로 가장 중요한 시기, 지금 당장 해야 할 한 가지가 나와요.' },
-        ]
-     : [
-         { title: '財運 · 인생 재물 전체',
-            first: '이 사주에서 돈이 가장 크게 들어오는 나이가 딱 정해져 있어요. 지금 그 시기가 맞는지, 아니면 준비 기간인지 — 모르면 그냥 지나쳐요.',
-            blurred: '20~30대는 흘러가는 구조였다면 지금부터는 쌓이는 구조로 바뀌는 시기예요. 이 사주에서 돈이 가장 크게 움직이는 나이대가 있고, 그 시기를 어떻게 준비하느냐에 따라 말년이 완전히 달라져요. 절대 하면 안 되는 돈 실수가 딱 하나 있는데, 이걸 모르고 그냥 지나치면 나중에 반드시 후회하게 돼요.' },
-          { title: '職 · 직업과 커리어',
-            first: '이 사주에 딱 맞는 직업이 따로 있어요. 지금 하는 일이 맞는지 안 맞는지도 사주에서 보여요.',
-            blurred: '어떤 환경에서 능력이 폭발하는지, 직장인으로 갈지 자영업으로 갈지도 이 사주가 답을 갖고 있어요. 지금 이 시기에 커리어에서 절대 하면 안 되는 결정이 있고, 반대로 지금 당장 움직여야 할 타이밍도 보여요. 크게 도약할 수 있는 구체적인 시기가 생각보다 가까이 와 있어요.' },
-          { title: '富 · 투자와 부동산',
-            first: '이 사주에서 절대 손대면 안 되는 투자가 있어요. 부동산이냐 금융이냐, 지금이 타이밍인지도 나와요.',
-            blurred: '반대로 지금 이 사주에 가장 잘 맞는 자산 방향은 따로 있어요. 지금 급하게 움직이면 반드시 후회하는 시기인지, 아니면 지금이 딱 타이밍인지도 보여요. 실거주에 좋은 방향과 수익 파이프라인 전략도 구체적으로 알 수 있어요.' },
-          { title: '緣 · 사람과 인연',
-            first: '진짜 내 편이 되어줄 사람의 특징이 보여요. 직업군, 성격, 나이대까지 구체적으로 나와요.',
-            blurred: '반대로 곁에 두면 반드시 손해보는 사람 유형도 딱 보여요. 이 사주에서 인간관계가 꼬이는 패턴이 있는데, 그걸 알면 같은 실수를 반복하지 않을 수 있어요. 귀인이 나타나는 구체적인 시기와 상황도 알 수 있어요.' },
-          { title: '月運 · 월별 운세',
-            first: '앞으로 12개월, 매달 운세 흐름이 다 달라요. 좋은 달과 조심할 달이 따로 있어요.',
-            blurred: '7월부터 내년 6월까지, 재물이 들어오는 달, 인간관계 조심해야 할 달, 결정을 내려야 할 달이 구체적으로 나와요. 타이밍을 아는 것과 모르는 것의 차이가 크게 나요.' },
-          { title: '幸 · 나를 돕는 것들',
-            first: '이 사주의 행운 색깔 · 마스코트 · 방향 · 숫자 · 아이템이 있어요.',
-            blurred: '단순한 미신이 아니라 이 사주 기운과 맞는 환경을 만드는 거예요. 행운 색깔만 무료에서 공개됐는데, 나머지 4가지가 사실 더 중요해요. 실제로 운의 흐름이 달라지는 걸 느낄 수 있어요.' },
-          { title: '道 · 이 사주로 잘 사는 법',
-            first: '이 사주가 잘 풀리는 조건이 딱 2가지예요. 이것만 지키면 인생이 달라져요.',
-            blurred: '반대로 이 사주가 망하는 패턴도 하나 있는데, 듣고 나면 "아, 내가 그걸 하고 있었구나" 싶을 거예요. 지금 당장 오늘부터 바꿀 수 있는 행동 2가지가 있어요.' },
-          { title: '직업 · 진로 심화 / 인연운 심화',
-            first: '나이대별로 가장 중요한 운이 따로 있어요. 지금 이 시기에 집중해야 할 영역이 보여요.',
-            blurred: '20대는 진로, 30대 미혼은 인연, 기혼은 부부운 — 사주 구조에서 실제로 보이는 흐름 기준으로 가장 중요한 분석이 나와요.' },
-          { title: '大運 · 앞으로의 큰 흐름',
-            first: '지금 어떤 대운을 타고 있는지, 다음 대운은 언제 바뀌는지 나와요.',
-            blurred: '현재 대운이 득인지 실인지, 다음 전환점이 언제인지 정확한 연도로 찍어드려요. 이 흐름을 아느냐 모르느냐가 앞으로 10년을 바꿔요.' },
-          { title: '총운 · 이 사주의 핵심 한마디',
-            first: '전체 분석을 관통하는 핵심 키워드가 있어요.',
-            blurred: '이 사주를 한 문장으로 정리하면 뭔지, 앞으로 가장 중요한 해가 언제인지, 지금 당장 해야 할 한 가지가 나와요.' },
-        ]
-   ).map((item, idx) => (
-      <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(201,168,76,0.1)' }}>
-        <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
-        <div style={{ fontSize: 17, lineHeight: 2.0, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all' }}>
-          <span>{item.first}</span>
-          <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{item.blurred}</span>
+    {serviceType === 'child' || serviceType === '노후' ? (
+      (serviceType === 'child'
+        ? [
+            { title: '타고난 기질 · 성격 심층 분석', first: '이 아이는 겉으로 보이는 것과 속마음이 완전히 달라요. ', blurred: '잘 웃고 사교적으로 보이지만, 실은 혼자만의 세계가 넓고 감정이 깊은 아이예요. 이 기질을 모르면 엉뚱한 방향으로 키울 수 있어요.' },
+            { title: '학습 스타일 · 공부가 잘 되는 환경', first: '이 아이는 시각적으로 배울 때 흡수가 가장 빨라요. ', blurred: '학원 수업보다 영상이나 그림으로 이해하는 타입이에요. 오전 시간대에 집중력이 최고조인 사주 구조를 갖고 있어요.' },
+            { title: '재능의 씨앗 · 빛나는 분야', first: '이 아이가 반복해도 안 지치는 것이 진짜 재능이에요. ', blurred: '부모가 보기엔 놀이 같지만, 이 사주에서는 그게 나중에 돈이 되는 분야와 직접 연결돼요. 방향만 잡아주면 빛나요.' },
+            { title: '이 아이에게 맞는 직업 방향', first: '이 사주에 딱 맞는 직업이 6가지 보여요. ', blurred: '창의력과 분석력이 동시에 필요한 분야에서 두각을 나타내는 사주예요. 이과/문과/예체능 중 어디로 가야 하는지도 나와요.' },
+            { title: '추천학과 5개', first: '이 아이의 사주 구조에 딱 맞는 학과가 있어요. ', blurred: '기질과 오행을 근거로 구체적 학과명 5개를 이유와 함께 알려드려요. 추상적 표현 없이 정확한 학과명으로 나와요.' },
+            { title: '또래 관계 · 친구 패턴', first: '이 아이가 친구 사이에서 어떤 역할인지 보여요. ', blurred: '리더형인지 참모형인지, 갈등이 생기는 패턴과 부모가 도와줄 수 있는 방법이 나와요.' },
+            { title: '부모와의 관계 · 키우는 법', first: '이 아이에게 절대 하면 안 되는 말이 있어요. ', blurred: '사주 구조상 이 아이가 스트레스받는 상황이 정해져 있어요. 반항기가 오는 시기와 대응법도 미리 알 수 있어요.' },
+            { title: '이 아이의 인생 흐름', first: '지금부터 20대까지, 30대까지의 흐름이 보여요. ', blurred: '이 사주가 꽃피는 시기가 언제인지, 지금 무엇에 집중해야 하는지 단계별로 나와요.' },
+            { title: '입시 · 취업 유리한 시기', first: '시험 운이 가장 강한 나이대가 따로 있어요. ', blurred: '이 사주에서 합격 확률이 높은 시기와 반대로 조심해야 할 시기가 구체적으로 나와요.' },
+            { title: '이 아이가 빛나는 조건', first: '어떤 환경에서 집중력과 자신감이 올라가는지 보여요. ', blurred: '선생님 스타일, 공부 공간, 루틴까지 부모가 오늘 당장 바꿔볼 수 있는 구체적인 조건이 나와요.' },
+            { title: '키우는 핵심 비법', first: '이 아이의 잠재력을 최대로 끌어내는 조건이 있어요. ', blurred: '해야 할 것과 절대 하면 안 되는 것, 오늘 바로 써먹을 수 있는 구체적 조언이 나와요.' },
+          ]
+        : [
+            { title: '노후 재물 심화 분석', first: '노후에 자산이 안정적으로 유지되는 구조인지 보여요. ', blurred: '수익형 자산 방향, 절대 하면 안 되는 투자 실수, 재물이 안정되는 구체적 나이대가 나와요.' },
+            { title: '건강 심화 분석', first: '건강 위기가 올 수 있는 나이대가 따로 있어요. ', blurred: '특히 챙겨야 할 신체 부위와 관리법, 오래 건강하게 사는 이 사주만의 생활 습관이 나와요.' },
+            { title: '황혼 인연 심화', first: '노후에 진짜 의지가 되는 사람의 특징이 보여요. ', blurred: '자녀와의 관계 흐름, 새로운 인연이 생기는 시기와 조건이 구체적으로 나와요.' },
+            { title: '노후 투자 · 부동산', first: '이 사주에 맞는 노후 자산 운용 방향이 나와요. ', blurred: '부동산/금융/현금 비중, 절대 하면 안 되는 투자 실수, 노후 수익 파이프라인 전략이 보여요.' },
+            { title: '緣 · 사람과 인연', first: '노후에 진짜 내 편이 되는 사람의 특징이 나와요. ', blurred: '독이 되는 사람 유형, 황혼기 귀인이 나타나는 상황, 인간관계에서 조심해야 할 패턴이 보여요.' },
+            { title: '月運 · 월별 운세', first: '앞으로 12개월의 운세 흐름이 한눈에 보여요. ', blurred: '매달 좋은 시기와 조심할 시기가 다르기 때문에 타이밍을 아는 것이 가장 중요해요.' },
+            { title: '幸 · 나를 돕는 것들', first: '행운 색깔·마스코트·방향·숫자·아이템이 나와요. ', blurred: '노후 시기에 특히 도움이 되는 아이템 기준으로 선별된 행운 요소예요.' },
+            { title: '노후를 빛나게 하는 법', first: '이 사주가 노후에 진짜 행복해지는 조건이 있어요. ', blurred: '지금부터 준비하면 달라지는 것들, 오늘 바로 실천할 수 있는 구체적 행동 조언이 나와요.' },
+            { title: '道 · 이 사주로 잘 사는 법', first: '이 사주가 잘 풀리는 조건이 딱 2가지예요. ', blurred: '반대로 망하는 패턴도 있는데, 아는 것과 모르는 것의 차이가 생각보다 크게 나요.' },
+            { title: '총운 정리', first: '전체 분석을 한 문장으로 정리해드려요. ', blurred: '이 사주의 핵심 키워드와 앞으로 가장 중요한 시기, 지금 당장 해야 할 한 가지가 나와요.' },
+          ]
+      ).map((item, idx) => (
+        <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(201,168,76,0.1)' }}>
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
+          <div style={{ fontSize: 17, lineHeight: 2.0, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all' }}>
+            <span>{item.first}</span>
+            <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{item.blurred}</span>
+          </div>
         </div>
-      </div>
-    ))}
+      ))
+    ) : (
+      <>
+        {FULL_ANALYSIS_PRIMARY.map((item, idx) => <FullAnalysisPreviewCard key={idx} {...item} />)}
+        <button
+          onClick={() => setMoreAnalysisOpen(o => !o)}
+          style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 700, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 10, color: '#C9A84C', cursor: 'pointer', marginBottom: moreAnalysisOpen ? 10 : 0 }}>
+          {moreAnalysisOpen ? '숨기기 ▲' : '그 밖에 포함된 분석 4개 더 보기 ▼'}
+        </button>
+        {moreAnalysisOpen && FULL_ANALYSIS_MORE.map((item, idx) => <FullAnalysisPreviewCard key={idx} {...item} />)}
+      </>
+    )}
     <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 10 }}>총 {serviceType === 'child' ? '11' : '10'}개 섹션 · 이 모든 내용이 {serviceType === 'child' ? '9,900원' : '1,990원'}</p>
     <div style={{ textAlign: 'center', marginTop: 12 }}>
       <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>↓ 아래 버튼으로 결제하세요</p>
@@ -2447,7 +2632,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 22, lineHeight: 1.7, wordBreak: 'keep-all' }}>돈 버는 타이밍 · 귀인 만나는 시기<br/>절대 하면 안 되는 결정까지</p>
         <button
           style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 900, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', boxShadow: '0 4px 20px rgba(201,168,76,0.35)' }}
-          onClick={() => { requestPayWithEmail('전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1990, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 1990, currency: 'KRW' }); handlePaidAnalyze(email) } else alert('결제가 취소되었습니다.') }) }) }}>
+          onClick={() => openFullAnalysisCheckout('mid_upsell_card')}>
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
             <span style={{ fontSize: 12, textDecoration: 'line-through', opacity: 0.55, fontWeight: 400 }}>9,900원</span>
             <span>지금 확인하기 1,990원 →</span>
@@ -2456,8 +2641,8 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       </div>
     )}
 
-    {/* 하단 액션 영역 */}
-    <div style={{ borderTop: '1px solid rgba(201,168,76,0.1)', marginTop: 32, paddingTop: 24 }}>
+    {/* 하단 액션 영역 — 버튼/공유 등 UI 전용이라 PDF에는 포함하지 않음 */}
+    <div data-pdf-exclude="true" style={{ borderTop: '1px solid rgba(201,168,76,0.1)', marginTop: 32, paddingTop: 24 }}>
 
       {/* 이메일 — 접이식 */}
       {isPaid && (
@@ -2529,17 +2714,29 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
           width: '100%', maxWidth: 480, zIndex: 999,
           background: '#111', borderTop: '1px solid rgba(201,168,76,0.3)',
-          padding: '10px 16px 20px', boxSizing: 'border-box',
+          padding: '10px 16px calc(10px + env(safe-area-inset-bottom))', boxSizing: 'border-box',
         }}>
-          <button
-            style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-            onClick={() => { requestPayWithEmail(serviceType === 'child' ? '자녀운 프리미엄' : '전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `${serviceType === 'child' ? 'child' : 'saju'}_${Date.now()}`, name: serviceType === 'child' ? '마이사주 자녀운 프리미엄' : '마이사주 전체 분석', amount: serviceType === 'child' ? 9900 : 1990, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: serviceType === 'child' ? 9900 : 1990, currency: 'KRW' }); handlePaidAnalyze(email) } else alert('결제가 취소되었습니다.') }) }) }}>
-            <span>{serviceType === 'child' ? '방학 전 특가로 확인하기 →' : '내 돈 버는 시기, 지금 확인하기 →'}</span>
-<span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
-  <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>{serviceType === 'child' ? '19,900원' : '9,900원'}</span>
-  <span style={{ fontSize: 16, fontWeight: 900 }}>{serviceType === 'child' ? '9,900원' : '1,990원'}</span>
-</span>
-          </button>
+          {serviceType === 'saju' ? (
+            <button
+              style={{ width: '100%', padding: '11px 14px', background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
+              onClick={() => openFullAnalysisCheckout('bottom_cta')}>
+              <span style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontSize: 14, fontWeight: 800, wordBreak: 'keep-all' }}>내 돈의 전환점과 다음 5년 확인하기</span>
+                <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.7, wordBreak: 'keep-all' }}>재물 시기 · 직업 · 투자 · 인연 · 월별 흐름</span>
+              </span>
+              <span style={{ fontSize: 14, fontWeight: 900, whiteSpace: 'nowrap' }}>전체 분석 열기 · 1,990원</span>
+            </button>
+          ) : (
+            <button
+              style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+              onClick={() => { requestPayWithEmail(serviceType === 'child' ? '자녀운 프리미엄' : '전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `${serviceType === 'child' ? 'child' : 'saju'}_${Date.now()}`, name: serviceType === 'child' ? '마이사주 자녀운 프리미엄' : '마이사주 전체 분석', amount: serviceType === 'child' ? 9900 : 1990, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: serviceType === 'child' ? 9900 : 1990, currency: 'KRW' }); handlePaidAnalyze(email) } else alert('결제가 취소되었습니다.') }) }) }}>
+              <span>{serviceType === 'child' ? '방학 전 특가로 확인하기 →' : '내 돈 버는 시기, 지금 확인하기 →'}</span>
+              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
+                <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>{serviceType === 'child' ? '19,900원' : '9,900원'}</span>
+                <span style={{ fontSize: 16, fontWeight: 900 }}>{serviceType === 'child' ? '9,900원' : '1,990원'}</span>
+              </span>
+            </button>
+          )}
         </div>
       )}
     </div>
