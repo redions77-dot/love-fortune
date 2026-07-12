@@ -506,41 +506,6 @@ function SectionViewTracker({ eventName, params }) {
   return <div ref={ref} style={{ height: 1 }} aria-hidden="true" />
 }
 
-// B. '돈의 흐름' 섹션 teaser — 구체적 연도/나이/투자 지침은 전체 분석에서만 공개
-function MoneyTeaserCard({ onCtaClick }) {
-  return (
-    <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '20px 18px', marginBottom: 10 }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 14, wordBreak: 'keep-all' }}>내 돈의 전환점은 언제일까요?</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 18 }}>
-        {['돈이 크게 움직이는 연도와 나이', '그 전에 준비해야 할 것', '반복하면 안 되는 돈 실수'].map(t => (
-          <div key={t} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-            <span style={{ color: '#C9A84C', fontSize: 13, marginTop: 2, flexShrink: 0 }}>✓</span>
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, wordBreak: 'keep-all' }}>{t}</span>
-          </div>
-        ))}
-      </div>
-      <button onClick={onCtaClick} style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}>
-        내 돈의 전환 시기 확인하기 · 1,990원
-      </button>
-    </div>
-  )
-}
-
-// C. '지금 이 시기' 섹션 teaser — 다음 흐름이 시작되는 정확한 시기는 전체 분석에서만 공개
-function CurrentPeriodTeaserCard({ onCtaClick }) {
-  return (
-    <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '20px 18px', marginBottom: 10 }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 10, wordBreak: 'keep-all' }}>다음 흐름이 시작되는 정확한 시기</p>
-      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, wordBreak: 'keep-all', marginBottom: 16 }}>
-        현재 흐름이 끝나는 때와 새로운 기회가 열리는 연도, 그 시기에 해야 할 선택을 전체 분석에서 확인할 수 있습니다.
-      </p>
-      <button onClick={onCtaClick} style={{ width: '100%', padding: '14px', fontSize: 15, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }}>
-        내 다음 전환점 확인하기 · 1,990원
-      </button>
-    </div>
-  )
-}
-
 // D. FULL ANALYSIS 미리보기 카드 목록 — 핵심 4개는 항상 보여주고, 나머지 4개는 아코디언으로 접어둔다.
 // 유료 본문 문장을 그대로 블러 처리해 길게 나열하지 않고, 짧은 미리보기 두 줄만 노출한다.
 const FULL_ANALYSIS_PRIMARY = [
@@ -2446,8 +2411,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             })}
           </div>
         </div>
-        {isMoneySection && <MoneyTeaserCard onCtaClick={() => openFullAnalysisCheckout('money_teaser')} />}
-        {isCurrentPeriodSection && <CurrentPeriodTeaserCard onCtaClick={() => openFullAnalysisCheckout('current_period_teaser')} />}
       </div>
     )
   }
@@ -2629,15 +2592,12 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     {/* 업셀 카드 — 무료 결과 후 1,990원 유도 */}
     {!isPaid && phase === 'done' && serviceType === 'saju' && (
       <div style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.04))', border: '2px solid rgba(201,168,76,0.45)', borderRadius: 16, padding: '28px 20px', marginBottom: 24, textAlign: 'center' }}>
-        <p style={{ fontSize: 19, fontWeight: 800, color: '#FFFFFF', marginBottom: 8, lineHeight: 1.5, wordBreak: 'keep-all' }}>내 사주, 더 자세히 보고 싶다면?</p>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 22, lineHeight: 1.7, wordBreak: 'keep-all' }}>돈 버는 타이밍 · 귀인 만나는 시기<br/>절대 하면 안 되는 결정까지</p>
+        <p style={{ fontSize: 19, fontWeight: 800, color: '#FFFFFF', marginBottom: 8, lineHeight: 1.5, wordBreak: 'keep-all' }}>내 사주의 정확한 시기까지 보고 싶다면?</p>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 22, lineHeight: 1.7, wordBreak: 'keep-all' }}>돈이 크게 움직이는 시기<br/>귀인을 만나는 시기<br/>피해야 할 선택과 앞으로의 방향까지</p>
         <button
           style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 900, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', boxShadow: '0 4px 20px rgba(201,168,76,0.35)' }}
           onClick={() => openFullAnalysisCheckout('mid_upsell_card')}>
-          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
-            <span style={{ fontSize: 12, textDecoration: 'line-through', opacity: 0.55, fontWeight: 400 }}>9,900원</span>
-            <span>지금 확인하기 1,990원 →</span>
-          </span>
+          내 사주 전체 분석 보기 · 1,990원
         </button>
       </div>
     )}
@@ -2725,7 +2685,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
                 <span style={{ fontSize: 14, fontWeight: 800, wordBreak: 'keep-all' }}>내 돈의 전환점과 다음 5년 확인하기</span>
                 <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.7, wordBreak: 'keep-all' }}>재물 시기 · 직업 · 투자 · 인연 · 월별 흐름</span>
               </span>
-              <span style={{ fontSize: 14, fontWeight: 900, whiteSpace: 'nowrap' }}>전체 분석 열기 · 1,990원</span>
+              <span style={{ fontSize: 14, fontWeight: 900, whiteSpace: 'nowrap' }}>전체 분석 보기 · 1,990원</span>
             </button>
           ) : (
             <button
