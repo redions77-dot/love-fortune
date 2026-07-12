@@ -357,11 +357,12 @@ function splitLastSentences(text, hideCount = 2) {
   const cut = boundaries[keepCount - 1]
   return { visible: clean.slice(0, cut).trim(), hidden: clean.slice(cut).trim() }
 }
-// 무료 결과에서 "결론만 블러" 처리할 섹션별 📌 소제목 인덱스(0부터)
-const CONCLUSION_BLUR_INDEX = {
-  '돈의 흐름': [1, 2],
-  '지금 이 시기': [1],
-}
+// 무료 결과에서 "결론만 블러" 처리할 섹션별 📌 소제목 인덱스(0부터).
+// '돈의 흐름'/'지금 이 시기'는 기본 사주(basePrompt) 전용 섹션 제목이며(자녀/노후 등 다른 상품은 이 제목을 쓰지 않음),
+// 백엔드가 더 이상 이 두 섹션에 정확한 나이·연도 결론을 생성하지 않으므로(전체 분석 전용으로 이동) 블러 대상을 비워
+// 기본 사주에서만 비활성화한다. 이 맵을 참조하는 렌더 박스(전체 분석 공개 배지 등) 자체는 자녀/노후 결과에서도
+// 그대로 쓰이는 공용 UI라 건드리지 않았다 — blurIdx가 비면 해당 상품들처럼 그냥 전체가 그대로 노출될 뿐이다.
+const CONCLUSION_BLUR_INDEX = {}
 function GunghabRadarChart({ categories, blurred }) {
   const size = 260
   const cx = size / 2, cy = size / 2, r = 95
