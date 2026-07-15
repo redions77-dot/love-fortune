@@ -346,6 +346,17 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
           if (safeText) res.write(`data: ${JSON.stringify({ text: safeText })}\n\n`);
         }
       }
+      // 최소 진단 로그 — 사용자 이름/생년월일/본문 내용은 남기지 않는다.
+      try {
+        const finalMessage = await stream.finalMessage();
+        const usage = finalMessage?.usage || {};
+        console.log(`[AI] model=${model} max_tokens=${maxTokens} stop_reason=${finalMessage?.stop_reason} input_tokens=${usage.input_tokens} output_tokens=${usage.output_tokens}`);
+        if (finalMessage?.stop_reason === 'max_tokens') {
+          console.warn(`[AI] 응답이 max_tokens(${maxTokens})에 도달해 잘렸을 수 있습니다. model=${model}`);
+        }
+      } catch (logErr) {
+        console.error('[AI] 진단 로그 기록 실패:', logErr.message);
+      }
       return;
     } catch (e) {
       const isOverloaded = e?.error?.error?.type === 'overloaded_error' || e?.status === 529;
@@ -1530,6 +1541,7 @@ ${공통규칙}
 - 핵심 항목은 1. 2. 3. 번호로 나열하고 각 항목 사이 빈 줄 추가.
 - 한 단락 최대 3줄.
 - 이 무료 분석에서는 정확한 나이·연도·월 등 구체적인 시기 숫자와, "지금 당장 무엇을 해야 한다"는 구체적 행동 지침을 절대 생성하지 마세요. 성향·패턴·지금 흐름의 성격은 배경과 이유까지 충분히 자세하게 설명하되, 숫자로 못박는 결론과 행동 지침은 전체 분석(유료)에서만 공개된다고 안내하세요.
+- 위 [기본 정보]와 [대운 정보]에 나온 나이·대운 시작연도·전환연도는 내부 계산 참고용일 뿐입니다. 공통 규칙 9번("실제로 중요한 해일 때만 언급")은 이 무료 분석에는 적용하지 마세요 — 대운이 바뀌는 해를 포함해 어떤 나이·연도·월 숫자도 본문에 그대로 쓰지 마세요.
 
 ===나를 읽다===
 (700~900자)
@@ -1566,6 +1578,12 @@ ${getAgeBasedFreeSection(year, maritalStatus)}
 형식: 색깔: O
 절대 다른 항목(마스코트, 방향, 숫자, 아이템)은 쓰지 마세요. 색깔 한 줄만.
 
+[출력 완결 규칙 — 반드시 지킬 것]
+- 위 3개 섹션(나를 읽다 / 돈의 흐름 / 지금 이 시기)과 행운미리보기까지, 전체 응답은 반드시 완결된 문장으로 끝내야 합니다. 문장이나 문단을 쓰다가 중간에 멈추지 마세요.
+- 마지막 문단을 새로 시작해놓고 끝맺지 못하는 일이 없도록 하세요.
+- 분량이 부족해질 것 같으면 앞부분 설명이나 예시 장면을 줄여서라도 마지막 섹션(행운미리보기)까지 반드시 완결하세요.
+- 응답 끝부분에서 새로운 긴 설명을 시작하지 마세요. 결론을 먼저 완성하는 것이 우선입니다.
+- 전체 응답은 주어진 출력 길이 한도 안에서 자연스럽게 끝나도록 분량을 스스로 조절해서 작성하세요.
 `;
 
   // ── 유료 전용 프롬프트 ──────────────────────────────
@@ -1692,7 +1710,7 @@ ${getAgeBasedPaidSection(year, maritalStatus)}
   try {
     if (!isPaid) {
       // 무료: haiku로 3섹션만
-      await streamToClient(res, basePrompt, MODEL_FREE, 3500);
+      await streamToClient(res, basePrompt, MODEL_FREE, 5000);
     } else {
       // 유료: 무료 재호출 없이 바로 paid_start → 유료 전용만 스트리밍
       // (무료 결과는 프론트에서 그대로 유지됨)
