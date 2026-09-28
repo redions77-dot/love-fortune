@@ -1,16 +1,16 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --color-bg: #F5F0E8;
-  --color-surface: #FDFAF5;
-  --color-border: rgba(180,160,110,0.2);
-  --color-border-strong: rgba(180,160,110,0.4);
-  --color-primary: #1B2A4A;
-  --color-primary-dark: #0F1E36;
-  --color-primary-light: #E8EDF5;
-  --color-text: #1B1B1B;
-  --color-text-muted: #7A6E5F;
-  --color-accent: #C9A84C;
+  --color-bg: #F4F5F7;
+  --color-surface: #FFFFFF;
+  --color-border: #DEDFE5;
+  --color-border-strong: #B9BAC4;
+  --color-primary: #633B50;
+  --color-primary-dark: #4E2E3F;
+  --color-primary-light: #F6F0F3;
+  --color-text: #24232B;
+  --color-text-muted: #62616C;
+  --color-accent: #633B50;
   --font-display: 'Nanum Myeongjo', serif;
   --font-body: 'Pretendard', -apple-system, sans-serif;
   --radius-sm: 6px;
@@ -19,7 +19,7 @@
 }
 
 html, body {
-  background: #050D1F;
+  background: var(--color-bg);
 }
 
 body {
@@ -50,6 +50,17 @@ select {
 
 input:focus, select:focus {
   border-color: var(--color-accent);
+}
+
+input::placeholder, textarea::placeholder {
+  color: #8A8994;
+  opacity: 1;
+}
+
+/* 키보드 포커스 표시 */
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [role="button"]:focus-visible, a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 @keyframes fadeIn {

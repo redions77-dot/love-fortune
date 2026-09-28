@@ -241,25 +241,25 @@ function renderFormattedContent(text) {
   return text.split('\n').map((line, i) => {
     const t = line.trim()
     if (!t) return <div key={i} style={{ height: 8 }} />
-    if (/^###\s/.test(t)) return <div key={i} style={{ fontSize: 14, fontWeight: 700, color: 'rgba(201,168,76,0.8)', marginTop: 10, marginBottom: 4 }}>{t.replace(/^###\s+/, '')}</div>
-    if (/^##\s/.test(t)) return <div key={i} style={{ fontSize: 15, fontWeight: 800, color: '#C9A84C', marginTop: 16, marginBottom: 4 }}>{t.replace(/^##\s+/, '')}</div>
-    if (/^#\s/.test(t)) return <div key={i} style={{ fontSize: 16, fontWeight: 800, color: '#FFFFFF', marginTop: 18, marginBottom: 6 }}>{t.replace(/^#\s+/, '')}</div>
+    if (/^###\s/.test(t)) return <div key={i} style={{ fontSize: 14, fontWeight: 700, color: '#633B50', marginTop: 10, marginBottom: 4 }}>{t.replace(/^###\s+/, '')}</div>
+    if (/^##\s/.test(t)) return <div key={i} style={{ fontSize: 15, fontWeight: 800, color: '#633B50', marginTop: 16, marginBottom: 4 }}>{t.replace(/^##\s+/, '')}</div>
+    if (/^#\s/.test(t)) return <div key={i} style={{ fontSize: 16, fontWeight: 800, color: '#24232B', marginTop: 18, marginBottom: 6 }}>{t.replace(/^#\s+/, '')}</div>
     if (SUBHEAD_EMOJIS.some(e => t.startsWith(e))) {
-      return <div key={i} style={{ fontWeight: 700, color: '#C9A84C', marginTop: 16, marginBottom: 4, lineHeight: 1.6 }}>{line}</div>
+      return <div key={i} style={{ fontWeight: 700, color: '#633B50', marginTop: 16, marginBottom: 4, lineHeight: 1.6 }}>{line}</div>
     }
     if (/^\d+\./.test(t)) {
       return <div key={i} style={{ paddingLeft: 4, marginBottom: 6, lineHeight: 1.9 }}>{line}</div>
     }
     if (t.startsWith('🔒')) {
-      return <div key={i} style={{ color: 'rgba(201,168,76,0.65)', marginTop: 12, lineHeight: 1.8 }}>{line}</div>
+      return <div key={i} style={{ color: '#633B50', marginTop: 12, lineHeight: 1.8 }}>{line}</div>
     }
     const monthMatch = t.match(MONTH_RE)
     if (monthMatch) {
-      return <div key={i} style={{ lineHeight: 1.9, marginBottom: 4 }}><span style={{ fontWeight: 700, color: '#C9A84C' }}>{monthMatch[1]}:</span> {monthMatch[2]}</div>
+      return <div key={i} style={{ lineHeight: 1.9, marginBottom: 4 }}><span style={{ fontWeight: 700, color: '#633B50' }}>{monthMatch[1]}:</span> {monthMatch[2]}</div>
     }
     const itemMatch = t.match(ITEM_RE)
     if (itemMatch) {
-      return <div key={i} style={{ lineHeight: 1.9, marginBottom: 4 }}><span style={{ fontWeight: 700, color: '#C9A84C' }}>{itemMatch[1]}:</span> {itemMatch[2]}</div>
+      return <div key={i} style={{ lineHeight: 1.9, marginBottom: 4 }}><span style={{ fontWeight: 700, color: '#633B50' }}>{itemMatch[1]}:</span> {itemMatch[2]}</div>
     }
     return <div key={i} style={{ lineHeight: 1.9, marginBottom: 2 }}>{line}</div>
   })
@@ -382,12 +382,12 @@ function GunghabRadarChart({ categories, blurred }) {
   const mainScore = categories.find(c => c.label === '총합')?.score ?? Math.round(categories.reduce((s, c) => s + c.score, 0) / categories.length)
   return (
     <div style={{ position: 'relative', marginBottom: 16 }}>
-      <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', ...(blurred ? { filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' } : {}) }}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', ...(blurred ? { filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' } : {}) }}>
         <div style={{ textAlign: 'center', marginBottom: 8 }}>
-          <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>💕 궁합 스탯</p>
+          <p style={{ fontSize: 12, color: '#633B50', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>💕 궁합 스탯</p>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-            <span style={{ fontSize: 52, fontWeight: 800, color: '#C9A84C', lineHeight: 1 }}>{mainScore}</span>
-            <span style={{ fontSize: 20, color: 'rgba(255,255,255,0.5)' }}>점</span>
+            <span style={{ fontSize: 52, fontWeight: 800, color: '#633B50', lineHeight: 1 }}>{mainScore}</span>
+            <span style={{ fontSize: 20, color: '#62616C' }}>점</span>
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
@@ -395,40 +395,40 @@ function GunghabRadarChart({ categories, blurred }) {
             {levels.map((level, li) => {
               const pts = categories.map((_, i) => getPoint(i, level))
               const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
-              return <path key={li} d={path} fill="none" stroke="rgba(201,168,76,0.12)" strokeWidth="1" />
+              return <path key={li} d={path} fill="none" stroke="#DEDFE5" strokeWidth="1" />
             })}
             {categories.map((_, i) => {
               const outer = getPoint(i, 1.0)
-              return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="rgba(201,168,76,0.15)" strokeWidth="1" />
+              return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="#DEDFE5" strokeWidth="1" />
             })}
-            <path d={dataPath} fill="rgba(201,168,76,0.15)" stroke="#C9A84C" strokeWidth="2" />
+            <path d={dataPath} fill="rgba(99,59,80,0.12)" stroke="#633B50" strokeWidth="2" />
             {dataPoints.map((p, i) => (
-              <circle key={i} cx={p.x} cy={p.y} r="4" fill={categories[i].color} stroke="#0D1B3E" strokeWidth="2" />
+              <circle key={i} cx={p.x} cy={p.y} r="4" fill={categories[i].color} stroke="#FFFFFF" strokeWidth="2" />
             ))}
             {categories.map((c, i) => {
               const lp = getLabelPoint(i)
               return (
                 <g key={i}>
-                  <text x={lp.x} y={lp.y - 7} textAnchor="middle" fontSize="13" fill="rgba(255,255,255,0.6)" fontWeight="600">{c.label}</text>
+                  <text x={lp.x} y={lp.y - 7} textAnchor="middle" fontSize="13" fill="#62616C" fontWeight="600">{c.label}</text>
                   <text x={lp.x} y={lp.y + 9} textAnchor="middle" fontSize="15" fill={c.color} fontWeight="800">{c.score}</text>
                 </g>
               )
             })}
           </svg>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', borderTop: '1px solid #DEDFE5', paddingTop: 14 }}>
           {categories.filter(c => c.label !== '총합').map(({ label, score, color }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }} />
-              <span style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)' }}>{label}</span>
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', marginLeft: 'auto' }}>{score}</span>
+              <span style={{ fontSize: 15, color: '#62616C' }}>{label}</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#24232B', marginLeft: 'auto' }}>{score}</span>
             </div>
           ))}
         </div>
       </div>
       {blurred && (
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 1 }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', textShadow: '0 0 20px rgba(0,0,0,0.8)', whiteSpace: 'nowrap' }}>✦ 결제 후 실제 점수를 확인하세요</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', textShadow: 'none', whiteSpace: 'nowrap' }}>✦ 결제 후 실제 점수를 확인하세요</p>
         </div>
       )}
     </div>
@@ -436,20 +436,26 @@ function GunghabRadarChart({ categories, blurred }) {
 }
 
 
+// 선택된 항목을 색상 외에 체크 표시로도 구분 (버튼에 position: 'relative' 필요)
+function CheckMark({ on }) {
+  if (!on) return null
+  return <span aria-hidden="true" style={{ position: 'absolute', top: 6, right: 8, fontSize: 12, fontWeight: 800, color: '#633B50', lineHeight: 1 }}>✓</span>
+}
+
 function DateRow({ year, setYear, month, setMonth, day, setDay, lunar, setLunar }) {
   return (
     <>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: !lunar ? 600 : 400, border: `1px solid ${!lunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: !lunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: !lunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setLunar(false)}>양력 🌞</button>
-        <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: lunar ? 600 : 400, border: `1px solid ${lunar ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: lunar ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: lunar ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setLunar(true)}>음력 🌙</button>
+        <button aria-pressed={!lunar} style={{ position: 'relative', flex: 1, padding: '10px', fontSize: 13, fontWeight: !lunar ? 600 : 400, border: `1px solid ${!lunar ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: !lunar ? '#F6F0F3' : '#FFFFFF', color: !lunar ? '#633B50' : '#62616C', cursor: 'pointer' }} onClick={() => setLunar(false)}><CheckMark on={!lunar} />양력</button>
+        <button aria-pressed={lunar} style={{ position: 'relative', flex: 1, padding: '10px', fontSize: 13, fontWeight: lunar ? 600 : 400, border: `1px solid ${lunar ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: lunar ? '#F6F0F3' : '#FFFFFF', color: lunar ? '#633B50' : '#62616C', cursor: 'pointer' }} onClick={() => setLunar(true)}><CheckMark on={lunar} />음력</button>
       </div>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 }}>
-        <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="년도" value={year} onChange={e => setYear(e.target.value.slice(0,4))} />
-        <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>년</span>
-        <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="월" value={month} onChange={e => setMonth(e.target.value.slice(0,2))} />
-        <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>월</span>
-        <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={day} onChange={e => setDay(e.target.value.slice(0,2))} />
-        <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>일</span>
+        <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="년도" value={year} onChange={e => setYear(e.target.value.slice(0,4))} />
+        <span style={{ fontSize: 14, color: '#62616C' }}>년</span>
+        <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="월" value={month} onChange={e => setMonth(e.target.value.slice(0,2))} />
+        <span style={{ fontSize: 14, color: '#62616C' }}>월</span>
+        <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={day} onChange={e => setDay(e.target.value.slice(0,2))} />
+        <span style={{ fontSize: 14, color: '#62616C' }}>일</span>
       </div>
     </>
 )
@@ -460,7 +466,7 @@ function renderBracketItems(text) {
   const parts = text.split(/(\[.+?\]\n)/g)
   return parts.map((part, i) => {
     const m = part.match(/^\[(.+?)\]\n$/)
-    if (m) return <div key={i} style={{ fontWeight: 700, color: '#C9A84C', marginTop: i > 0 ? 16 : 0 }}>✦ {m[1]}</div>
+    if (m) return <div key={i} style={{ fontWeight: 700, color: '#633B50', marginTop: i > 0 ? 16 : 0 }}>✦ {m[1]}</div>
     if (!part.trim()) return null
     return <span key={i}>{part}</span>
   })
@@ -469,16 +475,16 @@ const BRACKET_SECTIONS = new Set(['이 아이에게 맞는 직업 방향', '추�
 function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, isGilil = false, defaultOpen = false, forceOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   const isOpen = open || forceOpen
-  const borderColor = isGunghab ? 'rgba(155,29,58,0.4)' : isChild ? 'rgba(45,122,82,0.4)' : isGilil ? 'rgba(201,168,76,0.4)' : isPaid ? 'rgba(201,168,76,0.4)' : 'rgba(201,168,76,0.15)'
-  const openBg = isGunghab ? 'rgba(155,29,58,0.1)' : isChild ? 'rgba(45,122,82,0.1)' : 'rgba(201,168,76,0.08)'
+  const borderColor = isGunghab ? 'rgba(155,29,58,0.4)' : isChild ? 'rgba(45,122,82,0.4)' : isGilil ? '#DEDFE5' : isPaid ? '#DEDFE5' : '#DEDFE5'
+  const openBg = isGunghab ? 'rgba(155,29,58,0.1)' : isChild ? 'rgba(45,122,82,0.1)' : '#F6F0F3'
   const useBracket = BRACKET_SECTIONS.has(title)
   return (
     <div data-accordion="true" data-accordion-open={isOpen ? '1' : '0'} style={{ marginBottom: 10, border: `1px solid ${borderColor}`, borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px', cursor: 'pointer', background: isOpen ? openBg : '#0D1B3E', transition: 'all 0.2s' }} onClick={() => setOpen(o => !o)}>
-        <span style={{ fontSize: 17, fontWeight: 700, color: isOpen ? '#C9A84C' : 'rgba(255,255,255,0.85)', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
-        <span style={{ fontSize: 14, color: 'rgba(201,168,76,0.5)', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px', cursor: 'pointer', background: isOpen ? openBg : '#FFFFFF', transition: 'all 0.2s' }} onClick={() => setOpen(o => !o)}>
+        <span style={{ fontSize: 17, fontWeight: 700, color: isOpen ? '#633B50' : '#24232B', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
+        <span style={{ fontSize: 14, color: '#633B50', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
       </div>
-      {isOpen && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 18, color: 'rgba(255,255,255,0.88)', background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.1)' }}>{useBracket ? renderBracketItems(content) : renderFormattedContent(content)}</div>}
+      {isOpen && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 18, color: '#24232B', background: '#F4F5F7', borderTop: '1px solid #DEDFE5' }}>{useBracket ? renderBracketItems(content) : renderFormattedContent(content)}</div>}
     </div>
   )
 }
@@ -522,10 +528,10 @@ const FULL_ANALYSIS_MORE = [
 ]
 function FullAnalysisPreviewCard({ title, line1, line2 }) {
   return (
-    <div style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(201,168,76,0.1)' }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {title}</p>
-      <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(255,255,255,0.8)', wordBreak: 'keep-all', margin: 0, marginBottom: 4 }}>{line1}</p>
-      <p style={{ fontSize: 13, lineHeight: 1.7, color: 'rgba(255,255,255,0.45)', wordBreak: 'keep-all', margin: 0 }}>{line2}</p>
+    <div style={{ marginBottom: 10, padding: '14px 16px', background: '#FFFFFF', borderRadius: 10, border: '1px solid #DEDFE5' }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>✦ {title}</p>
+      <p style={{ fontSize: 15, lineHeight: 1.7, color: '#24232B', wordBreak: 'keep-all', margin: 0, marginBottom: 4 }}>{line1}</p>
+      <p style={{ fontSize: 13, lineHeight: 1.7, color: '#62616C', wordBreak: 'keep-all', margin: 0 }}>{line2}</p>
     </div>
   )
 }
@@ -596,6 +602,8 @@ export default function App() {
   const [mbti, setMbti] = useState(() => _qs.get('mbti') || '')
   const [blood, setBlood] = useState(() => _qs.get('blood') || '')
   const [phase, setPhase] = useState('input')
+  const [freeError, setFreeError] = useState(null)
+  const freeInFlightRef = useRef(false)
   const [sajuData, setSajuData] = useState(null)
   const [baseText, setBaseText] = useState('')
   const [paidText, setPaidText] = useState('')
@@ -724,10 +732,15 @@ export default function App() {
 
   // ── handleFreeAnalyze — 로딩 화면 추가 ──
   async function handleFreeAnalyze() {
+    if (freeInFlightRef.current) return // 진행 중 중복 요청 방지
+    freeInFlightRef.current = true
     trackEvent('free_analysis_started', { service_type: serviceType })
-    setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null)
+    setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null); setFreeError(null)
     setIsBaseStreaming(true); isPaidSectionRef.current = false; setScreen('result')
     const apiType = serviceType === 'child' ? '자녀천명' : serviceType === '노후' ? '노후' : '기본'
+    let failed = false
+    // 실패 시 결과 화면에 오류 안내를 띄운다. 첫 메시지를 유지하고, 재시도는 사용자가 버튼으로만 한다.
+    const fail = (msg) => { failed = true; setFreeError(prev => prev || msg); setPhase('error'); setIsBaseStreaming(false) }
     try {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: false, isLunar, userName: myName },
@@ -752,13 +765,16 @@ if (scoreMatch) {
 },
         onPaidText: () => {},
         onDone: () => {
+          if (failed) return
           setIsBaseStreaming(false); setPhase('done')
         },
-        onError: (e) => { alert(e); setPhase('input'); setIsBaseStreaming(false) },
+        onError: (e) => fail(e),
       })
     } catch (e) {
-      if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.')
-      setPhase('input'); setIsBaseStreaming(false)
+      if (e.name !== 'AbortError') fail('서버에 연결할 수 없어요. 잠시 후 다시 시도해주세요.')
+      else { setPhase('input'); setIsBaseStreaming(false) }
+    } finally {
+      freeInFlightRef.current = false
     }
   }
 
@@ -970,41 +986,41 @@ if (scoreMatch) {
   if (screen === '백년_input') {
     const canNext = 백년BirthdateValid && 백년BirthtimeValid && 백년Name.trim().length > 0 && 백년Gender !== ''
     return (
-      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
-          <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>百</div>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>100년 사주 인생 꿀팁</h1>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>지금부터 100세까지, 매년 사주 꿀팁을 드려요</p>
+      <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: '#FFFFFF', borderBottom: '1px solid #DEDFE5' }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>100년 사주 인생 꿀팁</h1>
+          <p style={{ fontSize: 12, color: '#62616C' }}>지금부터 100세까지, 매년 사주 꿀팁을 드려요</p>
         </div>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>이름을 알려주세요</h2>
-          <input style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 600, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box', marginBottom: 24 }} placeholder="이름 (예: 홍길동)" value={백년Name} onChange={e => set백년Name(e.target.value)} />
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>성별을 알려주세요</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>이름을 알려주세요</h2>
+          <input style={{ width: '100%', padding: '16px', fontSize: 16, fontWeight: 600, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box', marginBottom: 24 }} placeholder="이름 (예: 홍길동)" value={백년Name} onChange={e => set백년Name(e.target.value)} />
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>성별을 알려주세요</h2>
           <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-            <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: 백년Gender === '남성' ? 600 : 400, border: `1px solid ${백년Gender === '남성' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: 백년Gender === '남성' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: 백년Gender === '남성' ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => set백년Gender('남성')}>남성 👨</button>
-            <button style={{ flex: 1, padding: '10px', fontSize: 13, fontWeight: 백년Gender === '여성' ? 600 : 400, border: `1px solid ${백년Gender === '여성' ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: 백년Gender === '여성' ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: 백년Gender === '여성' ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => set백년Gender('여성')}>여성 👩</button>
+            <button aria-pressed={백년Gender === '남성'} style={{ position: 'relative', flex: 1, padding: '10px', fontSize: 13, fontWeight: 백년Gender === '남성' ? 600 : 400, border: `1px solid ${백년Gender === '남성' ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: 백년Gender === '남성' ? '#F6F0F3' : '#FFFFFF', color: 백년Gender === '남성' ? '#633B50' : '#62616C', cursor: 'pointer' }} onClick={() => set백년Gender('남성')}><CheckMark on={백년Gender === '남성'} />남성</button>
+            <button aria-pressed={백년Gender === '여성'} style={{ position: 'relative', flex: 1, padding: '10px', fontSize: 13, fontWeight: 백년Gender === '여성' ? 600 : 400, border: `1px solid ${백년Gender === '여성' ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: 백년Gender === '여성' ? '#F6F0F3' : '#FFFFFF', color: 백년Gender === '여성' ? '#633B50' : '#62616C', cursor: 'pointer' }} onClick={() => set백년Gender('여성')}><CheckMark on={백년Gender === '여성'} />여성</button>
           </div>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>생년월일을 알려주세요</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>생년월일을 알려주세요</h2>
           <DateRow year={백년BirthYear} setYear={set백년BirthYear} month={백년BirthMonth} setMonth={set백년BirthMonth} day={백년BirthDay} setDay={set백년BirthDay} lunar={백년IsLunar} setLunar={set백년IsLunar} />
-          {백년BirthdateValid && <p style={{ fontSize: 13, color: '#C9A84C', fontWeight: 600, marginBottom: 20 }}>✓ {백년BirthYear}년 {백년BirthMonth}월 {백년BirthDay}일</p>}
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', marginTop: 8, marginBottom: 6 }}>태어난 시간을 알려주세요</h2>
-          <button style={{ width: '100%', padding: '12px', fontSize: 13, border: `1px solid ${백년TimeUnknown ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: 백년TimeUnknown ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: 백년TimeUnknown ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', marginBottom: 10 }} onClick={() => set백년TimeUnknown(v => !v)}>
+          {백년BirthdateValid && <p style={{ fontSize: 13, color: '#633B50', fontWeight: 600, marginBottom: 20 }}>✓ {백년BirthYear}년 {백년BirthMonth}월 {백년BirthDay}일</p>}
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#24232B', marginTop: 8, marginBottom: 6 }}>태어난 시간을 알려주세요</h2>
+          <button aria-pressed={백년TimeUnknown} style={{ position: 'relative', width: '100%', padding: '12px', fontSize: 13, border: `1px solid ${백년TimeUnknown ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: 백년TimeUnknown ? '#F6F0F3' : '#FFFFFF', color: 백년TimeUnknown ? '#633B50' : '#62616C', cursor: 'pointer', marginBottom: 10 }} onClick={() => set백년TimeUnknown(v => !v)}><CheckMark on={백년TimeUnknown} />
             {백년TimeUnknown ? '✓ 모름으로 입력' : '시간을 모르는 경우 클릭'}
           </button>
           {!백년TimeUnknown && (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <select style={{ flex: 1, padding: '14px 8px', fontSize: 15, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: '#0D1B3E', color: '#FFFFFF' }} value={백년TimeAmPm} onChange={e => set백년TimeAmPm(e.target.value)}>
+              <select style={{ flex: 1, padding: '14px 8px', fontSize: 15, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B' }} value={백년TimeAmPm} onChange={e => set백년TimeAmPm(e.target.value)}>
                 <option value="오전">오전</option><option value="오후">오후</option>
               </select>
-              <input style={{ flex: 1, padding: '14px 8px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="시" min="1" max="12" value={백년TimeHour} onChange={e => set백년TimeHour(e.target.value.slice(0,2))} />
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 18 }}>:</span>
-              <input style={{ flex: 1, padding: '14px 8px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="분" min="0" max="59" value={백년TimeMin} onChange={e => set백년TimeMin(e.target.value.slice(0,2))} />
+              <input style={{ flex: 1, padding: '14px 8px', fontSize: 18, fontWeight: 700, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="시" min="1" max="12" value={백년TimeHour} onChange={e => set백년TimeHour(e.target.value.slice(0,2))} />
+              <span style={{ color: '#62616C', fontSize: 18 }}>:</span>
+              <input style={{ flex: 1, padding: '14px 8px', fontSize: 18, fontWeight: 700, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="분" min="0" max="59" value={백년TimeMin} onChange={e => set백년TimeMin(e.target.value.slice(0,2))} />
             </div>
           )}
         </div>
-        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
-          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => setScreen('landing')}>←</button>
-          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: !canNext ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: !canNext ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: !canNext ? 'not-allowed' : 'pointer' }} disabled={!canNext} onClick={() => setScreen('백년_payment')}>
+        <div style={{ position: 'fixed', bottom: 0, background: '#F4F5F7', borderTop: '1px solid #DEDFE5', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', fontSize: 15, cursor: 'pointer', color: '#62616C' }} onClick={() => setScreen('landing')}>←</button>
+          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: !canNext ? '#E4E5EA' : '#633B50', color: !canNext ? '#62616C' : '#FFFFFF', border: 'none', borderRadius: 10, cursor: !canNext ? 'not-allowed' : 'pointer' }} disabled={!canNext} onClick={() => setScreen('백년_payment')}>
             다음 — 결제하기
           </button>
         </div>
@@ -1028,33 +1044,33 @@ if (scoreMatch) {
       })
     }
     return (
-      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
-          <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>百</div>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>100년 사주 인생 꿀팁</h1>
+      <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: '#FFFFFF', borderBottom: '1px solid #DEDFE5' }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>100년 사주 인생 꿀팁</h1>
         </div>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 120px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
-          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 14, padding: '24px 20px', marginBottom: 20 }}>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>이름: {백년Name}</p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>생년월일: {백년BirthYear}년 {백년BirthMonth}월 {백년BirthDay}일{백년Birthtime ? ` · ${백년TimeAmPm} ${백년TimeHour}시 ${백년TimeMin}분` : ' · 시간 미입력'}</p>
+          <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 14, padding: '24px 20px', marginBottom: 20 }}>
+            <p style={{ fontSize: 13, color: '#62616C', marginBottom: 4 }}>이름: {백년Name}</p>
+            <p style={{ fontSize: 13, color: '#62616C' }}>생년월일: {백년BirthYear}년 {백년BirthMonth}월 {백년BirthDay}일{백년Birthtime ? ` · ${백년TimeAmPm} ${백년TimeHour}시 ${백년TimeMin}분` : ' · 시간 미입력'}</p>
           </div>
-          <div style={{ background: '#0D1B3E', border: '2px solid rgba(201,168,76,0.5)', borderRadius: 14, padding: '28px 24px', textAlign: 'center', marginBottom: 20 }}>
-            <span style={{ display: 'inline-block', background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', fontSize: 12, fontWeight: 800, borderRadius: 20, padding: '4px 16px', marginBottom: 16 }}>한정 특가</span>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', textDecoration: 'line-through', marginBottom: 6 }}>정가 300,000원</div>
+          <div style={{ background: '#FFFFFF', border: '2px solid #633B50', borderRadius: 14, padding: '28px 24px', textAlign: 'center', marginBottom: 20 }}>
+            <span style={{ display: 'inline-block', background: '#633B50', color: '#FFFFFF', fontSize: 12, fontWeight: 800, borderRadius: 20, padding: '4px 16px', marginBottom: 16 }}>한정 특가</span>
+            <div style={{ fontSize: 14, color: '#62616C', textDecoration: 'line-through', marginBottom: 6 }}>정가 300,000원</div>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 6, marginBottom: 16 }}>
-              <span style={{ fontSize: 40, fontWeight: 900, color: '#C9A84C' }}>99,000</span>
-              <span style={{ fontSize: 18, color: '#C9A84C', fontWeight: 700 }}>원</span>
+              <span style={{ fontSize: 40, fontWeight: 900, color: '#633B50' }}>99,000</span>
+              <span style={{ fontSize: 18, color: '#633B50', fontWeight: 700 }}>원</span>
             </div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8 }}>
+            <div style={{ fontSize: 13, color: '#62616C', lineHeight: 1.8 }}>
               ✦ 현재 나이부터 100세까지 매년 꿀팁<br/>
               ✦ 재물운·관계운·건강운 키워드 매년 제공<br/>
               ✦ 이메일로 전체 결과 발송
             </div>
           </div>
         </div>
-        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
-          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => setScreen('백년_input')}>←</button>
-          <button style={{ flex: 1, padding: '14px', fontSize: 16, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer' }} onClick={doPay}>
+        <div style={{ position: 'fixed', bottom: 0, background: '#F4F5F7', borderTop: '1px solid #DEDFE5', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', fontSize: 15, cursor: 'pointer', color: '#62616C' }} onClick={() => setScreen('백년_input')}>←</button>
+          <button style={{ flex: 1, padding: '14px', fontSize: 16, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 10, cursor: 'pointer' }} onClick={doPay}>
             🌟 99,000원 결제하고 받기
           </button>
         </div>
@@ -1086,48 +1102,47 @@ if (scoreMatch) {
       set백년EmailSent(true)
     }
     return (
-      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ textAlign: 'center', padding: '28px 24px 16px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
-          <div style={{ fontSize: 32, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 8 }}>百</div>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 4 }}>100년 사주 인생 꿀팁</h1>
-          {백년Name && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{백년Name}님 · {백년BirthYear}년생</p>}
+      <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '28px 24px 16px', background: '#FFFFFF', borderBottom: '1px solid #DEDFE5' }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 4 }}>100년 사주 인생 꿀팁</h1>
+          {백년Name && <p style={{ fontSize: 13, color: '#62616C' }}>{백년Name}님 · {백년BirthYear}년생</p>}
         </div>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 80px', width: '100%', boxSizing: 'border-box' }}>
           {is백년Streaming && yearBlocks.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,255,255,0.5)' }}>
-              <div style={{ fontSize: 36, marginBottom: 16 }}>🌟</div>
-              <p style={{ fontSize: 15, fontWeight: 600, color: '#C9A84C' }}>{백년Name || ''}님의 100년 인생 꿀팁 생성 중...</p>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#62616C' }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: '#633B50' }}>{백년Name || ''}님의 100년 인생 꿀팁 생성 중...</p>
               <p style={{ fontSize: 13, marginTop: 8 }}>지금부터 100세까지 매년 분석 중이에요</p>
             </div>
           )}
           {!is백년Streaming && !백년EmailSent && 백년Text && (
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px', marginBottom: 20 }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>📧 이메일로 전체 결과 받기</p>
+            <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px', marginBottom: 20 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>📧 이메일로 전체 결과 받기</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 8, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={백년EmailInput} onChange={e => set백년EmailInput(e.target.value)} />
-                <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={send백년Email}>발송</button>
+                <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid #DEDFE5', borderRadius: 8, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={백년EmailInput} onChange={e => set백년EmailInput(e.target.value)} />
+                <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={send백년Email}>발송</button>
               </div>
             </div>
           )}
-          {백년EmailSent && <p style={{ textAlign: 'center', fontSize: 13, color: '#C9A84C', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>}
+          {백년EmailSent && <p style={{ textAlign: 'center', fontSize: 13, color: '#633B50', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>}
           {yearBlocks.length > 0 ? yearBlocks.map((block, i) => (
-            <div key={i} style={{ marginBottom: 20, background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 12, overflow: 'hidden' }}>
+            <div key={i} style={{ marginBottom: 20, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, overflow: 'hidden' }}>
               {block.header && (
-                <div style={{ background: 'rgba(201,168,76,0.08)', borderBottom: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px' }}>
-                  <span style={{ fontSize: 15, fontWeight: 800, color: '#C9A84C' }}>{block.header}</span>
+                <div style={{ background: '#F6F0F3', borderBottom: '1px solid #DEDFE5', padding: '12px 16px' }}>
+                  <span style={{ fontSize: 15, fontWeight: 800, color: '#633B50' }}>{block.header}</span>
                 </div>
               )}
-              <div style={{ padding: '16px', fontSize: 15, color: 'rgba(255,255,255,0.85)', lineHeight: 1.8, wordBreak: 'keep-all' }}>{renderFormattedContent(block.body)}</div>
+              <div style={{ padding: '16px', fontSize: 15, color: '#24232B', lineHeight: 1.8, wordBreak: 'keep-all' }}>{renderFormattedContent(block.body)}</div>
             </div>
           )) : (백년Text && !is백년Streaming && (
-            <div style={{ padding: '16px', fontSize: 15, color: 'rgba(255,255,255,0.85)', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{백년Text}</div>
+            <div style={{ padding: '16px', fontSize: 15, color: '#24232B', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{백년Text}</div>
           ))}
           {is백년Streaming && yearBlocks.length > 0 && (
-            <div style={{ textAlign: 'center', padding: '20px', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>⟳ 계속 생성 중...</div>
+            <div style={{ textAlign: 'center', padding: '20px', color: '#62616C', fontSize: 13 }}>⟳ 계속 생성 중...</div>
           )}
         </div>
-        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
-          <button style={{ width: '100%', padding: '14px', fontSize: 14, fontWeight: 600, background: 'rgba(201,168,76,0.1)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer' }} onClick={handleRestart}>← 처음으로</button>
+        <div style={{ position: 'fixed', bottom: 0, background: '#F4F5F7', borderTop: '1px solid #DEDFE5', padding: '12px 16px 24px', maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+          <button style={{ width: '100%', padding: '14px', fontSize: 14, fontWeight: 600, background: '#F6F0F3', color: '#633B50', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer' }} onClick={handleRestart}>← 처음으로</button>
         </div>
       </div>
     )
@@ -1138,37 +1153,37 @@ if (scoreMatch) {
     const 목적목록 = [{ value: '이사', emoji: '🏠' },{ value: '계약', emoji: '📝' },{ value: '개업', emoji: '🎊' },{ value: '결혼', emoji: '💍' },{ value: '수술', emoji: '🏥' },{ value: '시험', emoji: '📚' }]
     const canNext = gilil목적 !== '' && birthdateValid
     return (
-      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
-          <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>吉</div>
-          <h1 style={{ wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>길일 추천</h1>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>내 사주와 맞는 좋은 날을 찾아드려요</p>
+      <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: '#FFFFFF', borderBottom: '1px solid #DEDFE5' }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
+          <h1 style={{ wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>길일 추천</h1>
+          <p style={{ fontSize: 12, color: '#62616C' }}>내 사주와 맞는 좋은 날을 찾아드려요</p>
         </div>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>어떤 날을 찾고 계세요?</h2>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>목적을 선택해주세요</p>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>어떤 날을 찾고 계세요?</h2>
+          <p style={{ fontSize: 13, color: '#62616C', marginBottom: 20 }}>목적을 선택해주세요</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 24 }}>
             {목적목록.map(({ value, emoji }) => (
-              <button key={value} style={{ padding: '16px 8px', border: `2px solid ${gilil목적 === value ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: gilil목적 === value ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', textAlign: 'center' }} onClick={() => setGilil목적(value)}>
+              <button key={value} aria-pressed={gilil목적 === value} style={{ position: 'relative', padding: '16px 8px', border: `2px solid ${gilil목적 === value ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: gilil목적 === value ? '#F6F0F3' : '#FFFFFF', cursor: 'pointer', textAlign: 'center' }} onClick={() => setGilil목적(value)}><CheckMark on={gilil목적 === value} />
                 <div style={{ fontSize: 24, marginBottom: 4 }}>{emoji}</div>
-                <div style={{ fontSize: 13, fontWeight: gilil목적 === value ? 700 : 400, color: gilil목적 === value ? '#C9A84C' : 'rgba(255,255,255,0.6)' }}>{value}</div>
+                <div style={{ fontSize: 13, fontWeight: gilil목적 === value ? 700 : 400, color: gilil목적 === value ? '#633B50' : '#62616C' }}>{value}</div>
               </button>
             ))}
           </div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>생년월일을 알려주세요</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>생년월일을 알려주세요</h2>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 12 }}>
-            <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0,4))} />
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>년</span>
-            <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0,2))} />
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>월</span>
-            <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0,2))} />
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>일</span>
+            <input style={{ width: 90, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0,4))} />
+            <span style={{ fontSize: 14, color: '#62616C' }}>년</span>
+            <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0,2))} />
+            <span style={{ fontSize: 14, color: '#62616C' }}>월</span>
+            <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0,2))} />
+            <span style={{ fontSize: 14, color: '#62616C' }}>일</span>
           </div>
-          {birthdateValid && <p style={{ fontSize: 13, color: '#C9A84C', textAlign: 'center', fontWeight: 600 }}>✓ {birthYear}년 {birthMonth}월 {birthDay}일</p>}
+          {birthdateValid && <p style={{ fontSize: 13, color: '#633B50', textAlign: 'center', fontWeight: 600 }}>✓ {birthYear}년 {birthMonth}월 {birthDay}일</p>}
         </div>
-        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
-          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => setScreen('landing')}>←</button>
-          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: !canNext ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: !canNext ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: !canNext ? 'not-allowed' : 'pointer' }} disabled={!canNext}
+        <div style={{ position: 'fixed', bottom: 0, background: '#F4F5F7', borderTop: '1px solid #DEDFE5', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', fontSize: 15, cursor: 'pointer', color: '#62616C' }} onClick={() => setScreen('landing')}>←</button>
+          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: !canNext ? '#E4E5EA' : '#633B50', color: !canNext ? '#62616C' : '#FFFFFF', border: 'none', borderRadius: 10, cursor: !canNext ? 'not-allowed' : 'pointer' }} disabled={!canNext}
             onClick={() => { if (IS_ADMIN) { handleGililAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); const _gililParams = new URLSearchParams({ payment: 'gilil', gp: gilil목적, by: birthYear, bm: birthMonth, bd: birthDay }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `gilil_${Date.now()}`, name: '마이사주 길일 추천', amount: 9900, buyer_name: '고객', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_gililParams}` }, (rsp) => { if (rsp.success) handleGililAnalyze(); else alert('결제가 취소되었습니다.') }) }}>
             📅 길일 찾기 (9,900원)
           </button>
@@ -1188,36 +1203,36 @@ if (scoreMatch) {
       setDeepEmailSent(true)
     }
     const seasonPhases = seasonData ? [
-      { key: 'wood', icon: '木', color: '#4ADE80', bgColor: 'rgba(74,222,128,0.08)', borderColor: 'rgba(74,222,128,0.3)' },
-      { key: 'fire', icon: '火', color: '#F87171', bgColor: 'rgba(248,113,113,0.08)', borderColor: 'rgba(248,113,113,0.3)' },
-      { key: 'earth', icon: '土', color: '#C9A84C', bgColor: 'rgba(201,168,76,0.08)', borderColor: 'rgba(201,168,76,0.3)' },
-      { key: 'metal', icon: '金', color: '#E8C96A', bgColor: 'rgba(232,201,106,0.08)', borderColor: 'rgba(232,201,106,0.3)' },
-      { key: 'water', icon: '水', color: '#60A5FA', bgColor: 'rgba(96,165,250,0.08)', borderColor: 'rgba(96,165,250,0.3)' },
+      { key: 'wood', icon: '木', color: '#1E7F4F', bgColor: 'rgba(74,222,128,0.08)', borderColor: 'rgba(74,222,128,0.3)' },
+      { key: 'fire', icon: '火', color: '#C53A3A', bgColor: 'rgba(248,113,113,0.08)', borderColor: 'rgba(248,113,113,0.3)' },
+      { key: 'earth', icon: '土', color: '#8A5F0E', bgColor: 'rgba(138,95,14,0.08)', borderColor: 'rgba(138,95,14,0.3)' },
+      { key: 'metal', icon: '金', color: '#5F6B7A', bgColor: 'rgba(95,107,122,0.08)', borderColor: 'rgba(95,107,122,0.3)' },
+      { key: 'water', icon: '水', color: '#2563EB', bgColor: 'rgba(96,165,250,0.08)', borderColor: 'rgba(96,165,250,0.3)' },
     ] : []
     return (
-      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
-          <div style={{ fontSize: 36 }}>🔮</div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>사주 심화 분석</h1>
+      <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: '#FFFFFF', borderBottom: '1px solid #DEDFE5' }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>사주 심화 분석</h1>
         </div>
         <div id="deep-result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
   {/* 사주팔자 카드 */}
   {sajuData?.사주 && (
-    <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
-      <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
+    <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+      <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
+      <p style={{ fontSize: 15, color: '#62616C', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         {[{ label: '시주(時)', value: sajuData.사주.시주 }, { label: '일주(日)', value: sajuData.사주.일주 }, { label: '월주(月)', value: sajuData.사주.월주 }, { label: '년주(年)', value: sajuData.사주.년주 }].map(({ label, value }) => {
-          const 오행색 = { '甲갑': '#4ADE80', '乙을': '#4ADE80', '丙병': '#F87171', '丁정': '#F87171', '戊무': '#C9A84C', '己기': '#C9A84C', '庚경': '#E8C96A', '辛신': '#E8C96A', '壬임': '#60A5FA', '癸계': '#60A5FA' }
-          const 색 = 오행색[value?.slice(0, 2)] || '#FFFFFF'
+          const 오행색 = { '甲갑': '#1E7F4F', '乙을': '#1E7F4F', '丙병': '#C53A3A', '丁정': '#C53A3A', '戊무': '#8A5F0E', '己기': '#8A5F0E', '庚경': '#5F6B7A', '辛신': '#5F6B7A', '壬임': '#2563EB', '癸계': '#2563EB' }
+          const 색 = 오행색[value?.slice(0, 2)] || '#24232B'
           return (
             <div key={label} style={{ textAlign: 'center', background: `${색}15`, borderRadius: 12, padding: '18px 4px', border: `2px solid ${색}50` }}>
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 10, display: 'block' }}>{label}</span>
+              <span style={{ fontSize: 12, color: '#62616C', marginBottom: 10, display: 'block' }}>{label}</span>
               <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 <span style={{ fontSize: 22, fontWeight: 900, color: 색, lineHeight: 1.2 }}>{value?.slice(0,1) || '-'}</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: 색, opacity: 0.7, marginTop: 2 }}>{value?.slice(2,3) || ''}</span>
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
+                <span style={{ fontSize: 11, color: '#62616C', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: 색, marginTop: 2 }}>{value?.slice(2,3) || ''}</span>
+                <span style={{ fontSize: 11, color: '#62616C', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
               </span>
             </div>
           )
@@ -1228,23 +1243,23 @@ if (scoreMatch) {
 
   {/* 운세 점수 카드 */}
   {scoreData && (
-    <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+    <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>사주 기운 스탯</p>
+        <p style={{ fontSize: 12, color: '#633B50', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>사주 기운 스탯</p>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-          <span style={{ fontSize: 56, fontWeight: 800, color: '#C9A84C', lineHeight: 1 }}>{scoreData.종합}</span>
-          <span style={{ fontSize: 22, color: 'rgba(255,255,255,0.5)' }}>점</span>
+          <span style={{ fontSize: 56, fontWeight: 800, color: '#633B50', lineHeight: 1 }}>{scoreData.종합}</span>
+          <span style={{ fontSize: 22, color: '#62616C' }}>점</span>
         </div>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>상위 {scoreData.종합 >= 90 ? '5' : scoreData.종합 >= 80 ? '15' : scoreData.종합 >= 70 ? '25' : scoreData.종합 >= 60 ? '40' : '50'}% 수준이에요</p>
+        <p style={{ fontSize: 13, color: '#62616C', marginTop: 6 }}>상위 {scoreData.종합 >= 90 ? '5' : scoreData.종합 >= 80 ? '15' : scoreData.종합 >= 70 ? '25' : scoreData.종합 >= 60 ? '40' : '50'}% 수준이에요</p>
       </div>
-      <div style={{ borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: 16 }}>
-        {[{ label: '재물운', score: scoreData.재물, color: '#7F77DD' }, { label: '애정운', score: scoreData.애정, color: '#D4537E' }, { label: '직업운', score: scoreData.직업, color: '#1D9E75' }, { label: '건강운', score: scoreData.건강, color: '#BA7517' }].map(({ label, score, color }) => (
+      <div style={{ borderTop: '1px solid #DEDFE5', paddingTop: 16 }}>
+        {[{ label: '재물운', score: scoreData.재물, color: '#5B52C7' }, { label: '애정운', score: scoreData.애정, color: '#B83A66' }, { label: '직업운', score: scoreData.직업, color: '#137A5A' }, { label: '건강운', score: scoreData.건강, color: '#9A5F0F' }].map(({ label, score, color }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', width: 44, flexShrink: 0 }}>{label}</span>
-            <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+            <span style={{ fontSize: 13, color: '#62616C', width: 44, flexShrink: 0 }}>{label}</span>
+            <div style={{ flex: 1, height: 8, background: '#FFFFFF', borderRadius: 99, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${score}%`, background: color, borderRadius: 99, transition: 'width 1s ease' }} />
             </div>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#FFFFFF', width: 32, textAlign: 'right', flexShrink: 0 }}>{score}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#24232B', width: 32, textAlign: 'right', flexShrink: 0 }}>{score}</span>
           </div>
         ))}
       </div>
@@ -1255,16 +1270,16 @@ if (scoreMatch) {
           {!isDeepPaid && !isDeepStreaming && (
             <>
               {/* 페인포인트 후킹 박스 */}
-              <div style={{ background: '#0D1B3E', border: '1.5px solid rgba(201,168,76,0.4)', borderRadius: 16, padding: '28px 22px', marginBottom: 20 }}>
-                <p style={{ fontSize: 19, fontWeight: 700, color: '#FFFFFF', marginBottom: 16, lineHeight: 1.5 }}>혹시, 이런 순간 없으셨어요?</p>
+              <div style={{ background: '#FFFFFF', border: '1.5px solid #DEDFE5', borderRadius: 16, padding: '28px 22px', marginBottom: 20 }}>
+                <p style={{ fontSize: 19, fontWeight: 700, color: '#24232B', marginBottom: 16, lineHeight: 1.5 }}>혹시, 이런 순간 없으셨어요?</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <span style={{ fontSize: 14, color: '#C9A84C', marginTop: 2, flexShrink: 0 }}>•</span>
-                    <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>돈이 언제쯤 풀릴지 막막할 때</span>
+                    <span style={{ fontSize: 14, color: '#633B50', marginTop: 2, flexShrink: 0 }}>•</span>
+                    <span style={{ fontSize: 16, color: '#24232B', lineHeight: 1.6 }}>돈이 언제쯤 풀릴지 막막할 때</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <span style={{ fontSize: 14, color: '#C9A84C', marginTop: 2, flexShrink: 0 }}>•</span>
-                    <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>이 선택이 맞는지 흔들릴 때</span>
+                    <span style={{ fontSize: 14, color: '#633B50', marginTop: 2, flexShrink: 0 }}>•</span>
+                    <span style={{ fontSize: 16, color: '#24232B', lineHeight: 1.6 }}>이 선택이 맞는지 흔들릴 때</span>
                   </div>
                 </div>
               </div>
@@ -1273,12 +1288,12 @@ if (scoreMatch) {
               {(() => {
                 const _teaser = MONEY_TEASER_VARIANTS[getMoneyTeaserVariant(baseText)]
                 return (
-                  <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px 18px', marginBottom: 20, overflow: 'hidden' }}>
-                    <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{_teaser.visible}</div>
+                  <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px 18px', marginBottom: 20, overflow: 'hidden' }}>
+                    <div style={{ fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{_teaser.visible}</div>
                     <div style={{ position: 'relative' }}>
-                      <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>{_teaser.blurred}</div>
-                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(13,27,62,0) 0%, rgba(13,27,62,0.7) 30%, rgba(13,27,62,0.95) 70%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(201,168,76,0.8)', textAlign: 'center', lineHeight: 1.6, padding: '0 20px' }}>여기서부터는 더 자세히 봐드려야 해요</p>
+                      <div style={{ fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>{_teaser.blurred}</div>
+                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 30%, rgba(255,255,255,0.95) 70%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <p style={{ fontSize: 15, fontWeight: 600, color: '#633B50', textAlign: 'center', lineHeight: 1.6, padding: '0 20px' }}>여기서부터는 더 자세히 봐드려야 해요</p>
                       </div>
                     </div>
                   </div>
@@ -1286,8 +1301,8 @@ if (scoreMatch) {
               })()}
 
               {/* 받는 것 리스트 */}
-              <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 16, padding: '22px 20px', marginBottom: 20 }}>
-                <p style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', marginBottom: 16 }}>9,900원 결제하면 이렇게 받아요</p>
+              <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '22px 20px', marginBottom: 20 }}>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#24232B', marginBottom: 16 }}>9,900원 결제하면 이렇게 받아요</p>
                 {[
                   '재물·커리어 심층 분석',
                   '대운 흐름 + 전환점 정확한 연도',
@@ -1297,8 +1312,8 @@ if (scoreMatch) {
                   '절대 하면 안 되는 결정 1가지',
                 ].map((t, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < 5 ? 12 : 0 }}>
-                    <span style={{ fontSize: 14, color: '#C9A84C', marginTop: 1, flexShrink: 0 }}>✓</span>
-                    <span style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{t}</span>
+                    <span style={{ fontSize: 14, color: '#633B50', marginTop: 1, flexShrink: 0 }}>✓</span>
+                    <span style={{ fontSize: 15, color: '#24232B', lineHeight: 1.5 }}>{t}</span>
                   </div>
                 ))}
               </div>
@@ -1310,70 +1325,70 @@ if (scoreMatch) {
                   { icon: '📄', label: 'PDF 저장' },
                   { icon: '♾️', label: '평생 재열람' },
                 ].map(({ icon, label }) => (
-                  <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 10 }}>
+                  <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10 }}>
                     <span style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>{icon}</span>
-                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>{label}</span>
+                    <span style={{ fontSize: 12, color: '#62616C', fontWeight: 500 }}>{label}</span>
                   </div>
                 ))}
               </div>
 
               {/* 결제 버튼 */}
-              <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: '0 4px 20px rgba(201,168,76,0.3)', marginBottom: 8 }}
+              <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: 'none', marginBottom: 8 }}
                 onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); const _deepParams = new URLSearchParams({ payment: 'deep', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_deepParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 9900, currency: 'KRW' }); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>지금 심화분석 확인하기 →</button>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginBottom: 20 }}>결제 즉시 분석이 시작돼요</p>
+              <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center', marginBottom: 20 }}>결제 즉시 분석이 시작돼요</p>
 
-              <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }} onClick={handleRestart}>← 처음으로</button>
+              <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C' }} onClick={handleRestart}>← 처음으로</button>
             </>
           )}
 
           {/* ── 실제 결과 모드 (결제 후) ── */}
 
           {isDeepStreaming && !deepText && (
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>
+            <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>🔮 심화 분석 중이에요...</span>
+                {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#633B50', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
+                <span style={{ fontSize: 14, color: '#62616C', marginLeft: 8 }}>🔮 심화 분석 중이에요...</span>
               </div>
             </div>
           )}
           {isDeepStreaming && deepText && (
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(deepText)}<span style={{ opacity: 0.4 }}>▌</span></div>
+            <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(deepText)}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
           {!isDeepStreaming && (() => {
             const filtered = deepSections.filter(sec => sec.title !== '분석 결과' && !sec.title.includes('운의계절') && sec.content?.trim())
             if (filtered.length > 0) return filtered.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} forceOpen={pdfCapturing} />)
-            if (isDeepPaid && deepText.trim()) return <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(deepText)}</div>
+            if (isDeepPaid && deepText.trim()) return <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(deepText)}</div>
             return null
           })()}
 
           {/* 나의 운의 계절 타임라인 */}
           {!isDeepStreaming && seasonData && (
-            <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '28px 20px', marginTop: 20, marginBottom: 20 }}>
+            <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '28px 20px', marginTop: 20, marginBottom: 20 }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 8 }}>CAREER SEASON</p>
-                <p style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF' }}>나의 운의 계절</p>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>사주와 수비학 기반 오행 커리어 흐름</p>
+                <p style={{ fontSize: 11, color: '#633B50', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 8 }}>CAREER SEASON</p>
+                <p style={{ fontSize: 20, fontWeight: 800, color: '#24232B' }}>나의 운의 계절</p>
+                <p style={{ fontSize: 13, color: '#62616C', marginTop: 6 }}>사주와 수비학 기반 오행 커리어 흐름</p>
               </div>
 
               {seasonData.yearsToEarth > 0 && (
-                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 12 }}>
-                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>커리어/재물 정점까지</p>
+                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12 }}>
+                  <p style={{ fontSize: 14, color: '#62616C', marginBottom: 4 }}>커리어/재물 정점까지</p>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-                    <span style={{ fontSize: 40, fontWeight: 900, color: '#C9A84C', lineHeight: 1 }}>{seasonData.yearsToEarth}</span>
-                    <span style={{ fontSize: 16, fontWeight: 600, color: 'rgba(201,168,76,0.7)' }}>년 남았어요</span>
+                    <span style={{ fontSize: 40, fontWeight: 900, color: '#633B50', lineHeight: 1 }}>{seasonData.yearsToEarth}</span>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: '#633B50' }}>년 남았어요</span>
                   </div>
                 </div>
               )}
               {seasonData.yearsToEarth === 0 && seasonData.current === 'earth' && (
-                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12 }}>
-                  <p style={{ fontSize: 16, fontWeight: 800, color: '#C9A84C' }}>지금이 전성기입니다</p>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>커리어와 재물의 정점을 지나고 있어요</p>
+                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12 }}>
+                  <p style={{ fontSize: 16, fontWeight: 800, color: '#633B50' }}>지금이 전성기입니다</p>
+                  <p style={{ fontSize: 13, color: '#62616C', marginTop: 4 }}>커리어와 재물의 정점을 지나고 있어요</p>
                 </div>
               )}
 
               <div style={{ position: 'relative', paddingLeft: 28 }}>
                 {/* 타임라인 세로 선 */}
-                <div style={{ position: 'absolute', left: 11, top: 24, bottom: 24, width: 2, background: 'rgba(201,168,76,0.15)' }} />
+                <div style={{ position: 'absolute', left: 11, top: 24, bottom: 24, width: 2, background: '#F6F0F3' }} />
 
                 {seasonPhases.map((phase, idx) => {
                   const data = seasonData[phase.key]
@@ -1387,41 +1402,40 @@ if (scoreMatch) {
                         position: 'absolute', left: -22, top: 20,
                         width: isCurrent ? 18 : 12, height: isCurrent ? 18 : 12,
                         borderRadius: '50%',
-                        background: isCurrent ? phase.color : isPast ? 'rgba(255,255,255,0.15)' : '#0D1B3E',
-                        border: `2px solid ${isCurrent ? phase.color : isPast ? 'rgba(255,255,255,0.2)' : phase.borderColor}`,
+                        background: isCurrent ? phase.color : isPast ? '#FFFFFF' : '#FFFFFF',
+                        border: `2px solid ${isCurrent ? phase.color : isPast ? '#DEDFE5' : phase.borderColor}`,
                         marginLeft: isCurrent ? -3 : 0, marginTop: isCurrent ? -3 : 0,
                         boxShadow: isCurrent ? `0 0 12px ${phase.color}60` : 'none',
                         zIndex: 1,
                       }} />
 
                       <div style={{
-                        background: isCurrent ? phase.bgColor : 'rgba(255,255,255,0.02)',
-                        border: `${isCurrent ? 2 : 1}px solid ${isCurrent ? phase.color + '80' : 'rgba(255,255,255,0.06)'}`,
+                        background: isCurrent ? phase.bgColor : isPast ? '#F4F5F7' : '#FFFFFF',
+                        border: `${isCurrent ? 2 : 1}px solid ${isCurrent ? phase.color + '80' : '#DEDFE5'}`,
                         borderRadius: 14,
                         padding: '18px 16px',
-                        opacity: isPast ? 0.5 : 1,
                         transition: 'all 0.3s ease',
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span style={{ fontSize: 28, fontWeight: 900, color: isCurrent ? phase.color : 'rgba(255,255,255,0.3)', fontFamily: 'Georgia, serif' }}>{phase.icon}</span>
+                            <span style={{ fontSize: 28, fontWeight: 900, color: isCurrent ? phase.color : '#62616C', fontFamily: 'Georgia, serif' }}>{phase.icon}</span>
                             <div>
-                              <p style={{ fontSize: 15, fontWeight: 700, color: isCurrent ? '#FFFFFF' : 'rgba(255,255,255,0.6)' }}>{data.label?.split(' · ')[1] || data.label}</p>
-                              <p style={{ fontSize: 12, color: isCurrent ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.25)', marginTop: 2 }}>{data.desc}</p>
+                              <p style={{ fontSize: 15, fontWeight: 700, color: isCurrent ? '#24232B' : '#62616C' }}>{data.label?.split(' · ')[1] || data.label}</p>
+                              <p style={{ fontSize: 12, color: isCurrent ? '#62616C' : '#62616C', marginTop: 2 }}>{data.desc}</p>
                             </div>
                           </div>
                           {isCurrent && (
-                            <span style={{ fontSize: 10, fontWeight: 700, color: phase.color, background: phase.color + '20', padding: '3px 8px', borderRadius: 10, border: `1px solid ${phase.color}40` }}>NOW</span>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: '#FFFFFF', background: phase.color, padding: '3px 8px', borderRadius: 10, border: `1px solid ${phase.color}` }}>NOW</span>
                           )}
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-                          <span style={{ fontSize: 12, color: isCurrent ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.2)' }}>{data.start}년 ~ {data.end}년</span>
+                          <span style={{ fontSize: 12, color: isCurrent ? '#62616C' : '#62616C' }}>{data.start}년 ~ {data.end}년</span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 60, height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${data.score}%`, background: isCurrent ? phase.color : 'rgba(255,255,255,0.2)', borderRadius: 99, transition: 'width 1s ease' }} />
+                            <div style={{ width: 60, height: 6, background: '#DEDFE5', borderRadius: 99, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${data.score}%`, background: isCurrent ? phase.color : '#8A8994', borderRadius: 99, transition: 'width 1s ease' }} />
                             </div>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: isCurrent ? phase.color : 'rgba(255,255,255,0.3)' }}>{data.score}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: isCurrent ? phase.color : '#62616C' }}>{data.score}</span>
                           </div>
                         </div>
                       </div>
@@ -1435,18 +1449,18 @@ if (scoreMatch) {
           {isDeepPaid && (
             <div data-pdf-exclude="true">
               {!deepEmailSent ? (
-                <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px', marginBottom: 16 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>📧 이메일로 결과 받기</p>
+                <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px', marginBottom: 16 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>📧 이메일로 결과 받기</p>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid rgba(201,168,76,0.2)', borderRadius: 8, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={deepEmailInput} onChange={e => setDeepEmailInput(e.target.value)} />
-                    <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={sendDeepEmail}>발송</button>
+                    <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid #DEDFE5', borderRadius: 8, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={deepEmailInput} onChange={e => setDeepEmailInput(e.target.value)} />
+                    <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={sendDeepEmail}>발송</button>
                   </div>
                 </div>
               ) : (
-                <p style={{ textAlign: 'center', fontSize: 13, color: '#C9A84C', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>
+                <p style={{ textAlign: 'center', fontSize: 13, color: '#633B50', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>
               )}
-              <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await exportResultPDF('deep-result-content', '마이사주_심화분석_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 심화 분석 저장하기 (PDF)</button>
-              <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
+              <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50', marginBottom: 10 }} onClick={async () => { try { await exportResultPDF('deep-result-content', '마이사주_심화분석_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 심화 분석 저장하기 (PDF)</button>
+              <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
             </div>
           )}
         </div>
@@ -1461,22 +1475,22 @@ if (scoreMatch) {
     const [selDay, setSelDay] = useState(null)
     const cur = months[selMonth]
     return (
-      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)' }}>
-          <div style={{ fontSize: 36 }}>吉</div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginTop: 8 }}>{gilil목적} 길일 추천</h1>
+      <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: '#FFFFFF' }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#24232B', marginTop: 8 }}>{gilil목적} 길일 추천</h1>
         </div>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 100px', width: '100%', boxSizing: 'border-box' }}>
-          {isGililStreaming && <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>🔍 길일을 찾고 있어요...</div>}
+          {isGililStreaming && <div style={{ textAlign: 'center', padding: '60px 0', color: '#62616C', fontSize: 14 }}>🔍 길일을 찾고 있어요...</div>}
           {!isGililStreaming && gililData && (
             <>
               <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '16px 0 12px', scrollbarWidth: 'none' }}>
-                {months.map((m, i) => <button key={i} onClick={() => { setSelMonth(i); setSelDay(null) }} style={{ flexShrink: 0, padding: '5px 14px', borderRadius: 20, fontSize: 12, border: '0.5px solid', cursor: 'pointer', borderColor: selMonth === i ? '#C9A94E' : 'rgba(255,255,255,0.2)', background: selMonth === i ? '#C9A94E' : 'transparent', color: selMonth === i ? '#0D1B3E' : 'rgba(255,255,255,0.5)', fontWeight: selMonth === i ? 700 : 400 }}>{m.month}월</button>)}
+                {months.map((m, i) => <button key={i} aria-pressed={selMonth === i} onClick={() => { setSelMonth(i); setSelDay(null) }} style={{ flexShrink: 0, padding: '5px 14px', borderRadius: 20, fontSize: 12, border: '1px solid', cursor: 'pointer', borderColor: selMonth === i ? '#633B50' : '#DEDFE5', background: selMonth === i ? '#F6F0F3' : '#FFFFFF', color: selMonth === i ? '#633B50' : '#62616C', fontWeight: selMonth === i ? 700 : 400 }}>{selMonth === i ? '✓ ' : ''}{m.month}월</button>)}
               </div>
               {cur && (
-                <div style={{ background: 'rgba(255,255,255,0.04)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '14px 12px' }}>
+                <div style={{ background: '#FFFFFF', border: '0.5px solid #DEDFE5', borderRadius: 12, padding: '14px 12px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: 8 }}>
-                    {['일','월','화','수','목','금','토'].map((d, i) => <div key={d} style={{ fontSize: 11, padding: '2px 0', color: i === 0 ? 'rgba(220,80,80,0.6)' : 'rgba(255,255,255,0.35)' }}>{d}</div>)}
+                    {['일','월','화','수','목','금','토'].map((d, i) => <div key={d} style={{ fontSize: 11, padding: '2px 0', color: i === 0 ? '#C53A3A' : '#62616C' }}>{d}</div>)}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
                     {(() => {
@@ -1487,15 +1501,15 @@ if (scoreMatch) {
                       for (let i = 0; i < startDay; i++) cells.push(<div key={`e${i}`} />)
                       for (let d = 1; d <= daysInMonth; d++) {
                         const isGilil = !!gililMap[d], isSun = (startDay + d - 1) % 7 === 0, isSelected = selDay === d
-                        cells.push(<div key={d} onClick={() => isGilil && setSelDay(isSelected ? null : d)} style={{ aspectRatio: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontSize: 12, borderRadius: 8, cursor: isGilil ? 'pointer' : 'default', background: isGilil ? 'rgba(201,169,78,0.18)' : 'transparent', border: isSelected ? '1.5px solid #C9A94E' : isGilil ? '0.5px solid rgba(201,169,78,0.5)' : 'none', color: isGilil ? (isSun ? '#f4a0a0' : '#f0d080') : (isSun ? 'rgba(220,80,80,0.5)' : 'rgba(255,255,255,0.55)'), fontWeight: isGilil ? 600 : 400 }}>
-                          {d}{isGilil && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#C9A94E', marginTop: 2 }} />}
+                        cells.push(<div key={d} onClick={() => isGilil && setSelDay(isSelected ? null : d)} style={{ aspectRatio: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontSize: 12, borderRadius: 8, cursor: isGilil ? 'pointer' : 'default', background: isGilil ? '#F6F0F3' : 'transparent', border: isSelected ? '1.5px solid #633B50' : isGilil ? '0.5px solid #633B50' : 'none', color: isGilil ? (isSun ? '#C53A3A' : '#633B50') : (isSun ? '#C53A3A' : '#62616C'), fontWeight: isGilil ? 600 : 400 }}>
+                          {d}{isGilil && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#633B50', marginTop: 2 }} />}
                         </div>)
                       }
                       return cells
                     })()}
                   </div>
                   {selDay && cur.days.find(d => d.date === selDay) && (
-                    <div style={{ background: 'rgba(201,169,78,0.12)', border: '0.5px solid rgba(201,169,78,0.4)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#f0d080', lineHeight: 1.6, marginTop: 10 }}>
+                    <div style={{ background: '#F6F0F3', border: '0.5px solid #DEDFE5', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#633B50', lineHeight: 1.6, marginTop: 10 }}>
                       {cur.month}월 {selDay}일 — {cur.days.find(d => d.date === selDay).comment}
                     </div>
                   )}
@@ -1504,8 +1518,8 @@ if (scoreMatch) {
             </>
           )}
         </div>
-        <div style={{ position: 'fixed', bottom: 0, width: '100%', background: '#050D1F', borderTop: '1px solid rgba(201,169,78,0.15)', padding: '12px 20px' }}>
-          <button onClick={handleRestart} style={{ width: '100%', padding: '14px', borderRadius: 10, border: '1px solid rgba(201,169,78,0.3)', background: 'transparent', color: 'rgba(255,255,255,0.6)', fontSize: 14, cursor: 'pointer' }}>처음으로 돌아가기</button>
+        <div style={{ position: 'fixed', bottom: 0, width: '100%', background: '#F4F5F7', borderTop: '1px solid #DEDFE5', padding: '12px 20px' }}>
+          <button onClick={handleRestart} style={{ width: '100%', padding: '14px', borderRadius: 10, border: '1px solid #DEDFE5', background: 'transparent', color: '#62616C', fontSize: 14, cursor: 'pointer' }}>처음으로 돌아가기</button>
         </div>
       </div>
     )
@@ -1522,46 +1536,46 @@ if (scoreMatch) {
 
     const TimeSelector = ({ ampm, setAmpm, hour, setHour, min, setMin, unknown, setUnknown }) => (
       <>
-        <button style={{ width: '100%', padding: '13px 16px', border: `1px solid ${unknown ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: unknown ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: unknown ? '#C9A84C' : 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: unknown ? 600 : 400, cursor: 'pointer', textAlign: 'center', marginBottom: 16 }} onClick={() => { setUnknown(true); setHour(''); setMin('') }}>✓ 태어난 시간 모름</button>
+        <button aria-pressed={unknown} style={{ position: 'relative', width: '100%', padding: '13px 16px', border: `1px solid ${unknown ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: unknown ? '#F6F0F3' : '#FFFFFF', color: unknown ? '#633B50' : '#62616C', fontSize: 14, fontWeight: unknown ? 600 : 400, cursor: 'pointer', textAlign: 'center', marginBottom: 16 }} onClick={() => { setUnknown(true); setHour(''); setMin('') }}><CheckMark on={unknown} />✓ 태어난 시간 모름</button>
         {!unknown && (
           <>
-            <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8 }}>오전 / 오후</p>
+            <p style={{ fontSize: 12, fontWeight: 600, color: '#633B50', marginBottom: 8 }}>오전 / 오후</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
-              {['오전','오후'].map(ap => <button key={ap} style={{ padding: '14px', fontSize: 15, fontWeight: ampm === ap ? 700 : 400, border: `2px solid ${ampm === ap ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: ampm === ap ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: ampm === ap ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }} onClick={() => setAmpm(ap)}>{ap === '오전' ? '🌅' : '🌇'} {ap}</button>)}
+              {['오전','오후'].map(ap => <button key={ap} aria-pressed={ampm === ap} style={{ position: 'relative', padding: '14px', fontSize: 15, fontWeight: ampm === ap ? 700 : 400, border: `2px solid ${ampm === ap ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: ampm === ap ? '#F6F0F3' : '#FFFFFF', color: ampm === ap ? '#633B50' : '#62616C', cursor: 'pointer' }} onClick={() => setAmpm(ap)}><CheckMark on={ampm === ap} />{ap === '오전' ? '🌅' : '🌇'} {ap}</button>)}
             </div>
-            <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8 }}>시 선택</p>
+            <p style={{ fontSize: 12, fontWeight: 600, color: '#633B50', marginBottom: 8 }}>시 선택</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
-              {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => <button key={h} style={{ padding: '12px 4px', fontSize: 14, fontWeight: hour === String(h) ? 700 : 400, border: `1px solid ${hour === String(h) ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 10, background: hour === String(h) ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: hour === String(h) ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', textAlign: 'center' }} onClick={() => setHour(String(h))}>{h}시</button>)}
+              {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => <button key={h} aria-pressed={hour === String(h)} style={{ position: 'relative', padding: '12px 4px', fontSize: 14, fontWeight: hour === String(h) ? 700 : 400, border: `1px solid ${hour === String(h) ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: hour === String(h) ? '#F6F0F3' : '#FFFFFF', color: hour === String(h) ? '#633B50' : '#62616C', cursor: 'pointer', textAlign: 'center' }} onClick={() => setHour(String(h))}><CheckMark on={hour === String(h)} />{h}시</button>)}
             </div>
-            <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8 }}>분 선택</p>
+            <p style={{ fontSize: 12, fontWeight: 600, color: '#633B50', marginBottom: 8 }}>분 선택</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
-              {['00','10','20','30','40','50'].map(m => <button key={m} style={{ padding: '12px 4px', fontSize: 14, fontWeight: min === m ? 700 : 400, border: `1px solid ${min === m ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 10, background: min === m ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: min === m ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer', textAlign: 'center' }} onClick={() => setMin(m)}>{m}분</button>)}
+              {['00','10','20','30','40','50'].map(m => <button key={m} aria-pressed={min === m} style={{ position: 'relative', padding: '12px 4px', fontSize: 14, fontWeight: min === m ? 700 : 400, border: `1px solid ${min === m ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: min === m ? '#F6F0F3' : '#FFFFFF', color: min === m ? '#633B50' : '#62616C', cursor: 'pointer', textAlign: 'center' }} onClick={() => setMin(m)}><CheckMark on={min === m} />{m}분</button>)}
             </div>
-            {hour && min && <p style={{ fontSize: 13, color: '#C9A84C', textAlign: 'center', marginBottom: 8, fontWeight: 600 }}>✓ {ampm} {hour}시 {min}분</p>}
+            {hour && min && <p style={{ fontSize: 13, color: '#633B50', textAlign: 'center', marginBottom: 8, fontWeight: 600 }}>✓ {ampm} {hour}시 {min}분</p>}
           </>
         )}
-        {unknown && <button style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', textDecoration: 'underline', display: 'block' }} onClick={() => setUnknown(false)}>시간 직접 선택하기</button>}
+        {unknown && <button style={{ fontSize: 13, color: '#62616C', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', textDecoration: 'underline', display: 'block' }} onClick={() => setUnknown(false)}>시간 직접 선택하기</button>}
       </>
     )
 
         return (
-      <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
-          <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10 }}>合</div>
-          <h1 style={{ wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>궁합 분석</h1>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>{isStep0 ? '어떤 관계를 분석할까요?' : isStep1 ? '먼저 내 정보를 입력해주세요' : '이제 상대방 정보를 입력해주세요'}</p>
+      <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: '#FFFFFF', borderBottom: '1px solid #DEDFE5' }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
+          <h1 style={{ wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>궁합 분석</h1>
+          <p style={{ fontSize: 12, color: '#62616C' }}>{isStep0 ? '어떤 관계를 분석할까요?' : isStep1 ? '먼저 내 정보를 입력해주세요' : '이제 상대방 정보를 입력해주세요'}</p>
         </div>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' }}>
-          <div style={{ height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 99, margin: '14px 0 0', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: isStep0 ? '33%' : isStep1 ? '66%' : '100%', background: '#C9A84C', borderRadius: 99, transition: 'width 0.35s ease' }} />
+          <div style={{ height: 2, background: '#FFFFFF', borderRadius: 99, margin: '14px 0 0', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: isStep0 ? '33%' : isStep1 ? '66%' : '100%', background: '#633B50', borderRadius: 99, transition: 'width 0.35s ease' }} />
           </div>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textAlign: 'right', marginTop: 4, marginBottom: 8 }}>{isStep0 ? '1' : isStep1 ? '2' : '3'} / 3</p>
+          <p style={{ fontSize: 11, color: '#62616C', textAlign: 'right', marginTop: 4, marginBottom: 8 }}>{isStep0 ? '1' : isStep1 ? '2' : '3'} / 3</p>
         </div>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
           {isStep0 && (
             <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>어떤 관계인가요?</h2>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 24 }}>관계에 맞는 분석을 해드려요</p>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>어떤 관계인가요?</h2>
+              <p style={{ fontSize: 13, color: '#62616C', marginBottom: 24 }}>관계에 맞는 분석을 해드려요</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {[
                   { value: '직장상사', emoji: '👔', label: '직장 상사', sub: '왜 이 상사가 나를 힘들게 하는지' },
@@ -1571,12 +1585,12 @@ if (scoreMatch) {
                   { value: '연인', emoji: '💕', label: '연인 / 부부', sub: '우리 잘 맞는지 사주로 확인' },
                 ].map(({ value, emoji, label, sub }) => (
                   <button key={value}
-                    style={{ padding: '18px 20px', border: `2px solid ${관계유형 === value ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: 관계유형 === value ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.15s' }}
-                    onClick={() => set관계유형(value)}>
+                    aria-pressed={관계유형 === value} style={{ position: 'relative', padding: '18px 20px', border: `2px solid ${관계유형 === value ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: 관계유형 === value ? '#F6F0F3' : '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.15s' }}
+                    onClick={() => set관계유형(value)}><CheckMark on={관계유형 === value} />
                     <span style={{ fontSize: 28 }}>{emoji}</span>
                     <div style={{ textAlign: 'left' }}>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: 관계유형 === value ? '#C9A84C' : '#FFFFFF' }}>{label}</div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{sub}</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 관계유형 === value ? '#633B50' : '#24232B' }}>{label}</div>
+                      <div style={{ fontSize: 12, color: '#62616C', marginTop: 2 }}>{sub}</div>
                     </div>
                   </button>
                 ))}
@@ -1585,43 +1599,43 @@ if (scoreMatch) {
           )}
           {isStep1 && (
             <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>나의 정보</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>나의 정보</h2>
               <div style={{ marginBottom: 16 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8 }}>이름 (선택)</p>
-                <input style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box', outline: 'none' }} type="text" placeholder="내 이름을 입력해주세요" value={myName} onChange={e => setMyName(e.target.value)} />
+                <p style={{ fontSize: 12, fontWeight: 600, color: '#633B50', marginBottom: 8 }}>이름 (선택)</p>
+                <input style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box' }} type="text" placeholder="내 이름을 입력해주세요" value={myName} onChange={e => setMyName(e.target.value)} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                {['여성','남성'].map(g => <button key={g} style={{ padding: '28px 16px', border: `2px solid ${gender === g ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: gender === g ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', fontSize: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }} onClick={() => setGender(g)}><span>{g === '여성' ? '♀️' : '♂️'}</span><span style={{ fontSize: 14, fontWeight: 600, color: gender === g ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>{g}</span></button>)}
+                {['여성','남성'].map(g => <button key={g} aria-pressed={gender === g} style={{ position: 'relative', padding: '22px 16px', border: `2px solid ${gender === g ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: gender === g ? '#F6F0F3' : '#FFFFFF', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }} onClick={() => setGender(g)}><CheckMark on={gender === g} /><span style={{ fontSize: 16, fontWeight: 600, color: gender === g ? '#633B50' : '#24232B' }}>{g}</span></button>)}
               </div>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 12 }}>내 생년월일 · 시간</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 12 }}>내 생년월일 · 시간</h2>
               <DateRow year={birthYear} setYear={setBirthYear} month={birthMonth} setMonth={setBirthMonth} day={birthDay} setDay={setBirthDay} lunar={isLunar} setLunar={setIsLunar} />
               <TimeSelector ampm={timeAmPm} setAmpm={setTimeAmPm} hour={timeHour} setHour={setTimeHour} min={timeMin} setMin={setTimeMin} unknown={timeUnknown} setUnknown={setTimeUnknown} />
             </>
           )}
           {!isStep0 && !isStep1 && (
             <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 6 }}>상대방 정보</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>상대방 정보</h2>
               <div style={{ marginBottom: 16 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 8 }}>상대방 이름 (선택)</p>
-                <input style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box', outline: 'none' }} type="text" placeholder="상대방 이름을 입력해주세요" value={partnerName} onChange={e => setPartnerName(e.target.value)} />
+                <p style={{ fontSize: 12, fontWeight: 600, color: '#633B50', marginBottom: 8 }}>상대방 이름 (선택)</p>
+                <input style={{ width: '100%', fontSize: 15, padding: '14px 16px', border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box' }} type="text" placeholder="상대방 이름을 입력해주세요" value={partnerName} onChange={e => setPartnerName(e.target.value)} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                {['여성','남성'].map(g => <button key={g} style={{ padding: '28px 16px', border: `2px solid ${partnerGender === g ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 10, background: partnerGender === g ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', fontSize: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }} onClick={() => setPartnerGender(g)}><span>{g === '여성' ? '♀️' : '♂️'}</span><span style={{ fontSize: 14, fontWeight: 600, color: partnerGender === g ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>{g}</span></button>)}
+                {['여성','남성'].map(g => <button key={g} aria-pressed={partnerGender === g} style={{ position: 'relative', padding: '22px 16px', border: `2px solid ${partnerGender === g ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: partnerGender === g ? '#F6F0F3' : '#FFFFFF', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }} onClick={() => setPartnerGender(g)}><CheckMark on={partnerGender === g} /><span style={{ fontSize: 16, fontWeight: 600, color: partnerGender === g ? '#633B50' : '#24232B' }}>{g}</span></button>)}
               </div>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginBottom: 12 }}>상대방 생년월일 · 시간</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 12 }}>상대방 생년월일 · 시간</h2>
               <DateRow year={partnerBirthYear} setYear={setPartnerBirthYear} month={partnerBirthMonth} setMonth={setPartnerBirthMonth} day={partnerBirthDay} setDay={setPartnerBirthDay} lunar={partnerIsLunar} setLunar={setPartnerIsLunar} />
               <TimeSelector ampm={partnerTimeAmPm} setAmpm={setPartnerTimeAmPm} hour={partnerTimeHour} setHour={setPartnerTimeHour} min={partnerTimeMin} setMin={setPartnerTimeMin} unknown={partnerTimeUnknown} setUnknown={setPartnerTimeUnknown} />
             </>
           )}
        {!isStep0 && !isStep1 && (
-            <div style={{ marginTop: 32, background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', border: '1px solid rgba(155,29,58,0.4)', borderRadius: 16, padding: '24px 20px', marginBottom: 8 }}>
-              <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 14, textAlign: 'center' }}>✦ 결제하면 이런 내용을 확인할 수 있어요</p>
+            <div style={{ marginTop: 32, background: '#FFFFFF', border: '1px solid rgba(155,29,58,0.4)', borderRadius: 16, padding: '24px 20px', marginBottom: 8 }}>
+              <p style={{ fontSize: 11, color: '#633B50', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 14, textAlign: 'center' }}>✦ 결제하면 이런 내용을 확인할 수 있어요</p>
               <GunghabRadarChart blurred categories={[
-                { label: '성격', score: 78, color: '#D4537E' },
-                { label: '재물', score: 65, color: '#7F77DD' },
-                { label: '결혼', score: 82, color: '#1D9E75' },
-                { label: '미래', score: 70, color: '#BA7517' },
-                { label: '총합', score: 74, color: '#C9A84C' },
+                { label: '성격', score: 78, color: '#B83A66' },
+                { label: '재물', score: 65, color: '#5B52C7' },
+                { label: '결혼', score: 82, color: '#137A5A' },
+                { label: '미래', score: 70, color: '#9A5F0F' },
+                { label: '총합', score: 74, color: '#633B50' },
               ]} />
               {(() => {
                 const isLover = 관계유형 === '연인'
@@ -1650,26 +1664,26 @@ if (scoreMatch) {
                 const hiddenBlur = cut > 0 ? blurredText.slice(cut).trim() : blurredText
                 return (
                   <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(155,29,58,0.06)', borderRadius: 10, border: '1px solid rgba(155,29,58,0.2)' }}>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>✦ {item.title}</p>
                     <div style={{ fontSize: 16, lineHeight: 2.0, wordBreak: 'keep-all' }}>
-                      {item.preview && <span style={{ color: 'rgba(255,255,255,0.75)' }}>{item.preview} </span>}
-                      {visibleBlur && <span style={{ color: 'rgba(255,255,255,0.75)' }}>{visibleBlur} </span>}
-                      {hiddenBlur && <span style={{ color: 'rgba(255,255,255,0.6)', filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{hiddenBlur}</span>}
+                      {item.preview && <span style={{ color: '#24232B' }}>{item.preview} </span>}
+                      {visibleBlur && <span style={{ color: '#24232B' }}>{visibleBlur} </span>}
+                      {hiddenBlur && <span style={{ color: '#62616C', filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{hiddenBlur}</span>}
                     </div>
                   </div>
                 )
               })}
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 12 }}>{관계유형 === '친구' ? '두 사람의 우정이 어디까지 가는지 전부 나와요 👇' : 관계유형 === '연인' ? '이 사람과 돈·미래·궁합이 맞는 구조인지 사주에서 확인하세요 👇' : 관계유형 === '직장상사' ? '이 상사와 잘 지내는 법, 사주에서 확인하세요 👇' : 관계유형 === '가족' ? '이 가족과의 관계, 사주에서 확인하세요 👇' : 관계유형 === '직장동료' ? '이 사람과 잘 지내는 법, 사주에서 확인하세요 👇' : '두 사람의 결혼·돈·미래 궁합까지 전부 나와요 👇'}</p>
+              <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center', marginTop: 12 }}>{관계유형 === '친구' ? '두 사람의 우정이 어디까지 가는지 전부 나와요 👇' : 관계유형 === '연인' ? '이 사람과 돈·미래·궁합이 맞는 구조인지 사주에서 확인하세요 👇' : 관계유형 === '직장상사' ? '이 상사와 잘 지내는 법, 사주에서 확인하세요 👇' : 관계유형 === '가족' ? '이 가족과의 관계, 사주에서 확인하세요 👇' : 관계유형 === '직장동료' ? '이 사람과 잘 지내는 법, 사주에서 확인하세요 👇' : '두 사람의 결혼·돈·미래 궁합까지 전부 나와요 👇'}</p>
             </div>
           )}
         </div>
-        <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
-          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 10, background: 'rgba(255,255,255,0.03)', fontSize: 15, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }} onClick={() => {
+        <div style={{ position: 'fixed', bottom: 0, background: '#F4F5F7', borderTop: '1px solid #DEDFE5', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+          <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', fontSize: 15, cursor: 'pointer', color: '#62616C' }} onClick={() => {
   if (isStep0) setScreen('landing')
   else if (isStep1) setGunghabStep(0)
   else setGunghabStep(1)
 }}>←</button>
-          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: (isStep0 ? false : isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(201,168,76,0.2)' : '#C9A84C', color: (isStep0 ? false : isStep1 ? !canStep1Next : !canStep2Next) ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 10, cursor: (isStep0 ? false : isStep1 ? !canStep1Next : !canStep2Next) ? 'not-allowed' : 'pointer' }}
+          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: (isStep0 ? false : isStep1 ? !canStep1Next : !canStep2Next) ? '#E4E5EA' : '#633B50', color: (isStep0 ? false : isStep1 ? !canStep1Next : !canStep2Next) ? '#62616C' : '#FFFFFF', border: 'none', borderRadius: 10, cursor: (isStep0 ? false : isStep1 ? !canStep1Next : !canStep2Next) ? 'not-allowed' : 'pointer' }}
             disabled={isStep0 ? !관계유형 : isStep1 ? !canStep1Next : !canStep2Next}
            onClick={() => {
   if (isStep0) { setGunghabStep(1); return }
@@ -1691,24 +1705,23 @@ if (scoreMatch) {
   if (screen === 'result' && serviceType === 'gunghab') {
     const gunghabSections = parseSections(gunghabText)
     return (
-      <div style={{ minHeight: '100vh', background: '#050D1F' }}>
+      <div style={{ minHeight: '100vh', background: '#F4F5F7' }}>
         <div id="gunghab-result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box' }}>
           <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
-            {관계유형 === '연인' && <span style={{ fontSize: 36 }}>💕</span>}
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', marginTop: 8 }}>{관계유형 === '연인' ? '두 사람의 궁합 분석' : '두 사람의 사주 분석'}</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginTop: 8 }}>{관계유형 === '연인' ? '두 사람의 궁합 분석' : '두 사람의 사주 분석'}</h2>
           </div>
           {gunghabSajuData && (
             <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#C9A84C', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 10 }}>💕 두 사람의 사주팔자</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#633B50', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 10 }}>💕 두 사람의 사주팔자</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {[{ label: gunghabSajuData.my.name + '님', data: gunghabSajuData.my }, { label: gunghabSajuData.partner.name + '님', data: gunghabSajuData.partner }].map(({ label, data }) => (
-                  <div key={label} style={{ background: '#1B2A4A', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, padding: '14px 10px' }}>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', textAlign: 'center', marginBottom: 8 }}>{label}</p>
+                  <div key={label} style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 10, padding: '14px 10px' }}>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', textAlign: 'center', marginBottom: 8 }}>{label}</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                       {[{ k: '시주(時)', v: data.시주 }, { k: '일주(日)', v: data.일주 }, { k: '월주(月)', v: data.월주 }, { k: '년주(年)', v: data.년주 }].map(({ k, v }) => (
-                        <div key={k} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.06)', borderRadius: 7, padding: '10px 4px', border: '1px solid rgba(201,168,76,0.15)' }}>
-                          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: 4 }}>{k}</span>
-                          <span style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF' }}>{v}</span>
+                        <div key={k} style={{ textAlign: 'center', background: '#FFFFFF', borderRadius: 7, padding: '10px 4px', border: '1px solid #DEDFE5' }}>
+                          <span style={{ fontSize: 11, color: '#62616C', display: 'block', marginBottom: 4 }}>{k}</span>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: '#24232B' }}>{v}</span>
                         </div>
                       ))}
                     </div>
@@ -1717,17 +1730,17 @@ if (scoreMatch) {
               </div>
             </div>
           )}
-          {isGunghabStreaming && gunghabText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(gunghabText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
-          {isGunghabStreaming && !gunghabText && <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}><div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>{[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}<span style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>💕 두 사람의 궁합을 분석하고 있어요...</span></div></div>}
+          {isGunghabStreaming && gunghabText && <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(gunghabText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
+          {isGunghabStreaming && !gunghabText && <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}><div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>{[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#633B50', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}<span style={{ fontSize: 14, color: '#62616C', marginLeft: 8 }}>💕 두 사람의 궁합을 분석하고 있어요...</span></div></div>}
           {!isGunghabStreaming && gunghabSections.length > 0 && (() => {
             if (gunghabSajuData?.scores) {
               const s = gunghabSajuData.scores
               return <GunghabRadarChart categories={[
-                { label: '성격', score: s.성격, color: '#D4537E' },
-                { label: '재물', score: s.재물, color: '#7F77DD' },
-                { label: '결혼', score: s.결혼, color: '#1D9E75' },
-                { label: '미래', score: s.미래, color: '#BA7517' },
-                { label: '총합', score: s.total, color: '#C9A84C' },
+                { label: '성격', score: s.성격, color: '#B83A66' },
+                { label: '재물', score: s.재물, color: '#5B52C7' },
+                { label: '결혼', score: s.결혼, color: '#137A5A' },
+                { label: '미래', score: s.미래, color: '#9A5F0F' },
+                { label: '총합', score: s.total, color: '#633B50' },
               ]} />
             }
             const totalSec = gunghabSections.find(s => s.title.includes('총평'))
@@ -1739,30 +1752,30 @@ if (scoreMatch) {
             }
             if (!totalScore) return null
             return <GunghabRadarChart categories={[
-              { label: '성격', score: Math.min(95, Math.max(50, totalScore - 5)), color: '#D4537E' },
-              { label: '재물', score: Math.min(95, Math.max(50, totalScore + 3)), color: '#7F77DD' },
-              { label: '결혼', score: Math.min(95, Math.max(50, totalScore - 8)), color: '#1D9E75' },
-              { label: '미래', score: Math.min(95, Math.max(50, totalScore + 6)), color: '#BA7517' },
-              { label: '총합', score: totalScore, color: '#C9A84C' },
+              { label: '성격', score: Math.min(95, Math.max(50, totalScore - 5)), color: '#B83A66' },
+              { label: '재물', score: Math.min(95, Math.max(50, totalScore + 3)), color: '#5B52C7' },
+              { label: '결혼', score: Math.min(95, Math.max(50, totalScore - 8)), color: '#137A5A' },
+              { label: '미래', score: Math.min(95, Math.max(50, totalScore + 6)), color: '#9A5F0F' },
+              { label: '총합', score: totalScore, color: '#633B50' },
             ]} />
           })()}
           {!isGunghabStreaming && gunghabSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={i === 0} forceOpen={pdfCapturing} />)}
           <div data-pdf-exclude="true">
-          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C', marginBottom: 10 }} onClick={async () => { try { await exportResultPDF('gunghab-result-content', '마이사주_궁합분석_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 궁합 분석 저장하기 (PDF)</button>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginTop: 6, lineHeight: 1.6 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요. PC에서 이용해주세요.</p>
-          <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.6)', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
+          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50', marginBottom: 10 }} onClick={async () => { try { await exportResultPDF('gunghab-result-content', '마이사주_궁합분석_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 궁합 분석 저장하기 (PDF)</button>
+          <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center', marginTop: 6, lineHeight: 1.6 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요. PC에서 이용해주세요.</p>
+          <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
           {preEmail ? (
-            <div style={{ marginTop: 20, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, padding: '20px', textAlign: 'center' }}>
+            <div style={{ marginTop: 20, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px', textAlign: 'center' }}>
               <p style={{ fontSize: 20, marginBottom: 6 }}>✅</p>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 4 }}>이메일 발송 완료!</p>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>{preEmail}<br/>로 결과를 보내드렸어요.</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 4 }}>이메일 발송 완료!</p>
+              <p style={{ fontSize: 13, color: '#62616C', lineHeight: 1.7 }}>{preEmail}<br/>로 결과를 보내드렸어요.</p>
             </div>
           ) : (
-            <div style={{ marginTop: 20, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, padding: '20px' }}>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 6 }}>📧 이메일로 결과 받기</p>
+            <div style={{ marginTop: 20, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px' }}>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 6 }}>📧 이메일로 결과 받기</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <input id="gunghab-email-input" type="email" placeholder="이메일 주소 입력" style={{ flex: 1, padding: '10px 14px', fontSize: 13, border: '1px solid rgba(180,160,110,0.4)', borderRadius: 8, background: '#FFFFFF', color: '#1B1B1B', outline: 'none' }} />
-                <button style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                <input id="gunghab-email-input" type="email" placeholder="이메일 주소 입력" style={{ flex: 1, padding: '10px 14px', fontSize: 13, border: '1px solid rgba(180,160,110,0.4)', borderRadius: 8, background: '#FFFFFF', color: '#24232B' }} />
+                <button style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }}
                   onClick={async () => {
                     const email = document.getElementById('gunghab-email-input').value
                     if (!email || !email.includes('@')) { alert('이메일 주소를 확인해주세요.'); return }
@@ -1782,42 +1795,42 @@ if (scoreMatch) {
  // ── 이메일 모달 ──
 if (emailModal) {
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 24 }}>
-      <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.4)', borderRadius: 20, padding: '36px 28px', maxWidth: 380, width: '100%' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(36,35,43,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 24 }}>
+      <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 20, padding: '36px 28px', maxWidth: 380, width: '100%' }}>
         {emailModal.productName === '심화 분석' ? (
           <>
-            <p style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', textAlign: 'center', marginBottom: 8, lineHeight: 1.5 }}>막혔던 부분,<br/>지금 다 풀어드릴게요</p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginBottom: 18, lineHeight: 1.6 }}>재물·커리어 심층 분석 · 대운 흐름 · 수비학 운명수 · 귀인 시기 · 행동 전략</p>
+            <p style={{ fontSize: 20, fontWeight: 700, color: '#24232B', textAlign: 'center', marginBottom: 8, lineHeight: 1.5 }}>막혔던 부분,<br/>지금 다 풀어드릴게요</p>
+            <p style={{ fontSize: 13, color: '#24232B', textAlign: 'center', marginBottom: 18, lineHeight: 1.6 }}>재물·커리어 심층 분석 · 대운 흐름 · 수비학 운명수 · 귀인 시기 · 행동 전략</p>
             <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <span style={{ display: 'inline-block', background: '#C9474A', color: '#FFFFFF', fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 8 }}>50% 할인</span>
+              <span style={{ display: 'inline-block', background: '#C9474A', color: '#24232B', fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 8 }}>50% 할인</span>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10 }}>
-                <span style={{ fontSize: 14, textDecoration: 'line-through', color: 'rgba(255,255,255,0.4)' }}>19,900원</span>
-                <span style={{ fontSize: 32, fontWeight: 800, color: '#C9A84C' }}>9,900원</span>
+                <span style={{ fontSize: 14, textDecoration: 'line-through', color: '#62616C' }}>19,900원</span>
+                <span style={{ fontSize: 32, fontWeight: 800, color: '#633B50' }}>9,900원</span>
               </div>
             </div>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 20 }}>한 번 결제하면 이 결과를 계속 볼 수 있어요</p>
+            <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', marginBottom: 20 }}>한 번 결제하면 이 결과를 계속 볼 수 있어요</p>
           </>
         ) : emailModal.productName === '자녀운 프리미엄' ? (
           <>
-            <p style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', textAlign: 'center', marginBottom: 8, lineHeight: 1.5 }}>이 아이, 어떤 학과가<br/>맞는지 알려드릴게요</p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginBottom: 18, lineHeight: 1.6 }}>추천학과 5개 · 맞는 직업 방향 · 입시 유리한 시기 · 공부가 잘 되는 방법까지</p>
+            <p style={{ fontSize: 20, fontWeight: 700, color: '#24232B', textAlign: 'center', marginBottom: 8, lineHeight: 1.5 }}>이 아이, 어떤 학과가<br/>맞는지 알려드릴게요</p>
+            <p style={{ fontSize: 13, color: '#24232B', textAlign: 'center', marginBottom: 18, lineHeight: 1.6 }}>추천학과 5개 · 맞는 직업 방향 · 입시 유리한 시기 · 공부가 잘 되는 방법까지</p>
             <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <span style={{ display: 'inline-block', background: '#C9474A', color: '#FFFFFF', fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 8 }}>여름방학 특가</span>
+              <span style={{ display: 'inline-block', background: '#C9474A', color: '#24232B', fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 8 }}>여름방학 특가</span>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10 }}>
-                <span style={{ fontSize: 14, textDecoration: 'line-through', color: 'rgba(255,255,255,0.4)' }}>19,900원</span>
-                <span style={{ fontSize: 32, fontWeight: 800, color: '#C9A84C' }}>9,900원</span>
+                <span style={{ fontSize: 14, textDecoration: 'line-through', color: '#62616C' }}>19,900원</span>
+                <span style={{ fontSize: 32, fontWeight: 800, color: '#633B50' }}>9,900원</span>
               </div>
             </div>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 20 }}>한 번 결제하면 이 결과를 계속 볼 수 있어요</p>
+            <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', marginBottom: 20 }}>한 번 결제하면 이 결과를 계속 볼 수 있어요</p>
           </>
         ) : (
           <>
             <p style={{ fontSize: 32, textAlign: 'center', marginBottom: 10 }}>📧</p>
-            <p style={{ fontSize: 20, fontWeight: 800, color: '#C9A84C', textAlign: 'center', marginBottom: 20, wordBreak: 'keep-all', lineHeight: 1.4 }}>결과 받을 이메일을<br/>입력해주세요</p>
+            <p style={{ fontSize: 20, fontWeight: 800, color: '#633B50', textAlign: 'center', marginBottom: 20, wordBreak: 'keep-all', lineHeight: 1.4 }}>결과 받을 이메일을<br/>입력해주세요</p>
           </>
         )}
-        <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2.2, margin: 0 }}>
+        <div style={{ background: '#FFFFFF', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
+          <p style={{ fontSize: 14, color: '#24232B', lineHeight: 2.2, margin: 0 }}>
             📧 결과는 이메일로 바로 전송돼요<br/>
             🔒 이메일은 결과 발송에만 사용돼요<br/>
             ♾️ 언제든 다시 볼 수 있어요
@@ -1828,18 +1841,18 @@ if (emailModal) {
           placeholder="이메일 주소 입력"
           value={preEmail}
           onChange={e => setPreEmail(e.target.value)}
-          style={{ width: '100%', padding: '16px 18px', fontSize: 17, border: '1px solid rgba(201,168,76,0.4)', borderRadius: 12, background: '#FFFFFF', color: '#1B1B1B', outline: 'none', boxSizing: 'border-box', marginBottom: 14 }} />
+          style={{ width: '100%', padding: '16px 18px', fontSize: 17, border: '1px solid #DEDFE5', borderRadius: 12, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box', marginBottom: 14 }} />
         <button
-          style={{ width: '100%', padding: '18px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', marginBottom: 12, letterSpacing: '0.02em' }}
+          style={{ width: '100%', padding: '18px', fontSize: 17, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', marginBottom: 12, letterSpacing: '0.02em' }}
           onClick={() => { if (!preEmail || !preEmail.includes('@')) { alert('이메일 주소를 확인해주세요.'); return } const cb = emailModal.onConfirm; setEmailModal(null); cb(preEmail) }}>
           {emailModal.productName === '심화 분석' || emailModal.productName === '자녀운 프리미엄' ? '9,900원 결제하기 →' : '결제하기 →'}
         </button>
         <button
-          style={{ width: '100%', padding: '14px', fontSize: 15, background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer' }}
+          style={{ width: '100%', padding: '14px', fontSize: 15, background: 'none', border: 'none', color: '#62616C', cursor: 'pointer' }}
           onClick={() => { const cb = emailModal.onConfirm; setEmailModal(null); cb(null) }}>
           이메일 없이 결제하기
         </button>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', textAlign: 'center', marginTop: 6 }}>이메일 없이 결제하면 결과를 저장할 수 없어요.</p>
+        <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', marginTop: 6 }}>이메일 없이 결제하면 결과를 저장할 수 없어요.</p>
       </div>
     </div>
   )
@@ -1952,31 +1965,30 @@ if (emailModal) {
 // ── 입력 화면 ──
 if (screen === 'input') {
   const serviceNames = { saju: '나의 사주', child: '우리 아이 진로·학과 프리미엄', deep: '사주 심화 분석' }
-  const serviceChar = { saju: '命', child: '子', deep: '🔮' }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
       {/* 헤더 */}
-      <div style={{ textAlign: 'center', padding: '36px 24px 20px', background: 'linear-gradient(180deg, #0D1B3E 0%, #050D1F 100%)', borderBottom: '1px solid rgba(201,168,76,0.15)' }}>
-        <div style={{ fontSize: 48, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 12 }}>{serviceChar[serviceType] || '命'}</div>
-        <h1 style={{ wordBreak: 'keep-all', fontSize: 22, fontWeight: 800, color: '#FFFFFF', marginBottom: 8 }}>{serviceNames[serviceType] || '사주 분석'}</h1>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>생년월일을 입력하면 무료로 먼저 확인해드려요</p>
+      <div style={{ textAlign: 'center', padding: '24px 24px 20px', background: '#FFFFFF', borderBottom: '1px solid #DEDFE5' }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
+        <h1 style={{ wordBreak: 'keep-all', fontSize: 22, fontWeight: 800, color: '#24232B', marginBottom: 8 }}>{serviceNames[serviceType] || '사주 분석'}</h1>
+        <p style={{ fontSize: 14, color: '#62616C' }}>생년월일을 입력하면 무료로 먼저 확인해드려요</p>
       </div>
 
       {/* 진행바 */}
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 20px', width: '100%', boxSizing: 'border-box' }}>
-        <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 99, margin: '16px 0 0', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #C9A84C, #F5E090)', borderRadius: 99, transition: 'width 0.35s ease' }} />
+        <div style={{ height: 4, background: '#DEDFE5', borderRadius: 99, margin: '16px 0 0', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${progress}%`, background: '#633B50', borderRadius: 99, transition: 'width 0.35s ease' }} />
         </div>
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'right', marginTop: 6 }}>{step + 1} / {STEPS.length}</p>
+        <p style={{ fontSize: 12, color: '#62616C', textAlign: 'right', marginTop: 6 }}>{step + 1} / {STEPS.length}</p>
       </div>
 
       {/* 본문 */}
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 20px 120px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 20px 190px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
 
         {/* 섹션 제목 */}
         <div style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: '#FFFFFF', lineHeight: 1.2, wordBreak: 'keep-all', margin: 0, marginBottom: 8 }}>
+          <h2 style={{ fontSize: 28, fontWeight: 800, color: '#24232B', lineHeight: 1.2, wordBreak: 'keep-all', margin: 0, marginBottom: 8 }}>
             {currentStepId === 'gender' && '성별을 알려주세요'}
             {currentStepId === 'marital' && '결혼 상태를 알려주세요'}
             {currentStepId === 'birthdate' && '생년월일을 알려주세요'}
@@ -1984,7 +1996,7 @@ if (screen === 'input') {
             {currentStepId === 'mbti' && 'MBTI를 선택해주세요'}
             {currentStepId === 'blood' && '혈액형을 선택해주세요'}
           </h2>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+          <p style={{ fontSize: 15, color: '#62616C', margin: 0 }}>
             {currentStepId === 'gender' && '사주 풀이에 사용돼요'}
             {currentStepId === 'marital' && '사주 풀이에 사용돼요'}
             {currentStepId === 'birthdate' && '숫자로 직접 입력해주세요'}
@@ -1998,18 +2010,19 @@ if (screen === 'input') {
         {currentStepId === 'gender' && (
           <>
             <div style={{ marginBottom: 24 }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(201,168,76,0.7)', marginBottom: 10 }}>이름 (선택)</p>
+              <p style={{ fontSize: 15, fontWeight: 600, color: '#633B50', marginBottom: 10 }}>이름 (선택)</p>
               <input
-                style={{ width: '100%', fontSize: 18, padding: '18px 20px', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 14, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box', outline: 'none' }}
+                style={{ width: '100%', fontSize: 18, padding: '18px 20px', border: '1px solid #DEDFE5', borderRadius: 14, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box' }}
                 type="text" placeholder="이름을 입력해주세요" value={myName} onChange={e => setMyName(e.target.value)} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               {['여성','남성'].map(g => (
                 <button key={g}
-                  style={{ padding: '40px 16px', border: `2px solid ${gender === g ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 16, background: gender === g ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, transition: 'all 0.15s' }}
+                  aria-pressed={gender === g}
+                  style={{ position: 'relative', padding: '30px 16px', border: `2px solid ${gender === g ? '#633B50' : '#DEDFE5'}`, borderRadius: 16, background: gender === g ? '#F6F0F3' : '#FFFFFF', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, transition: 'all 0.15s' }}
                   onClick={() => setGender(g)}>
-                  <span style={{ fontSize: 44 }}>{g === '여성' ? '♀️' : '♂️'}</span>
-                  <span style={{ fontSize: 20, fontWeight: 700, color: gender === g ? '#C9A84C' : 'rgba(255,255,255,0.7)' }}>{g}</span>
+                  <CheckMark on={gender === g} />
+                  <span style={{ fontSize: 20, fontWeight: 700, color: gender === g ? '#633B50' : '#24232B' }}>{g}</span>
                 </button>
               ))}
             </div>
@@ -2019,14 +2032,15 @@ if (screen === 'input') {
         {/* ── 결혼 상태 ── */}
         {currentStepId === 'marital' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {[{ value: '미혼', emoji: '💫', sub: '결혼 전이거나 현재 혼자예요' }, { value: '기혼', emoji: '💍', sub: '결혼해서 살고 있어요' }].map(({ value, emoji, sub }) => (
+            {[{ value: '미혼', sub: '결혼 전이거나 현재 혼자예요' }, { value: '기혼', sub: '결혼해서 살고 있어요' }].map(({ value, sub }) => (
               <button key={value}
-                style={{ padding: '28px 24px', border: `2px solid ${maritalStatus === value ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 16, background: maritalStatus === value ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 20, transition: 'all 0.15s' }}
+                aria-pressed={maritalStatus === value}
+                style={{ position: 'relative', padding: '24px 24px', border: `2px solid ${maritalStatus === value ? '#633B50' : '#DEDFE5'}`, borderRadius: 16, background: maritalStatus === value ? '#F6F0F3' : '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 20, transition: 'all 0.15s' }}
                 onClick={() => setMaritalStatus(value)}>
-                <span style={{ fontSize: 40 }}>{emoji}</span>
+                <CheckMark on={maritalStatus === value} />
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: maritalStatus === value ? '#C9A84C' : '#FFFFFF' }}>{value}</div>
-                  <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>{sub}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: maritalStatus === value ? '#633B50' : '#24232B' }}>{value}</div>
+                  <div style={{ fontSize: 14, color: '#62616C', marginTop: 4 }}>{sub}</div>
                 </div>
               </button>
             ))}
@@ -2037,28 +2051,29 @@ if (screen === 'input') {
         {currentStepId === 'birthdate' && (
           <>
             <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
-              {[['양력 🌞', false], ['음력 🌙', true]].map(([label, val]) => (
+              {[['양력', false], ['음력', true]].map(([label, val]) => (
                 <button key={label}
-                  style={{ flex: 1, padding: '16px', fontSize: 16, fontWeight: isLunar === val ? 700 : 400, border: `2px solid ${isLunar === val ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 12, background: isLunar === val ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: isLunar === val ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
-                  onClick={() => setIsLunar(val)}>{label}</button>
+                  aria-pressed={isLunar === val}
+                  style={{ position: 'relative', flex: 1, padding: '16px', fontSize: 16, fontWeight: isLunar === val ? 700 : 400, border: `2px solid ${isLunar === val ? '#633B50' : '#DEDFE5'}`, borderRadius: 12, background: isLunar === val ? '#F6F0F3' : '#FFFFFF', color: isLunar === val ? '#633B50' : '#62616C', cursor: 'pointer' }}
+                  onClick={() => setIsLunar(val)}><CheckMark on={isLunar === val} />{label}</button>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16 }}>
               <input
-                style={{ width: 108, flexShrink: 0, padding: '22px 4px', fontSize: 24, fontWeight: 800, border: '1px solid rgba(201,168,76,0.25)', borderRadius: 14, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }}
+                style={{ flex: '1.6 1 0', minWidth: 0, padding: '22px 4px', fontSize: 24, fontWeight: 800, border: '1px solid #DEDFE5', borderRadius: 14, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }}
                 type="number" inputMode="numeric" placeholder="년도" value={birthYear} onChange={e => setBirthYear(e.target.value.slice(0,4))} />
-              <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>년</span>
+              <span style={{ fontSize: 18, color: '#62616C', fontWeight: 600 }}>년</span>
               <input
-                style={{ width: 66, flexShrink: 0, padding: '22px 4px', fontSize: 24, fontWeight: 800, border: '1px solid rgba(201,168,76,0.25)', borderRadius: 14, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }}
+                style={{ flex: '1 1 0', minWidth: 0, padding: '22px 4px', fontSize: 24, fontWeight: 800, border: '1px solid #DEDFE5', borderRadius: 14, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }}
                 type="number" inputMode="numeric" placeholder="월" value={birthMonth} onChange={e => setBirthMonth(e.target.value.slice(0,2))} />
-              <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>월</span>
+              <span style={{ fontSize: 18, color: '#62616C', fontWeight: 600 }}>월</span>
               <input
-                style={{ width: 66, flexShrink: 0, padding: '22px 4px', fontSize: 24, fontWeight: 800, border: '1px solid rgba(201,168,76,0.25)', borderRadius: 14, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', textAlign: 'center', boxSizing: 'border-box' }}
+                style={{ flex: '1 1 0', minWidth: 0, padding: '22px 4px', fontSize: 24, fontWeight: 800, border: '1px solid #DEDFE5', borderRadius: 14, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }}
                 type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0,2))} />
-              <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>일</span>
+              <span style={{ fontSize: 18, color: '#62616C', fontWeight: 600 }}>일</span>
             </div>
             {birthdateValid && (
-              <p style={{ fontSize: 16, color: '#C9A84C', textAlign: 'center', fontWeight: 700, marginTop: 8 }}>
+              <p style={{ fontSize: 16, color: '#633B50', textAlign: 'center', fontWeight: 700, marginTop: 8 }}>
                 ✓ {birthYear}년 {birthMonth}월 {birthDay}일 {isLunar ? '(음력)' : '(양력)'}
               </p>
             )}
@@ -2069,43 +2084,47 @@ if (screen === 'input') {
         {currentStepId === 'birthtime' && (
           <>
             <button
-              style={{ width: '100%', padding: '20px 16px', border: `2px solid ${timeUnknown ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 14, background: timeUnknown ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeUnknown ? '#C9A84C' : 'rgba(255,255,255,0.4)', fontSize: 18, fontWeight: timeUnknown ? 700 : 400, cursor: 'pointer', textAlign: 'center', marginBottom: 24 }}
+              aria-pressed={timeUnknown}
+              style={{ width: '100%', padding: '20px 16px', border: `2px solid ${timeUnknown ? '#633B50' : '#DEDFE5'}`, borderRadius: 14, background: timeUnknown ? '#F6F0F3' : '#FFFFFF', color: timeUnknown ? '#633B50' : '#62616C', fontSize: 18, fontWeight: timeUnknown ? 700 : 400, cursor: 'pointer', textAlign: 'center', marginBottom: 24 }}
               onClick={() => { setTimeUnknown(true); setTimeHour(''); setTimeMin('') }}>
-              ✓ 태어난 시간 모름
+              {timeUnknown ? '✓ ' : ''}태어난 시간 모름
             </button>
             {!timeUnknown && (
               <>
-                <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(201,168,76,0.7)', marginBottom: 12 }}>오전 / 오후</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 12 }}>오전 / 오후</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
                   {['오전','오후'].map(ap => (
                     <button key={ap}
-                      style={{ padding: '20px', fontSize: 18, fontWeight: timeAmPm === ap ? 700 : 400, border: `2px solid ${timeAmPm === ap ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 14, background: timeAmPm === ap ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeAmPm === ap ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
-                      onClick={() => setTimeAmPm(ap)}>{ap === '오전' ? '🌅' : '🌇'} {ap}</button>
+                      aria-pressed={timeAmPm === ap}
+                      style={{ position: 'relative', padding: '20px', fontSize: 18, fontWeight: timeAmPm === ap ? 700 : 400, border: `2px solid ${timeAmPm === ap ? '#633B50' : '#DEDFE5'}`, borderRadius: 14, background: timeAmPm === ap ? '#F6F0F3' : '#FFFFFF', color: timeAmPm === ap ? '#633B50' : '#62616C', cursor: 'pointer' }}
+                      onClick={() => setTimeAmPm(ap)}><CheckMark on={timeAmPm === ap} />{ap}</button>
                   ))}
                 </div>
-                <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(201,168,76,0.7)', marginBottom: 12 }}>시 선택</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 12 }}>시 선택</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
                   {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
                     <button key={h}
-                      style={{ padding: '18px 4px', fontSize: 17, fontWeight: timeHour === String(h) ? 700 : 400, border: `2px solid ${timeHour === String(h) ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 12, background: timeHour === String(h) ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeHour === String(h) ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
-                      onClick={() => setTimeHour(String(h))}>{h}시</button>
+                      aria-pressed={timeHour === String(h)}
+                      style={{ position: 'relative', padding: '18px 4px', fontSize: 17, fontWeight: timeHour === String(h) ? 700 : 400, border: `2px solid ${timeHour === String(h) ? '#633B50' : '#DEDFE5'}`, borderRadius: 12, background: timeHour === String(h) ? '#F6F0F3' : '#FFFFFF', color: timeHour === String(h) ? '#633B50' : '#62616C', cursor: 'pointer' }}
+                      onClick={() => setTimeHour(String(h))}><CheckMark on={timeHour === String(h)} />{h}시</button>
                   ))}
                 </div>
-                <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(201,168,76,0.7)', marginBottom: 12 }}>분 선택</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 12 }}>분 선택</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
                   {['00','10','20','30','40','50'].map(m => (
                     <button key={m}
-                      style={{ padding: '18px 4px', fontSize: 17, fontWeight: timeMin === m ? 700 : 400, border: `2px solid ${timeMin === m ? '#C9A84C' : 'rgba(201,168,76,0.15)'}`, borderRadius: 12, background: timeMin === m ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', color: timeMin === m ? '#C9A84C' : 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
-                      onClick={() => setTimeMin(m)}>{m}분</button>
+                      aria-pressed={timeMin === m}
+                      style={{ position: 'relative', padding: '18px 4px', fontSize: 17, fontWeight: timeMin === m ? 700 : 400, border: `2px solid ${timeMin === m ? '#633B50' : '#DEDFE5'}`, borderRadius: 12, background: timeMin === m ? '#F6F0F3' : '#FFFFFF', color: timeMin === m ? '#633B50' : '#62616C', cursor: 'pointer' }}
+                      onClick={() => setTimeMin(m)}><CheckMark on={timeMin === m} />{m}분</button>
                   ))}
                 </div>
                 {timeHour && timeMin && (
-                  <p style={{ fontSize: 16, color: '#C9A84C', textAlign: 'center', fontWeight: 700 }}>✓ {timeAmPm} {timeHour}시 {timeMin}분</p>
+                  <p style={{ fontSize: 16, color: '#633B50', textAlign: 'center', fontWeight: 700 }}>✓ {timeAmPm} {timeHour}시 {timeMin}분</p>
                 )}
               </>
             )}
             {timeUnknown && (
-              <button style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', textDecoration: 'underline', display: 'block' }} onClick={() => setTimeUnknown(false)}>시간 직접 선택하기</button>
+              <button style={{ fontSize: 14, color: '#62616C', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', textDecoration: 'underline', display: 'block' }} onClick={() => setTimeUnknown(false)}>시간 직접 선택하기</button>
             )}
           </>
         )}
@@ -2116,12 +2135,13 @@ if (screen === 'input') {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 10 }}>
               {MBTI_LIST.map(m => (
                 <button key={m}
-                  style={{ padding: '20px 4px', fontSize: 16, fontWeight: mbti === m ? 800 : 500, border: `2px solid ${mbti === m ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 12, background: mbti === m ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)', color: mbti === m ? '#C9A84C' : 'rgba(255,255,255,0.55)', cursor: 'pointer' }}
-                  onClick={() => setMbti(mbti === m ? '' : m)}>{m}</button>
+                  aria-pressed={mbti === m}
+                  style={{ position: 'relative', padding: '20px 4px', fontSize: 16, fontWeight: mbti === m ? 800 : 500, border: `2px solid ${mbti === m ? '#633B50' : '#DEDFE5'}`, borderRadius: 12, background: mbti === m ? '#F6F0F3' : '#FFFFFF', color: mbti === m ? '#633B50' : '#62616C', cursor: 'pointer' }}
+                  onClick={() => setMbti(mbti === m ? '' : m)}><CheckMark on={mbti === m} />{m}</button>
               ))}
             </div>
             <button
-              style={{ width: '100%', padding: '20px', fontSize: 16, fontWeight: 500, border: `2px solid rgba(201,168,76,0.15)`, borderRadius: 12, background: 'rgba(255,255,255,0.02)', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', marginTop: 4 }}
+              style={{ width: '100%', padding: '20px', fontSize: 16, fontWeight: 500, border: `2px solid #DEDFE5`, borderRadius: 12, background: '#FFFFFF', color: '#62616C', cursor: 'pointer', marginTop: 4 }}
               onClick={() => { setMbti(''); goNext(); }}>MBTI를 모릅니다</button>
           </>
         )}
@@ -2131,8 +2151,9 @@ if (screen === 'input') {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
             {BLOOD_LIST.map(b => (
               <button key={b}
-                style={{ padding: '40px 16px', fontSize: 28, fontWeight: blood === b ? 800 : 600, border: `2px solid ${blood === b ? '#C9A84C' : 'rgba(201,168,76,0.2)'}`, borderRadius: 16, background: blood === b ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)', color: blood === b ? '#C9A84C' : 'rgba(255,255,255,0.6)', cursor: 'pointer', textAlign: 'center' }}
-                onClick={() => setBlood(blood === b ? '' : b)}>{b}형</button>
+                aria-pressed={blood === b}
+                style={{ position: 'relative', padding: '32px 16px', fontSize: 28, fontWeight: blood === b ? 800 : 600, border: `2px solid ${blood === b ? '#633B50' : '#DEDFE5'}`, borderRadius: 16, background: blood === b ? '#F6F0F3' : '#FFFFFF', color: blood === b ? '#633B50' : '#62616C', cursor: 'pointer', textAlign: 'center' }}
+                onClick={() => setBlood(blood === b ? '' : b)}><CheckMark on={blood === b} />{b}형</button>
             ))}
           </div>
         )}
@@ -2140,18 +2161,18 @@ if (screen === 'input') {
       </div>
 
       {/* 하단 버튼 */}
-      <div style={{ position: 'fixed', bottom: 0, background: '#050D1F', borderTop: '1px solid rgba(201,168,76,0.15)', padding: '14px 20px 30px', maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+      <div style={{ position: 'fixed', bottom: 0, background: '#FFFFFF', borderTop: '1px solid #DEDFE5', padding: '14px 20px calc(20px + env(safe-area-inset-bottom))', maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
         {currentStepId === 'blood' && serviceType === 'child' && (
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#C9A84C', background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 8, padding: '10px 16px', textAlign: 'center', marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#633B50', background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 8, padding: '10px 16px', textAlign: 'center', marginBottom: 8 }}>
             ✦ 입력하면 무료로 일부 먼저 확인할 수 있어요
           </div>
         )}
         <div style={{ display: 'flex', gap: 12 }}>
         <button
-          style={{ flex: '0 0 auto', padding: '18px 24px', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 14, background: 'rgba(255,255,255,0.03)', fontSize: 20, cursor: 'pointer', color: 'rgba(255,255,255,0.5)' }}
+          style={{ flex: '0 0 auto', padding: '18px 24px', border: '1px solid #DEDFE5', borderRadius: 14, background: '#FFFFFF', fontSize: 20, cursor: 'pointer', color: '#62616C' }}
           onClick={goBack}>←</button>
         <button
-          style={{ flex: 1, padding: '18px', fontSize: 18, fontWeight: 700, background: !canGoNext() ? 'rgba(201,168,76,0.2)' : 'linear-gradient(135deg, #C9A84C, #F5E090)', color: !canGoNext() ? 'rgba(255,255,255,0.3)' : '#0A1628', border: 'none', borderRadius: 14, cursor: !canGoNext() ? 'not-allowed' : 'pointer', letterSpacing: '0.02em' }}
+          style={{ flex: 1, padding: '18px', fontSize: 18, fontWeight: 700, background: !canGoNext() ? '#E4E5EA' : '#633B50', color: !canGoNext() ? '#62616C' : '#FFFFFF', border: 'none', borderRadius: 14, cursor: !canGoNext() ? 'not-allowed' : 'pointer', letterSpacing: '0.02em' }}
           onClick={goNext} disabled={!canGoNext()}>
           {currentStepId === 'blood'
             ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : serviceType === 'child' ? '방학 전 특가로 확인하기 (9,900원) 👶' : '내 돈 버는 시기, 지금 확인하기 →')
@@ -2167,26 +2188,26 @@ if (screen === 'result') {
   const baseSections = parseSections(baseText)
   const paidSections = parseSections(paidText)
   return (
-    <div style={{ minHeight: '100vh', background: '#050D1F', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
       <div id="result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 20px 120px', boxSizing: 'border-box', width: '100%' }}>
 
         {/* 사주팔자 카드 */}
         {sajuData?.사주 && (
-  <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
-    <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
-    <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.4)', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
+  <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+    <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
+    <p style={{ fontSize: 15, color: '#62616C', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
       {[{ label: '시주(時)', value: sajuData.사주.시주 }, { label: '일주(日)', value: sajuData.사주.일주 }, { label: '월주(月)', value: sajuData.사주.월주 }, { label: '년주(年)', value: sajuData.사주.년주 }].map(({ label, value }) => {
-        const 오행색 = { '甲갑': '#4ADE80', '乙을': '#4ADE80', '丙병': '#F87171', '丁정': '#F87171', '戊무': '#C9A84C', '己기': '#C9A84C', '庚경': '#E8C96A', '辛신': '#E8C96A', '壬임': '#60A5FA', '癸계': '#60A5FA' }
-        const 색 = 오행색[value?.slice(0, 2)] || '#FFFFFF'
+        const 오행색 = { '甲갑': '#1E7F4F', '乙을': '#1E7F4F', '丙병': '#C53A3A', '丁정': '#C53A3A', '戊무': '#8A5F0E', '己기': '#8A5F0E', '庚경': '#5F6B7A', '辛신': '#5F6B7A', '壬임': '#2563EB', '癸계': '#2563EB' }
+        const 색 = 오행색[value?.slice(0, 2)] || '#24232B'
         return (
           <div key={label} style={{ textAlign: 'center', background: `${색}15`, borderRadius: 12, padding: '18px 4px', border: `2px solid ${색}50` }}>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 10, display: 'block' }}>{label}</span>
+            <span style={{ fontSize: 12, color: '#62616C', marginBottom: 10, display: 'block' }}>{label}</span>
             <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
  <span style={{ fontSize: 22, fontWeight: 900, color: 색, lineHeight: 1.2 }}>{value?.slice(0,1) || '-'}</span>
-<span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
-<span style={{ fontSize: 16, fontWeight: 700, color: 색, opacity: 0.7, marginTop: 2 }}>{value?.slice(2,3) || ''}</span>
-<span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
+<span style={{ fontSize: 11, color: '#62616C', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
+<span style={{ fontSize: 16, fontWeight: 700, color: 색, marginTop: 2 }}>{value?.slice(2,3) || ''}</span>
+<span style={{ fontSize: 11, color: '#62616C', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
 </span>
           </div>
         )
@@ -2201,16 +2222,16 @@ if (screen === 'result') {
 const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   const 타입 = 일주타입명[일주키]
   if (!타입) return null
-  const 오행색 = { '甲': '#4ADE80', '乙': '#4ADE80', '丙': '#F87171', '丁': '#F87171', '戊': '#C9A84C', '己': '#C9A84C', '庚': '#E8C96A', '辛': '#E8C96A', '壬': '#60A5FA', '癸': '#60A5FA' }
-  const 색 = 오행색[일주키[0]] || '#C9A84C'
+  const 오행색 = { '甲': '#1E7F4F', '乙': '#1E7F4F', '丙': '#C53A3A', '丁': '#C53A3A', '戊': '#8A5F0E', '己': '#8A5F0E', '庚': '#5F6B7A', '辛': '#5F6B7A', '壬': '#2563EB', '癸': '#2563EB' }
+  const 색 = 오행색[일주키[0]] || '#633B50'
   return (
-    <div id="share-card" style={{ background: '#0D1B3E', border: `1px solid ${색}40`, borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
-      <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 12 }}>MY TYPE</p>
+    <div id="share-card" style={{ background: '#FFFFFF', border: `1px solid ${색}40`, borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+      <p style={{ fontSize: 11, color: '#633B50', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 12 }}>MY TYPE</p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
         <div style={{ width: 52, height: 52, borderRadius: 12, background: `${색}18`, border: `1px solid ${색}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: 색, fontFamily: 'Georgia, serif', flexShrink: 0 }}>{일주키}</div>
         <div>
-          <p style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', marginBottom: 4 }}>{타입.name}</p>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>{타입.desc}</p>
+          <p style={{ fontSize: 20, fontWeight: 800, color: '#24232B', marginBottom: 4 }}>{타입.name}</p>
+          <p style={{ fontSize: 13, color: '#62616C', lineHeight: 1.6 }}>{타입.desc}</p>
         </div>
       </div>
      
@@ -2221,11 +2242,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 {/* 운세 점수 카드 — 레이더 차트 */}
 {scoreData && (() => {
   const categories = [
-    { label: '재물운', score: scoreData.재물, color: '#7F77DD' },
-    { label: '애정운', score: scoreData.애정, color: '#D4537E' },
-    { label: '직업운', score: scoreData.직업, color: '#1D9E75' },
-    { label: '건강운', score: scoreData.건강, color: '#BA7517' },
-    { label: '종합운', score: scoreData.종합, color: '#C9A84C' },
+    { label: '재물운', score: scoreData.재물, color: '#5B52C7' },
+    { label: '애정운', score: scoreData.애정, color: '#B83A66' },
+    { label: '직업운', score: scoreData.직업, color: '#137A5A' },
+    { label: '건강운', score: scoreData.건강, color: '#9A5F0F' },
+    { label: '종합운', score: scoreData.종합, color: '#633B50' },
   ]
   const size = 260
   const cx = size / 2, cy = size / 2, r = 95
@@ -2253,14 +2274,14 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
 
   return (
-    <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
+    <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
       <div style={{ textAlign: 'center', marginBottom: 8 }}>
-       <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>사주 기운 스탯</p>
+       <p style={{ fontSize: 12, color: '#633B50', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>사주 기운 스탯</p>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-          <span style={{ fontSize: 52, fontWeight: 800, color: '#C9A84C', lineHeight: 1 }}>{scoreData.종합}</span>
-          <span style={{ fontSize: 20, color: 'rgba(255,255,255,0.5)' }}>점</span>
+          <span style={{ fontSize: 52, fontWeight: 800, color: '#633B50', lineHeight: 1 }}>{scoreData.종합}</span>
+          <span style={{ fontSize: 20, color: '#62616C' }}>점</span>
         </div>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: '#62616C', marginTop: 4 }}>
           상위 {scoreData.종합 >= 90 ? '5' : scoreData.종합 >= 80 ? '15' : scoreData.종합 >= 70 ? '25' : scoreData.종합 >= 60 ? '40' : '50'}% 수준이에요
         </p>
       </div>
@@ -2272,21 +2293,21 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           {levels.map((level, li) => {
             const pts = categories.map((_, i) => getPoint(i, level))
             const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
-            return <path key={li} d={path} fill="none" stroke="rgba(201,168,76,0.12)" strokeWidth="1" />
+            return <path key={li} d={path} fill="none" stroke="#DEDFE5" strokeWidth="1" />
           })}
 
           {/* 축선 */}
           {categories.map((_, i) => {
             const outer = getPoint(i, 1.0)
-            return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="rgba(201,168,76,0.15)" strokeWidth="1" />
+            return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="#DEDFE5" strokeWidth="1" />
           })}
 
           {/* 데이터 영역 */}
-          <path d={dataPath} fill="rgba(201,168,76,0.15)" stroke="#C9A84C" strokeWidth="2" />
+          <path d={dataPath} fill="rgba(99,59,80,0.12)" stroke="#633B50" strokeWidth="2" />
 
           {/* 데이터 점 */}
           {dataPoints.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r="4" fill={categories[i].color} stroke="#0D1B3E" strokeWidth="2" />
+            <circle key={i} cx={p.x} cy={p.y} r="4" fill={categories[i].color} stroke="#FFFFFF" strokeWidth="2" />
           ))}
 
           {/* 라벨 */}
@@ -2298,7 +2319,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
                   x={lp.x} y={lp.y - 6}
                   textAnchor="middle"
                   fontSize="11"
-                  fill="rgba(255,255,255,0.6)"
+                  fill="#62616C"
                   fontWeight="600"
                 >{c.label}</text>
                 <text
@@ -2315,12 +2336,12 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       </div>
 
       {/* 범례 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', borderTop: '1px solid #DEDFE5', paddingTop: 14 }}>
         {categories.filter(c => c.label !== '종합운').map(({ label, score, color }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{label}</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#FFFFFF', marginLeft: 'auto' }}>{score}</span>
+            <span style={{ fontSize: 13, color: '#62616C' }}>{label}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#24232B', marginLeft: 'auto' }}>{score}</span>
           </div>
         ))}
       </div>
@@ -2330,8 +2351,32 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
         {/* 스트리밍 텍스트 */}
         {isBaseStreaming && baseText && (
-          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
             {removeMarkers(baseText)}<span style={{ opacity: 0.4 }}>▌</span>
+          </div>
+        )}
+
+        {/* 무료 풀이 첫 응답 대기 */}
+        {phase === 'streaming' && isBaseStreaming && !baseText && (
+          <div role="status" style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 14, padding: '28px 20px', marginBottom: 14 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: '#633B50', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
+              <span style={{ fontSize: 16, color: '#24232B', marginLeft: 10 }}>사주 풀이를 준비하고 있어요</span>
+            </div>
+          </div>
+        )}
+
+        {/* 무료 풀이 실패 — 입력값은 그대로 두고 수동 재시도만 허용 */}
+        {phase === 'error' && (
+          <div role="alert" style={{ background: '#FFFFFF', border: '1px solid #C53A3A', borderRadius: 14, padding: '22px 20px', marginBottom: 14 }}>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#C53A3A', marginBottom: 6 }}>풀이를 불러오지 못했어요</p>
+            <p style={{ fontSize: 14, color: '#62616C', lineHeight: 1.6, wordBreak: 'keep-all', marginBottom: 16 }}>{freeError || '잠시 후 다시 시도해주세요.'}</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 700, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer' }}
+                onClick={handleFreeAnalyze}>다시 시도</button>
+              <button style={{ flex: 1, padding: '14px', fontSize: 15, background: '#FFFFFF', color: '#24232B', border: '1px solid #DEDFE5', borderRadius: 12, cursor: 'pointer' }}
+                onClick={() => { setPhase('input'); setFreeError(null); setScreen('input') }}>입력 화면으로</button>
+            </div>
           </div>
         )}
 
@@ -2349,15 +2394,15 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       <div key={i}>
         {isMoneySection && <SectionViewTracker eventName="money_section_viewed" params={{ service_type: serviceType }} />}
         {isCurrentPeriodSection && <SectionViewTracker eventName="current_period_section_viewed" params={{ service_type: serviceType }} />}
-        <div style={{ marginBottom: 10, border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px', background: '#0D1B3E' }}>
-            <span style={{ fontSize: 17, fontWeight: 700, color: 'rgba(255,255,255,0.85)' }}>{sec.title}</span>
-            <span style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', background: 'rgba(201,168,76,0.1)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(201,168,76,0.3)' }}>전체 분석 공개</span>
+        <div style={{ marginBottom: 10, border: '1px solid #DEDFE5', borderRadius: 14, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px', background: '#FFFFFF' }}>
+            <span style={{ fontSize: 17, fontWeight: 700, color: '#24232B' }}>{sec.title}</span>
+            <span style={{ fontSize: 12, color: '#633B50', background: '#F6F0F3', padding: '3px 10px', borderRadius: 20, border: '1px solid #DEDFE5' }}>전체 분석 공개</span>
           </div>
-          <div style={{ padding: '16px 20px 20px', fontSize: 18, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', background: '#050D1F' }}>
+          <div style={{ padding: '16px 20px 20px', fontSize: 18, color: '#24232B', wordBreak: 'keep-all', background: '#F4F5F7' }}>
             {blocks.map((block, bi) => {
               if (block.isLock) {
-                return <div key={bi} style={{ color: 'rgba(201,168,76,0.65)', marginTop: 12, lineHeight: 1.8 }}>{block.bodyLines.join('\n')}</div>
+                return <div key={bi} style={{ color: '#633B50', marginTop: 12, lineHeight: 1.8 }}>{block.bodyLines.join('\n')}</div>
               }
               headerCount++
               const bodyText = block.bodyLines.join(' ').replace(/\s+/g, ' ').trim()
@@ -2365,7 +2410,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
               const { visible, hidden } = shouldBlur ? splitLastSentences(bodyText, 2) : { visible: bodyText, hidden: '' }
               return (
                 <div key={bi} style={{ marginTop: 16, marginBottom: 4 }}>
-                  {block.header && <div style={{ fontWeight: 700, color: '#C9A84C', marginBottom: 4, lineHeight: 1.6 }}>{block.header}</div>}
+                  {block.header && <div style={{ fontWeight: 700, color: '#633B50', marginBottom: 4, lineHeight: 1.6 }}>{block.header}</div>}
                   <div style={{ lineHeight: 1.9 }}>
                     {visible && <span>{visible} </span>}
                     {hidden && <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{hidden}</span>}
@@ -2382,15 +2427,15 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   return (
     <div key={i}>
       {i === 0 && (
-        <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.55)', fontWeight: 600, letterSpacing: '0.04em', margin: '0 2px 6px' }}>
+        <p style={{ fontSize: 12, color: '#633B50', fontWeight: 600, letterSpacing: '0.04em', margin: '0 2px 6px' }}>
           🔮 사주 분석으로 읽는 나의 성향{mbti ? ' (MBTI 교차분석 포함)' : ''}
         </p>
       )}
       <Accordion title={sec.title} content={sec.content} defaultOpen={i === 0} forceOpen={pdfCapturing} />
       {i === 0 && (
-        <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 12, padding: '16px 18px', marginBottom: 10 }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', marginBottom: 6 }}>이 성향이 반복시키는 관계 패턴</p>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7, wordBreak: 'keep-all', margin: 0 }}>
+        <div style={{ background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px 18px', marginBottom: 10 }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', marginBottom: 6 }}>이 성향이 반복시키는 관계 패턴</p>
+          <p style={{ fontSize: 14, color: '#62616C', lineHeight: 1.7, wordBreak: 'keep-all', margin: 0 }}>
             강점으로 작용하는 성향이 특정 관계에서는 오해를 만들기도 합니다. 어떤 유형의 사람과 부딪히는지는 전체 분석에서 확인할 수 있습니다.
           </p>
         </div>
@@ -2402,7 +2447,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
         {/* 유료 스트리밍 텍스트 */}
         {isPaidStreaming && paidText && (
-          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.88)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
             {removeMarkers(paidText)}<span style={{ opacity: 0.4 }}>▌</span>
           </div>
         )}
@@ -2410,15 +2455,15 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         {/* 유료 분석 아코디언 */}
         {!isPaidStreaming && paidSections.length > 0 && (
           <>
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#C9A84C', textAlign: 'center', margin: '20px 0 12px', letterSpacing: '0.08em' }}>✦ 전체 분석 결과 ✦</p>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', textAlign: 'center', margin: '20px 0 12px', letterSpacing: '0.08em' }}>✦ 전체 분석 결과 ✦</p>
             {paidSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} forceOpen={pdfCapturing} />)}
           </>
         )}
 
         {/* 결제 유도 카드 */}
         {phase === 'done' && !isPaid && !isPaidStreaming && (
-  <div style={{ background: 'linear-gradient(135deg, #0D1B3E 0%, #050D1F 100%)', borderRadius: 16, padding: '28px 20px', marginBottom: 16, border: '1px solid rgba(201,168,76,0.3)' }}>
-    <p style={{ fontSize: 12, color: 'rgba(201,168,76,0.6)', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 16, textAlign: 'center' }}>FULL ANALYSIS</p>
+  <div style={{ background: '#FFFFFF', borderRadius: 16, padding: '28px 20px', marginBottom: 16, border: '1px solid #DEDFE5' }}>
+    <p style={{ fontSize: 12, color: '#633B50', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 16, textAlign: 'center' }}>FULL ANALYSIS</p>
     {serviceType === 'child' || serviceType === '노후' ? (
       (serviceType === 'child'
         ? [
@@ -2447,9 +2492,9 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             { title: '총운 정리', first: '전체 분석을 한 문장으로 정리해드려요. ', blurred: '이 사주의 핵심 키워드와 앞으로 가장 중요한 시기, 지금 당장 해야 할 한 가지가 나와요.' },
           ]
       ).map((item, idx) => (
-        <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(201,168,76,0.1)' }}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 8 }}>✦ {item.title}</p>
-          <div style={{ fontSize: 17, lineHeight: 2.0, color: 'rgba(255,255,255,0.75)', wordBreak: 'keep-all' }}>
+        <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: '#FFFFFF', borderRadius: 10, border: '1px solid #DEDFE5' }}>
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>✦ {item.title}</p>
+          <div style={{ fontSize: 17, lineHeight: 2.0, color: '#24232B', wordBreak: 'keep-all' }}>
             <span>{item.first}</span>
             <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{item.blurred}</span>
           </div>
@@ -2460,25 +2505,25 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         {FULL_ANALYSIS_PRIMARY.map((item, idx) => <FullAnalysisPreviewCard key={idx} {...item} />)}
         <button
           onClick={() => setMoreAnalysisOpen(o => !o)}
-          style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 700, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 10, color: '#C9A84C', cursor: 'pointer', marginBottom: moreAnalysisOpen ? 10 : 0 }}>
+          style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 700, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10, color: '#633B50', cursor: 'pointer', marginBottom: moreAnalysisOpen ? 10 : 0 }}>
           {moreAnalysisOpen ? '숨기기 ▲' : '그 밖에 포함된 분석 4개 더 보기 ▼'}
         </button>
         {moreAnalysisOpen && FULL_ANALYSIS_MORE.map((item, idx) => <FullAnalysisPreviewCard key={idx} {...item} />)}
       </>
     )}
-    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center', marginTop: 10 }}>총 {serviceType === 'child' ? '11' : '10'}개 섹션 · 이 모든 내용이 {serviceType === 'child' ? '9,900원' : '1,990원'}</p>
+    <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center', marginTop: 10 }}>총 {serviceType === 'child' ? '11' : '10'}개 섹션 · 이 모든 내용이 {serviceType === 'child' ? '9,900원' : '1,990원'}</p>
     <div style={{ textAlign: 'center', marginTop: 12 }}>
-      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)' }}>↓ 아래 버튼으로 결제하세요</p>
+      <p style={{ fontSize: 14, color: '#62616C' }}>↓ 아래 버튼으로 결제하세요</p>
     </div>
   </div>
 )}
 
         {/* 유료 분석 로딩 */}
         {isPaidStreaming && !paidText && (
-          <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 14, padding: '28px 20px', marginBottom: 14 }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 14, padding: '28px 20px', marginBottom: 14 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: '#C9A84C', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
-              <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.5)', marginLeft: 10 }}>전체 사주를 분석하고 있어요...</span>
+              {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: '#633B50', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
+              <span style={{ fontSize: 16, color: '#62616C', marginLeft: 10 }}>전체 사주를 분석하고 있어요...</span>
             </div>
           </div>
         )}
@@ -2487,36 +2532,36 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
       <div data-pdf-exclude="true" style={{ marginTop: 28, marginBottom: 10 }}>
         {/* 페인포인트 후킹 박스 */}
-        <div style={{ background: '#0D1B3E', border: '1.5px solid rgba(201,168,76,0.4)', borderRadius: 16, padding: '28px 22px', marginBottom: 20 }}>
-          <p style={{ fontSize: 19, fontWeight: 700, color: '#FFFFFF', marginBottom: 16, lineHeight: 1.5 }}>혹시, 이런 순간 없으셨어요?</p>
+        <div style={{ background: '#FFFFFF', border: '1.5px solid #DEDFE5', borderRadius: 16, padding: '28px 22px', marginBottom: 20 }}>
+          <p style={{ fontSize: 19, fontWeight: 700, color: '#24232B', marginBottom: 16, lineHeight: 1.5 }}>혹시, 이런 순간 없으셨어요?</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-              <span style={{ fontSize: 14, color: '#C9A84C', marginTop: 2, flexShrink: 0 }}>•</span>
-              <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>돈이 언제쯤 풀릴지 막막할 때</span>
+              <span style={{ fontSize: 14, color: '#633B50', marginTop: 2, flexShrink: 0 }}>•</span>
+              <span style={{ fontSize: 16, color: '#24232B', lineHeight: 1.6 }}>돈이 언제쯤 풀릴지 막막할 때</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-              <span style={{ fontSize: 14, color: '#C9A84C', marginTop: 2, flexShrink: 0 }}>•</span>
-              <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>이 선택이 맞는지 흔들릴 때</span>
+              <span style={{ fontSize: 14, color: '#633B50', marginTop: 2, flexShrink: 0 }}>•</span>
+              <span style={{ fontSize: 16, color: '#24232B', lineHeight: 1.6 }}>이 선택이 맞는지 흔들릴 때</span>
             </div>
           </div>
         </div>
 
         {/* 블러+컷오프 샘플 텍스트 — 이미 생성된 무료/유료 분석과 같은 재물 패턴으로 표시 */}
         {(() => { const _teaser = MONEY_TEASER_VARIANTS[getMoneyTeaserVariant(baseText + '\n' + paidText)]; return (
-        <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '20px 18px', marginBottom: 20, overflow: 'hidden' }}>
-          <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{_teaser.visible}</div>
+        <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px 18px', marginBottom: 20, overflow: 'hidden' }}>
+          <div style={{ fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{_teaser.visible}</div>
           <div style={{ position: 'relative' }}>
-            <div style={{ fontSize: 18, lineHeight: 2.2, color: 'rgba(255,255,255,0.85)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>{_teaser.blurred}</div>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(13,27,62,0) 0%, rgba(13,27,62,0.7) 30%, rgba(13,27,62,0.95) 70%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(201,168,76,0.8)', textAlign: 'center', lineHeight: 1.6, padding: '0 20px' }}>여기서부터는 더 자세히 봐드려야 해요</p>
+            <div style={{ fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>{_teaser.blurred}</div>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 30%, rgba(255,255,255,0.95) 70%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: '#633B50', textAlign: 'center', lineHeight: 1.6, padding: '0 20px' }}>여기서부터는 더 자세히 봐드려야 해요</p>
             </div>
           </div>
         </div>
         ) })()}
 
         {/* 받는 것 리스트 */}
-        <div style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 16, padding: '22px 20px', marginBottom: 20 }}>
-          <p style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', marginBottom: 16 }}>9,900원 결제하면 이렇게 받아요</p>
+        <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '22px 20px', marginBottom: 20 }}>
+          <p style={{ fontSize: 16, fontWeight: 700, color: '#24232B', marginBottom: 16 }}>9,900원 결제하면 이렇게 받아요</p>
           {[
             '재물·커리어 심층 분석',
             '대운 흐름 + 전환점 정확한 연도',
@@ -2526,8 +2571,8 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             '절대 하면 안 되는 결정 1가지',
           ].map((t, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < 5 ? 12 : 0 }}>
-              <span style={{ fontSize: 14, color: '#C9A84C', marginTop: 1, flexShrink: 0 }}>✓</span>
-              <span style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{t}</span>
+              <span style={{ fontSize: 14, color: '#633B50', marginTop: 1, flexShrink: 0 }}>✓</span>
+              <span style={{ fontSize: 15, color: '#24232B', lineHeight: 1.5 }}>{t}</span>
             </div>
           ))}
         </div>
@@ -2539,27 +2584,27 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             { icon: '📄', label: 'PDF 저장' },
             { icon: '♾️', label: '평생 재열람' },
           ].map(({ icon, label }) => (
-            <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 10 }}>
+            <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10 }}>
               <span style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>{icon}</span>
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>{label}</span>
+              <span style={{ fontSize: 12, color: '#62616C', fontWeight: 500 }}>{label}</span>
             </div>
           ))}
         </div>
 
         {/* 결제 버튼 */}
-        <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: '0 4px 20px rgba(201,168,76,0.3)', marginBottom: 8 }}
+        <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: 'none', marginBottom: 8 }}
           onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); const _deepParams = new URLSearchParams({ payment: 'deep', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_deepParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 9900, currency: 'KRW' }); setScreen('deep_result'); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>지금 심화분석 확인하기 →</button>
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textAlign: 'center' }}>결제 즉시 분석이 시작돼요</p>
+        <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center' }}>결제 즉시 분석이 시작돼요</p>
       </div>
     )}
 
     {/* 업셀 카드 — 무료 결과 후 1,990원 유도 */}
     {!isPaid && phase === 'done' && serviceType === 'saju' && (
-      <div style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.04))', border: '2px solid rgba(201,168,76,0.45)', borderRadius: 16, padding: '28px 20px', marginBottom: 24, textAlign: 'center' }}>
-        <p style={{ fontSize: 19, fontWeight: 800, color: '#FFFFFF', marginBottom: 8, lineHeight: 1.5, wordBreak: 'keep-all' }}>내 사주의 정확한 시기까지 보고 싶다면?</p>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 22, lineHeight: 1.7, wordBreak: 'keep-all' }}>돈이 크게 움직이는 시기<br/>귀인을 만나는 시기<br/>피해야 할 선택과 앞으로의 방향까지</p>
+      <div style={{ background: '#FFFFFF', border: '1.5px solid #633B50', borderRadius: 16, padding: '28px 20px', marginBottom: 24, textAlign: 'center' }}>
+        <p style={{ fontSize: 19, fontWeight: 800, color: '#24232B', marginBottom: 8, lineHeight: 1.5, wordBreak: 'keep-all' }}>내 사주의 정확한 시기까지 보고 싶다면?</p>
+        <p style={{ fontSize: 13, color: '#62616C', marginBottom: 22, lineHeight: 1.7, wordBreak: 'keep-all' }}>돈이 크게 움직이는 시기<br/>귀인을 만나는 시기<br/>피해야 할 선택과 앞으로의 방향까지</p>
         <button
-          style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 900, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', boxShadow: '0 4px 20px rgba(201,168,76,0.35)' }}
+          style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 900, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', boxShadow: 'none' }}
           onClick={() => openFullAnalysisCheckout('mid_upsell_card')}>
           내 사주 전체 분석 보기 · 1,990원
         </button>
@@ -2567,22 +2612,22 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     )}
 
     {/* 하단 액션 영역 — 버튼/공유 등 UI 전용이라 PDF에는 포함하지 않음 */}
-    <div data-pdf-exclude="true" style={{ borderTop: '1px solid rgba(201,168,76,0.1)', marginTop: 32, paddingTop: 24 }}>
+    <div data-pdf-exclude="true" style={{ borderTop: '1px solid #DEDFE5', marginTop: 32, paddingTop: 24 }}>
 
       {/* 이메일 — 접이식 */}
       {isPaid && (
         preEmail ? (
-          <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '18px', textAlign: 'center', marginBottom: 20 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#C9A84C', marginBottom: 4 }}>✅ 이메일 발송 완료</p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>{preEmail}로 결과를 보내드렸어요.</p>
+          <div style={{ background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12, padding: '18px', textAlign: 'center', marginBottom: 20 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 4 }}>✅ 이메일 발송 완료</p>
+            <p style={{ fontSize: 13, color: '#62616C' }}>{preEmail}로 결과를 보내드렸어요.</p>
           </div>
         ) : (
           <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center', marginBottom: 10 }}>📧 결과를 이메일로 받아두면 언제든 다시 볼 수 있어요</p>
+            <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', marginBottom: 10 }}>📧 결과를 이메일로 받아두면 언제든 다시 볼 수 있어요</p>
             <div style={{ display: 'flex', gap: 8 }}>
               <input id="result-email-input" type="email" placeholder="이메일 주소 입력"
-                style={{ flex: 1, padding: '12px 14px', fontSize: 14, border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, background: '#FFFFFF', color: '#1B1B1B', outline: 'none' }} />
-              <button style={{ padding: '12px 18px', fontSize: 14, fontWeight: 600, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 10, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                style={{ flex: 1, padding: '12px 14px', fontSize: 14, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B' }} />
+              <button style={{ padding: '12px 18px', fontSize: 14, fontWeight: 600, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 10, cursor: 'pointer', whiteSpace: 'nowrap' }}
                 onClick={async () => {
                   const email = document.getElementById('result-email-input').value
                   if (!email || !email.includes('@')) { alert('이메일 주소를 확인해주세요.'); return }
@@ -2605,12 +2650,12 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       {/* PDF + 처음으로 — 결제 완료 후에만 표시 */}
       {isPaid && <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
         <button
-          style={{ flex: 1, padding: '14px', fontSize: 14, fontWeight: 600, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 10, cursor: 'pointer', color: '#C9A84C' }}
+          style={{ flex: 1, padding: '14px', fontSize: 14, fontWeight: 600, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50' }}
           onClick={async () => { try { await exportResultPDF('result-content', '마이사주_분석결과_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>
           📄 PDF 저장
         </button>
         <button
-          style={{ flex: 1, padding: '14px', fontSize: 14, background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}
+          style={{ flex: 1, padding: '14px', fontSize: 14, background: 'none', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C' }}
           onClick={handleRestart}>
           ← 처음으로
         </button>
@@ -2619,7 +2664,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       {/* 친구 공유 — 텍스트 링크 */}
       <p style={{ textAlign: 'center', marginBottom: 8 }}>
         <button
-          style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+          style={{ fontSize: 13, color: '#62616C', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
           onClick={() => {
             navigator.clipboard?.writeText('https://mysaju.shop').then(() => alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')).catch(() => {
               const el = document.createElement('textarea'); el.value = 'https://mysaju.shop'
@@ -2631,19 +2676,19 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         </button>
       </p>
 
-      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>
+      <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>
     </div>
       </div>
       {phase === 'done' && !isPaid && !isPaidStreaming && (
         <div style={{
           position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
           width: '100%', maxWidth: 480, zIndex: 999,
-          background: '#111', borderTop: '1px solid rgba(201,168,76,0.3)',
+          background: '#FFFFFF', borderTop: '1px solid #DEDFE5',
           padding: '10px 16px calc(10px + env(safe-area-inset-bottom))', boxSizing: 'border-box',
         }}>
           {serviceType === 'saju' ? (
             <button
-              style={{ width: '100%', padding: '11px 14px', background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
+              style={{ width: '100%', padding: '11px 14px', background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
               onClick={() => openFullAnalysisCheckout('bottom_cta')}>
               <span style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <span style={{ fontSize: 14, fontWeight: 800, wordBreak: 'keep-all' }}>내 돈의 전환점과 다음 5년 확인하기</span>
@@ -2653,7 +2698,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             </button>
           ) : (
             <button
-              style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+              style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
               onClick={() => { requestPayWithEmail(serviceType === 'child' ? '자녀운 프리미엄' : '전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `${serviceType === 'child' ? 'child' : 'saju'}_${Date.now()}`, name: serviceType === 'child' ? '마이사주 자녀운 프리미엄' : '마이사주 전체 분석', amount: serviceType === 'child' ? 9900 : 1990, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: serviceType === 'child' ? 9900 : 1990, currency: 'KRW' }); handlePaidAnalyze(email) } else alert('결제가 취소되었습니다.') }) }) }}>
               <span>{serviceType === 'child' ? '방학 전 특가로 확인하기 →' : '내 돈 버는 시기, 지금 확인하기 →'}</span>
               <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
@@ -2702,30 +2747,30 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     }
 
     return (
-      <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 16px' }}>
+      <div style={{ minHeight: '100vh', background: '#F4F5F7', padding: '40px 16px' }}>
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#C9A84C', marginBottom: 20, textAlign: 'center' }}>🔮 심화분석 결과 발송</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#633B50', marginBottom: 20, textAlign: 'center' }}>🔮 심화분석 결과 발송</h1>
           <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
             <input
-              style={{ flex: 1, padding: '12px 14px', fontSize: 14, border: '1px solid rgba(201,168,76,0.3)', borderRadius: 8, background: 'rgba(255,255,255,0.04)', color: '#FFFFFF', boxSizing: 'border-box' }}
+              style={{ flex: 1, padding: '12px 14px', fontSize: 14, border: '1px solid #DEDFE5', borderRadius: 8, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box' }}
               type="email" placeholder="고객 이메일 주소" value={adminEmail}
               onChange={e => setAdminEmail(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') fetchAdminResults() }}
             />
-            <button style={{ padding: '12px 18px', fontSize: 14, fontWeight: 700, background: '#C9A84C', color: '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={fetchAdminResults} disabled={adminLoading}>
+            <button style={{ padding: '12px 18px', fontSize: 14, fontWeight: 700, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={fetchAdminResults} disabled={adminLoading}>
               {adminLoading ? '조회 중...' : '조회'}
             </button>
           </div>
-          {adminLoading && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>조회 중...</p>}
+          {adminLoading && <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center' }}>조회 중...</p>}
           {!adminLoading && adminResults.length === 0 && (
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>이메일을 입력하고 조회하면 심화분석 결과 목록이 나타나요.</p>
+            <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center' }}>이메일을 입력하고 조회하면 심화분석 결과 목록이 나타나요.</p>
           )}
           {adminResults.map(r => (
-            <div key={r.id} style={{ background: '#0D1B3E', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 12, padding: '16px', marginBottom: 12 }}>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 8 }}>{r.userName || '이름 없음'} · {new Date(r.createdAt).toLocaleString('ko-KR')}</p>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', maxHeight: 60, overflow: 'hidden', marginBottom: 12, whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{r.resultText.slice(0, 120)}...</p>
+            <div key={r.id} style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px', marginBottom: 12 }}>
+              <p style={{ fontSize: 13, color: '#62616C', marginBottom: 8 }}>{r.userName || '이름 없음'} · {new Date(r.createdAt).toLocaleString('ko-KR')}</p>
+              <p style={{ fontSize: 13, color: '#24232B', maxHeight: 60, overflow: 'hidden', marginBottom: 12, whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{r.resultText.slice(0, 120)}...</p>
               <button
-                style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 700, background: adminStatus[r.id] === 'sent' ? 'rgba(74,222,128,0.15)' : '#C9A84C', color: adminStatus[r.id] === 'sent' ? '#4ADE80' : '#0A1628', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 700, background: adminStatus[r.id] === 'sent' ? 'rgba(74,222,128,0.15)' : '#633B50', color: adminStatus[r.id] === 'sent' ? '#1E7F4F' : '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer' }}
                 onClick={() => sendAdminResult(r)} disabled={adminSendingId === r.id}
               >
                 {adminSendingId === r.id ? '발송 중...' : adminStatus[r.id] === 'sent' ? '✅ 발송 완료' : adminStatus[r.id] === 'error' ? '⚠️ 발송 실패 · 재발송' : '📧 이 결과 이메일로 발송'}
@@ -2739,43 +2784,43 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
   // ── 약관/정책 화면들 ──
   if (screen === 'refund') return (
-  <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
+  <div style={{ minHeight: '100vh', background: '#F4F5F7', padding: '40px 20px 80px' }}>
     <div style={{ maxWidth: 480, margin: '0 auto' }}>
-      <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
-      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', marginBottom: 4 }}>환불정책</h1>
-      <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 32 }}>시행일: 2026년 6월 21일</p>
+      <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#633B50', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: '#24232B', marginBottom: 4 }}>환불정책</h1>
+      <p style={{ fontSize: 13, color: '#62616C', marginBottom: 32 }}>시행일: 2026년 6월 21일</p>
 
-      <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: 12, padding: '16px 18px', marginBottom: 28 }}>
-        <p style={{ fontSize: 14, color: '#C9A84C', fontWeight: 700, marginBottom: 6 }}>⚠️ 구매 전 꼭 확인해주세요</p>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.8 }}>본 서비스는 결제 즉시 생성되는 1회성 디지털 콘텐츠로, 결제 완료 후에는 원칙적으로 환불이 불가합니다. 결제 전 서비스 내용을 충분히 확인해 주세요.</p>
+      <div style={{ background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px 18px', marginBottom: 28 }}>
+        <p style={{ fontSize: 14, color: '#633B50', fontWeight: 700, marginBottom: 6 }}>⚠️ 구매 전 꼭 확인해주세요</p>
+        <p style={{ fontSize: 13, color: '#24232B', lineHeight: 1.8 }}>본 서비스는 결제 즉시 생성되는 1회성 디지털 콘텐츠로, 결제 완료 후에는 원칙적으로 환불이 불가합니다. 결제 전 서비스 내용을 충분히 확인해 주세요.</p>
       </div>
 
-      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2.2 }}>
-        <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제1조 (디지털 콘텐츠의 특성)</p>
+      <div style={{ fontSize: 14, color: '#24232B', lineHeight: 2.2 }}>
+        <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제1조 (디지털 콘텐츠의 특성)</p>
         <p style={{ marginBottom: 24 }}>마이사주(mysaju.shop) 서비스는 이용자가 입력한 정보를 바탕으로 AI가 즉시 생성하는 1회성 맞춤형 디지털 콘텐츠입니다. 결제가 완료되는 즉시 콘텐츠 생성이 시작되며, 이용자 요청에 따라 개인화된 풀이가 제공됩니다.</p>
 
-        <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제2조 (환불 불가 원칙)</p>
+        <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제2조 (환불 불가 원칙)</p>
         <p style={{ marginBottom: 8 }}>① 결제 완료 후 콘텐츠 생성이 시작된 경우, 「전자상거래 등에서의 소비자보호에 관한 법률」 제17조 제2항 제5호에 따라 디지털 콘텐츠의 특성상 청약 철회 및 환불이 불가합니다.</p>
         <p style={{ marginBottom: 24 }}>② 이용자는 결제 전 서비스 소개 페이지에서 제공 내용을 충분히 확인하시기 바랍니다.</p>
 
-        <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제3조 (예외적 환불 사유)</p>
+        <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제3조 (예외적 환불 사유)</p>
         <p style={{ marginBottom: 8 }}>다음의 경우에 한해 환불 신청을 검토합니다.</p>
         <p style={{ marginBottom: 8 }}>① 결제는 완료되었으나 서비스 시스템 오류로 인해 콘텐츠가 전혀 생성·제공되지 않은 경우</p>
         <p style={{ marginBottom: 8 }}>② 동일한 정보로 중복 결제가 발생한 경우 (중복분에 한해 환불)</p>
         <p style={{ marginBottom: 24 }}>③ 기타 회사의 귀책사유로 서비스 이용이 불가한 경우</p>
 
-        <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제4조 (환불 신청 방법)</p>
+        <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제4조 (환불 신청 방법)</p>
         <p style={{ marginBottom: 8 }}>환불 신청은 결제일로부터 7일 이내에 아래 방법으로 요청하시기 바랍니다.</p>
-        <p style={{ marginBottom: 8 }}>· 카카오톡 오픈채팅: <span style={{ color: '#C9A84C' }}>open.kakao.com/me/mysajushop</span></p>
-        <p style={{ marginBottom: 8 }}>· 이메일: <span style={{ color: '#C9A84C' }}>redions77@naver.com</span></p>
+        <p style={{ marginBottom: 8 }}>· 카카오톡 오픈채팅: <span style={{ color: '#633B50' }}>open.kakao.com/me/mysajushop</span></p>
+        <p style={{ marginBottom: 8 }}>· 이메일: <span style={{ color: '#633B50' }}>redions77@naver.com</span></p>
         <p style={{ marginBottom: 24 }}>· 요청 시 포함 사항: 결제일시, 결제금액, 환불 사유 및 증빙자료</p>
 
-        <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제5조 (환불 처리 기간)</p>
+        <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제5조 (환불 처리 기간)</p>
         <p style={{ marginBottom: 8 }}>· 신용카드: 카드사 정책에 따라 영업일 기준 3~7일</p>
         <p style={{ marginBottom: 24 }}>· 간편결제(카카오페이 등): 영업일 기준 1~3일</p>
 
-        <div style={{ borderTop: '1px solid rgba(201,168,76,0.15)', paddingTop: 24, marginTop: 8 }}>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 2 }}>
+        <div style={{ borderTop: '1px solid #DEDFE5', paddingTop: 24, marginTop: 8 }}>
+          <p style={{ fontSize: 12, color: '#62616C', lineHeight: 2 }}>
             상호: 봄결 · 대표자: 손영주<br/>
             사업자등록번호: 291-17-02825<br/>
             통신판매업신고: 제2026-별내-1183호<br/>
@@ -2788,29 +2833,29 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   </div>
 )
   if (screen === 'terms') return (
-    <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
+    <div style={{ minHeight: '100vh', background: '#F4F5F7', padding: '40px 20px 80px' }}>
       <div style={{ maxWidth: 480, margin: '0 auto' }}>
-        <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', marginBottom: 4 }}>이용약관</h1>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 32 }}>시행일: 2026년 6월 21일</p>
-        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2.2 }}>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제1조 (목적)</p>
+        <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#633B50', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#24232B', marginBottom: 4 }}>이용약관</h1>
+        <p style={{ fontSize: 13, color: '#62616C', marginBottom: 32 }}>시행일: 2026년 6월 21일</p>
+        <div style={{ fontSize: 14, color: '#24232B', lineHeight: 2.2 }}>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제1조 (목적)</p>
           <p style={{ marginBottom: 24 }}>이 약관은 봄결(이하 "회사")이 운영하는 마이사주(mysaju.shop) 서비스의 이용 조건 및 절차, 회사와 이용자 간의 권리·의무 및 책임사항을 규정함을 목적으로 합니다.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제2조 (서비스 내용)</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제2조 (서비스 내용)</p>
           <p style={{ marginBottom: 24 }}>회사는 이용자가 입력한 생년월일, 성별 등 정보를 바탕으로 AI가 생성하는 사주 분석 콘텐츠를 제공합니다. 본 서비스는 오락·참고 목적의 콘텐츠이며, 의학·법률·재무 등 전문적 조언을 대체하지 않습니다.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제3조 (이용 계약)</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제3조 (이용 계약)</p>
           <p style={{ marginBottom: 24 }}>이용자가 서비스를 이용하거나 결제를 진행하면 본 약관에 동의한 것으로 간주합니다.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제4조 (결제 및 요금)</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제4조 (결제 및 요금)</p>
           <p style={{ marginBottom: 8 }}>① 서비스 요금은 결제 화면에 표시된 금액을 따릅니다.</p>
           <p style={{ marginBottom: 24 }}>② 결제는 KG이니시스를 통한 신용카드 및 간편결제로 이루어집니다.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제5조 (콘텐츠의 한계)</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제5조 (콘텐츠의 한계)</p>
           <p style={{ marginBottom: 24 }}>AI가 생성하는 사주 분석 결과는 참고용이며, 결과의 정확성·완전성을 보장하지 않습니다. 이용자는 본 서비스 결과를 전적으로 신뢰하여 중요한 결정을 내리지 않도록 합니다.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제6조 (환불)</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제6조 (환불)</p>
           <p style={{ marginBottom: 24 }}>환불에 관한 사항은 별도의 환불정책을 따릅니다.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제7조 (면책)</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제7조 (면책)</p>
           <p style={{ marginBottom: 24 }}>회사는 이용자가 서비스 결과를 근거로 내린 판단이나 행동에 대해 책임을 지지 않습니다.</p>
-          <div style={{ borderTop: '1px solid rgba(201,168,76,0.15)', paddingTop: 24, marginTop: 8 }}>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 2 }}>
+          <div style={{ borderTop: '1px solid #DEDFE5', paddingTop: 24, marginTop: 8 }}>
+            <p style={{ fontSize: 12, color: '#62616C', lineHeight: 2 }}>
               상호: 봄결 · 대표자: 손영주<br/>
               사업자등록번호: 291-17-02825<br/>
               통신판매업신고: 제2026-별내-1183호<br/>
@@ -2823,30 +2868,30 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   )
 
   if (screen === 'privacy') return (
-    <div style={{ minHeight: '100vh', background: '#050D1F', padding: '40px 20px 80px' }}>
+    <div style={{ minHeight: '100vh', background: '#F4F5F7', padding: '40px 20px 80px' }}>
       <div style={{ maxWidth: 480, margin: '0 auto' }}>
-        <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#C9A84C', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', marginBottom: 4 }}>개인정보처리방침</h1>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 32 }}>시행일: 2026년 6월 21일</p>
-        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2.2 }}>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제1조 (수집하는 개인정보)</p>
+        <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#633B50', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#24232B', marginBottom: 4 }}>개인정보처리방침</h1>
+        <p style={{ fontSize: 13, color: '#62616C', marginBottom: 32 }}>시행일: 2026년 6월 21일</p>
+        <div style={{ fontSize: 14, color: '#24232B', lineHeight: 2.2 }}>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제1조 (수집하는 개인정보)</p>
           <p style={{ marginBottom: 8 }}>회사는 서비스 제공을 위해 다음 정보를 수집합니다.</p>
           <p style={{ marginBottom: 8 }}>· 필수: 생년월일, 태어난 시간(선택), 성별</p>
           <p style={{ marginBottom: 24 }}>· 선택: 이름, 이메일 주소, MBTI, 혈액형</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제2조 (수집 목적)</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제2조 (수집 목적)</p>
           <p style={{ marginBottom: 8 }}>· 사주 분석 콘텐츠 생성 및 제공</p>
           <p style={{ marginBottom: 8 }}>· 이메일 입력 시: 분석 결과 발송 및 재열람 서비스 제공</p>
           <p style={{ marginBottom: 24 }}>· 결제 처리 (KG이니시스를 통해 처리되며, 카드 정보는 회사가 저장하지 않습니다)</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제3조 (보유 및 이용 기간)</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제3조 (보유 및 이용 기간)</p>
           <p style={{ marginBottom: 24 }}>수집된 생년월일, 분석 결과 등 입력 정보는 재열람 서비스 제공 및 서비스 품질 향상을 위해 저장될 수 있습니다. 이메일 주소는 결과 재조회를 위한 식별자로 사용됩니다. 이용자가 열람·삭제를 요청하는 경우 지체 없이 파기합니다.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제4조 (제3자 제공)</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제4조 (제3자 제공)</p>
           <p style={{ marginBottom: 24 }}>회사는 이용자의 개인정보를 결제 처리(KG이니시스) 외 제3자에게 제공하지 않습니다.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제5조 (이용자 권리)</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제5조 (이용자 권리)</p>
           <p style={{ marginBottom: 24 }}>이용자는 개인정보 열람·삭제를 요청할 수 있습니다. 문의는 redions77@naver.com으로 연락해 주세요.</p>
-          <p style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15, marginBottom: 8 }}>제6조 (개인정보보호책임자)</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제6조 (개인정보보호책임자)</p>
           <p style={{ marginBottom: 24 }}>· 성명: 손영주 · 이메일: redions77@naver.com</p>
-          <div style={{ borderTop: '1px solid rgba(201,168,76,0.15)', paddingTop: 24, marginTop: 8 }}>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 2 }}>
+          <div style={{ borderTop: '1px solid #DEDFE5', paddingTop: 24, marginTop: 8 }}>
+            <p style={{ fontSize: 12, color: '#62616C', lineHeight: 2 }}>
               상호: 봄결 · 대표자: 손영주<br/>
               사업자등록번호: 291-17-02825<br/>
               통신판매업신고: 제2026-별내-1183호<br/>
