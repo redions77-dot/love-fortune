@@ -1847,138 +1847,102 @@ if (emailModal) {
 
   // ── 랜딩 ──
   if (screen === 'landing') {
+    const C = { bg: '#F4F5F7', card: '#FFFFFF', text: '#24232B', sub: '#62616C', accent: '#633B50', line: '#DEDFE5' }
+    const goSaju = () => { setServiceType('saju'); setScreen('input') }
+    const cardStyle = { background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: '18px 14px 10px', display: 'flex', flexDirection: 'column', minHeight: 188, cursor: 'pointer', textAlign: 'left' }
+    const cardLabelStyle = { fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 8, wordBreak: 'keep-all' }
+    const cardHookStyle = { fontSize: 13, color: C.sub, lineHeight: 1.6, whiteSpace: 'pre-line', wordBreak: 'keep-all', flex: 1, marginBottom: 10 }
+    const cardBtnStyle = { width: '100%', padding: '10px 0', fontSize: 14, fontWeight: 700, background: 'transparent', color: C.text, border: 'none', borderTop: `1px solid ${C.line}`, cursor: 'pointer', textAlign: 'left' }
+    const footerLinkStyle = { fontSize: 13, color: C.sub, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textDecoration: 'underline' }
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', background: '#050D1F' }}>
-        <div style={{ background: 'linear-gradient(90deg, #7B5C10, #C9A84C, #7B5C10)', textAlign: 'center', padding: '9px 16px', fontSize: 12, fontWeight: 600, color: '#0A1628', letterSpacing: '0.01em' }}>
-          ✨ 회원가입 없이 바로 확인 — 무료로 먼저 보세요
-        </div>
-        <div style={{ position: 'relative' }}>          <div style={{ position: 'relative', textAlign: 'center', padding: '52px 24px 36px', margin: '20px 16px 0', borderRadius: 16, border: '1px solid rgba(201,168,76,0.5)', background: 'rgba(5,13,31,0.6)', backdropFilter: 'blur(8px)', maxWidth: 480, marginLeft: 'auto', marginRight: 'auto' }}>
-            <div style={{ marginBottom: 20 }}>
-              <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-                <defs>
-                  <linearGradient id="starV" x1="40" y1="0" x2="40" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#F5E090"/><stop offset="50%" stopColor="#C9A84C"/><stop offset="100%" stopColor="#F5E090"/></linearGradient>
-                  <linearGradient id="starH" x1="0" y1="40" x2="80" y2="40" gradientUnits="userSpaceOnUse"><stop offset="0%" stopColor="#F5E090"/><stop offset="50%" stopColor="#C9A84C"/><stop offset="100%" stopColor="#F5E090"/></linearGradient>
-                </defs>
-                <path d="M40 4L41.2 37L40 76L38.8 37L40 4Z" fill="url(#starV)"/>
-                <path d="M4 40L37 38.8L76 40L37 41.2L4 40Z" fill="url(#starH)"/>
-                <circle cx="40" cy="40" r="2.5" fill="#FFF8DC"/>
-              </svg>
-            </div>
-            <h1 style={{ wordBreak: 'keep-all', fontSize: 34, fontWeight: 800, color: '#FFFFFF', marginBottom: 12, lineHeight: 1.25, letterSpacing: '-0.02em' }}>나는 죽어도 안되는 게,<br/>쟤는 왜 쉽게 될까</h1>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, marginBottom: 24 }}>노력 차이가 아니에요. 타이밍을 몰랐던 거예요.<br/><span style={{ fontWeight: 700, color: '#C9A84C', fontSize: 15 }}>내 사주에 답이 있어요.</span></p>
-            <div onClick={() => { setServiceType('saju'); setScreen('input') }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.5)', padding: '9px 22px', borderRadius: 20, fontSize: 13, color: '#C9A84C', fontWeight: 600, cursor: 'pointer' }}>
-              <span>⏰</span>
-              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.3 }}>
-                <span style={{ fontSize: 10, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>9,900원</span>
-                <span style={{ fontWeight: 800 }}>무료로 먼저 보기 →</span>
-              </span>
-            </div>
-          </div>
-          <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 24px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: 18, lineHeight: 1.75, color: 'rgba(255,255,255,0.85)', wordBreak: 'keep-all', fontWeight: 700 }}>내 사주엔 돈 버는 시기가 따로 있어요.<br/>그 타이밍만 알아도 달라져요.</p>
-<button
-  style={{ marginTop: 20, width: '100%', padding: '16px', fontSize: 16, fontWeight: 800, background: 'linear-gradient(135deg, #C9A84C, #F5E090)', color: '#0A1628', border: 'none', borderRadius: 12, cursor: 'pointer' }}
-  onClick={() => { setServiceType('saju'); setScreen('input') }}>
-  내 돈 버는 시기 지금 확인하기 →
-</button>
-          </div>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100svh', background: C.bg, color: C.text }}>
+        <div style={{ background: C.card, borderBottom: `1px solid ${C.line}`, textAlign: 'center', padding: '10px 16px', fontSize: 12, fontWeight: 600, color: C.sub, wordBreak: 'keep-all' }}>
+          회원가입 없이 바로 확인 — 무료로 먼저 보세요
         </div>
 
-
+        {/* 첫 화면 */}
+        <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: '24px 24px 36px', textAlign: 'center', boxSizing: 'border-box' }}>
+          <p style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>마이사주</p>
+          <h1 style={{ wordBreak: 'keep-all', fontSize: 34, fontWeight: 700, color: C.text, marginBottom: 14, lineHeight: 1.3, letterSpacing: '-0.02em' }}>나, 앞으로<br/>잘 풀릴까?</h1>
+          <p style={{ wordBreak: 'keep-all', fontSize: 15, color: C.sub, lineHeight: 1.8, marginBottom: 28 }}>돈과 일, 사랑과 관계.<br/>지금 마음에 걸리는 고민부터<br/>사주로 살펴보세요.</p>
+          <button
+            style={{ width: '100%', maxWidth: 360, minHeight: 52, padding: '14px 20px', fontSize: 16, fontWeight: 700, background: C.accent, color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', wordBreak: 'keep-all' }}
+            onClick={goSaju}>
+            내 사주 무료로 보기 →
+          </button>
+        </div>
 
         {/* 서비스 카드 */}
-        <div style={{ background: '#0A1628' }}>
-          <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 16px 48px', width: '100%', boxSizing: 'border-box' }}>
-            <p style={{ fontSize: 11, color: 'rgba(201,168,76,0.7)', textAlign: 'center', marginBottom: 4, fontWeight: 600, letterSpacing: '0.12em' }}>SERVICES</p>
-            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginBottom: 20, fontWeight: 700 }}>내 돈 버는 시기, 골라서 확인하세요</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '8px 16px 32px', width: '100%', boxSizing: 'border-box' }}>
+          <h2 style={{ fontSize: 18, color: C.text, textAlign: 'center', marginBottom: 16, fontWeight: 700 }}>궁금한 주제를 골라보세요</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
 
-              {/* ① 나의 사주  ② 궁합 */}
-              {[
-                {
-                  type: 'saju', char: '命', label: '나의 사주',
-                  badge: 'FREE PREVIEW',
-                  hook: '지금 돈이 들어오는 구조인지\n아직도 모르고 열심히만 하고 있어요?',
-                  border: 'rgba(201,168,76,0.3)', bg: 'rgba(201,168,76,0.06)'
-                },
-                {
-                  type: 'gunghab', char: '合', label: '궁합',
-                  hook: '그 사람이 나한테\n이득인 사람인지 사주에 나와요.',
-                  border: 'rgba(155,29,58,0.3)', bg: 'rgba(155,29,58,0.06)',
-                  onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') }
-                },
-              ].map(({ type, char, label, hook, badge, border, bg, onClick }) => (
-                <div key={type} onClick={onClick || (() => { setServiceType(type); setScreen('input') })} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 220, cursor: 'pointer' }}>
-                  {badge && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, marginBottom: 10 }}>
-                      <span style={{ display: 'inline-block', background: 'rgba(201,168,76,0.2)', color: '#F5E090', fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 4, border: '1px solid rgba(201,168,76,0.6)', letterSpacing: '0.12em' }}>{badge}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#C9A84C' }}>기본 사주 무료 공개</span>
-                    </div>
-                  )}
-                  <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10, marginTop: badge ? 0 : 22 }}>{char}</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 8, textAlign: 'center' }}>{label}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, whiteSpace: 'pre-line', textAlign: 'center', marginBottom: 14, wordBreak: 'keep-all' }}>{hook}</div>
-                  <button
-                    style={{ width: '100%', padding: '11px 0', fontSize: 14, fontWeight: 800, background: 'transparent', color: '#C9A84C', border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                    onClick={e => { e.stopPropagation(); (onClick || (() => { setServiceType(type); setScreen('input') }))() }}>
-                    지금 확인하기 →
-                  </button>
-                </div>
-              ))}
-
-              {/* ③ 자녀  ④ 100년 */}
-              {[
-                {
-                  char: '子', label: '우리 아이 진로·학과',
-                  hook: '맞는 직업 · 추천학과 5개\n공부법까지',
-                  border: 'rgba(45,122,82,0.3)', bg: 'rgba(45,122,82,0.06)',
-                  btn: '확인하기 →',
-                  onClick: () => { setServiceType('child'); setScreen('input') }
-                },
-                {
-                  char: '百', label: '100년 사주 인생 꿀팁',
-                  hook: '지금부터 100세까지\n매년 재물운·관계운·건강운',
-                  border: 'rgba(201,168,76,0.3)', bg: 'rgba(201,168,76,0.06)',
-                  btn: '🌟 꿀팁 받기 →',
-                  onClick: () => setScreen('백년_input')
-                },
-              ].map(({ char, label, hook, border, bg, btn, onClick }) => (
-                <div key={char} onClick={onClick} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', minHeight: 220, cursor: 'pointer' }}>
-                  <div style={{ fontSize: 36, fontWeight: 900, color: '#C9A84C', fontFamily: 'Georgia, serif', lineHeight: 1, marginBottom: 10, marginTop: 22 }}>{char}</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginBottom: 8, textAlign: 'center' }}>{label}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, whiteSpace: 'pre-line', textAlign: 'center', marginBottom: 14, wordBreak: 'keep-all' }}>{hook}</div>
-                  <button
-                    style={{ width: '100%', padding: '11px 0', fontSize: 14, fontWeight: 800, background: 'transparent', color: '#C9A84C', border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                    onClick={e => { e.stopPropagation(); onClick() }}>
-                    {btn}
-                  </button>
-                </div>
-              ))}
-
-            </div>
-            <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid rgba(201,168,76,0.15)', marginTop: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 24 }}>
-                {[['⭐','만족도 94%'],['🔒','안전한 결제'],['⚡','즉시 확인']].map(([e,t]) => (
-                  <div key={t} style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 20 }}>{e}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>{t}</div>
-                  </div>
-                ))}
+            {/* ① 나의 사주  ② 궁합 */}
+            {[
+              {
+                type: 'saju', label: '나의 사주',
+                badge: '기본 풀이 무료',
+                hook: '타고난 성향부터\n돈·일·관계의 흐름까지 살펴보세요.',
+              },
+              {
+                type: 'gunghab', label: '궁합',
+                hook: '두 사람의 성향과\n관계에서 살펴볼 점을 알아보세요.',
+                onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') }
+              },
+            ].map(({ type, label, hook, badge, onClick }) => (
+              <div key={type} onClick={onClick || (() => { setServiceType(type); setScreen('input') })} style={cardStyle}>
+                {badge && <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 6 }}>{badge}</div>}
+                <div style={cardLabelStyle}>{label}</div>
+                <div style={cardHookStyle}>{hook}</div>
+                <button
+                  style={cardBtnStyle}
+                  onClick={e => { e.stopPropagation(); (onClick || (() => { setServiceType(type); setScreen('input') }))() }}>
+                  지금 확인하기 →
+                </button>
               </div>
-            </div>
+            ))}
+
+            {/* ③ 자녀  ④ 100년 */}
+            {[
+              {
+                key: 'child', label: '우리 아이 진로·학과',
+                hook: '맞는 직업 · 추천학과 5개\n공부법까지',
+                btn: '확인하기 →',
+                onClick: () => { setServiceType('child'); setScreen('input') }
+              },
+              {
+                key: 'baeknyeon', label: '100년 사주 인생 꿀팁',
+                hook: '지금부터 100세까지\n매년 재물운·관계운·건강운',
+                btn: '꿀팁 받기 →',
+                onClick: () => setScreen('백년_input')
+              },
+            ].map(({ key, label, hook, btn, onClick }) => (
+              <div key={key} onClick={onClick} style={cardStyle}>
+                <div style={cardLabelStyle}>{label}</div>
+                <div style={cardHookStyle}>{hook}</div>
+                <button
+                  style={cardBtnStyle}
+                  onClick={e => { e.stopPropagation(); onClick() }}>
+                  {btn}
+                </button>
+              </div>
+            ))}
+
           </div>
+          <p style={{ textAlign: 'center', fontSize: 13, color: C.sub, padding: '20px 0 0', marginTop: 20, borderTop: `1px solid ${C.line}` }}>안전한 결제 · 즉시 확인</p>
         </div>
 
         {/* 푸터 */}
-<div style={{ borderTop: '1px solid rgba(201,168,76,0.2)', padding: '28px 20px 44px', background: '#050D1F' }}>
-  <div style={{ maxWidth: 480, margin: '0 auto' }}>
-    <p style={{ fontSize: 13, fontWeight: 700, color: '#C9A84C', marginBottom: 10 }}>봄결</p>
-            <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
-              <button onClick={() => setScreen('terms')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>이용약관</button>
-<button onClick={() => setScreen('privacy')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>개인정보처리방침</button>
-<button onClick={() => setScreen('refund')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>환불정책</button>
-<button onClick={() => window.open('https://open.kakao.com/me/mysajushop', '_blank')} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>고객문의</button>            </div>
-            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.15)', marginTop: 12 }}>© 2026 봄결. All rights reserved.</p>
+        <div style={{ borderTop: `1px solid ${C.line}`, padding: '28px 0 40px', background: C.card, marginTop: 'auto' }}>
+          <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: '0 16px', boxSizing: 'border-box', overflowWrap: 'anywhere' }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 10 }}>봄결</p>
+            <div style={{ display: 'flex', columnGap: 16, rowGap: 4, marginTop: 16, flexWrap: 'wrap' }}>
+              <button onClick={() => setScreen('terms')} style={footerLinkStyle}>이용약관</button>
+              <button onClick={() => setScreen('privacy')} style={footerLinkStyle}>개인정보처리방침</button>
+              <button onClick={() => setScreen('refund')} style={footerLinkStyle}>환불정책</button>
+              <button onClick={() => window.open('https://open.kakao.com/me/mysajushop', '_blank')} style={footerLinkStyle}>고객문의</button>
+            </div>
+            <p style={{ fontSize: 11, color: C.sub, marginTop: 12 }}>© 2026 봄결. All rights reserved.</p>
           </div>
         </div>
       </div>
