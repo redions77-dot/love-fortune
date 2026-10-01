@@ -229,7 +229,101 @@ const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
 const STEPS = ['gender', 'marital', 'birthdate', 'birthtime', 'mbti', 'blood']
 const API_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname) ? '' : 'https://love-fortune.onrender.com'
-const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === 'bomgyeol2026'
+// [보안] 운영자 여부는 서버 세션(HttpOnly 쿠키)으로만 판단한다. 관리자 비밀값은 프런트엔드에 두지 않는다.
+// 운영자 API(/api/admin/*)는 같은 도메인으로 요청한다 (운영: Vercel rewrite → 백엔드, 로컬: Vite 프록시).
+const IMP_CODE = 'imp87662575'
+const ORDER_STORE_KEY = 'mysaju_orders'
+const ADMIN_HINT_KEY = 'mysaju_admin_hint'
+const ORDER_KEEP_MS = 2 * 24 * 60 * 60 * 1000
+
+// [보안] 주문 토큰은 모바일 결제 후 페이지가 다시 열려도 결제를 확인할 수 있도록 이 브라우저에만 보관한다.
+function rememberOrder(order) {
+  try {
+    const all = JSON.parse(localStorage.getItem(ORDER_STORE_KEY) || '{}')
+    const now = Date.now()
+    for (const [id, v] of Object.entries(all)) if (!v || now - (v.savedAt || 0) > ORDER_KEEP_MS) delete all[id]
+    all[order.orderId] = { orderToken: order.orderToken, product: order.product, savedAt: now }
+    localStorage.setItem(ORDER_STORE_KEY, JSON.stringify(all))
+  } catch {}
+}
+function recallOrder(orderId) {
+  try {
+    const v = orderId && JSON.parse(localStorage.getItem(ORDER_STORE_KEY) || '{}')[orderId]
+    return v ? { orderId, orderToken: v.orderToken, product: v.product } : null
+  } catch { return null }
+}
+async function readJson(res) { try { return await res.json() } catch { return {} } }
+
+// [보안] 결제 후 서버가 포트원 결제 내역(주문번호·상태·금액)을 확인한다. 일시적인 조회 실패만 재시도한다.
+async function confirmPayment(order, impUid) {
+  let lastError = '결제 확인이 지연되고 있어요. 잠시 후 다시 시도해주세요.'
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt) await new Promise(r => setTimeout(r, attempt * 2000))
+    let res
+    try {
+      res = await fetch(`${API_URL}/api/orders/${encodeURIComponent(order.orderId)}/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderToken: order.orderToken, impUid }) })
+    } catch { continue }
+    const json = await readJson(res)
+    if (res.ok && json.status === 'paid') return
+    if (json.error) lastError = json.error
+    if (res.status < 500) throw new Error(lastError)
+  }
+  throw new Error(lastError)
+}
+
+// [보안] 결제된 주문의 분석 결과를 받는다. 서버는 주문당 생성을 한 번만 실행하고,
+// 생성 중이면 이어서, 완료됐으면 저장된 결과를 처음부터 다시 보내준다. 연결이 끊기면 제한적으로 재시도한다.
+async function streamOrderAnalysis(order, { onEvent, onReset, signal }) {
+  const delays = [0, 3000, 8000, 15000]
+  let lastError = null
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    if (delays[attempt]) await new Promise(r => setTimeout(r, delays[attempt]))
+    if (attempt > 0) onReset?.()
+    let gotDone = false, retryable = true
+    try {
+      const res = await fetch(`${API_URL}/api/orders/${encodeURIComponent(order.orderId)}/analysis`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderToken: order.orderToken }), signal })
+      if (!res.ok) {
+        lastError = (await readJson(res)).error || `서버 오류가 발생했습니다 (${res.status})`
+        if (res.status < 500 && res.status !== 429) break
+        continue
+      }
+      const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''
+      while (true) {
+        const { done, value } = await reader.read(); if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split('\n'); buf = lines.pop()
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          let json; try { json = JSON.parse(line.slice(6)) } catch { continue }
+          if (json.error) { lastError = json.error; if (json.retryable === false) retryable = false; continue }
+          if (json.type === 'job_status') continue
+          if (json.type === 'done') gotDone = true
+          onEvent(json)
+        }
+      }
+    } catch (e) {
+      if (e.name === 'AbortError') throw e
+      lastError = '서버에 연결할 수 없습니다.'
+    }
+    if (gotDone) return { ok: true }
+    if (!retryable) break
+  }
+  return { ok: false, error: lastError || '분석을 완료하지 못했어요. 잠시 후 다시 시도해주세요.' }
+}
+
+// [보안] 이메일은 서버가 저장한 결과로 서버가 만들어 보낸다. (주문 토큰 필요, 횟수 제한)
+async function sendOrderEmail(order, email) {
+  if (!order) throw new Error('발송 오류가 발생했습니다.')
+  const res = await fetch(`${API_URL}/api/orders/${encodeURIComponent(order.orderId)}/email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderToken: order.orderToken, email }) })
+  if (!res.ok) throw new Error((await readJson(res)).error || '발송 오류가 발생했습니다.')
+}
+
+const fullProductFor = (st) => st === 'child' ? 'full_child' : st === '노후' ? 'full_nohu' : 'full_saju'
+
+// [보안] 모바일 결제 복귀 주소는 결과를 다 받은 뒤에 지운다. 그 전에 새로고침하면 같은 주문의 결과를 이어서 받는다.
+function clearPaymentReturnUrl() {
+  if (new URLSearchParams(window.location.search).get('payment')) window.history.replaceState({}, '', window.location.pathname)
+}
 
 const LOADING_STAGES = ['사주 데이터를 읽고 있어요', '기운의 흐름을 분석하고 있어요', '당신만의 풀이를 만들고 있어요']
 
@@ -536,6 +630,186 @@ function FullAnalysisPreviewCard({ title, line1, line2 }) {
   )
 }
 
+// ── [보안] 운영자 화면 (?view=admin): 서버 세션으로 인증하고 조회·재발송·재생성은 서버 API로만 처리 ──
+function AdminPanel({ onAuthChange, onExit }) {
+  const [authState, setAuthState] = useState('checking')
+  const [tokenInput, setTokenInput] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [loggingIn, setLoggingIn] = useState(false)
+  const [adminEmail, setAdminEmail] = useState('')
+  const [adminResults, setAdminResults] = useState([])
+  const [adminOrders, setAdminOrders] = useState([])
+  const [adminLoading, setAdminLoading] = useState(false)
+  const [adminSendingId, setAdminSendingId] = useState(null)
+  const [adminStatus, setAdminStatus] = useState({})
+  const [orderStatus, setOrderStatus] = useState({})
+  const [orderEmail, setOrderEmail] = useState({})
+
+  const adminFetch = (path, body) => fetch(path, { method: body === undefined ? 'GET' : 'POST', credentials: 'same-origin', cache: 'no-store', headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) })
+
+  function setAuthed(on) {
+    setAuthState(on ? 'in' : 'out'); onAuthChange(on)
+    try { if (on) localStorage.setItem(ADMIN_HINT_KEY, '1'); else localStorage.removeItem(ADMIN_HINT_KEY) } catch {}
+  }
+
+  useEffect(() => {
+    adminFetch('/api/admin/session').then(readJson).then(j => setAuthed(!!j.admin)).catch(() => setAuthState('out'))
+  }, []) // eslint-disable-line
+
+  async function login() {
+    if (!tokenInput) return
+    setLoggingIn(true); setLoginError('')
+    try {
+      const res = await adminFetch('/api/admin/login', { token: tokenInput })
+      const json = await readJson(res)
+      if (res.ok) { setTokenInput(''); setAuthed(true) }
+      else setLoginError(json.error || '인증에 실패했습니다.')
+    } catch { setLoginError('서버에 연결할 수 없습니다.') }
+    setLoggingIn(false)
+  }
+
+  async function logout() {
+    try { await adminFetch('/api/admin/logout', {}) } catch {}
+    setAuthed(false); setAdminResults([]); setAdminOrders([])
+  }
+
+  // 이메일이면 결과·주문을, 주문번호(포트원 관리자 화면의 주문번호)면 주문을 찾는다.
+  async function fetchAdminResults() {
+    const query = adminEmail.trim()
+    if (!query) { alert('이메일 주소 또는 주문번호를 입력해주세요'); return }
+    const byEmail = query.includes('@')
+    setAdminLoading(true); setAdminResults([]); setAdminOrders([]); setAdminStatus({}); setOrderStatus({})
+    try {
+      const [rRes, oRes] = await Promise.all([
+        byEmail ? adminFetch('/api/admin/results/search', { email: query }) : null,
+        adminFetch('/api/admin/orders/search', byEmail ? { email: query } : { orderId: query }),
+      ])
+      if (rRes?.status === 401 || oRes.status === 401) { setAuthed(false); return }
+      const [rJson, oJson] = await Promise.all([rRes ? readJson(rRes) : { success: true, results: [] }, readJson(oRes)])
+      if (rJson.success) setAdminResults(rJson.results.filter(r => r.type === 'deep'))
+      else alert(rJson.error || '조회 실패')
+      if (oJson.success) setAdminOrders(oJson.orders)
+      else alert(oJson.error || '조회 실패')
+    } catch { alert('서버에 연결할 수 없습니다.') }
+    finally { setAdminLoading(false) }
+  }
+
+  async function sendAdminResult(result) {
+    setAdminSendingId(result.id)
+    try {
+      const res = await adminFetch(`/api/admin/results/${result.id}/email`, {})
+      const data = await readJson(res)
+      setAdminStatus(prev => ({ ...prev, [result.id]: data.success ? 'sent' : 'error' }))
+      if (!data.success && data.error) alert(data.error)
+    } catch {
+      setAdminStatus(prev => ({ ...prev, [result.id]: 'error' }))
+    }
+    setAdminSendingId(null)
+  }
+
+  // action: verify(포트원 결제 확인) | regenerate(결과 다시 생성) | send(결과 이메일 발송)
+  async function orderAction(order, action) {
+    setOrderStatus(prev => ({ ...prev, [order.id]: 'working' }))
+    try {
+      const res = await adminFetch(`/api/admin/orders/${encodeURIComponent(order.id)}/${action}`, { email: orderEmail[order.id] || undefined })
+      const data = await readJson(res)
+      setOrderStatus(prev => ({ ...prev, [order.id]: res.ok ? `${action}:ok` : 'error' }))
+      if (!res.ok) alert(data.error || '요청 실패')
+      else if (action === 'verify') setAdminOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'paid' } : o))
+    } catch {
+      setOrderStatus(prev => ({ ...prev, [order.id]: 'error' }))
+    }
+  }
+
+  const jobLabel = { done: '생성 완료', generating: '생성 중', failed: '생성 실패' }
+  const boxStyle = { background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px', marginBottom: 12 }
+  const inputStyle = { flex: 1, padding: '12px 14px', fontSize: 14, border: '1px solid #DEDFE5', borderRadius: 8, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box' }
+  const primaryBtn = { padding: '12px 18px', fontSize: 14, fontWeight: 700, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }
+  const subBtn = { flex: 1, padding: '10px 14px', fontSize: 13, background: 'none', border: '1px solid #DEDFE5', borderRadius: 8, cursor: 'pointer', color: '#62616C' }
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#F4F5F7', padding: '40px 16px' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto' }}>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#633B50', marginBottom: 20, textAlign: 'center' }}>🔮 심화분석 결과 발송</h1>
+        {authState === 'checking' && <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center' }}>확인 중...</p>}
+        {authState === 'out' && (
+          <form onSubmit={e => { e.preventDefault(); login() }} style={{ ...boxStyle, padding: '20px' }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>운영자 인증</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input type="password" autoComplete="off" placeholder="운영자 토큰" value={tokenInput} onChange={e => setTokenInput(e.target.value)} style={inputStyle} />
+              <button type="submit" style={primaryBtn} disabled={loggingIn}>{loggingIn ? '확인 중...' : '로그인'}</button>
+            </div>
+            {loginError && <p style={{ fontSize: 13, color: '#C53A3A', marginTop: 10 }}>{loginError}</p>}
+          </form>
+        )}
+        {authState === 'in' && (
+          <>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              <input style={inputStyle} type="text" placeholder="고객 이메일 또는 주문번호" value={adminEmail}
+                onChange={e => setAdminEmail(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') fetchAdminResults() }}
+              />
+              <button style={primaryBtn} onClick={fetchAdminResults} disabled={adminLoading}>
+                {adminLoading ? '조회 중...' : '조회'}
+              </button>
+            </div>
+            {adminLoading && <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center' }}>조회 중...</p>}
+            {!adminLoading && adminResults.length === 0 && (
+              <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center' }}>이메일을 입력하고 조회하면 심화분석 결과 목록이 나타나요. 주문번호로는 주문만 찾을 수 있어요.</p>
+            )}
+            {adminResults.map(r => (
+              <div key={r.id} style={boxStyle}>
+                <p style={{ fontSize: 13, color: '#62616C', marginBottom: 8 }}>{r.userName || '이름 없음'} · {new Date(r.createdAt).toLocaleString('ko-KR')}</p>
+                <p style={{ fontSize: 13, color: '#24232B', maxHeight: 60, overflow: 'hidden', marginBottom: 12, whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{r.resultText.slice(0, 120)}...</p>
+                <button
+                  style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 700, background: adminStatus[r.id] === 'sent' ? 'rgba(74,222,128,0.15)' : '#633B50', color: adminStatus[r.id] === 'sent' ? '#1E7F4F' : '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                  onClick={() => sendAdminResult(r)} disabled={adminSendingId === r.id}
+                >
+                  {adminSendingId === r.id ? '발송 중...' : adminStatus[r.id] === 'sent' ? '✅ 발송 완료' : adminStatus[r.id] === 'error' ? '⚠️ 발송 실패 · 재발송' : '📧 이 결과 이메일로 발송'}
+                </button>
+              </div>
+            ))}
+            {adminOrders.length > 0 && (
+              <div style={{ marginTop: 24 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>주문 내역</p>
+                {adminOrders.map(o => (
+                  <div key={o.id} style={boxStyle}>
+                    <p style={{ fontSize: 13, color: '#62616C', marginBottom: 6 }}>{o.productName} · {Number(o.amount).toLocaleString('ko-KR')}원{o.isComp ? ' · 운영자' : ''} · {new Date(o.createdAt).toLocaleString('ko-KR')}</p>
+                    <p style={{ fontSize: 12, color: '#62616C', marginBottom: 6, wordBreak: 'break-all' }}>주문번호 {o.id}</p>
+                    <p style={{ fontSize: 13, color: '#24232B' }}>{o.userName || '이름 없음'} · {o.status === 'paid' ? '결제 확인' : '결제 대기'} · {jobLabel[o.jobStatus] || '생성 전'}{o.hasEmail ? '' : ' · 이메일 없음'}</p>
+                    {!o.hasEmail && o.product !== 'gilil' && o.status === 'paid' && o.jobStatus !== 'generating' && (
+                      <input style={{ ...inputStyle, width: '100%', marginTop: 10 }} type="email" placeholder="결과를 받을 고객 이메일" value={orderEmail[o.id] || ''} onChange={e => setOrderEmail(prev => ({ ...prev, [o.id]: e.target.value }))} />
+                    )}
+                    {o.status !== 'paid' && (
+                      <button style={{ ...primaryBtn, width: '100%', padding: '10px', fontSize: 13, marginTop: 10 }} disabled={orderStatus[o.id] === 'working'} onClick={() => orderAction(o, 'verify')}>
+                        {orderStatus[o.id] === 'working' ? '확인 중...' : '💳 포트원 결제 확인'}
+                      </button>
+                    )}
+                    {o.status === 'paid' && o.product !== 'gilil' && o.jobStatus !== 'done' && o.jobStatus !== 'generating' && (
+                      <button style={{ ...primaryBtn, width: '100%', padding: '10px', fontSize: 13, marginTop: 10 }} disabled={orderStatus[o.id] === 'working' || orderStatus[o.id] === 'regenerate:ok'} onClick={() => orderAction(o, 'regenerate')}>
+                        {orderStatus[o.id] === 'regenerate:ok' ? '✅ 재생성 시작 (완료 후 이메일 발송)' : orderStatus[o.id] === 'working' ? '요청 중...' : '🔁 결과 다시 생성하기'}
+                      </button>
+                    )}
+                    {o.status === 'paid' && o.product !== 'gilil' && o.jobStatus === 'done' && (
+                      <button style={{ ...primaryBtn, width: '100%', padding: '10px', fontSize: 13, marginTop: 10 }} disabled={orderStatus[o.id] === 'working' || orderStatus[o.id] === 'send:ok'} onClick={() => orderAction(o, 'send')}>
+                        {orderStatus[o.id] === 'send:ok' ? '✅ 발송 완료' : orderStatus[o.id] === 'working' ? '발송 중...' : '📧 결과 이메일 발송'}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
+              <button style={subBtn} onClick={onExit}>결제 없이 서비스 테스트</button>
+              <button style={subBtn} onClick={logout}>로그아웃</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const _qs = new URLSearchParams(window.location.search)
   const _mobilePayment = _qs.get('payment')
@@ -546,36 +820,27 @@ export default function App() {
     ping(); const id = setInterval(ping, 30000); return () => clearInterval(id)
   }, [])
 
+  // [보안] 모바일 결제 후 복귀: 이 브라우저에 보관한 주문으로 서버가 결제를 확인한 뒤에만 분석을 시작한다.
   useEffect(() => {
-    if (_mobilePayment === 'gunghab' && _impSuccess === 'true') {
-      const t = setTimeout(() => { handleGunghabAnalyze(); window.history.replaceState({}, '', window.location.pathname) }, 300)
-      return () => clearTimeout(t)
-    }
-    if (_mobilePayment === 'gunghab' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
-    if (_mobilePayment === 'paid' && _impSuccess === 'true') {
-      const t = setTimeout(() => { handlePaidAnalyze(null); window.history.replaceState({}, '', window.location.pathname) }, 300)
-      return () => clearTimeout(t)
-    }
-    if (_mobilePayment === 'paid' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
-    if (_mobilePayment === 'deep' && _impSuccess === 'true') {
-      const t = setTimeout(() => { handleDeepAnalyze(); window.history.replaceState({}, '', window.location.pathname) }, 300)
-      return () => clearTimeout(t)
-    }
-    if (_mobilePayment === 'deep' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
-    if (_mobilePayment === 'gilil' && _impSuccess === 'true') {
-      const t = setTimeout(() => { handleGililAnalyze(); window.history.replaceState({}, '', window.location.pathname) }, 300)
-      return () => clearTimeout(t)
-    }
-    if (_mobilePayment === 'gilil' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
-    if (_mobilePayment === '백년' && _impSuccess === 'true') {
-      const t = setTimeout(() => { handle백년Analyze(); window.history.replaceState({}, '', window.location.pathname) }, 300)
-      return () => clearTimeout(t)
-    }
-    if (_mobilePayment === '백년' && _impSuccess === 'false') { alert('결제가 취소되었습니다.'); window.history.replaceState({}, '', window.location.pathname) }
+    const returnHandlers = { gunghab: handleGunghabAnalyze, paid: handlePaidAnalyze, deep: handleDeepAnalyze, gilil: handleGililAnalyze, '백년': handle백년Analyze }
+    const handler = returnHandlers[_mobilePayment]
+    if (!handler) return
+    const clearUrl = () => window.history.replaceState({}, '', window.location.pathname)
+    if (_impSuccess === 'false') { alert('결제가 취소되었습니다.'); clearUrl(); return }
+    if (_impSuccess !== 'true') return
+    const order = recallOrder(_qs.get('merchant_uid'))
+    if (!order) { alert('결제 정보를 확인할 수 없어요. 결제가 완료되었다면 고객센터로 문의해주세요.'); clearUrl(); return }
+    let cancelled = false
+    const t = setTimeout(() => {
+      confirmPayment(order, _qs.get('imp_uid'))
+        .then(() => { if (!cancelled) handler(order) })
+        .catch((e) => alert(e.message))
+    }, 300)
+    return () => { cancelled = true; clearTimeout(t) }
   }, []) // eslint-disable-line
 
   const [screen, setScreen] = useState(() => {
-    if (IS_ADMIN && _qs.get('view') === 'email') return 'admin_email'
+    if (_qs.get('view') === 'admin') return 'admin_email'
     if (_mobilePayment === 'gunghab' && _impSuccess === 'true') return 'result'
     if (_mobilePayment === 'paid' && _impSuccess === 'true') return 'result'
     if (_mobilePayment === 'deep' && _impSuccess === 'true') return 'deep_result'
@@ -663,6 +928,19 @@ export default function App() {
   const abortRef = useRef(null)
   const isPaidSectionRef = useRef(false)
   const freeResultViewedRef = useRef(false)
+  const freeRefRef = useRef('')      // [보안] 서버가 저장한 무료 결과 참조 (결과 화면 이메일용)
+  const paidOrdersRef = useRef({})   // [보안] 상품별 결제 완료 주문 { full, deep, gunghab, gilil, baeknyeon }
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  // [보안] 운영자 로그인 기록이 있는 브라우저에서만 서버에 세션을 확인한다.
+  useEffect(() => {
+    let hint = false
+    try { hint = localStorage.getItem(ADMIN_HINT_KEY) === '1' } catch {}
+    if (!hint || _qs.get('view') === 'admin') return
+    fetch('/api/admin/session', { credentials: 'same-origin', cache: 'no-store' }).then(readJson)
+      .then(j => { setIsAdmin(!!j.admin); if (!j.admin) { try { localStorage.removeItem(ADMIN_HINT_KEY) } catch {} } })
+      .catch(() => {})
+  }, []) // eslint-disable-line
 
   useEffect(() => {
     if (screen === 'result' && phase === 'done' && !isPaid && !freeResultViewedRef.current) {
@@ -696,7 +974,7 @@ export default function App() {
     if (currentStepId === 'gender' && (serviceType === 'child' || serviceType === '노후')) { setStep(s => s + 2); return }
     if (step < STEPS.length - 1) setStep(s => s + 1)
     else if (serviceType === 'deep') {
-      if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return }
+      if (isAdmin) { setScreen('deep_result'); startCheckout({ product: 'deep', input: personalInput(), onPaid: (order) => handleDeepAnalyze(order) }); return }
       setScreen('deep_result')
     } else handleFreeAnalyze()
   }
@@ -722,6 +1000,7 @@ export default function App() {
           else if (json.type === 'score') onBaseText?.(json.text)
           else if (json.type === 'paid_start') isPaidSectionRef.current = true
           else if (json.type === 'done') { gotDone = true; onDone?.() }
+          else if (json.type === 'free_ref') freeRefRef.current = json.id
           else if (json.error) onError?.(json.error)
           else if (json.text) { if (isPaidSectionRef.current) onPaidText?.(json.text); else onBaseText?.(json.text) }
         } catch {}
@@ -736,7 +1015,7 @@ export default function App() {
     freeInFlightRef.current = true
     trackEvent('free_analysis_started', { service_type: serviceType })
     setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null); setFreeError(null)
-    setIsBaseStreaming(true); isPaidSectionRef.current = false; setScreen('result')
+    setIsBaseStreaming(true); isPaidSectionRef.current = false; setScreen('result'); freeRefRef.current = ''
     const apiType = serviceType === 'child' ? '자녀천명' : serviceType === '노후' ? '노후' : '기본'
     let failed = false
     // 실패 시 결과 화면에 오류 안내를 띄운다. 첫 메시지를 유지하고, 재시도는 사용자가 버튼으로만 한다.
@@ -778,79 +1057,82 @@ if (scoreMatch) {
     }
   }
 
-  async function handlePaidAnalyze(emailOverride) {
-    const _paidQs = new URLSearchParams(window.location.search)
-    const _isMobilePaid = _paidQs.get('payment') === 'paid'
-    const _bt = _isMobilePaid ? (_paidQs.get('bt') || '') : birthtime
-    const _st = _isMobilePaid ? (_paidQs.get('st') || serviceType) : serviceType
-    setPaidText(''); setIsPaidStreaming(true); isPaidSectionRef.current = false
-    const apiType = _st === 'child' ? '자녀천명' : _st === '노후' ? '노후' : '전체'
-    let _fullBase = '', _fullPaid = ''
-    try {
-      await streamAnalyze({
-        body: { gender, maritalStatus, birthdate, birthtime: _bt, mbti, blood, type: apiType, isPaid: true, isLunar, userName: myName, previousText: baseText },
-        onSaju: (d) => { setSajuData(d) },
-        onBaseText: (t) => { setBaseText(prev => prev + t); _fullBase += t },
-        onPaidText: (t) => { setPaidText(prev => prev + t); _fullPaid += t },
-        onDone: () => {}, onError: (e) => alert(e),
-      })
-    } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
-    setIsPaidStreaming(false); setIsPaid(true)
-    const _email = emailOverride || preEmail
-    if (_email && (_fullBase.trim() || _fullPaid.trim())) {
-      const label = _st === 'child' ? '🌱 우리 아이 진로·학과 프리미엄' : _st === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'
-      autoSendEmail({ email: _email, subject: `${label} - ${myName || ''}님의 결과`, sections: [...parseSections(_fullBase), ...parseSections(_fullPaid)], name: myName })
-      saveResult({ email: _email, type: _st === 'child' ? 'child' : _st === '노후' ? 'nohu' : 'base', resultText: _fullBase + '\n' + _fullPaid, userName: myName })
+  // [보안] 결제: 서버가 만든 주문의 주문번호·금액으로 결제창을 열고, 결제가 끝나면 서버가 포트원 결제를 확인한다.
+  // 운영자 세션이 있으면 서버가 결제 없는 주문(status: paid)을 만들어 준다.
+  function personalInput() {
+    return { gender, maritalStatus, birthdate, birthtime, mbti, blood, isLunar, userName: myName }
+  }
+
+  async function createOrder(product, input, email) {
+    const res = await fetch(isAdmin ? '/api/admin/orders' : `${API_URL}/api/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: isAdmin ? 'same-origin' : 'omit', body: JSON.stringify({ product, input, email: email || undefined }) })
+    const json = await readJson(res)
+    if (!res.ok || !json.orderId) throw new Error(json.error || '결제를 준비하지 못했어요. 잠시 후 다시 시도해주세요.')
+    rememberOrder(json)
+    return json
+  }
+
+  async function startCheckout({ product, input, email, buyerName, buyerEmail, redirectParams, onPaid }) {
+    let order
+    try { order = await createOrder(product, input, email) } catch (e) { alert(e.message); return }
+    if (order.status === 'paid') { onPaid(order, true); return }
+    const IMP = window.IMP; IMP.init(IMP_CODE)
+    const _params = new URLSearchParams(redirectParams || {}).toString()
+    IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: order.orderId, name: order.name, amount: order.amount, buyer_name: buyerName || '고객', ...(buyerEmail !== undefined ? { buyer_email: buyerEmail } : {}), m_redirect_url: `${window.location.origin}${window.location.pathname}?${_params}` }, async (rsp) => {
+      if (!rsp.success) { alert('결제가 취소되었습니다.'); return }
+      try { await confirmPayment(order, rsp.imp_uid) } catch (e) { alert(e.message); return }
+      onPaid(order, false)
+    })
+  }
+
+  function deepCheckout(email, afterPaid) {
+    return {
+      product: 'deep', input: { ...personalInput(), previousText: [baseText, paidText].filter(t => t && t.trim()).join('\n\n') }, email, buyerName: myName || '고객', buyerEmail: email || '',
+      redirectParams: { payment: 'deep', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' },
+      onPaid: (order, comp) => { if (!comp && window.fbq) fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); afterPaid(order) },
     }
   }
 
-  async function handleDeepAnalyze() {
-    const _deepQs = new URLSearchParams(window.location.search)
-    const _isMobileDeep = _deepQs.get('payment') === 'deep'
-    const _bt = _isMobileDeep ? (_deepQs.get('bt') || '') : birthtime
+  async function handlePaidAnalyze(order) {
+    paidOrdersRef.current.full = order
+    const _baseAtStart = baseText
+    setPaidText(''); setIsPaidStreaming(true); isPaidSectionRef.current = false
+    try {
+      const ctrl = new AbortController(); abortRef.current = ctrl
+      const result = await streamOrderAnalysis(order, {
+        signal: ctrl.signal,
+        onReset: () => { setPaidText(''); setBaseText(_baseAtStart); isPaidSectionRef.current = false },
+        onEvent: (json) => {
+          if (json.type === 'saju') setSajuData(json)
+          else if (json.type === 'score') setBaseText(prev => prev + json.text)
+          else if (json.type === 'paid_start') isPaidSectionRef.current = true
+          else if (json.text && !json.type) { if (isPaidSectionRef.current) setPaidText(prev => prev + json.text); else setBaseText(prev => prev + json.text) }
+        },
+      })
+      if (result.ok) clearPaymentReturnUrl(); else alert(result.error)
+    } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
+    setIsPaidStreaming(false); setIsPaid(true)
+    // 결과 저장과 결제 전 입력 이메일로의 자동 발송은 서버가 생성 완료 후 처리한다.
+  }
+
+  async function handleDeepAnalyze(order) {
+    paidOrdersRef.current.deep = order
     setDeepText(''); setIsDeepStreaming(true); setSeasonData(null)
     let fullDeepText = ''
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
-      const _prevText = [baseText, paidText].filter(t => t && t.trim()).join('\n\n')
-      const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, maritalStatus, birthdate, birthtime: _bt, mbti, blood, type: '심화', isPaid: true, isLunar, userName: myName, previousText: _prevText }), signal: ctrl.signal })
-      const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''
-      while (true) {
-        const { done, value } = await reader.read(); if (done) break
-        buf += decoder.decode(value, { stream: true })
-        const lines = buf.split('\n'); buf = lines.pop()
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          try {
-            const json = JSON.parse(line.slice(6))
-            if (json.type === 'saju') {
-              setSajuData(json.사주 ? { 사주: json.사주, 생년월일: json.생년월일 } : null)
-            } else if (json.type === 'season') {
-              setSeasonData(json.data)
-            } else if (json.text) {
-              fullDeepText += json.text
-              setDeepText(prev => prev + json.text)
-            }
-          } catch {}
-        }
-      }
+      const result = await streamOrderAnalysis(order, {
+        signal: ctrl.signal,
+        onReset: () => { fullDeepText = ''; setDeepText(''); setSeasonData(null) },
+        onEvent: (json) => {
+          if (json.type === 'saju') setSajuData(json.사주 ? { 사주: json.사주, 생년월일: json.생년월일 } : null)
+          else if (json.type === 'season') setSeasonData(json.data)
+          else if (json.text) { fullDeepText += json.text; setDeepText(prev => prev + json.text) }
+        },
+      })
+      if (result.ok) clearPaymentReturnUrl(); else alert(result.error)
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
     setIsDeepStreaming(false)
-    if (fullDeepText.trim()) {
-      setIsDeepPaid(true)
-      if (preEmail) saveResult({ email: preEmail, type: 'deep', resultText: fullDeepText, userName: myName })
-    }
-  }
-
-  async function saveResult({ email, type, resultText, userName }) {
-    if (!email || !resultText) return
-    try { await fetch(`${API_URL}/api/save-result`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, type, resultText, userName }) }) } catch {}
-  }
-
-  async function autoSendEmail({ email, subject, sections, name }) {
-    if (!email || !email.includes('@')) return
-    const htmlContent = `<div style="font-family:'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#0D1B3E;color:#FFFFFF;box-sizing:border-box;"><h1 style="color:#C9A84C;text-align:center;font-size:22px;margin-bottom:8px;">${subject}</h1><p style="text-align:center;color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:24px;">${name || ''}님의 분석 결과</p><hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:24px 0;">${sections.map(sec => `<div style="margin-bottom:32px;"><h2 style="color:#C9A84C;font-size:18px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(201,168,76,0.15);">${sec.title}</h2><p style="color:rgba(255,255,255,0.85);font-size:17px;line-height:1.8;white-space:pre-wrap;word-break:keep-all;margin:0;">${sec.content}</p></div>`).join('')}<hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:32px 0 16px;"><p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p></div>`
-    try { await fetch(`${API_URL}/api/send-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: email, subject, html: htmlContent }) }) } catch {}
+    if (fullDeepText.trim()) setIsDeepPaid(true)
   }
 
   function requestPayWithEmail(productName, onConfirm) {
@@ -858,18 +1140,19 @@ if (scoreMatch) {
     setEmailModal({ productName, onConfirm: (email) => { if (email) setPreEmail(email); onConfirm(email) } })
   }
 
-  // 무료 결과 페이지의 '전체 분석 1,990원' 결제 진입점 — 기존 결제 로직(PG/파라미터/성공 처리)은 그대로 두고,
-  // 어느 teaser에서 눌렀는지(location)만 추가로 기록한다.
+  // 무료 결과 페이지의 '전체 분석 1,990원' 결제 진입점 — 어느 teaser에서 눌렀는지(location)만 추가로 기록한다.
   function openFullAnalysisCheckout(location) {
     trackEvent('paid_teaser_clicked', { location })
     requestPayWithEmail('전체 분석', (email) => {
-      if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return }
-      trackEvent('payment_page_opened', { location })
-      const IMP = window.IMP; IMP.init('imp87662575')
-      const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString()
-      IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `saju_${Date.now()}`, name: '마이사주 전체 분석', amount: 1990, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => {
-        if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 1990, currency: 'KRW' }); trackEvent('payment_completed', { location, amount: 1990 }); handlePaidAnalyze(email) }
-        else alert('결제가 취소되었습니다.')
+      if (!isAdmin) trackEvent('payment_page_opened', { location })
+      startCheckout({
+        product: 'full_saju', input: { ...personalInput(), previousText: baseText, freeRef: freeRefRef.current }, email, buyerName: myName || '고객', buyerEmail: email || '',
+        redirectParams: { payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' },
+        onPaid: (order, comp) => {
+          if (comp) setIsPaid(true)
+          else { if (window.fbq) fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); trackEvent('payment_completed', { location, amount: order.amount }) }
+          handlePaidAnalyze(order)
+        },
       })
     })
   }
@@ -908,78 +1191,45 @@ if (scoreMatch) {
   const partnerBirthdateValid = partnerBirthYear.length === 4 && Number(partnerBirthMonth) >= 1 && Number(partnerBirthMonth) <= 12 && Number(partnerBirthDay) >= 1 && Number(partnerBirthDay) <= 31
   const partnerBirthtimeValid = partnerTimeUnknown || (partnerTimeHour !== '' && partnerTimeMin !== '')
 
-  async function handleGunghabAnalyze(emailOverride) {
-    const _isMobileReturn = new URLSearchParams(window.location.search).get('payment') === 'gunghab'
-    const _qs2 = new URLSearchParams(window.location.search)
-    const _birthtime = _isMobileReturn ? (_qs2.get('bt') || '') : birthtime
-    const _partnerBirthtime = _isMobileReturn ? (_qs2.get('pbt') || '') : partnerBirthtime
+  async function handleGunghabAnalyze(order) {
+    paidOrdersRef.current.gunghab = order
     setGunghabText(''); setIsGunghabStreaming(true); setScreen('result')
-    let _fullGunghabText = ''
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
-      const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender, birthdate, birthtime: _birthtime, isLunar, partnerGender, partnerBirthdate, partnerBirthtime: _partnerBirthtime, partnerIsLunar, myName: myName || 'A', partnerName: partnerName || 'B', type: '궁합', isPaid: true, 관계유형 }), signal: ctrl.signal })
-      const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''
-      while (true) {
-        const { done, value } = await reader.read(); if (done) break
-        buf += decoder.decode(value, { stream: true })
-        const lines = buf.split('\n'); buf = lines.pop()
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          try { const json = JSON.parse(line.slice(6)); if (json.type === 'gunghab_saju') setGunghabSajuData(json); else if (json.text) { setGunghabText(prev => prev + json.text); _fullGunghabText += json.text } } catch {}
-        }
-      }
+      const result = await streamOrderAnalysis(order, {
+        signal: ctrl.signal,
+        onReset: () => { setGunghabText('') },
+        onEvent: (json) => { if (json.type === 'gunghab_saju') setGunghabSajuData(json); else if (json.text) setGunghabText(prev => prev + json.text) },
+      })
+      if (result.ok) clearPaymentReturnUrl(); else alert(result.error)
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
     setIsGunghabStreaming(false)
-    const _email = emailOverride || preEmail
-    if (_email && _fullGunghabText.trim()) {
-      autoSendEmail({ email: _email, subject: `💕 ${myName || 'A'}님 & ${partnerName || 'B'}님 궁합 분석 결과`, sections: parseSections(_fullGunghabText), name: myName })
-      saveResult({ email: _email, type: 'gunghab', resultText: _fullGunghabText, userName: myName })
-    }
   }
 
-  async function handleGililAnalyze() {
+  async function handleGililAnalyze(order) {
+    paidOrdersRef.current.gilil = order
     setGililData(null); setIsGililStreaming(true); setScreen('gilil_result')
     try {
-      const res = await fetch(`${API_URL}/api/gilil`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ purpose: gilil목적 }) })
-      const data = await res.json(); if (data.success) setGililData(data.data)
+      const res = await fetch(`${API_URL}/api/orders/${encodeURIComponent(order.orderId)}/analysis`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderToken: order.orderToken }) })
+      const data = await readJson(res)
+      if (data.success) { setGililData(data.data); clearPaymentReturnUrl() } else alert(data.error || '서버에 연결할 수 없습니다.')
     } catch (e) { alert('서버에 연결할 수 없습니다.') }
     setIsGililStreaming(false)
   }
 
-  async function handle백년Analyze(emailOverride) {
-    const _qs2 = new URLSearchParams(window.location.search)
-    const _isMobileReturn = _qs2.get('payment') === '백년'
-    const _by = _isMobileReturn ? (_qs2.get('hby') || '') : 백년BirthYear
-    const _bm = _isMobileReturn ? (_qs2.get('hbm') || '') : 백년BirthMonth
-    const _bd = _isMobileReturn ? (_qs2.get('hbd') || '') : 백년BirthDay
-    const _bt = _isMobileReturn ? (_qs2.get('hth') ? `${_qs2.get('hth')}:${_qs2.get('htm')||'00'}` : '') : 백년Birthtime
-    const _hn = _isMobileReturn ? (_qs2.get('hn') || '') : 백년Name
-    const _bd_str = (_by.length === 4 && _bm && _bd) ? `${_by}-${String(_bm).padStart(2,'0')}-${String(_bd).padStart(2,'0')}` : 백년Birthdate
+  async function handle백년Analyze(order) {
+    paidOrdersRef.current.baeknyeon = order
     set백년Text(''); setIs백년Streaming(true); setScreen('백년_result')
-    let fullText = ''
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
-      const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gender: 백년Gender || '미입력', birthdate: _bd_str, birthtime: _bt, type: '100년꿀팁', isPaid: true, isLunar: false, userName: _hn }), signal: ctrl.signal })
-      const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''
-      while (true) {
-        const { done, value } = await reader.read(); if (done) break
-        buf += decoder.decode(value, { stream: true })
-        const lines = buf.split('\n'); buf = lines.pop()
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          try {
-            const json = JSON.parse(line.slice(6))
-            if (json.text) { fullText += json.text; set백년Text(prev => prev + json.text) }
-          } catch {}
-        }
-      }
+      const result = await streamOrderAnalysis(order, {
+        signal: ctrl.signal,
+        onReset: () => { set백년Text('') },
+        onEvent: (json) => { if (json.text) set백년Text(prev => prev + json.text) },
+      })
+      if (result.ok) clearPaymentReturnUrl(); else alert(result.error)
     } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
     setIs백년Streaming(false)
-    const _email = emailOverride || 백년Email
-    if (_email && fullText.trim()) {
-      autoSendEmail({ email: _email, subject: `🌟 ${_hn || ''}님의 100년 사주 인생 꿀팁`, sections: [{ title: '100년 인생 꿀팁', content: fullText }], name: _hn })
-      saveResult({ email: _email, type: '100년꿀팁', resultText: fullText, userName: _hn })
-    }
   }
 
   // ── 100년 입력 ──
@@ -1031,16 +1281,10 @@ if (scoreMatch) {
   // ── 100년 결제 ──
   if (screen === '백년_payment') {
     function doPay() {
-      if (IS_ADMIN) {
-        handle백년Analyze('')
-        return
-      }
-      const IMP = window.IMP; IMP.init('imp87662575')
-      const _params = new URLSearchParams({ payment: '백년', hn: 백년Name, hby: 백년BirthYear, hbm: 백년BirthMonth, hbd: 백년BirthDay, hth: 백년TimeHour || '', htm: 백년TimeMin || '' }).toString()
-      IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `baek_${Date.now()}`, name: '마이사주 100년 사주 인생 꿀팁', amount: 99000, buyer_name: 백년Name || '고객', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_params}` }, (rsp) => {
-        if (rsp.success) {
-          handle백년Analyze('')
-        } else { alert('결제가 취소되었습니다.') }
+      startCheckout({
+        product: 'baeknyeon', input: { gender: 백년Gender, birthdate: 백년Birthdate, birthtime: 백년Birthtime, userName: 백년Name }, buyerName: 백년Name || '고객',
+        redirectParams: { payment: '백년', hn: 백년Name, hby: 백년BirthYear, hbm: 백년BirthMonth, hbd: 백년BirthDay, hth: 백년TimeHour || '', htm: 백년TimeMin || '' },
+        onPaid: (order) => handle백년Analyze(order),
       })
     }
     return (
@@ -1096,10 +1340,9 @@ if (scoreMatch) {
     }
     function send백년Email() {
       if (!백년EmailInput.includes('@')) { alert('이메일 주소를 확인해주세요'); return }
-      set백년Email(백년EmailInput)
-      autoSendEmail({ email: 백년EmailInput, subject: `🌟 ${백년Name || ''}님의 100년 사주 인생 꿀팁`, sections: [{ title: '100년 인생 꿀팁', content: 백년Text }], name: 백년Name })
-      saveResult({ email: 백년EmailInput, type: '100년꿀팁', resultText: 백년Text, userName: 백년Name })
-      set백년EmailSent(true)
+      sendOrderEmail(paidOrdersRef.current.baeknyeon, 백년EmailInput)
+        .then(() => { set백년Email(백년EmailInput); set백년EmailSent(true) })
+        .catch((e) => alert(e.message))
     }
     return (
       <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
@@ -1184,7 +1427,7 @@ if (scoreMatch) {
         <div style={{ position: 'fixed', bottom: 0, background: '#F4F5F7', borderTop: '1px solid #DEDFE5', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
           <button style={{ flex: '0 0 auto', padding: '14px 20px', border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', fontSize: 15, cursor: 'pointer', color: '#62616C' }} onClick={() => setScreen('landing')}>←</button>
           <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: !canNext ? '#E4E5EA' : '#633B50', color: !canNext ? '#62616C' : '#FFFFFF', border: 'none', borderRadius: 10, cursor: !canNext ? 'not-allowed' : 'pointer' }} disabled={!canNext}
-            onClick={() => { if (IS_ADMIN) { handleGililAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); const _gililParams = new URLSearchParams({ payment: 'gilil', gp: gilil목적, by: birthYear, bm: birthMonth, bd: birthDay }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `gilil_${Date.now()}`, name: '마이사주 길일 추천', amount: 9900, buyer_name: '고객', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_gililParams}` }, (rsp) => { if (rsp.success) handleGililAnalyze(); else alert('결제가 취소되었습니다.') }) }}>
+            onClick={() => startCheckout({ product: 'gilil', input: { purpose: gilil목적 }, buyerName: '고객', redirectParams: { payment: 'gilil', gp: gilil목적, by: birthYear, bm: birthMonth, bd: birthDay }, onPaid: (order) => handleGililAnalyze(order) })}>
             📅 길일 찾기 (9,900원)
           </button>
         </div>
@@ -1197,10 +1440,9 @@ if (scoreMatch) {
     const deepSections = parseSections(deepText)
     function sendDeepEmail() {
       if (!deepEmailInput.includes('@')) { alert('이메일 주소를 확인해주세요'); return }
-      const emailSections = deepSections.filter(sec => sec.title !== '분석 결과' && !sec.title.includes('운의계절') && sec.content?.trim())
-      autoSendEmail({ email: deepEmailInput, subject: `🔮 ${myName || ''}님의 사주 심화 분석 결과`, sections: emailSections.length > 0 ? emailSections : [{ title: '심화 분석', content: deepText }], name: myName })
-      saveResult({ email: deepEmailInput, type: 'deep', resultText: deepText, userName: myName })
-      setDeepEmailSent(true)
+      sendOrderEmail(paidOrdersRef.current.deep, deepEmailInput)
+        .then(() => setDeepEmailSent(true))
+        .catch((e) => alert(e.message))
     }
     const seasonPhases = seasonData ? [
       { key: 'wood', icon: '木', color: '#1E7F4F', bgColor: 'rgba(74,222,128,0.08)', borderColor: 'rgba(74,222,128,0.3)' },
@@ -1334,7 +1576,7 @@ if (scoreMatch) {
 
               {/* 결제 버튼 */}
               <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: 'none', marginBottom: 8 }}
-                onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); const _deepParams = new URLSearchParams({ payment: 'deep', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_deepParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 9900, currency: 'KRW' }); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>지금 심화분석 확인하기 →</button>
+                onClick={() => { requestPayWithEmail('심화 분석', (email) => startCheckout(deepCheckout(email, (order) => handleDeepAnalyze(order)))) }}>지금 심화분석 확인하기 →</button>
               <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center', marginBottom: 20 }}>결제 즉시 분석이 시작돼요</p>
 
               <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C' }} onClick={handleRestart}>← 처음으로</button>
@@ -1688,11 +1930,13 @@ if (scoreMatch) {
            onClick={() => {
   if (isStep0) { setGunghabStep(1); return }
   if (isStep1) { setGunghabStep(2); return }
-              if (IS_ADMIN) { handleGunghabAnalyze(null); return }
-              const IMP = window.IMP; IMP.init('imp87662575')
               const _pbt = (() => { if (partnerTimeUnknown) return ''; if (!partnerTimeHour || !partnerTimeMin) return ''; let h = Number(partnerTimeHour); if (partnerTimeAmPm === '오전' && h === 12) h = 0; if (partnerTimeAmPm === '오후' && h !== 12) h += 12; return `${String(h).padStart(2,'0')}:${String(partnerTimeMin).padStart(2,'0')}` })()
-              const _params = new URLSearchParams({ payment: 'gunghab', imp_success: 'true', g: gender, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mn: myName || '', pn: partnerName || '', pg: partnerGender, pby: partnerBirthYear, pbm: partnerBirthMonth, pbd: partnerBirthDay, ptu: partnerTimeUnknown ? '1' : '0', pil: partnerIsLunar ? '1' : '0', pbt: _pbt, ptap: partnerTimeAmPm }).toString()
-              IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `gunghab_${Date.now()}`, name: '마이사주 궁합 분석', amount: 1990, buyer_name: myName || '고객', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_params}` }, (rsp) => { if (rsp.success) handleGunghabAnalyze(null); else alert('결제가 취소되었습니다.') })
+              startCheckout({
+                product: 'gunghab', input: { gender, birthdate, birthtime, isLunar, partnerGender, partnerBirthdate, partnerBirthtime: _pbt, partnerIsLunar, myName, partnerName, 관계유형 }, buyerName: myName || '고객',
+                redirectParams: { payment: 'gunghab', g: gender, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mn: myName || '', pn: partnerName || '', pg: partnerGender, pby: partnerBirthYear, pbm: partnerBirthMonth, pbd: partnerBirthDay, ptu: partnerTimeUnknown ? '1' : '0', pil: partnerIsLunar ? '1' : '0', pbt: _pbt, ptap: partnerTimeAmPm },
+                onPaid: (order) => handleGunghabAnalyze(order),
+              })
+
             }}>
             {isStep0 ? '다음 — 내 정보 입력' : isStep1 ? '다음 — 상대방 정보 입력' : '💕 관계 분석받기 (1,990원)'}
           </button>
@@ -1780,7 +2024,7 @@ if (scoreMatch) {
                     const email = document.getElementById('gunghab-email-input').value
                     if (!email || !email.includes('@')) { alert('이메일 주소를 확인해주세요.'); return }
                     const btn = document.querySelector('#gunghab-email-input + button'); btn.textContent = '발송 중...'; btn.disabled = true
-                    try { const _secs = parseSections(gunghabText); const res = await fetch(`${API_URL}/api/send-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: email, subject: `💕 ${myName || 'A'}님 & ${partnerName || 'B'}님 궁합 분석 결과`, html: `<div style="font-family:'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#0D1B3E;color:#FFFFFF;box-sizing:border-box;"><h1 style="color:#C9A84C;text-align:center;font-size:22px;margin-bottom:24px;">💕 ${myName || 'A'}님 & ${partnerName || 'B'}님 궁합 분석</h1><hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:24px 0;">${_secs.map(s => `<div style="margin-bottom:32px;"><h2 style="color:#C9A84C;font-size:18px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(201,168,76,0.15);">${s.title}</h2><p style="color:rgba(255,255,255,0.85);font-size:17px;line-height:1.8;white-space:pre-wrap;word-break:keep-all;margin:0;">${s.content}</p></div>`).join('')}<hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:32px 0 16px;"><p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p></div>` }) }); if (!res.ok) throw new Error('실패'); document.getElementById('gunghab-email-input').dataset.sent = 'true'; alert('이메일을 발송했어요! 😊') } catch { alert('발송 오류가 발생했습니다.') }
+                    try { await sendOrderEmail(paidOrdersRef.current.gunghab, email); document.getElementById('gunghab-email-input').dataset.sent = 'true'; alert('이메일을 발송했어요! 😊') } catch (e) { alert(e.message || '발송 오류가 발생했습니다.') }
                     finally { btn.textContent = '발송'; btn.disabled = false }
                   }}>발송</button>
               </div>
@@ -2593,7 +2837,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
         {/* 결제 버튼 */}
         <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: 'none', marginBottom: 8 }}
-          onClick={() => { requestPayWithEmail('심화 분석', (email) => { if (IS_ADMIN) { setScreen('deep_result'); handleDeepAnalyze(); return } const IMP = window.IMP; IMP.init('imp87662575'); const _deepParams = new URLSearchParams({ payment: 'deep', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `deep_${Date.now()}`, name: '마이사주 심화 분석', amount: 9900, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_deepParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: 9900, currency: 'KRW' }); setScreen('deep_result'); handleDeepAnalyze() } else alert('결제가 취소되었습니다.') }) }) }}>지금 심화분석 확인하기 →</button>
+          onClick={() => { requestPayWithEmail('심화 분석', (email) => startCheckout(deepCheckout(email, (order) => { setScreen('deep_result'); handleDeepAnalyze(order) }))) }}>지금 심화분석 확인하기 →</button>
         <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center' }}>결제 즉시 분석이 시작돼요</p>
       </div>
     )}
@@ -2632,14 +2876,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
                   const email = document.getElementById('result-email-input').value
                   if (!email || !email.includes('@')) { alert('이메일 주소를 확인해주세요.'); return }
                   const btn = document.querySelector('#result-email-input + button'); btn.textContent = '발송 중...'; btn.disabled = true
-                  const allSections = [...parseSections(baseText), ...parseSections(paidText)]
-                  const htmlContent = `<div style="font-family:'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#0D1B3E;color:#FFFFFF;box-sizing:border-box;"><h1 style="color:#C9A84C;text-align:center;font-size:22px;margin-bottom:8px;">${serviceType === 'child' ? '🌱 우리 아이 진로·학과 프리미엄' : serviceType === '노후' ? '🌅 노후 운세 분석' : '✨ 나의 사주 분석'}</h1><p style="text-align:center;color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:24px;">${myName || ''}님의 분석 결과</p><hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:24px 0;">${allSections.map(s => `<div style="margin-bottom:32px;"><h2 style="color:#C9A84C;font-size:18px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(201,168,76,0.15);">${s.title}</h2><p style="color:rgba(255,255,255,0.85);font-size:17px;line-height:1.8;white-space:pre-wrap;word-break:keep-all;margin:0;">${s.content}</p></div>`).join('')}<hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:32px 0 16px;"><p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p></div>`
                   try {
-                    const res = await fetch(`${API_URL}/api/send-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: email, subject: `✨ ${myName || ''}님의 사주 분석 결과`, html: htmlContent }) })
-                    if (!res.ok) throw new Error('실패')
+                    await sendOrderEmail(paidOrdersRef.current.full, email)
                     document.getElementById('result-email-input').dataset.sent = 'true'
                     alert('이메일을 발송했어요! 😊')
-                  } catch { alert('발송 오류가 발생했습니다.') }
+                  } catch (e) { alert(e.message || '발송 오류가 발생했습니다.') }
                   finally { btn.textContent = '발송'; btn.disabled = false }
                 }}>발송</button>
             </div>
@@ -2699,7 +2940,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           ) : (
             <button
               style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-              onClick={() => { requestPayWithEmail(serviceType === 'child' ? '자녀운 프리미엄' : '전체 분석', (email) => { if (IS_ADMIN) { setIsPaid(true); handlePaidAnalyze(email); return } const IMP = window.IMP; IMP.init('imp87662575'); const _paidParams = new URLSearchParams({ payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }).toString(); IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: `${serviceType === 'child' ? 'child' : 'saju'}_${Date.now()}`, name: serviceType === 'child' ? '마이사주 자녀운 프리미엄' : '마이사주 전체 분석', amount: serviceType === 'child' ? 9900 : 1990, buyer_name: myName || '고객', buyer_email: email || '', m_redirect_url: `${window.location.origin}${window.location.pathname}?${_paidParams}` }, (rsp) => { if (rsp.success) { if (window.fbq) fbq('track', 'Purchase', { value: serviceType === 'child' ? 9900 : 1990, currency: 'KRW' }); handlePaidAnalyze(email) } else alert('결제가 취소되었습니다.') }) }) }}>
+              onClick={() => { requestPayWithEmail(serviceType === 'child' ? '자녀운 프리미엄' : '전체 분석', (email) => startCheckout({ product: fullProductFor(serviceType), input: { ...personalInput(), previousText: baseText, freeRef: freeRefRef.current }, email, buyerName: myName || '고객', buyerEmail: email || '', redirectParams: { payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }, onPaid: (order, comp) => { if (comp) setIsPaid(true); else if (window.fbq) fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); handlePaidAnalyze(order) } })) }}>
               <span>{serviceType === 'child' ? '방학 전 특가로 확인하기 →' : '내 돈 버는 시기, 지금 확인하기 →'}</span>
               <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
                 <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>{serviceType === 'child' ? '19,900원' : '9,900원'}</span>
@@ -2713,74 +2954,8 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   )
 }
 
-  // ── 관리자: 심화분석 결과 이메일 발송 ──
-  if (screen === 'admin_email') {
-    const [adminEmail, setAdminEmail] = useState('')
-    const [adminResults, setAdminResults] = useState([])
-    const [adminLoading, setAdminLoading] = useState(false)
-    const [adminSendingId, setAdminSendingId] = useState(null)
-    const [adminStatus, setAdminStatus] = useState({})
-
-    async function fetchAdminResults() {
-      if (!adminEmail.includes('@')) { alert('이메일 주소를 확인해주세요'); return }
-      setAdminLoading(true); setAdminResults([]); setAdminStatus({})
-      try {
-        const res = await fetch(`${API_URL}/api/get-results?email=${encodeURIComponent(adminEmail)}`)
-        const data = await res.json()
-        if (data.success) setAdminResults(data.results.filter(r => r.type === 'deep'))
-        else alert(data.error || '조회 실패')
-      } catch (e) { alert('서버에 연결할 수 없습니다.') }
-      setAdminLoading(false)
-    }
-
-    async function sendAdminResult(result) {
-      setAdminSendingId(result.id)
-      const htmlContent = `<div style="font-family:'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;background:#0D1B3E;color:#FFFFFF;box-sizing:border-box;"><h1 style="color:#C9A84C;text-align:center;font-size:22px;margin-bottom:8px;">🔮 사주 심화 분석 결과</h1><p style="text-align:center;color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:24px;">${result.userName || ''}님의 분석 결과</p><hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:24px 0;"><p style="color:rgba(255,255,255,0.85);font-size:17px;line-height:1.8;white-space:pre-wrap;word-break:keep-all;margin:0;">${result.resultText}</p><hr style="border:none;border-top:1px solid rgba(201,168,76,0.3);margin:32px 0 16px;"><p style="text-align:center;color:rgba(255,255,255,0.4);font-size:12px;">마이사주 · mysaju.shop</p></div>`
-      try {
-        const res = await fetch(`${API_URL}/api/send-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: adminEmail, subject: '🔮 마이사주 심화 분석 결과', html: htmlContent }) })
-        const data = await res.json()
-        setAdminStatus(prev => ({ ...prev, [result.id]: data.success ? 'sent' : 'error' }))
-      } catch (e) {
-        setAdminStatus(prev => ({ ...prev, [result.id]: 'error' }))
-      }
-      setAdminSendingId(null)
-    }
-
-    return (
-      <div style={{ minHeight: '100vh', background: '#F4F5F7', padding: '40px 16px' }}>
-        <div style={{ maxWidth: 480, margin: '0 auto' }}>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#633B50', marginBottom: 20, textAlign: 'center' }}>🔮 심화분석 결과 발송</h1>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-            <input
-              style={{ flex: 1, padding: '12px 14px', fontSize: 14, border: '1px solid #DEDFE5', borderRadius: 8, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box' }}
-              type="email" placeholder="고객 이메일 주소" value={adminEmail}
-              onChange={e => setAdminEmail(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') fetchAdminResults() }}
-            />
-            <button style={{ padding: '12px 18px', fontSize: 14, fontWeight: 700, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={fetchAdminResults} disabled={adminLoading}>
-              {adminLoading ? '조회 중...' : '조회'}
-            </button>
-          </div>
-          {adminLoading && <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center' }}>조회 중...</p>}
-          {!adminLoading && adminResults.length === 0 && (
-            <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center' }}>이메일을 입력하고 조회하면 심화분석 결과 목록이 나타나요.</p>
-          )}
-          {adminResults.map(r => (
-            <div key={r.id} style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px', marginBottom: 12 }}>
-              <p style={{ fontSize: 13, color: '#62616C', marginBottom: 8 }}>{r.userName || '이름 없음'} · {new Date(r.createdAt).toLocaleString('ko-KR')}</p>
-              <p style={{ fontSize: 13, color: '#24232B', maxHeight: 60, overflow: 'hidden', marginBottom: 12, whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{r.resultText.slice(0, 120)}...</p>
-              <button
-                style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 700, background: adminStatus[r.id] === 'sent' ? 'rgba(74,222,128,0.15)' : '#633B50', color: adminStatus[r.id] === 'sent' ? '#1E7F4F' : '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer' }}
-                onClick={() => sendAdminResult(r)} disabled={adminSendingId === r.id}
-              >
-                {adminSendingId === r.id ? '발송 중...' : adminStatus[r.id] === 'sent' ? '✅ 발송 완료' : adminStatus[r.id] === 'error' ? '⚠️ 발송 실패 · 재발송' : '📧 이 결과 이메일로 발송'}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
+  // ── [보안] 운영자 화면 (?view=admin) — 인증·권한 확인은 서버 세션으로만 ──
+  if (screen === 'admin_email') return <AdminPanel onAuthChange={setIsAdmin} onExit={() => { window.history.replaceState({}, '', window.location.pathname); setScreen('landing') }} />
 
   // ── 약관/정책 화면들 ──
   if (screen === 'refund') return (

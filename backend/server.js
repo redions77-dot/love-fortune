@@ -4,23 +4,25 @@ const Anthropic = require('@anthropic-ai/sdk');
 const KoreanLunarCalendar = require('korean-lunar-calendar');
 const { Pool } = require('pg');
 require('dotenv').config();
+const { installSecureApi } = require('./secure');
+
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'https://love-fortune-nu.vercel.app',
+  'https://mysaju.shop',
+  'https://www.mysaju.shop',
+];
 
 const app = express();
 app.use(express.json());
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://love-fortune-nu.vercel.app',
-    'https://mysaju.shop',
-    'https://www.mysaju.shop',
-  ]
-}));
+app.use(cors({ origin: ALLOWED_ORIGINS }));
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  // 로컬 테스트 DB처럼 SSL이 없는 경우에만 DATABASE_SSL=disable 로 끈다.
+  ssl: process.env.DATABASE_SSL === 'disable' ? false : { rejectUnauthorized: false },
 });
 
 (async () => {
@@ -66,9 +68,8 @@ function getComment(purpose) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-// 6개월치 길일 API
-app.post('/api/gilil', (req, res) => {
-  const { purpose } = req.body;
+// 6개월치 길일 계산 — 유료 상품이므로 결제 확인된 주문(/api/orders/:id/analysis)으로만 제공한다.
+function computeGilil(purpose) {
   const results = {};
   const today = new Date();
 
@@ -96,8 +97,8 @@ app.post('/api/gilil', (req, res) => {
     };
   }
 
-  res.json({ success: true, data: results });
-});
+  return results;
+}
 
 
 function lunarToSolar(year, month, day) {
@@ -592,7 +593,10 @@ function calcSaju(birthdate, birthtime, isLunar) {
   return { year, month, day, 일주, 년주, 월주, 시주, 일천간index: 일주obj.천간index, 년천간index: 년주obj.천간index };
 }
 
-app.post('/api/analyze', async (req, res) => {
+// 분석 본문 생성. 무료 요청은 HTTP 응답(res)으로, 유료 주문은 secure.js의 작업 기록 객체로 스트리밍한다.
+// body는 무료 요청이면 isPaid를 false로 고정한 요청 본문, 유료면 서버에 저장된 주문 입력이다.
+async function runAnalysis(body, res) {
+  const req = { body };
   const { gender, birthdate, birthtime, mbti, blood, type, isPaid, isLunar, maritalStatus, userName, previousText } = req.body;
 
   // 이미 생성되어 사용자에게 보여준 이전(무료) 분석 결과와 모순되지 않도록 유료/심화 프롬프트에 공통으로 붙일 블록
@@ -1732,120 +1736,21 @@ res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
   }
 
   res.end();
+}
+
+const secureApi = installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins: ALLOWED_ORIGINS });
+
+// 무료 분석만 처리한다. 유료 분석은 결제가 확인된 주문으로만 /api/orders/:id/analysis 에서 생성한다.
+app.post('/api/analyze', async (req, res) => {
+  const body = req.body || {};
+  if (body.isPaid || secureApi.PAID_ONLY_ANALYSIS_TYPES.has(body.type)) return secureApi.rejectPaidWithoutOrder(res);
+  await runAnalysis({ ...body, isPaid: false }, secureApi.createFreeTee(res));
 });
 
-// ── PDF 생성 API ──────────────────────────────────────
-app.post('/api/pdf', async (req, res) => {
-  const { html, filename } = req.body;
-  if (!html) return res.status(400).json({ error: 'html 없음' });
-
-  let browser;
-  try {
-    const chromium = require('@sparticuz/chromium');
-    const puppeteer = require('puppeteer-core');
-
-    // Render 환경에서 chromium 실행 파일 경로 명시
-    const executablePath = process.env.CHROME_PATH
-      || await chromium.executablePath('/opt/render/.cache/puppeteer/chrome')
-      || '/usr/bin/google-chrome-stable';
-
-    browser = await puppeteer.launch({
-      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      defaultViewport: { width: 1280, height: 800 },
-      executablePath,
-      headless: true,
-    });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdf = await page.pdf({
-      format: 'A4',
-      margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' },
-      printBackground: true,
-    });
-    await browser.close();
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename || '마이사주_결과')}.pdf`);
-    res.send(pdf);
-  } catch (e) {
-    if (browser) await browser.close().catch(() => {});
-    console.error('PDF 생성 오류:', e);
-    res.status(500).json({ error: 'PDF 생성 실패' });
-  }
-});
-
-// ── 이메일 발송 API ──────────────────────────────────────
-app.post('/api/send-email', async (req, res) => {
-  const { to, subject, html } = req.body;
-  if (!to || !html) return res.status(400).json({ error: '이메일 또는 내용 없음' });
-
-  try {
-    const nodemailer = require('nodemailer');
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: `마이사주 <${process.env.GMAIL_USER}>`,
-      to,
-      subject: subject || '마이사주 분석 결과',
-      html,
-    });
-
-    res.json({ success: true });
-  } catch (e) {
-    console.error('이메일 발송 오류:', e);
-    res.status(500).json({ error: '이메일 발송 실패' });
-  }
-});
-
-// ── 결과 저장 API ──────────────────────────────────────
-app.post('/api/save-result', async (req, res) => {
-  const { email, type, resultText, userName } = req.body;
-  if (!email || !type || !resultText) {
-    return res.status(400).json({ error: 'email, type, resultText는 필수입니다.' });
-  }
-  try {
-    const { rows } = await pool.query(
-      'INSERT INTO results (email, type, result_text, user_name) VALUES ($1, $2, $3, $4) RETURNING id',
-      [email, type, resultText, userName || null]
-    );
-    res.json({ success: true, id: rows[0].id });
-  } catch (e) {
-    console.error('[DB] 결과 저장 실패:', e.message);
-    res.status(500).json({ error: '결과 저장에 실패했습니다.' });
-  }
-});
-
-// ── 결과 조회 API ──────────────────────────────────────
-app.get('/api/get-results', async (req, res) => {
-  const { email } = req.query;
-  if (!email) {
-    return res.status(400).json({ error: 'email 파라미터가 필요합니다.' });
-  }
-  try {
-    const { rows } = await pool.query(
-      'SELECT id, type, result_text, user_name, created_at FROM results WHERE email = $1 ORDER BY created_at DESC',
-      [email]
-    );
-    res.json({
-      success: true,
-      results: rows.map(r => ({
-        id: r.id,
-        type: r.type,
-        resultText: r.result_text,
-        userName: r.user_name,
-        createdAt: r.created_at,
-      })),
-    });
-  } catch (e) {
-    console.error('[DB] 결과 조회 실패:', e.message);
-    res.status(500).json({ error: '결과 조회에 실패했습니다.' });
-  }
+// 인증 없이 결과 저장·조회·임의 메일 발송·임의 HTML 렌더링을 허용하던 API는 제거했다.
+// (결과 저장·발송은 서버가 생성한 주문 결과 기준으로 secure.js에서 처리, /api/pdf는 프런트엔드에서 쓰지 않음)
+app.all(['/api/pdf', '/api/send-email', '/api/save-result', '/api/get-results', '/api/gilil'], (req, res) => {
+  res.status(410).json({ error: '더 이상 지원하지 않는 요청입니다. 페이지를 새로고침해주세요.' });
 });
 
 const PORT = process.env.PORT || 4000;
