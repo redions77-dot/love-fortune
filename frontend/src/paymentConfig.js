@@ -1,4 +1,4 @@
-import { PRODUCTION_HOSTS } from './apiConfig.js'
+import { PRODUCTION_HOSTS } from './hosts.js'
 
 // 결제 가맹점 코드(IMP) 결정. 미리보기가 운영 가맹점 코드로 결제창을 열지 않게 한다.
 //  - VITE_IMP_CODE 설정됨: 그 값 사용. 단 운영 도메인이 아니면 운영 코드와 같을 수 없다.

@@ -25,8 +25,8 @@
 </script>
     <!-- Google tag (gtag.js) -->
 <script>
-  // 분석 도구는 운영 도메인에서만 로드한다 (미리보기·로컬에서는 스크립트도 이벤트도 없음). src/paymentConfig.js 의 isAnalyticsHost 와 같은 목록.
-  window.__ANALYTICS_ON__ = ['love-fortune-nu.vercel.app', 'mysaju.shop', 'www.mysaju.shop'].indexOf(location.hostname) !== -1;
+  // 분석 도구는 운영 도메인에서만 로드한다 (미리보기·로컬에서는 스크립트도 이벤트도 없음). 도메인 목록은 src/hosts.js 한 곳에서 관리하며 빌드 때 채워진다.
+  window.__ANALYTICS_ON__ = __PRODUCTION_HOSTS__.indexOf(location.hostname) !== -1;
   if (window.__ANALYTICS_ON__) {
     var gs = document.createElement('script'); gs.async = true;
     gs.src = 'https://www.googletagmanager.com/gtag/js?id=G-359ZYJD21F';
