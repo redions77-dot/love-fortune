@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { API_URL } from './apiConfig.js'
+import { PAYMENT_CONFIG, isAnalyticsHost } from './paymentConfig.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
 // 없으면 조용히 무시한다. 나중에 다른 분석 도구를 붙일 때도 호출부는 바꿀 필요 없이 이 함수만 확장하면 된다.
 function trackEvent(name, params = {}) {
   try {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined' || !isAnalyticsHost(window.location.hostname)) return
     if (typeof window.gtag === 'function') window.gtag('event', name, params)
     if (typeof window.fbq === 'function') window.fbq('trackCustom', name, params)
   } catch {}
@@ -231,7 +232,6 @@ const BLOOD_LIST = ['A', 'B', 'O', 'AB']
 const STEPS = ['gender', 'marital', 'birthdate', 'birthtime', 'mbti', 'blood']
 // [보안] 운영자 여부는 서버 세션(HttpOnly 쿠키)으로만 판단한다. 관리자 비밀값은 프런트엔드에 두지 않는다.
 // 운영자 API(/api/admin/*)는 같은 도메인으로 요청한다 (운영: Vercel rewrite → 백엔드, 로컬: Vite 프록시).
-const IMP_CODE = 'imp87662575'
 const ORDER_STORE_KEY = 'mysaju_orders'
 const ADMIN_HINT_KEY = 'mysaju_admin_hint'
 const ORDER_KEEP_MS = 2 * 24 * 60 * 60 * 1000
@@ -1072,10 +1072,12 @@ if (scoreMatch) {
   }
 
   async function startCheckout({ product, input, email, buyerName, buyerEmail, redirectParams, onPaid }) {
+    // 결제 설정이 없으면(미리보기 등) 주문 생성·결제창 모두 열지 않는다. 운영 가맹점 코드로 대체하지 않는다.
+    if (!PAYMENT_CONFIG.code) { alert(PAYMENT_CONFIG.error); return }
     let order
     try { order = await createOrder(product, input, email) } catch (e) { alert(e.message); return }
     if (order.status === 'paid') { onPaid(order, true); return }
-    const IMP = window.IMP; IMP.init(IMP_CODE)
+    const IMP = window.IMP; IMP.init(PAYMENT_CONFIG.code)
     const _params = new URLSearchParams(redirectParams || {}).toString()
     IMP.request_pay({ pg: 'html5_inicis', pay_method: 'card', merchant_uid: order.orderId, name: order.name, amount: order.amount, buyer_name: buyerName || '고객', ...(buyerEmail !== undefined ? { buyer_email: buyerEmail } : {}), m_redirect_url: `${window.location.origin}${window.location.pathname}?${_params}` }, async (rsp) => {
       if (!rsp.success) { alert('결제가 취소되었습니다.'); return }
@@ -1088,7 +1090,7 @@ if (scoreMatch) {
     return {
       product: 'deep', input: { ...personalInput(), previousText: [baseText, paidText].filter(t => t && t.trim()).join('\n\n') }, email, buyerName: myName || '고객', buyerEmail: email || '',
       redirectParams: { payment: 'deep', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' },
-      onPaid: (order, comp) => { if (!comp && window.fbq) fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); afterPaid(order) },
+      onPaid: (order, comp) => { if (!comp && window.fbq) window.fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); afterPaid(order) },
     }
   }
 
@@ -1150,7 +1152,7 @@ if (scoreMatch) {
         redirectParams: { payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' },
         onPaid: (order, comp) => {
           if (comp) setIsPaid(true)
-          else { if (window.fbq) fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); trackEvent('payment_completed', { location, amount: order.amount }) }
+          else { if (window.fbq) window.fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); trackEvent('payment_completed', { location, amount: order.amount }) }
           handlePaidAnalyze(order)
         },
       })
@@ -2940,7 +2942,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           ) : (
             <button
               style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-              onClick={() => { requestPayWithEmail(serviceType === 'child' ? '자녀운 프리미엄' : '전체 분석', (email) => startCheckout({ product: fullProductFor(serviceType), input: { ...personalInput(), previousText: baseText, freeRef: freeRefRef.current }, email, buyerName: myName || '고객', buyerEmail: email || '', redirectParams: { payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }, onPaid: (order, comp) => { if (comp) setIsPaid(true); else if (window.fbq) fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); handlePaidAnalyze(order) } })) }}>
+              onClick={() => { requestPayWithEmail(serviceType === 'child' ? '자녀운 프리미엄' : '전체 분석', (email) => startCheckout({ product: fullProductFor(serviceType), input: { ...personalInput(), previousText: baseText, freeRef: freeRefRef.current }, email, buyerName: myName || '고객', buyerEmail: email || '', redirectParams: { payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }, onPaid: (order, comp) => { if (comp) setIsPaid(true); else if (window.fbq) window.fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); handlePaidAnalyze(order) } })) }}>
               <span>{serviceType === 'child' ? '방학 전 특가로 확인하기 →' : '내 돈 버는 시기, 지금 확인하기 →'}</span>
               <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
                 <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>{serviceType === 'child' ? '19,900원' : '9,900원'}</span>

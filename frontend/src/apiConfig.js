@@ -4,8 +4,8 @@
 //  - 미설정 + 운영 도메인: 기존 운영 백엔드 (기존 동작 유지)
 //  - 미설정 + 그 외 도메인(미리보기 등): 오류 → 앱을 띄우지 않고 설정 누락 안내 화면 표시
 const PRODUCTION_API = 'https://love-fortune.onrender.com'
-const PRODUCTION_HOSTS = ['love-fortune-nu.vercel.app', 'mysaju.shop', 'www.mysaju.shop']
-const LOCAL_HOSTS = ['localhost', '127.0.0.1']
+export const PRODUCTION_HOSTS = ['love-fortune-nu.vercel.app', 'mysaju.shop', 'www.mysaju.shop']
+export const LOCAL_HOSTS = ['localhost', '127.0.0.1']
 
 export function resolveApiUrl({ hostname, envUrl }) {
   const raw = (envUrl || '').trim()
