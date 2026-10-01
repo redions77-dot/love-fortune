@@ -1,8 +1,0 @@
-{
-  "rewrites": [
-    {
-      "source": "/api/admin/:path*",
-      "destination": "https://love-fortune.onrender.com/api/admin/:path*"
-    }
-  ]
-}

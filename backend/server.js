@@ -5,13 +5,16 @@ const KoreanLunarCalendar = require('korean-lunar-calendar');
 const { Pool } = require('pg');
 require('dotenv').config();
 const { installSecureApi } = require('./secure');
+const { buildAllowedOrigins } = require('./origins');
 
-const ALLOWED_ORIGINS = [
+const BASE_ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'https://love-fortune-nu.vercel.app',
   'https://mysaju.shop',
   'https://www.mysaju.shop',
 ];
+// 미리보기·테스트 프런트 주소는 EXTRA_ALLOWED_ORIGINS(쉼표 구분, 정확한 출처만)로만 추가한다.
+const ALLOWED_ORIGINS = buildAllowedOrigins(BASE_ALLOWED_ORIGINS, process.env.EXTRA_ALLOWED_ORIGINS);
 
 const app = express();
 app.use(express.json());

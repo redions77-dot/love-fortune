@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { API_URL } from './apiConfig.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
 // 없으면 조용히 무시한다. 나중에 다른 분석 도구를 붙일 때도 호출부는 바꿀 필요 없이 이 함수만 확장하면 된다.
@@ -228,7 +229,6 @@ const 일주타입명 = {
 const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
 const STEPS = ['gender', 'marital', 'birthdate', 'birthtime', 'mbti', 'blood']
-const API_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname) ? '' : 'https://love-fortune.onrender.com'
 // [보안] 운영자 여부는 서버 세션(HttpOnly 쿠키)으로만 판단한다. 관리자 비밀값은 프런트엔드에 두지 않는다.
 // 운영자 API(/api/admin/*)는 같은 도메인으로 요청한다 (운영: Vercel rewrite → 백엔드, 로컬: Vite 프록시).
 const IMP_CODE = 'imp87662575'
