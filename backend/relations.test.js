@@ -133,11 +133,24 @@ test('유료 안내 묶음: 실제 유료 섹션만 약속하고, 모든 섹션�
   assert.strictEqual(R.RELATIONS.직장동료.paidTitle, '이 사람과 더 편하게 일하려면');
 });
 
-test('내 사주 무료 프롬프트: 핵심 한 문장 구조, 점수·유형명 금지, 팁은 주의할 습관과 연결', () => {
+test('내 사주 무료 프롬프트: 균형 있는 첫 문장, 가정형 장면, 모순 금지, 계산값 근거, 해요체, 짧은 팁', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, 'server.js'), 'utf8');
-  for (const t of ['핵심 한 문장', '이런 성향이 나오는 이유', '나의 강점', '주의할 습관', '바로 실천할 팁']) assert.ok(src.includes('===' + t + '==='), t);
-  assert.ok(src.includes('"상위 몇 %" 같은 수치 평가는 쓰지 마세요'));
-  assert.ok(src.includes("바로 위 '주의할 습관'과 직접 이어지는 행동"));
+  const free = src.slice(src.indexOf('const basePrompt'), src.indexOf('const paidOnlyPrompt'));
+  for (const t of ['핵심 한 문장', '이런 성향이 나오는 이유', '나의 강점', '주의할 습관', '바로 실천할 팁']) assert.ok(free.includes('===' + t + '==='), t);
+  const must = [
+    '"상위 몇 %" 같은 수치 평가는 쓰지 마세요',
+    '유형 이름(예: ~형)은 쓰지 마세요',
+    '단점이나 부정적인 결과로 시작하지 마세요',
+    '입력받지 않은 과거 경험을 실제 있었던 일처럼 쓰지 마세요',
+    '누구에게나 해당하는 칭찬',
+    '강점·주의할 습관·바로 실천할 팁은 서로 모순되면 안 됩니다',
+    "바로 위 '주의할 습관'을 보완하는 구체적인 행동 딱 1개",
+    '[사주 계산값]에 없는 오행·음양·상생상극은 새로 만들지 마세요',
+    '모든 문장은 해요체',
+    '(짧은 1~2문장)',
+  ];
+  for (const m of must) assert.ok(free.includes(m), m);
+  assert.ok(src.includes('${factsBlock(') && src.includes('${규칙문}'));   // 계산값 표가 모든 개인 풀이 프롬프트에 들어간다
   assert.ok(!src.includes('getScoreOnly') && !src.includes("type: 'score'"));
-  assert.ok(!/===공유 문장===/.test(src.slice(src.indexOf('const basePrompt'), src.indexOf('const paidOnlyPrompt'))));
+  assert.ok(!/===공유 문장===/.test(free));
 });

@@ -1,6 +1,8 @@
 // 관계 궁합: 관계 유형 정의, 사주 신호(바 3개), 무료·유료 프롬프트.
 // 관계 선택값은 이 파일의 normalizeRelation 한 곳에서만 검증한다 (모르는 값을 연인으로 바꾸지 않는다).
 
+const { factsBlock, 규칙문, parsePillar, 쉬운오행 } = require('./saju');
+
 const LEVELS = Object.freeze({
   high: { level: 'high', text: '잘 맞는 편', filled: 3 },
   mid: { level: 'mid', text: '무난한 편', filled: 2 },
@@ -60,7 +62,7 @@ const RELATIONS = Object.freeze({
   },
   부모자녀: {
     label: '부모·자녀', kind: 'family', needsRole: true,
-    stance: '부모와 자녀 관계입니다. 연애·결혼 관점의 해석은 절대 하지 마세요. 보호와 독립, 기대와 표현의 차이를 중심으로 풀이하세요. 자녀가 미성년이면 부모의 양육 관점, 성인이면 서로 존중하는 거리 관점을 쓰세요.',
+    stance: '부모와 자녀 관계입니다. 연애·결혼 관점의 해석은 절대 하지 마세요. 보호와 독립, 기대와 표현의 차이를 중심으로 풀이하고, 업무·프로젝트·효율 같은 직장 표현은 쓰지 마세요. 자녀가 미성년이면 부모의 양육 관점, 성인이면 서로 존중하는 거리 관점을 쓰세요.',
     bars: [
       { label: '표현 이해', aspect: '서로의 마음을 표현하고 알아듣는 방식' },
       { label: '거리 조절', aspect: '간섭과 독립 사이에서 편한 거리를 찾는 방식' },
@@ -84,7 +86,7 @@ const RELATIONS = Object.freeze({
   },
   형제가족: {
     label: '형제자매·기타 가족', kind: 'family',
-    stance: '형제자매나 그 밖의 가족 관계입니다. 연애·결혼 관점의 해석은 절대 하지 마세요. 가족 안에서의 역할 기대, 표현 방식 차이, 적당한 거리를 중심으로 풀이하세요.',
+    stance: '형제자매나 그 밖의 가족 관계입니다. 연애·결혼 관점의 해석은 절대 하지 마세요. 가족 안에서의 역할 기대, 표현 방식 차이, 적당한 거리를 중심으로 풀이하세요. 연락·부탁·모임·생활 분담 같은 가족 상황으로 설명하고, 업무·프로젝트·효율 같은 직장 표현은 쓰지 마세요.',
     bars: [
       { label: '표현 이해', aspect: '서로의 마음을 표현하고 알아듣는 방식' },
       { label: '거리 조절', aspect: '가깝지만 서로의 영역을 지키는 거리감' },
@@ -98,7 +100,7 @@ const RELATIONS = Object.freeze({
       ['관계 총평', '핵심을 정리하고 이번 주에 해볼 행동 한 가지'],
     ],
     tone: '가족에게 건넬 수 있는 편안하고 솔직한 말투',
-    situations: "명절·가족 모임에서의 역할, 부탁과 거절, 비교하는 말에 반응하기, 연락 주기와 거리 두기",
+    situations: "연락 주기와 안부, 부탁과 거절, 명절·가족 모임에서의 역할, 생활비·돌봄 같은 생활 분담, 비교하는 말에 반응하기",
     paidTitle: "가족과 거리를 편하게 조절하려면",
     bundles: [
       ["서로의 성향 이해하기","같은 가족이어도 다르게 느끼고 표현하는 지점, 오래된 역할·비교·기대가 관계에 주는 영향과 조율법",["성향 차이로 보는 서로 이해","가족 안에서의 역할과 기대"]],
@@ -132,7 +134,7 @@ const RELATIONS = Object.freeze({
   },
   직장동료: {
     label: '직장 동료·상사', kind: 'work',
-    stance: '직장에서 함께 일하는 관계입니다(동료·상사·후배 모두 포함, 직급 차이가 있어도 업무 관계로 풀이). 연애·결혼 관점의 해석은 절대 하지 마세요. 일하는 방식, 의사소통, 역할 분담을 중심으로 풀이하고, 상대를 평가·비난하거나 인사·평판·승진을 단정하지 마세요.',
+    stance: '직장에서 함께 일하는 관계입니다(동료·상사·후배 모두 포함, 직급 차이가 있어도 업무 관계로 풀이). 연애·결혼 관점의 해석은 절대 하지 마세요. 일하는 방식, 의사소통, 역할 분담을 중심으로 풀이하고, 상대를 평가·비난하거나 인사·평판·승진을 단정하지 마세요. 상대에게 역할을 일방적으로 정해주는 말 대신, 역할을 함께 확인하고 정하는 말로 쓰세요.',
     bars: [
       { label: '업무 호흡', aspect: '일하는 속도와 방식이 맞는 정도' },
       { label: '의사소통', aspect: '요청·피드백을 주고받는 방식' },
@@ -145,7 +147,7 @@ const RELATIONS = Object.freeze({
       ['부담스러운 상황에서의 대처', '마감·의견 충돌 등 압박 상황에서 관계를 지키는 방법'],
       ['관계 총평', '핵심을 정리하고 이번 주에 해볼 행동 한 가지'],
     ],
-    tone: '직장에서 예의를 지키면서도 분명한 말투',
+    tone: '직장에서 예의를 지키면서도 분명한 말투(역할은 정해주지 않고 함께 확인하는 문장)',
     situations: "업무 우선순위 정하기, 피드백 주고받기, 일정 조율과 마감 공유, 역할 분담과 책임 범위 확인",
     paidTitle: "이 사람과 더 편하게 일하려면",
     bundles: [
@@ -205,8 +207,31 @@ function calcRelationLevels(saju1, saju2) {
 }
 
 // 클라이언트에 보낼 바 정보 (라벨 + 수준). 해설·팁은 AI가 채운다.
-function buildBars(relKey, levels) {
-  return RELATIONS[relKey].bars.map((b, i) => ({ label: b.label, aspect: b.aspect, ...LEVELS[levels[i]] }));
+// 두 사람의 일간(기질)·일지·월지가 만나는 방식의 "근거" 문장. AI는 이 근거와 계산값 표에 있는 관계만 설명할 수 있다.
+function relPhrase(a, b) {
+  const A = 쉬운오행[a], B = 쉬운오행[b];
+  if (a === b) return `${A} 기운끼리 같아서 닮은 면이 있는 관계`;
+  if (상생[a] === b) return `${A} 기운이 ${B} 기운을 키워주는 관계(상생)`;
+  if (상생[b] === a) return `${B} 기운이 ${A} 기운을 키워주는 관계(상생)`;
+  if (상극[a] === b) return `${A} 기운이 ${B} 기운을 누르는 관계(상극)`;
+  if (상극[b] === a) return `${B} 기운이 ${A} 기운을 누르는 관계(상극)`;
+  return `${A} 기운과 ${B} 기운은 직접 키워주거나 누르는 관계가 아님`;
+}
+function calcRelationBasis(saju1, saju2) {
+  const a일 = parsePillar(saju1.일주), b일 = parsePillar(saju2.일주);
+  const a월 = parsePillar(saju1.월주), b월 = parsePillar(saju2.월주);
+  const none = '계산할 수 없어 근거 없음';
+  const 기질 = a일 && b일 ? `일간 ${a일.gan}(읽는 사람)과 ${b일.gan}(상대): ${relPhrase(간오행[a일.gan], 간오행[b일.gan])}` : none;
+  let 일지 = none;
+  if (a일 && b일) {
+    일지 = `일지 ${a일.ji}과 ${b일.ji}: ` + (inPair(충, a일.ji, b일.ji) ? '서로 부딪히기 쉬운 짝(충)' : inPair(육합, a일.ji, b일.ji) ? '서로 어울려 묶이는 짝(육합)' : relPhrase(지오행[a일.ji], 지오행[b일.ji]));
+  }
+  const 월지 = a월 && b월 ? `월지 ${a월.ji}과 ${b월.ji}: ${relPhrase(지오행[a월.ji], 지오행[b월.ji])}` : none;
+  return [기질, 일지, 월지];
+}
+
+function buildBars(relKey, levels, basis = []) {
+  return RELATIONS[relKey].bars.map((b, i) => ({ label: b.label, aspect: b.aspect, basis: basis[i] || '', ...LEVELS[levels[i]] }));
 }
 
 // ── 프롬프트 ──────────────────────────────────────
@@ -220,7 +245,9 @@ const PRINCIPLES = (nameA, nameB) => `[작성 원칙 — 다른 규칙과 충돌
 - 존댓말을 쓰고, 쉬운 말로 쓰세요. 한자와 한자 병기, 마크다운 기호(**, ##), 요일 언급은 쓰지 마세요.
 - 두 사람은 "${nameA}님"(읽는 사람)과 "${nameB}님"으로 부르세요. 이름이 'A'·'B'면 "나"와 "상대방"으로 쓰세요.
 ${TRUST_RULES}
-- 나이는 숫자로 쓰고(예: 30대), 한글 숫자 표기는 쓰지 마세요.`;
+- 나이는 숫자로 쓰고(예: 30대), 한글 숫자 표기는 쓰지 마세요.
+- 모든 문장은 해요체(~해요, ~이에요, ~예요)로 끝내세요. '~다', '~이다' 같은 평서체는 쓰지 마세요. (대화 문장만 예외)
+- [사주 계산값]과 각 항목의 '근거'에 없는 오행·음양·상생상극·합충은 새로 만들어 설명하지 마세요.`;
 
 function roleBlock(relKey, role, nameA, nameB) {
   if (!RELATIONS[relKey].needsRole) return '';
@@ -231,15 +258,17 @@ function roleBlock(relKey, role, nameA, nameB) {
 function personBlock(nameA, nameB, my, partner, ages) {
   return `[${nameA}님]
 - 성별: ${my.gender || '미입력'} / 나이대: ${ages.a}
-- 년주 ${my.년주} / 월주 ${my.월주} / 일주 ${my.일주} / 시주 ${my.시주 || '미입력'}
+${factsBlock(my)}
 
 [${nameB}님]
 - 성별: ${partner.gender || '미입력'} / 나이대: ${ages.b}
-- 년주 ${partner.년주} / 월주 ${partner.월주} / 일주 ${partner.일주} / 시주 ${partner.시주 || '미입력'}`;
+${factsBlock(partner)}
+
+${규칙문}`;
 }
 
 function barBlock(bars) {
-  return bars.map((b, i) => `${i + 1}. ${b.label} — ${b.aspect} → 이 항목의 수준은 '${b.text}'으로 정해져 있습니다. 해설은 이 수준과 일관되게 쓰세요.`).join('\n');
+  return bars.map((b, i) => `${i + 1}. ${b.label} — ${b.aspect} → 이 항목의 수준은 '${b.text}'으로 정해져 있습니다. 해설은 이 수준과 일관되게 쓰세요.${b.basis ? `\n   근거(서버 계산): ${b.basis}` : ''}`).join('\n');
 }
 
 // 이 관계에서 실제로 일어나는 상황 목록 (팁·대화 문장을 구체적으로 만들기 위한 재료)
@@ -250,7 +279,7 @@ function situationsFor(rel, role) {
 // 무료: 한 줄 요약 + 관계 요약 + 바 3개 해설/팁 + 잘 맞는 점 1 + 조율할 점 1 + 대화 문장 1
 function buildFreeGunghabPrompt({ relKey, role, nameA, nameB, my, partner, ages, bars }) {
   const rel = RELATIONS[relKey];
-  const barSections = bars.map(b => `===${b.label}===\n해설: (한 문장. '${b.text}'에 맞게, 이 항목이 실제 생활에서 어떻게 나타날 수 있는지)\n팁: (한 문장. 위 해설과 이어지는 행동. 아래 '실제 상황' 중 이 항목에 어울리는 상황 하나를 골라 구체적으로)`).join('\n\n');
+  const barSections = bars.map(b => `===${b.label}===\n해설: (한 문장. '${b.text}'에 맞게, 이 항목이 실제 생활에서 어떻게 나타날 수 있는지)\n팁: (짧은 1~2문장. 위 해설과 이어지는 행동 하나. '이 관계의 실제 상황' 중 이 항목에 어울리는 상황 하나를 골라 구체적으로)`).join('\n\n');
   return `당신은 한국의 사주·명리학 전문가입니다. 아래 두 사람의 관계를 '${rel.label}' 관점에서 쉽고 솔직하게, 짧고 실용적으로 풀이하세요.
 
 [관계] ${rel.label}
@@ -291,7 +320,7 @@ ${barSections}
 (한 문장. 누구의 잘못으로 쓰지 말고 방식의 차이로 쓰세요. 어떤 상황에서 생기는지 함께.)
 
 ===대화 문장===
-(${nameA}님이 상대에게 '조율할 점'의 상황에서 실제로 건넬 수 있는 문장 딱 1개. 큰따옴표로 감싸세요. ${rel.tone}.)`;
+('조율할 점'의 상황에서 상대에게 직접 건넬 수 있는 문장 딱 1개. 큰따옴표로 감싸세요. 상대 이름을 3인칭으로 부르며 말하지 말고, 호칭은 생략해도 자연스럽게 쓰세요. ${rel.tone}.)`;
 }
 
 // 유료: 관계별 상세 풀이. 구체적 적용 방법(상황·문장·행동)을 담는다.
@@ -322,4 +351,4 @@ ${PRINCIPLES(nameA, nameB)}
 ${sections}`;
 }
 
-module.exports = { situationsFor, TRUST_RULES, RELATIONS, LEVELS, ROLES, normalizeRelation, calcRelationLevels, buildBars, buildFreeGunghabPrompt, buildPaidGunghabPrompt };
+module.exports = { calcRelationBasis, situationsFor, TRUST_RULES, RELATIONS, LEVELS, ROLES, normalizeRelation, calcRelationLevels, buildBars, buildFreeGunghabPrompt, buildPaidGunghabPrompt };

@@ -6,7 +6,7 @@ const { Pool } = require('pg');
 require('dotenv').config();
 const { installSecureApi } = require('./secure');
 const { buildAllowedOrigins } = require('./origins');
-const { TRUST_RULES, RELATIONS, normalizeRelation, calcRelationLevels, buildBars, buildFreeGunghabPrompt, buildPaidGunghabPrompt } = require('./relations');
+const { TRUST_RULES, RELATIONS, normalizeRelation, calcRelationLevels, calcRelationBasis, buildBars, buildFreeGunghabPrompt, buildPaidGunghabPrompt } = require('./relations');
 
 const BASE_ALLOWED_ORIGINS = [
   'http://localhost:5173',
@@ -21,7 +21,9 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: ALLOWED_ORIGINS }));
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// 로컬 품질 테스트 전용: DISABLE_AI_RETRIES=1 이면 SDK 자동 재시도(maxRetries)와 앱 재시도를 모두 끈다. 운영에서는 설정하지 않는다.
+const NO_AI_RETRIES = process.env.DISABLE_AI_RETRIES === '1';
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, ...(NO_AI_RETRIES ? { maxRetries: 0 } : {}) });
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -111,54 +113,8 @@ function lunarToSolar(year, month, day) {
   return calendar.getSolarCalendar();
 }
 
-const 천간 = ['甲갑','乙을','丙병','丁정','戊무','己기','庚경','辛신','壬임','癸계'];
-const 지지 = ['子자','丑축','寅인','卯묘','辰진','巳사','午오','未미','申신','酉유','戌술','亥해'];
-
-function get일주(birthdate) {
-  const 기준일 = new Date('1900-01-01');
-  const 날짜 = new Date(birthdate);
-  const 차이 = Math.round((날짜 - 기준일) / (1000 * 60 * 60 * 24));
-  const 천간index = ((차이) % 10 + 10) % 10;
-  const 지지index = ((10 + 차이) % 12 + 12) % 12;
-  return { 간지: 천간[천간index] + 지지[지지index], 천간index };
-}
-
-function get년주(year) {
-  const 차이 = year - 1984;
-  const 천간index = ((차이) % 10 + 10) % 10;
-  const 지지index = ((차이) % 12 + 12) % 12;
-  return { 간지: 천간[천간index] + 지지[지지index], 천간index };
-}
-
-const 절기시작일 = [6, 4, 6, 5, 6, 6, 7, 7, 8, 8, 7, 7];
-function getSajuMonth(month, day) {
-  if (day < 절기시작일[month - 1]) return month <= 1 ? 12 : month - 1;
-  return month;
-}
-
-function get월주(year, month, day, 년천간index) {
-  const 양력month = getSajuMonth(month, day);
-  const 양력월지지 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0];
-  const 양력월사주순번 = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-  const 월지index = 양력월지지[양력month - 1];
-  const 사주순번 = 양력월사주순번[양력month - 1];
-  const 월간시작표 = [2, 4, 6, 8, 0, 2, 4, 6, 8, 0];
-  const 월간index = (월간시작표[년천간index] + (사주순번 - 1)) % 10;
-  return 천간[월간index] + 지지[월지index];
-}
-
-// ✅ 시주 계산 — 30분 이동 기준 (전통 만세력 표준)
-// 자시(子時) 시작 = 23:30 기준
-function get시주(birthtime, 일천간index) {
-  if (!birthtime) return null;
-  const [h] = birthtime.split(':').map(Number);
-  // 정시 기준: 각 시의 시작은 홀수시 정각 (子=23시, 丑=01시, 寅=03시...)
-  const 시간대 = [0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,0]
-  const 시지index = 시간대[h];
-  const 시간시작표 = [0, 2, 4, 6, 8, 0, 2, 4, 6, 8];
-  const 시천간index = (시간시작표[일천간index] + 시지index) % 10;
-  return 천간[시천간index] + 지지[시지index];
-}
+// 사주 계산(천간·지지·년/월/일/시주)과 AI 전달용 계산값 표는 saju.js 에 있다.
+const { 천간, 지지, 절기시작일, get일주, get년주, get월주, get시주, factsBlock, 규칙문 } = require('./saju');
 
 function get시지라벨(시주) {
   if (!시주) return null;
@@ -338,7 +294,7 @@ const 공통규칙 = `작성 규칙 (반드시 지킬 것):
 const 공통규칙_담백 = 공통규칙.split(/\r?\n/).filter((l, i) => i === 0 || /^(1|4|6|10|10-1|10-2|12|16|17|18)\./.test(l)).join('\n')
 
 async function streamToClient(res, prompt, model, maxTokens = 4000) {
-  const maxRetries = 3;
+  const maxRetries = NO_AI_RETRIES ? 1 : 3;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const stream = await anthropic.messages.stream({
@@ -590,6 +546,10 @@ async function runAnalysis(body, res) {
 [사주팔자]
 - 년주: ${년주} / 월주: ${월주} / 일주: ${일주} / 시주: ${시주 || '미입력'}
 
+${factsBlock({ 년주, 월주, 일주, 시주: 시주 || '' })}
+
+${규칙문}
+
 ${daeunBlock}`;
 
 // ── 궁합 (무료 요약 / 유료 상세) ─────────────────────
@@ -607,7 +567,7 @@ ${daeunBlock}`;
     const nameA = myName || 'A'
     const nameB = partnerName || 'B'
     const pSaju = calcSaju(partnerBirthdate, partnerBirthtime, partnerIsLunar);
-    const bars = buildBars(rel.key, calcRelationLevels(saju, pSaju))
+    const bars = buildBars(rel.key, calcRelationLevels(saju, pSaju), calcRelationBasis(saju, pSaju))
     const ageBand = (y) => { const a = thisYear - y; return a < 10 ? '10세 미만' : `${Math.floor(a / 10) * 10}대` }
     const my = { gender, 년주, 월주, 일주, 시주: 시주 || '' }
     const partner = { gender: partnerGender, 년주: pSaju.년주, 월주: pSaju.월주, 일주: pSaju.일주, 시주: pSaju.시주 || '' }
@@ -1218,22 +1178,27 @@ ${TRUST_RULES}
 - 한 단락 최대 3줄, 소제목은 📌로 구분하세요. 번호 목록(1. 2. 3.)은 쓰지 마세요.
 - 점수·순위·퍼센트·"상위 몇 %" 같은 수치 평가는 쓰지 마세요.
 - 별명처럼 붙이는 유형 이름(예: ~형)은 쓰지 마세요.
+- 모든 문장은 해요체(~해요, ~이에요, ~예요)로 끝내세요. '~다', '~이다' 같은 평서체는 쓰지 마세요.
+- 입력받지 않은 과거 경험을 실제 있었던 일처럼 쓰지 마세요. 장면은 "~할 때가 있을 수 있어요"처럼 앞으로 마주칠 수 있는 상황으로 쓰세요.
+- 누구에게나 해당하는 칭찬(예: 성실해요, 책임감이 강해요)이나 고생담은 쓰지 마세요. 반드시 위 [사주 계산값]에서 읽히는 특징과 연결하세요.
+- [사주 계산값]에 없는 오행·음양·상생상극은 새로 만들지 마세요. 기운이 그렇다고 해서 성향이 '그래서 생긴다'고 단정하지 말고 "~로 읽을 수 있어요"로 쓰세요.
+- 강점·주의할 습관·바로 실천할 팁은 서로 모순되면 안 됩니다. (예: 강점에서는 점검을 줄이라 하고 습관에서는 점검을 늘리라 하는 식으로 쓰지 마세요.)
 
 ===핵심 한 문장===
-첫 줄: 이 사주에서 두드러지는 핵심 성향을 이름 없이 한 문장으로 쓰세요. "~한 경향이 있어요"처럼 가능성으로 쓰세요.
-둘째 줄: 그 성향이 일상에서 어떻게 나타날 수 있는지 짧은 생활 속 장면 1~2문장.
+첫 줄: 이 사주에서 읽히는 강점이나 특징을 중심으로, 균형 있게 이름 없이 한 문장. 단점이나 부정적인 결과로 시작하지 마세요. "~한 경향이 있어요"처럼 가능성으로 쓰세요.
+둘째 줄: 그 특징이 일상에서 나타날 수 있는 장면 1~2문장. 실제 있었던 일처럼 쓰지 말고 "~할 때가 있을 수 있어요"처럼 쓰세요.
 
 ===이런 성향이 나오는 이유===
-(250~400자) 사주 구조를 쉬운 말로 설명하세요. 앞의 한 문장을 다시 풀어쓰지 말고, 왜 그렇게 나올 수 있는지 근거를 짚어주세요. 읽는 사람이 맞는 부분과 아닌 부분을 스스로 판단할 수 있게 써주세요.
+(200~350자) 위 [사주 계산값]에서 근거 1~2개만 골라 쉬운 말로 설명하세요. 앞의 한 문장을 되풀이하지 말고, 읽는 사람이 맞는 부분과 아닌 부분을 스스로 판단할 수 있게 써주세요.
 
 ===나의 강점===
-(200~300자) 이 사주에서 두드러지는 강점 딱 1개. 해석 → 생활에서 나타날 수 있는 모습 → 더 잘 쓰는 방법 순서로.
+(150~250자) 이 사주에서 두드러지는 강점 딱 1개. 해석 → 생활에서 나타날 수 있는 모습 → 더 잘 쓰는 방법 순서로. 더 잘 쓰는 방법은 아래 '주의할 습관'과 부딪히지 않는 방향이어야 해요.
 
 ===주의할 습관===
-(200~300자) 이 사주에서 나타나기 쉬운 습관 딱 1개. 흠이 아니라 '방향만 바꾸면 달라지는 것'으로, 해석 → 생활에서 나타날 수 있는 모습 → 줄여보는 방법 순서로.
+(150~250자) 이 사주에서 나타나기 쉬운 습관 딱 1개. 흠이 아니라 '방향만 바꾸면 달라지는 것'으로, 해석 → 생활에서 나타날 수 있는 모습 → 줄여보는 방법 순서로. 위 강점을 해치지 않는 방향이어야 해요.
 
 ===바로 실천할 팁===
-(150~250자) 바로 위 '주의할 습관'과 직접 이어지는 행동 딱 1개. 일·돈·관계·공부와 배움 중 그 습관이 나타나는 장면 하나를 골라 오늘 해볼 수 있게 구체적으로 쓰세요. "충분히 쉬세요", "긍정적으로 생각하세요"처럼 누구에게나 맞는 조언은 쓰지 마세요. 왜 도움이 될 수 있는지 한 문장을 포함하세요.
+(짧은 1~2문장) 바로 위 '주의할 습관'을 보완하는 구체적인 행동 딱 1개. 일·돈·관계·공부와 배움 중 그 습관이 나타나는 장면 하나를 골라 오늘 해볼 수 있게 쓰세요. "충분히 쉬세요", "긍정적으로 생각하세요"처럼 누구에게나 맞는 조언은 쓰지 마세요.
 
 [출력 완결 규칙]
 - 전체 응답은 완결된 문장으로 끝내고, 마지막 섹션(바로 실천할 팁)까지 반드시 작성하세요. 분량이 부족해질 것 같으면 앞부분 설명을 줄이세요.

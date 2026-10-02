@@ -10,6 +10,18 @@ const http = require('http');
 const fs = require('fs');
 
 const BANNER = '===예시 표시===\n이 화면은 로컬 확인용 예시 결과입니다. 실제 AI 풀이가 아닙니다.\n\n';
+// 저장해 둔 실제 결과를 다시 보여주는 모드(추가 AI 호출 없음): SAMPLE_REPLAY=quality-outputs.json 경로
+const REPLAY = process.env.SAMPLE_REPLAY ? JSON.parse(fs.readFileSync(process.env.SAMPLE_REPLAY, 'utf8')) : null;
+const REPLAY_BANNER = '===예시 표시===\n수정 전 실제 AI 결과를 다시 보여주는 화면입니다(추가 AI 호출 없음). 수정 후 결과가 아니며, 수정 후 품질은 아직 확인하지 않았습니다.\n\n';
+function replayFor(p) {
+  if (!REPLAY) return null;
+  if (p.includes('===나의 강점===') && p.includes('===바로 실천할 팁===')) return REPLAY_BANNER + REPLAY.saju;
+  if (p.includes('===한 줄 요약===') && p.includes('===대화 문장===')) {
+    const label = (p.match(/^\[관계\] (.+)$/m) || [])[1];
+    if (REPLAY[label]) return REPLAY_BANNER + REPLAY[label];
+  }
+  return null;
+}
 const firstMatch = (s, re, d = '') => (s.match(re) || [])[1] || d;
 
 // 수준별 문장 끝 (해설 = 항목별 앞부분 + 수준 끝)
@@ -128,6 +140,8 @@ function paid(p) {
 }
 
 function sampleFor(p) {
+  const replay = replayFor(p);
+  if (replay) return replay;
   if (p.includes('===한 줄 요약===') && p.includes('===대화 문장===')) return freeGunghab(p);
   if (p.includes('===나의 강점===') && p.includes('===바로 실천할 팁===')) return freeMy(p);
   if (p.includes('[핵심 항목 수준')) return paid(p);
