@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef } from 'react'
 import { API_URL } from './apiConfig.js'
 import { PAYMENT_CONFIG, isAnalyticsHost } from './paymentConfig.js'
+import GunghabBars from './GunghabBars.jsx'
+import ShareModal from './ShareModal.jsx'
+import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID_TOPICS, GUNGHAB_PRICE_TEXT, SAJU_PAID_TOPICS, parseGunghabFree, parseMyFree, buildShareText } from './relations.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
 // 없으면 조용히 무시한다. 나중에 다른 분석 도구를 붙일 때도 호출부는 바꿀 필요 없이 이 함수만 확장하면 된다.
@@ -457,79 +460,6 @@ function splitLastSentences(text, hideCount = 2) {
 // 기본 사주에서만 비활성화한다. 이 맵을 참조하는 렌더 박스(전체 분석 공개 배지 등) 자체는 자녀/노후 결과에서도
 // 그대로 쓰이는 공용 UI라 건드리지 않았다 — blurIdx가 비면 해당 상품들처럼 그냥 전체가 그대로 노출될 뿐이다.
 const CONCLUSION_BLUR_INDEX = {}
-function GunghabRadarChart({ categories, blurred }) {
-  const size = 260
-  const cx = size / 2, cy = size / 2, r = 95
-  const levels = [0.2, 0.4, 0.6, 0.8, 1.0]
-  const n = categories.length
-  const angleOffset = -Math.PI / 2
-  const getPoint = (i, ratio) => {
-    const angle = angleOffset + (2 * Math.PI * i) / n
-    return { x: cx + r * ratio * Math.cos(angle), y: cy + r * ratio * Math.sin(angle) }
-  }
-  const getLabelPoint = (i) => {
-    const angle = angleOffset + (2 * Math.PI * i) / n
-    return { x: cx + (r + 26) * Math.cos(angle), y: cy + (r + 26) * Math.sin(angle) }
-  }
-  const dataPoints = categories.map((c, i) => getPoint(i, c.score / 100))
-  const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
-  const mainScore = categories.find(c => c.label === '총합')?.score ?? Math.round(categories.reduce((s, c) => s + c.score, 0) / categories.length)
-  return (
-    <div style={{ position: 'relative', marginBottom: 16 }}>
-      <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', ...(blurred ? { filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' } : {}) }}>
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
-          <p style={{ fontSize: 12, color: '#633B50', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>💕 궁합 스탯</p>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-            <span style={{ fontSize: 52, fontWeight: 800, color: '#633B50', lineHeight: 1 }}>{mainScore}</span>
-            <span style={{ fontSize: 20, color: '#62616C' }}>점</span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
-          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-            {levels.map((level, li) => {
-              const pts = categories.map((_, i) => getPoint(i, level))
-              const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
-              return <path key={li} d={path} fill="none" stroke="#DEDFE5" strokeWidth="1" />
-            })}
-            {categories.map((_, i) => {
-              const outer = getPoint(i, 1.0)
-              return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="#DEDFE5" strokeWidth="1" />
-            })}
-            <path d={dataPath} fill="rgba(99,59,80,0.12)" stroke="#633B50" strokeWidth="2" />
-            {dataPoints.map((p, i) => (
-              <circle key={i} cx={p.x} cy={p.y} r="4" fill={categories[i].color} stroke="#FFFFFF" strokeWidth="2" />
-            ))}
-            {categories.map((c, i) => {
-              const lp = getLabelPoint(i)
-              return (
-                <g key={i}>
-                  <text x={lp.x} y={lp.y - 7} textAnchor="middle" fontSize="13" fill="#62616C" fontWeight="600">{c.label}</text>
-                  <text x={lp.x} y={lp.y + 9} textAnchor="middle" fontSize="15" fill={c.color} fontWeight="800">{c.score}</text>
-                </g>
-              )
-            })}
-          </svg>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', borderTop: '1px solid #DEDFE5', paddingTop: 14 }}>
-          {categories.filter(c => c.label !== '총합').map(({ label, score, color }) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }} />
-              <span style={{ fontSize: 15, color: '#62616C' }}>{label}</span>
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#24232B', marginLeft: 'auto' }}>{score}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      {blurred && (
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 1 }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', textShadow: 'none', whiteSpace: 'nowrap' }}>✦ 결제 후 실제 점수를 확인하세요</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-
 // 선택된 항목을 색상 외에 체크 표시로도 구분 (버튼에 position: 'relative' 필요)
 function CheckMark({ on }) {
   if (!on) return null
@@ -888,7 +818,12 @@ export default function App() {
   const [deepEmailSent, setDeepEmailSent] = useState(false)
   const [moreAnalysisOpen, setMoreAnalysisOpen] = useState(false)
 
-  const [관계유형, set관계유형] = useState('연인')
+  const [관계유형, set관계유형] = useState(() => _qs.get('rt') || '')
+  const [관계역할, set관계역할] = useState(() => _qs.get('rr') || '')
+  const [gunghabFreeText, setGunghabFreeText] = useState('')
+  const [gunghabFreePhase, setGunghabFreePhase] = useState('input') // input | streaming | done | error
+  const [gunghabFreeError, setGunghabFreeError] = useState(null)
+  const [shareDraft, setShareDraft] = useState(null) // 공유 확인 창에 보여줄 문구 (null이면 닫힘)
   const [gunghabStep, setGunghabStep] = useState(0)
   const [partnerGender, setPartnerGender] = useState(() => _qs.get('pg') || '')
   const [partnerBirthYear, setPartnerBirthYear] = useState(() => _qs.get('pby') || '')
@@ -983,7 +918,7 @@ export default function App() {
     if (step > 0) setStep(s => s - 1); else setScreen('landing')
   }
 
-  async function streamAnalyze({ body, onSaju, onBaseText, onPaidText, onDone, onError }) {
+  async function streamAnalyze({ body, onSaju, onGunghabSaju, onBaseText, onPaidText, onDone, onError }) {
     const ctrl = new AbortController(); abortRef.current = ctrl
     const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal })
     if (!res.ok) { onError?.(`서버 오류가 발생했습니다 (${res.status})`); return }
@@ -1001,6 +936,7 @@ export default function App() {
           else if (json.type === 'paid_start') isPaidSectionRef.current = true
           else if (json.type === 'done') { gotDone = true; onDone?.() }
           else if (json.type === 'free_ref') freeRefRef.current = json.id
+          else if (json.type === 'gunghab_saju') onGunghabSaju?.(json)
           else if (json.error) onError?.(json.error)
           else if (json.text) { if (isPaidSectionRef.current) onPaidText?.(json.text); else onBaseText?.(json.text) }
         } catch {}
@@ -1169,7 +1105,7 @@ if (scoreMatch) {
     setIsLunar(false); setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
     setMbti(''); setBlood(''); setPhase('input'); setSajuData(null); setBaseText(''); setPaidText('')
     setIsBaseStreaming(false); setIsPaidStreaming(false); setIsPaid(false)
-    setGunghabStep(1); set관계유형('연인'); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
+    setGunghabStep(1); set관계유형(''); set관계역할(''); setGunghabFreeText(''); setGunghabFreePhase('input'); setGunghabFreeError(null); setShareDraft(null); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
     setPartnerIsLunar(false); setPartnerTimeHour(''); setPartnerTimeMin(''); setPartnerTimeAmPm('오전'); setPartnerTimeUnknown(false)
     setMyName(''); setPartnerName(''); setGunghabText(''); setIsGunghabStreaming(false); setGunghabSajuData(null)
     setGilil목적(''); setGililText(''); setIsGililStreaming(false); isPaidSectionRef.current = false
@@ -1192,6 +1128,36 @@ if (scoreMatch) {
   })()
   const partnerBirthdateValid = partnerBirthYear.length === 4 && Number(partnerBirthMonth) >= 1 && Number(partnerBirthMonth) <= 12 && Number(partnerBirthDay) >= 1 && Number(partnerBirthDay) <= 31
   const partnerBirthtimeValid = partnerTimeUnknown || (partnerTimeHour !== '' && partnerTimeMin !== '')
+
+  // 관계 궁합 무료 풀이 — 결제 없이 요약·핵심 3가지·대화 문장까지 완결해서 보여준다.
+  async function handleGunghabFree() {
+    if (freeInFlightRef.current) return
+    freeInFlightRef.current = true
+    trackEvent('gunghab_free_started', { relation: 관계유형 })
+    isPaidSectionRef.current = false
+    setGunghabFreeText(''); setGunghabSajuData(null); setGunghabFreeError(null); setGunghabFreePhase('streaming'); setScreen('gunghab_free')
+    let failed = false
+    const fail = (msg) => { failed = true; setGunghabFreeError(prev => prev || msg); setGunghabFreePhase('error') }
+    try {
+      await streamAnalyze({
+        body: { type: '궁합무료', gender, birthdate, birthtime, isLunar, partnerGender, partnerBirthdate, partnerBirthtime, partnerIsLunar, myName, partnerName, 관계유형, 내역할: 관계역할, isPaid: false },
+        onGunghabSaju: (d) => setGunghabSajuData(d),
+        onBaseText: (t) => setGunghabFreeText(prev => prev + t),
+        onDone: () => { if (!failed) setGunghabFreePhase('done') },
+        onError: (e) => fail(e),
+      })
+    } catch (e) { if (e.name !== 'AbortError') fail('서버에 연결할 수 없어요. 잠시 후 다시 시도해주세요.') }
+    finally { freeInFlightRef.current = false }
+  }
+
+  // 관계 상세 풀이(유료) 결제 시작 — 무료 결과 화면에서만 선택해서 들어온다.
+  function startGunghabPaid() {
+    startCheckout({
+      product: 'gunghab', input: { gender, birthdate, birthtime, isLunar, partnerGender, partnerBirthdate, partnerBirthtime, partnerIsLunar, myName, partnerName, 관계유형, 내역할: 관계역할 }, buyerName: myName || '고객',
+      redirectParams: { payment: 'gunghab', rt: 관계유형, rr: 관계역할, g: gender, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mn: myName || '', pn: partnerName || '', pg: partnerGender, pby: partnerBirthYear, pbm: partnerBirthMonth, pbd: partnerBirthDay, ptu: partnerTimeUnknown ? '1' : '0', pil: partnerIsLunar ? '1' : '0', pbt: partnerBirthtime, ptap: partnerTimeAmPm },
+      onPaid: (order) => handleGunghabAnalyze(order),
+    })
+  }
 
   async function handleGunghabAnalyze(order) {
     paidOrdersRef.current.gunghab = order
@@ -1301,8 +1267,6 @@ if (scoreMatch) {
             <p style={{ fontSize: 13, color: '#62616C' }}>생년월일: {백년BirthYear}년 {백년BirthMonth}월 {백년BirthDay}일{백년Birthtime ? ` · ${백년TimeAmPm} ${백년TimeHour}시 ${백년TimeMin}분` : ' · 시간 미입력'}</p>
           </div>
           <div style={{ background: '#FFFFFF', border: '2px solid #633B50', borderRadius: 14, padding: '28px 24px', textAlign: 'center', marginBottom: 20 }}>
-            <span style={{ display: 'inline-block', background: '#633B50', color: '#FFFFFF', fontSize: 12, fontWeight: 800, borderRadius: 20, padding: '4px 16px', marginBottom: 16 }}>한정 특가</span>
-            <div style={{ fontSize: 14, color: '#62616C', textDecoration: 'line-through', marginBottom: 6 }}>정가 300,000원</div>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 6, marginBottom: 16 }}>
               <span style={{ fontSize: 40, fontWeight: 900, color: '#633B50' }}>99,000</span>
               <span style={{ fontSize: 18, color: '#633B50', fontWeight: 700 }}>원</span>
@@ -1777,6 +1741,7 @@ if (scoreMatch) {
     const myBirthtimeValid = timeUnknown || (timeHour !== '' && timeMin !== '')
     const canStep1Next = gender !== '' && myBirthdateValid && myBirthtimeValid
     const canStep2Next = partnerGender !== '' && partnerBirthdateValid && partnerBirthtimeValid
+    const step0Valid = 관계유형 !== '' && (관계유형 !== '부모자녀' || 관계역할 !== '')
 
     const TimeSelector = ({ ampm, setAmpm, hour, setHour, min, setMin, unknown, setUnknown }) => (
       <>
@@ -1806,7 +1771,7 @@ if (scoreMatch) {
       <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
         <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: '#FFFFFF', borderBottom: '1px solid #DEDFE5' }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
-          <h1 style={{ wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>궁합 분석</h1>
+          <h1 style={{ wordBreak: 'keep-all', fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>관계 궁합</h1>
           <p style={{ fontSize: 12, color: '#62616C' }}>{isStep0 ? '어떤 관계를 분석할까요?' : isStep1 ? '먼저 내 정보를 입력해주세요' : '이제 상대방 정보를 입력해주세요'}</p>
         </div>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px', width: '100%', boxSizing: 'border-box' }}>
@@ -1821,16 +1786,10 @@ if (scoreMatch) {
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>어떤 관계인가요?</h2>
               <p style={{ fontSize: 13, color: '#62616C', marginBottom: 24 }}>관계에 맞는 분석을 해드려요</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[
-                  { value: '직장상사', emoji: '👔', label: '직장 상사', sub: '왜 이 상사가 나를 힘들게 하는지' },
-                  { value: '직장동료', emoji: '🤝', label: '직장 동료', sub: '같이 일하면 어떤 팀이 되는지' },
-                  { value: '가족', emoji: '👨‍👩‍👧', label: '가족', sub: '왜 가족인데 이렇게 힘든지' },
-                  { value: '친구', emoji: '👫', label: '오랜 친구', sub: '이 친구가 진짜 내 편인지' },
-                  { value: '연인', emoji: '💕', label: '연인 / 부부', sub: '우리 잘 맞는지 사주로 확인' },
-                ].map(({ value, emoji, label, sub }) => (
+                {RELATION_OPTIONS.map(({ key: value, emoji, label, sub }) => (
                   <button key={value}
                     aria-pressed={관계유형 === value} style={{ position: 'relative', padding: '18px 20px', border: `2px solid ${관계유형 === value ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: 관계유형 === value ? '#F6F0F3' : '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.15s' }}
-                    onClick={() => set관계유형(value)}><CheckMark on={관계유형 === value} />
+                    onClick={() => { set관계유형(value); if (value !== '부모자녀') set관계역할('') }}><CheckMark on={관계유형 === value} />
                     <span style={{ fontSize: 28 }}>{emoji}</span>
                     <div style={{ textAlign: 'left' }}>
                       <div style={{ fontSize: 15, fontWeight: 600, color: 관계유형 === value ? '#633B50' : '#24232B' }}>{label}</div>
@@ -1839,6 +1798,20 @@ if (scoreMatch) {
                   </button>
                 ))}
               </div>
+              {관계유형 === '부모자녀' && (
+                <div style={{ marginTop: 16 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>내가 어느 쪽인가요?</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    {RELATION_ROLES.map(({ key, label, sub }) => (
+                      <button key={key} aria-pressed={관계역할 === key} onClick={() => set관계역할(key)} style={{ position: 'relative', padding: '14px 12px', border: '2px solid ' + (관계역할 === key ? '#633B50' : '#DEDFE5'), borderRadius: 10, background: 관계역할 === key ? '#F6F0F3' : '#FFFFFF', cursor: 'pointer', textAlign: 'left' }}>
+                        <CheckMark on={관계역할 === key} />
+                        <div style={{ fontSize: 14, fontWeight: 600, color: 관계역할 === key ? '#633B50' : '#24232B' }}>{label}</div>
+                        <div style={{ fontSize: 12, color: '#62616C', marginTop: 2 }}>{sub}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
           {isStep1 && (
@@ -1871,53 +1844,13 @@ if (scoreMatch) {
               <TimeSelector ampm={partnerTimeAmPm} setAmpm={setPartnerTimeAmPm} hour={partnerTimeHour} setHour={setPartnerTimeHour} min={partnerTimeMin} setMin={setPartnerTimeMin} unknown={partnerTimeUnknown} setUnknown={setPartnerTimeUnknown} />
             </>
           )}
-       {!isStep0 && !isStep1 && (
-            <div style={{ marginTop: 32, background: '#FFFFFF', border: '1px solid rgba(155,29,58,0.4)', borderRadius: 16, padding: '24px 20px', marginBottom: 8 }}>
-              <p style={{ fontSize: 11, color: '#633B50', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 14, textAlign: 'center' }}>✦ 결제하면 이런 내용을 확인할 수 있어요</p>
-              <GunghabRadarChart blurred categories={[
-                { label: '성격', score: 78, color: '#B83A66' },
-                { label: '재물', score: 65, color: '#5B52C7' },
-                { label: '결혼', score: 82, color: '#137A5A' },
-                { label: '미래', score: 70, color: '#9A5F0F' },
-                { label: '총합', score: 74, color: '#633B50' },
-              ]} />
-              {(() => {
-                const isLover = 관계유형 === '연인'
-                const thirdItem = isLover
-                  ? { title: '결혼 궁합', blurred: '이 관계가 인연으로 묶이는 사주인지, 결혼 후 운의 흐름이 어떻게 달라지는지 분석해드려요. 사주에서 보이는 혼인 시기와 실제로 결혼했을 때 두 사람의 운이 올라가는지 내려가는지가 확인돼요. 결혼 후 첫 3년의 흐름이 특히 중요한데, 이 시기에 생기는 갈등 패턴과 해결법이 구체적으로 나와요. 자녀 운과 시댁·처가 관계에서의 역학 관계도 사주에서 읽을 수 있어요. 이 조합이 결혼으로 갔을 때 가장 행복해지는 조건과 반대로 피해야 할 상황도 짚어드려요.' }
-                  : 관계유형 === '가족'
-                  ? { title: '가족 인연', blurred: '이 가족이 사주적으로 어떤 인연으로 묶여있는지, 서로에게 어떤 의미를 주는 존재인지 분석해드려요. 전생에서 이어진 인연의 깊이가 어느 정도인지, 이번 생에서 서로에게 주는 영향이 긍정적인지 부정적인지도 나와요. 가족 간 갈등이 생기는 근본 원인이 사주 구조에 있는 경우가 많은데, 그 패턴을 알면 관계가 훨씬 편해져요. 서로에게 가장 도움이 되는 소통 방식과 절대 하면 안 되는 말이 따로 있어요. 나이가 들수록 이 관계가 어떻게 변하는지도 구체적으로 확인할 수 있어요.' }
-                  : 관계유형 === '친구'
-                  ? { title: '우정의 깊이', blurred: '이 친구와의 인연이 사주적으로 얼마나 깊은지, 앞으로도 계속 함께할 인연인지 짚어드려요. 단순한 친구인지 인생 전체를 함께하는 지기(知己)인지 사주에서 구분할 수 있어요. 이 친구와 사업이나 프로젝트를 같이 해도 되는 궁합인지, 돈이 오가면 관계가 틀어지는 구조인지도 확인돼요. 우정이 깊어지는 시기와 소원해지기 쉬운 시기가 따로 있는데, 그 흐름을 알면 관계를 더 오래 유지할 수 있어요. 이 친구가 내 인생에서 어떤 역할을 하는 존재인지 한마디로 정리해드려요.' }
-                  : { title: '직장 내 영향력', blurred: '이 사람과의 관계가 회사 내에서 내 입지나 평판에 어떤 영향을 주는지, 함께 일할 때 주의해야 할 포인트를 짚어드려요. 이 사람이 내 승진이나 평가에 도움이 되는 구조인지 방해가 되는 구조인지 사주에서 확인할 수 있어요. 함께 프로젝트를 하면 시너지가 나는 분야와 절대 같이 하면 안 되는 업무 유형이 따로 있어요. 직장 내 갈등이 생겼을 때 이 사람과의 최적 대응 전략이 나오고, 관계를 유리하게 이끄는 타이밍도 구체적으로 짚어드려요. 이직이나 부서 이동 시 이 관계가 어떻게 변하는지도 확인할 수 있어요.' }
-                return [
-                  { title: isLover ? '성격 궁합' : '성격 케미', preview: 관계유형 === '친구' ? '이 친구, 내가 힘들 때 진짜 내 편이 돼줄 사람인지 사주에서 보여요.' : 관계유형 === '직장상사' ? '이 상사, 내 편으로 만들 수 있는 사람인지 사주에서 보여요.' : 관계유형 === '가족' ? '이 가족, 나한테 힘이 되는 사람인지 에너지를 빼는 사람인지 사주에서 보여요.' : 관계유형 === '직장동료' ? '이 동료, 같이 일하면 내 편이 돼주는 사람인지 에너지 빼는 사람인지 보여요.' : '두 사람은 겉으로 보기엔 달라 보이지만, 사주 구조상 서로의 빈자리를 채워주는 관계예요. 두 사람 사이에서 반복되는 패턴이 있어요. 이게 뭔지 알면 관계가 달라지는데, 지금은 딱 그 직전이에요.', blurred: '한 사람이 불을 지피면 다른 한 사람이 방향을 잡아주는 구조라 함께할수록 시너지가 나요. 단, 속도 차이에서 오는 충돌이 생길 수 있고 이걸 어떻게 다루느냐가 관건이에요. 특히 감정 표현 방식이 정반대라 한쪽은 말로 풀려 하고 다른 한쪽은 행동으로 보여주려 해요. 이 차이를 이해하면 싸움이 줄고, 모르면 같은 패턴이 반복돼요. 두 사람의 일간 조합에서 목화(木火)의 기운이 강하게 작용하고 있어서 초반 끌림은 강하지만 유지하려면 서로의 리듬을 맞추는 연습이 필요해요. 실제로 이 조합은 3년 차에 가장 큰 고비가 오는데, 그 시기를 어떻게 넘기느냐가 이 관계의 수명을 결정해요.' },
-                  { title: 관계유형 === '연인' ? '돈 궁합' : '재물 운', preview: 관계유형 === '친구' ? '오래된 인연일수록 사주 구조가 맞는지가 중요해요. 이 두 사람이 계속 가까울 수 있는 구조인지 나와요.' : 관계유형 === '직장상사' ? '같이 일하면 내 운이 올라가는 구조인지, 아니면 막히는 구조인지 나와요.' : 관계유형 === '가족' ? '같이 있으면 돈이 모이는 구조인지, 아니면 한 사람이 계속 소진되는 구조인지 나와요.' : 관계유형 === '직장동료' ? '이 사람과 같이 일하면 내 커리어와 수입에 어떤 영향을 주는지 나와요.' : '두 사람이 함께 돈을 모을 수 있는 구조인지, 아니면 한 사람이 새는 구조인지 나와요.', blurred: '두 사람이 같이 있을 때 돈이 모이는 구조인지, 아니면 쓰게 되는 구조인지 사주에 다 나와요. 공동 투자나 재정 운용 방향도 확인할 수 있어요. 한 사람은 모으는 데 강하고 다른 한 사람은 불리는 데 강한 구조인데, 이 역할 분담이 자연스럽게 맞아떨어지면 재산이 빠르게 늘어나는 조합이에요. 단, 큰 지출에 대한 기준이 다를 수 있어서 미리 합의하지 않으면 돈 문제로 감정이 상할 수 있어요. 특히 부동산이나 목돈이 움직이는 시기에 의견 충돌이 생기기 쉬운 구조예요. 두 사람이 함께 투자하면 안 되는 분야가 따로 있고, 반대로 같이 하면 시너지가 나는 재테크 방향도 구체적으로 나와요. 공동 재정을 운용할 때 절대 하면 안 되는 실수 한 가지도 짚어드려요.' },
-                  { title: thirdItem.title, preview: null, blurred: thirdItem.blurred },
-                  { title: '두 사람의 앞으로 3년', preview: null, blurred: '2025~2027년, 두 사람에게 가장 중요한 시기가 언제인지, 함께 올라타야 할 타이밍과 조심해야 할 구간이 나와요. 2025년 하반기에 관계의 전환점이 한 번 오고, 2026년 봄에는 함께 큰 결정을 내려야 할 상황이 생겨요. 이 시기를 잘 넘기면 2027년에 두 사람의 관계가 한 단계 깊어지는 구조예요. 반대로 2026년 여름~가을은 서로 지치기 쉬운 시기라 의식적으로 거리를 좁히려는 노력이 필요해요. 각 시기별로 조심해야 할 행동과 반드시 해야 할 대화 주제가 따로 있어요. 특히 두 사람의 대운 흐름이 교차하는 지점이 있는데, 그 시기가 이 관계의 가장 큰 기회이자 위기가 될 수 있어요. 3년간의 월별 흐름도 구체적으로 확인할 수 있어요.' },
-                  { title: isLover ? '궁합 총평' : '관계 총평', preview: null, blurred: '이 사주 조합이 전체적으로 어떤 관계인지, 잘 맞는 이유와 주의할 점을 한 번에 정리해드려요. 두 사람의 오행 균형을 종합하면 서로에게 필요한 기운을 주고받는 상보적 관계예요. 다만 한쪽이 지나치게 맞추는 구조가 되면 균형이 깨지기 쉬워서 대등한 관계 유지가 핵심이에요. 이 조합의 가장 큰 강점은 위기 상황에서 오히려 단단해지는 구조라는 거예요. 반대로 평화로운 시기에 권태가 올 수 있는데, 그걸 방지하는 구체적인 방법도 나와요. 장기적으로 이 관계가 유지되려면 반드시 지켜야 할 규칙이 하나 있고, 그걸 알면 10년 후에도 지금처럼 가까운 사이로 남을 수 있어요. 전체 궁합 점수와 영역별 세부 점수도 한눈에 정리해드려요.' },
-                ]
-              })().map((item, idx) => {
-                const blurredText = item.blurred || ''
-                const sentenceLimit = item.preview ? 1 : 2
-                let cut = -1, count = 0
-                for (let i = 0; i < blurredText.length - 1; i++) {
-                  if (blurredText[i] === '.' && blurredText[i + 1] === ' ') { count++; if (count === sentenceLimit) { cut = i + 2; break } }
-                }
-                const visibleBlur = cut > 0 ? blurredText.slice(0, cut).trim() : ''
-                const hiddenBlur = cut > 0 ? blurredText.slice(cut).trim() : blurredText
-                return (
-                  <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: 'rgba(155,29,58,0.06)', borderRadius: 10, border: '1px solid rgba(155,29,58,0.2)' }}>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>✦ {item.title}</p>
-                    <div style={{ fontSize: 16, lineHeight: 2.0, wordBreak: 'keep-all' }}>
-                      {item.preview && <span style={{ color: '#24232B' }}>{item.preview} </span>}
-                      {visibleBlur && <span style={{ color: '#24232B' }}>{visibleBlur} </span>}
-                      {hiddenBlur && <span style={{ color: '#62616C', filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{hiddenBlur}</span>}
-                    </div>
-                  </div>
-                )
-              })}
-              <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center', marginTop: 12 }}>{관계유형 === '친구' ? '두 사람의 우정이 어디까지 가는지 전부 나와요 👇' : 관계유형 === '연인' ? '이 사람과 돈·미래·궁합이 맞는 구조인지 사주에서 확인하세요 👇' : 관계유형 === '직장상사' ? '이 상사와 잘 지내는 법, 사주에서 확인하세요 👇' : 관계유형 === '가족' ? '이 가족과의 관계, 사주에서 확인하세요 👇' : 관계유형 === '직장동료' ? '이 사람과 잘 지내는 법, 사주에서 확인하세요 👇' : '두 사람의 결혼·돈·미래 궁합까지 전부 나와요 👇'}</p>
+          {!isStep0 && !isStep1 && (
+            <div style={{ marginTop: 28, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '20px 18px' }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#633B50', marginBottom: 10 }}>무료로 바로 확인할 수 있어요</p>
+              {['두 사람의 관계 요약', '이 관계의 핵심 3가지와 짧은 해설·행동 팁', '잘 맞는 점 1개와 조율할 점 1개', '바로 써볼 수 있는 대화 문장 1개'].map(t => (
+                <div key={t} style={{ display: 'flex', gap: 8, fontSize: 14, color: '#24232B', lineHeight: 1.6, marginBottom: 6 }}><span style={{ color: '#633B50' }}>✓</span><span>{t}</span></div>
+              ))}
+              <p style={{ fontSize: 12, color: '#62616C', lineHeight: 1.6, margin: '10px 0 0', wordBreak: 'keep-all' }}>결제 없이 결과를 끝까지 볼 수 있어요. 더 자세한 풀이는 결과 화면에서 선택할 수 있어요.</p>
             </div>
           )}
         </div>
@@ -1927,22 +1860,86 @@ if (scoreMatch) {
   else if (isStep1) setGunghabStep(0)
   else setGunghabStep(1)
 }}>←</button>
-          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: (isStep0 ? false : isStep1 ? !canStep1Next : !canStep2Next) ? '#E4E5EA' : '#633B50', color: (isStep0 ? false : isStep1 ? !canStep1Next : !canStep2Next) ? '#62616C' : '#FFFFFF', border: 'none', borderRadius: 10, cursor: (isStep0 ? false : isStep1 ? !canStep1Next : !canStep2Next) ? 'not-allowed' : 'pointer' }}
-            disabled={isStep0 ? !관계유형 : isStep1 ? !canStep1Next : !canStep2Next}
+          <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 600, background: (isStep0 ? !step0Valid : isStep1 ? !canStep1Next : !canStep2Next) ? '#E4E5EA' : '#633B50', color: (isStep0 ? !step0Valid : isStep1 ? !canStep1Next : !canStep2Next) ? '#62616C' : '#FFFFFF', border: 'none', borderRadius: 10, cursor: (isStep0 ? !step0Valid : isStep1 ? !canStep1Next : !canStep2Next) ? 'not-allowed' : 'pointer' }}
+            disabled={isStep0 ? !step0Valid : isStep1 ? !canStep1Next : !canStep2Next}
            onClick={() => {
   if (isStep0) { setGunghabStep(1); return }
   if (isStep1) { setGunghabStep(2); return }
-              const _pbt = (() => { if (partnerTimeUnknown) return ''; if (!partnerTimeHour || !partnerTimeMin) return ''; let h = Number(partnerTimeHour); if (partnerTimeAmPm === '오전' && h === 12) h = 0; if (partnerTimeAmPm === '오후' && h !== 12) h += 12; return `${String(h).padStart(2,'0')}:${String(partnerTimeMin).padStart(2,'0')}` })()
-              startCheckout({
-                product: 'gunghab', input: { gender, birthdate, birthtime, isLunar, partnerGender, partnerBirthdate, partnerBirthtime: _pbt, partnerIsLunar, myName, partnerName, 관계유형 }, buyerName: myName || '고객',
-                redirectParams: { payment: 'gunghab', g: gender, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mn: myName || '', pn: partnerName || '', pg: partnerGender, pby: partnerBirthYear, pbm: partnerBirthMonth, pbd: partnerBirthDay, ptu: partnerTimeUnknown ? '1' : '0', pil: partnerIsLunar ? '1' : '0', pbt: _pbt, ptap: partnerTimeAmPm },
-                onPaid: (order) => handleGunghabAnalyze(order),
-              })
-
+              handleGunghabFree()
             }}>
-            {isStep0 ? '다음 — 내 정보 입력' : isStep1 ? '다음 — 상대방 정보 입력' : '💕 관계 분석받기 (1,990원)'}
+            {isStep0 ? '다음 — 내 정보 입력' : isStep1 ? '다음 — 상대방 정보 입력' : '무료로 관계 보기'}
           </button>
         </div>
+      </div>
+    )
+  }
+
+  // ── 관계 궁합 무료 결과 ──
+  if (screen === 'gunghab_free') {
+    const relLabel = gunghabSajuData?.relation?.label || RELATION_OPTIONS.find(o => o.key === 관계유형)?.label || '관계'
+    const parsed = gunghabFreePhase === 'done' ? parseGunghabFree(gunghabFreeText, gunghabSajuData?.bars) : null
+    const readable = parsed && (parsed.summary || parsed.good || parsed.tune)
+    const topics = GUNGHAB_PAID_TOPICS[관계유형] || []
+    const card = { background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '18px', marginBottom: 14 }
+    const tag = { fontSize: 12, fontWeight: 700, color: '#633B50', margin: '0 0 6px' }
+    const body = { fontSize: 15, lineHeight: 1.8, color: '#24232B', margin: 0, wordBreak: 'keep-all' }
+    return (
+      <div style={{ minHeight: '100vh', background: '#F4F5F7' }}>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 48px', boxSizing: 'border-box' }}>
+          <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#633B50', margin: '0 0 4px' }}>관계 궁합 · 무료 결과</p>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: '#24232B', margin: 0, wordBreak: 'keep-all' }}>{relLabel} 관계, 한눈에 보기</h2>
+          </div>
+
+          {gunghabFreePhase === 'streaming' && (
+            <div role="status" style={card}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {[0,1,2].map(n => <div key={n} style={{ width: 10, height: 10, borderRadius: '50%', background: '#633B50', animation: 'pulse 1.2s ease-in-out ' + (n * 0.2) + 's infinite' }} />)}
+                <span style={{ fontSize: 16, color: '#24232B', marginLeft: 10 }}>두 사람의 관계를 살펴보고 있어요</span>
+              </div>
+            </div>
+          )}
+
+          {gunghabFreePhase === 'error' && (
+            <div role="alert" style={{ ...card, border: '1px solid #C53A3A' }}>
+              <p style={{ fontSize: 16, fontWeight: 700, color: '#C53A3A', margin: '0 0 6px' }}>풀이를 불러오지 못했어요</p>
+              <p style={{ fontSize: 14, color: '#62616C', lineHeight: 1.6, margin: '0 0 16px', wordBreak: 'keep-all' }}>{gunghabFreeError || '잠시 후 다시 시도해주세요.'}</p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 700, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer' }} onClick={handleGunghabFree}>다시 시도</button>
+                <button style={{ flex: 1, padding: '14px', fontSize: 15, background: '#FFFFFF', color: '#24232B', border: '1px solid #DEDFE5', borderRadius: 12, cursor: 'pointer' }} onClick={() => { setGunghabFreePhase('input'); setScreen('gunghab_input') }}>입력 화면으로</button>
+              </div>
+            </div>
+          )}
+
+          {parsed && !readable && (
+            <div style={card}><p style={{ ...body, whiteSpace: 'pre-wrap' }}>{removeMarkers(gunghabFreeText)}</p></div>
+          )}
+
+          {readable && (
+            <>
+              {parsed.summary && <div style={card}><p style={tag}>두 사람의 관계 요약</p><p style={body}>{parsed.summary}</p></div>}
+              <GunghabBars bars={parsed.bars} />
+              {parsed.good && <div style={card}><p style={tag}>잘 맞는 점</p><p style={body}>{parsed.good}</p></div>}
+              {parsed.tune && <div style={card}><p style={tag}>조율할 점</p><p style={body}>{parsed.tune}</p></div>}
+              {parsed.line && <div style={{ ...card, background: '#F6F0F3' }}><p style={tag}>이렇게 말해보세요</p><p style={{ ...body, fontWeight: 600 }}>{parsed.line}</p></div>}
+              <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50', marginBottom: 20 }}
+                onClick={() => setShareDraft(buildShareText({ sentence: parsed.share, fallback: '사주로 우리 관계를 가볍게 살펴봤어요. 너는 어때?', people: [[myName, '나'], [partnerName, '상대']] }))}>
+                이 결과 요약 공유하기
+              </button>
+
+              <div style={{ ...card, border: '1.5px solid #633B50' }}>
+                <p style={{ fontSize: 16, fontWeight: 800, color: '#24232B', margin: '0 0 6px' }}>더 자세히 알고 싶다면 (선택)</p>
+                <p style={{ fontSize: 14, lineHeight: 1.7, color: '#62616C', margin: '0 0 12px', wordBreak: 'keep-all' }}>위 결과는 무료로 끝까지 볼 수 있어요. 상세 풀이에서는 {relLabel} 관계에 맞춰 아래 내용을 상황별 행동과 대화 문장까지 더 깊이 풀어드려요.</p>
+                {topics.map(t => <div key={t} style={{ display: 'flex', gap: 8, fontSize: 14, color: '#24232B', lineHeight: 1.6, marginBottom: 4 }}><span style={{ color: '#633B50' }}>✓</span><span>{t}</span></div>)}
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', margin: '12px 0 10px' }}>가격 {GUNGHAB_PRICE_TEXT} · 1회 결제</p>
+                <button style={{ width: '100%', padding: '15px', fontSize: 16, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer' }} onClick={startGunghabPaid}>상세 풀이 보기 · {GUNGHAB_PRICE_TEXT}</button>
+              </div>
+            </>
+          )}
+
+          <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C' }} onClick={handleRestart}>처음으로 돌아가기</button>
+        </div>
+        {shareDraft !== null && <ShareModal initialText={shareDraft} onClose={() => setShareDraft(null)} />}
       </div>
     )
   }
@@ -1954,11 +1951,11 @@ if (scoreMatch) {
       <div style={{ minHeight: '100vh', background: '#F4F5F7' }}>
         <div id="gunghab-result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box' }}>
           <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginTop: 8 }}>{관계유형 === '연인' ? '두 사람의 궁합 분석' : '두 사람의 사주 분석'}</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginTop: 8 }}>{(gunghabSajuData?.relation?.label || '관계') + ' 상세 풀이'}</h2>
           </div>
           {gunghabSajuData && (
             <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#633B50', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 10 }}>💕 두 사람의 사주팔자</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#633B50', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 10 }}>두 사람의 사주팔자</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {[{ label: gunghabSajuData.my.name + '님', data: gunghabSajuData.my }, { label: gunghabSajuData.partner.name + '님', data: gunghabSajuData.partner }].map(({ label, data }) => (
                   <div key={label} style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 10, padding: '14px 10px' }}>
@@ -1978,33 +1975,7 @@ if (scoreMatch) {
           )}
           {isGunghabStreaming && gunghabText && <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(gunghabText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
           {isGunghabStreaming && !gunghabText && <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}><div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>{[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#633B50', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}<span style={{ fontSize: 14, color: '#62616C', marginLeft: 8 }}>💕 두 사람의 궁합을 분석하고 있어요...</span></div></div>}
-          {!isGunghabStreaming && gunghabSections.length > 0 && (() => {
-            if (gunghabSajuData?.scores) {
-              const s = gunghabSajuData.scores
-              return <GunghabRadarChart categories={[
-                { label: '성격', score: s.성격, color: '#B83A66' },
-                { label: '재물', score: s.재물, color: '#5B52C7' },
-                { label: '결혼', score: s.결혼, color: '#137A5A' },
-                { label: '미래', score: s.미래, color: '#9A5F0F' },
-                { label: '총합', score: s.total, color: '#633B50' },
-              ]} />
-            }
-            const totalSec = gunghabSections.find(s => s.title.includes('총평'))
-            if (!totalSec) return null
-            let totalScore = null
-            for (const m of totalSec.content.matchAll(/(\d{2,3})\s*점/g)) {
-              const n = parseInt(m[1])
-              if (n >= 50 && n <= 100) { totalScore = n; break }
-            }
-            if (!totalScore) return null
-            return <GunghabRadarChart categories={[
-              { label: '성격', score: Math.min(95, Math.max(50, totalScore - 5)), color: '#B83A66' },
-              { label: '재물', score: Math.min(95, Math.max(50, totalScore + 3)), color: '#5B52C7' },
-              { label: '결혼', score: Math.min(95, Math.max(50, totalScore - 8)), color: '#137A5A' },
-              { label: '미래', score: Math.min(95, Math.max(50, totalScore + 6)), color: '#9A5F0F' },
-              { label: '총합', score: totalScore, color: '#633B50' },
-            ]} />
-          })()}
+          {!isGunghabStreaming && <GunghabBars bars={gunghabSajuData?.bars} />}
           {!isGunghabStreaming && gunghabSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={i === 0} forceOpen={pdfCapturing} />)}
           <div data-pdf-exclude="true">
           <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50', marginBottom: 10 }} onClick={async () => { try { await exportResultPDF('gunghab-result-content', '마이사주_궁합분석_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 궁합 분석 저장하기 (PDF)</button>
@@ -2048,9 +2019,7 @@ if (emailModal) {
             <p style={{ fontSize: 20, fontWeight: 700, color: '#24232B', textAlign: 'center', marginBottom: 8, lineHeight: 1.5 }}>막혔던 부분,<br/>지금 다 풀어드릴게요</p>
             <p style={{ fontSize: 13, color: '#24232B', textAlign: 'center', marginBottom: 18, lineHeight: 1.6 }}>재물·커리어 심층 분석 · 대운 흐름 · 수비학 운명수 · 귀인 시기 · 행동 전략</p>
             <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <span style={{ display: 'inline-block', background: '#C9474A', color: '#24232B', fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 8 }}>50% 할인</span>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10 }}>
-                <span style={{ fontSize: 14, textDecoration: 'line-through', color: '#62616C' }}>19,900원</span>
                 <span style={{ fontSize: 32, fontWeight: 800, color: '#633B50' }}>9,900원</span>
               </div>
             </div>
@@ -2061,9 +2030,7 @@ if (emailModal) {
             <p style={{ fontSize: 20, fontWeight: 700, color: '#24232B', textAlign: 'center', marginBottom: 8, lineHeight: 1.5 }}>이 아이, 어떤 학과가<br/>맞는지 알려드릴게요</p>
             <p style={{ fontSize: 13, color: '#24232B', textAlign: 'center', marginBottom: 18, lineHeight: 1.6 }}>추천학과 5개 · 맞는 직업 방향 · 입시 유리한 시기 · 공부가 잘 되는 방법까지</p>
             <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <span style={{ display: 'inline-block', background: '#C9474A', color: '#24232B', fontSize: 12, fontWeight: 700, borderRadius: 20, padding: '4px 12px', marginBottom: 8 }}>여름방학 특가</span>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10 }}>
-                <span style={{ fontSize: 14, textDecoration: 'line-through', color: '#62616C' }}>19,900원</span>
                 <span style={{ fontSize: 32, fontWeight: 800, color: '#633B50' }}>9,900원</span>
               </div>
             </div>
@@ -2104,6 +2071,30 @@ if (emailModal) {
   )
 }
 
+  // ── 다른 풀이 (자녀 학업·진로, 100년 인생 흐름) — 기존 상품·결제는 그대로 ──
+  if (screen === 'other_services') {
+    const items = [
+      { key: 'child', label: '자녀 학업·진로', hook: '우리 아이의 기질과 공부 방식, 맞는 직업·추천학과 5개를 부모 관점에서 풀어드려요.', price: '무료 풀이 후 상세 풀이 9,900원', onClick: () => { setServiceType('child'); setScreen('input') } },
+      { key: 'baeknyeon', label: '100년 인생 흐름', hook: '지금부터 100세까지 매년의 재물·관계·건강 흐름 키워드를 정리해드려요.', price: '유료 99,000원', onClick: () => setScreen('백년_input') },
+    ]
+    return (
+      <div style={{ minHeight: '100vh', background: '#F4F5F7' }}>
+        <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 48px', boxSizing: 'border-box' }}>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#24232B', textAlign: 'center', margin: '8px 0 6px' }}>다른 풀이</h1>
+          <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', margin: '0 0 20px' }}>필요할 때만 골라서 볼 수 있어요.</p>
+          {items.map(({ key, label, hook, price, onClick }) => (
+            <div key={key} onClick={onClick} style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '18px 16px', marginBottom: 12, cursor: 'pointer' }}>
+              <p style={{ fontSize: 16, fontWeight: 700, color: '#24232B', margin: '0 0 6px' }}>{label}</p>
+              <p style={{ fontSize: 14, lineHeight: 1.7, color: '#62616C', margin: '0 0 8px', wordBreak: 'keep-all' }}>{hook}</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#633B50', margin: 0 }}>{price}</p>
+            </div>
+          ))}
+          <button style={{ width: '100%', padding: '14px', fontSize: 15, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C', marginTop: 8 }} onClick={() => setScreen('landing')}>← 처음으로</button>
+        </div>
+      </div>
+    )
+  }
+
   // ── 랜딩 ──
   if (screen === 'landing') {
     const C = { bg: '#F4F5F7', card: '#FFFFFF', text: '#24232B', sub: '#62616C', accent: '#633B50', line: '#DEDFE5' }
@@ -2123,7 +2114,7 @@ if (emailModal) {
         <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: '24px 24px 36px', textAlign: 'center', boxSizing: 'border-box' }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>마이사주</p>
           <h1 style={{ wordBreak: 'keep-all', fontSize: 34, fontWeight: 700, color: C.text, marginBottom: 14, lineHeight: 1.3, letterSpacing: '-0.02em' }}>나, 앞으로<br/>잘 풀릴까?</h1>
-          <p style={{ wordBreak: 'keep-all', fontSize: 15, color: C.sub, lineHeight: 1.8, marginBottom: 28 }}>돈과 일, 사랑과 관계.<br/>지금 마음에 걸리는 고민부터<br/>사주로 살펴보세요.</p>
+          <p style={{ wordBreak: 'keep-all', fontSize: 15, color: C.sub, lineHeight: 1.8, marginBottom: 28 }}>생년월일만 입력하면 나의 성향·강점·주의할 습관과<br/>바로 해볼 수 있는 팁을 무료로 알려드려요.</p>
           <button
             style={{ width: '100%', maxWidth: 360, minHeight: 52, padding: '14px 20px', fontSize: 16, fontWeight: 700, background: C.accent, color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', wordBreak: 'keep-all' }}
             onClick={goSaju}>
@@ -2131,64 +2122,25 @@ if (emailModal) {
           </button>
         </div>
 
-        {/* 서비스 카드 */}
+        {/* 메뉴 2개 — 메뉴 이름보다 얻는 도움을 먼저 설명 */}
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '8px 16px 32px', width: '100%', boxSizing: 'border-box' }}>
-          <h2 style={{ fontSize: 18, color: C.text, textAlign: 'center', marginBottom: 16, fontWeight: 700 }}>궁금한 주제를 골라보세요</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-
-            {/* ① 나의 사주  ② 궁합 */}
+          <h2 style={{ fontSize: 18, color: C.text, textAlign: 'center', marginBottom: 16, fontWeight: 700 }}>무엇을 알아볼까요?</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              {
-                type: 'saju', label: '나의 사주',
-                badge: '기본 풀이 무료',
-                hook: '타고난 성향부터\n돈·일·관계의 흐름까지 살펴보세요.',
-              },
-              {
-                type: 'gunghab', label: '궁합',
-                hook: '두 사람의 성향과\n관계에서 살펴볼 점을 알아보세요.',
-                onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형('연인'); setScreen('gunghab_input') }
-              },
-            ].map(({ type, label, hook, badge, onClick }) => (
-              <div key={type} onClick={onClick || (() => { setServiceType(type); setScreen('input') })} style={cardStyle}>
-                {badge && <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 6 }}>{badge}</div>}
+              { key: 'saju', label: '내 사주', hook: '나의 핵심 성향과 강점, 주의할 습관, 오늘 해볼 수 있는 팁을 무료로 받아보세요.', sub: '일·돈·관계·공부와 배움까지, 나를 이해하는 데 쓸 수 있어요.', btn: '내 사주 무료로 보기 →', onClick: goSaju },
+              { key: 'gunghab', label: '관계 궁합', hook: '연인·부부·가족·친구·직장 동료와의 관계를 핵심 3가지와 바로 써볼 대화 문장으로 알려드려요.', sub: '두 사람의 생년월일만 있으면 돼요. 결과는 무료로 끝까지 볼 수 있어요.', btn: '관계 궁합 무료로 보기 →', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형(''); set관계역할(''); setScreen('gunghab_input') } },
+            ].map(({ key, label, hook, sub, btn, onClick }) => (
+              <div key={key} onClick={onClick} style={{ ...cardStyle, minHeight: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 6 }}>무료로 확인</div>
                 <div style={cardLabelStyle}>{label}</div>
-                <div style={cardHookStyle}>{hook}</div>
-                <button
-                  style={cardBtnStyle}
-                  onClick={e => { e.stopPropagation(); (onClick || (() => { setServiceType(type); setScreen('input') }))() }}>
-                  지금 확인하기 →
-                </button>
+                <div style={{ ...cardHookStyle, flex: 'none' }}>{hook}</div>
+                <div style={{ fontSize: 12, color: C.sub, lineHeight: 1.6, marginBottom: 10, wordBreak: 'keep-all' }}>{sub}</div>
+                <button style={cardBtnStyle} onClick={e => { e.stopPropagation(); onClick() }}>{btn}</button>
               </div>
             ))}
-
-            {/* ③ 자녀  ④ 100년 */}
-            {[
-              {
-                key: 'child', label: '우리 아이 진로·학과',
-                hook: '맞는 직업 · 추천학과 5개\n공부법까지',
-                btn: '확인하기 →',
-                onClick: () => { setServiceType('child'); setScreen('input') }
-              },
-              {
-                key: 'baeknyeon', label: '100년 사주 인생 꿀팁',
-                hook: '지금부터 100세까지\n매년 재물운·관계운·건강운',
-                btn: '꿀팁 받기 →',
-                onClick: () => setScreen('백년_input')
-              },
-            ].map(({ key, label, hook, btn, onClick }) => (
-              <div key={key} onClick={onClick} style={cardStyle}>
-                <div style={cardLabelStyle}>{label}</div>
-                <div style={cardHookStyle}>{hook}</div>
-                <button
-                  style={cardBtnStyle}
-                  onClick={e => { e.stopPropagation(); onClick() }}>
-                  {btn}
-                </button>
-              </div>
-            ))}
-
           </div>
-          <p style={{ textAlign: 'center', fontSize: 13, color: C.sub, padding: '20px 0 0', marginTop: 20, borderTop: `1px solid ${C.line}` }}>안전한 결제 · 즉시 확인</p>
+          <p style={{ textAlign: 'center', fontSize: 13, color: C.sub, lineHeight: 1.7, padding: '20px 0 0', marginTop: 20, borderTop: '1px solid ' + C.line, wordBreak: 'keep-all' }}>더 자세한 풀이는 결과를 본 뒤 필요할 때 고를 수 있어요.</p>
+          <p style={{ textAlign: 'center', margin: '8px 0 0' }}><button onClick={() => setScreen('other_services')} style={footerLinkStyle}>다른 풀이 보기</button></p>
         </div>
 
         {/* 푸터 */}
@@ -2421,7 +2373,7 @@ if (screen === 'input') {
           style={{ flex: 1, padding: '18px', fontSize: 18, fontWeight: 700, background: !canGoNext() ? '#E4E5EA' : '#633B50', color: !canGoNext() ? '#62616C' : '#FFFFFF', border: 'none', borderRadius: 14, cursor: !canGoNext() ? 'not-allowed' : 'pointer', letterSpacing: '0.02em' }}
           onClick={goNext} disabled={!canGoNext()}>
           {currentStepId === 'blood'
-            ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : serviceType === 'child' ? '방학 전 특가로 확인하기 (9,900원) 👶' : '내 돈 버는 시기, 지금 확인하기 →')
+            ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : serviceType === 'child' ? '무료로 자녀 풀이 보기 →' : '무료로 내 사주 보기 →')
             : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음 →'}
         </button>
         </div>
@@ -2627,8 +2579,8 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         )}
 
         {/* 기본 분석 결과 아코디언 */}
-{!isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수')).map((sec, i) => {
-  const isBlurred = i >= 1
+{!isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수') && s.title !== '공유 문장').map((sec, i) => {
+  const isBlurred = serviceType !== 'saju' && i >= 1
 
   if (isBlurred && !isPaid) {
     const blurIdx = CONCLUSION_BLUR_INDEX[sec.title] || []
@@ -2677,15 +2629,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           🔮 사주 분석으로 읽는 나의 성향{mbti ? ' (MBTI 교차분석 포함)' : ''}
         </p>
       )}
-      <Accordion title={sec.title} content={sec.content} defaultOpen={i === 0} forceOpen={pdfCapturing} />
-      {i === 0 && (
-        <div style={{ background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px 18px', marginBottom: 10 }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', marginBottom: 6 }}>이 성향이 반복시키는 관계 패턴</p>
-          <p style={{ fontSize: 14, color: '#62616C', lineHeight: 1.7, wordBreak: 'keep-all', margin: 0 }}>
-            강점으로 작용하는 성향이 특정 관계에서는 오해를 만들기도 합니다. 어떤 유형의 사람과 부딪히는지는 전체 분석에서 확인할 수 있습니다.
-          </p>
-        </div>
-      )}
+      <Accordion title={sec.title} content={sec.content} defaultOpen={serviceType === 'saju' || i === 0} forceOpen={pdfCapturing} />
     </div>
   )
 })}
@@ -2706,8 +2650,24 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           </>
         )}
 
+        {/* 내 사주 — 무료 풀이로 도움이 끝난 뒤, 선택 사항으로만 안내 */}
+        {phase === 'done' && !isPaid && !isPaidStreaming && serviceType === 'saju' && (
+          <div style={{ background: '#FFFFFF', border: '1.5px solid #633B50', borderRadius: 16, padding: '22px 18px', marginBottom: 16 }}>
+            <p style={{ fontSize: 17, fontWeight: 800, color: '#24232B', margin: '0 0 6px' }}>더 깊이 알고 싶다면 (선택)</p>
+            <p style={{ fontSize: 14, lineHeight: 1.7, color: '#62616C', margin: '0 0 12px', wordBreak: 'keep-all' }}>위 풀이는 무료로 끝까지 볼 수 있어요. 전체 분석에서는 아래 풀이가 더해져요.</p>
+            {SAJU_PAID_TOPICS.map(({ title, desc }) => (
+              <div key={title} style={{ marginBottom: 8 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', margin: 0 }}>✓ {title}</p>
+                <p style={{ fontSize: 13, color: '#62616C', margin: '0 0 0 18px', wordBreak: 'keep-all' }}>{desc}</p>
+              </div>
+            ))}
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', margin: '12px 0 10px' }}>가격 1,990원 · 1회 결제</p>
+            <button style={{ width: '100%', padding: '15px', fontSize: 16, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer' }} onClick={() => openFullAnalysisCheckout('result_card')}>전체 분석 보기 · 1,990원</button>
+          </div>
+        )}
+
         {/* 결제 유도 카드 */}
-        {phase === 'done' && !isPaid && !isPaidStreaming && (
+        {phase === 'done' && !isPaid && !isPaidStreaming && serviceType !== 'saju' && (
   <div style={{ background: '#FFFFFF', borderRadius: 16, padding: '28px 20px', marginBottom: 16, border: '1px solid #DEDFE5' }}>
     <p style={{ fontSize: 12, color: '#633B50', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 16, textAlign: 'center' }}>FULL ANALYSIS</p>
     {serviceType === 'child' || serviceType === '노후' ? (
@@ -2844,18 +2804,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       </div>
     )}
 
-    {/* 업셀 카드 — 무료 결과 후 1,990원 유도 */}
-    {!isPaid && phase === 'done' && serviceType === 'saju' && (
-      <div style={{ background: '#FFFFFF', border: '1.5px solid #633B50', borderRadius: 16, padding: '28px 20px', marginBottom: 24, textAlign: 'center' }}>
-        <p style={{ fontSize: 19, fontWeight: 800, color: '#24232B', marginBottom: 8, lineHeight: 1.5, wordBreak: 'keep-all' }}>내 사주의 정확한 시기까지 보고 싶다면?</p>
-        <p style={{ fontSize: 13, color: '#62616C', marginBottom: 22, lineHeight: 1.7, wordBreak: 'keep-all' }}>돈이 크게 움직이는 시기<br/>귀인을 만나는 시기<br/>피해야 할 선택과 앞으로의 방향까지</p>
-        <button
-          style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 900, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', boxShadow: 'none' }}
-          onClick={() => openFullAnalysisCheckout('mid_upsell_card')}>
-          내 사주 전체 분석 보기 · 1,990원
-        </button>
-      </div>
-    )}
 
     {/* 하단 액션 영역 — 버튼/공유 등 UI 전용이라 PDF에는 포함하지 않음 */}
     <div data-pdf-exclude="true" style={{ borderTop: '1px solid #DEDFE5', marginTop: 32, paddingTop: 24 }}>
@@ -2904,54 +2852,33 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         </button>
       </div>}
 
-      {/* 친구 공유 — 텍스트 링크 */}
-      <p style={{ textAlign: 'center', marginBottom: 8 }}>
-        <button
-          style={{ fontSize: 13, color: '#62616C', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-          onClick={() => {
-            navigator.clipboard?.writeText('https://mysaju.shop').then(() => alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')).catch(() => {
-              const el = document.createElement('textarea'); el.value = 'https://mysaju.shop'
-              document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el)
-              alert('링크가 복사됐어요! 카카오톡에 붙여넣기 해서 공유해보세요 😊')
-            })
-          }}>
-          친구에게 마이사주 알려주기
-        </button>
-      </p>
+      {/* 결과 요약 공유 — 공유할 내용을 먼저 확인한 뒤 직접 보낸다 */}
+      <button style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 600, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50', marginBottom: 10 }}
+        onClick={() => setShareDraft(buildShareText({ sentence: serviceType === 'saju' ? parseMyFree(baseText).share : '', fallback: '사주로 내 성향을 가볍게 살펴봤어요. 너는 어떤 편이야?', people: [[myName, '나']] }))}>
+        결과 요약 공유하기
+      </button>
 
       <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>
     </div>
       </div>
-      {phase === 'done' && !isPaid && !isPaidStreaming && (
+      {phase === 'done' && !isPaid && !isPaidStreaming && serviceType !== 'saju' && (
         <div style={{
           position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
           width: '100%', maxWidth: 480, zIndex: 999,
           background: '#FFFFFF', borderTop: '1px solid #DEDFE5',
           padding: '10px 16px calc(10px + env(safe-area-inset-bottom))', boxSizing: 'border-box',
         }}>
-          {serviceType === 'saju' ? (
-            <button
-              style={{ width: '100%', padding: '11px 14px', background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}
-              onClick={() => openFullAnalysisCheckout('bottom_cta')}>
-              <span style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ fontSize: 14, fontWeight: 800, wordBreak: 'keep-all' }}>내 돈의 전환점과 다음 5년 확인하기</span>
-                <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.7, wordBreak: 'keep-all' }}>재물 시기 · 직업 · 투자 · 인연 · 월별 흐름</span>
-              </span>
-              <span style={{ fontSize: 14, fontWeight: 900, whiteSpace: 'nowrap' }}>전체 분석 보기 · 1,990원</span>
-            </button>
-          ) : (
             <button
               style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
               onClick={() => { requestPayWithEmail(serviceType === 'child' ? '자녀운 프리미엄' : '전체 분석', (email) => startCheckout({ product: fullProductFor(serviceType), input: { ...personalInput(), previousText: baseText, freeRef: freeRefRef.current }, email, buyerName: myName || '고객', buyerEmail: email || '', redirectParams: { payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }, onPaid: (order, comp) => { if (comp) setIsPaid(true); else if (window.fbq) window.fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); handlePaidAnalyze(order) } })) }}>
-              <span>{serviceType === 'child' ? '방학 전 특가로 확인하기 →' : '내 돈 버는 시기, 지금 확인하기 →'}</span>
+              <span>{serviceType === 'child' ? '자녀 풀이 전체 보기 →' : '전체 분석 보기 →'}</span>
               <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>
-                <span style={{ fontSize: 11, textDecoration: 'line-through', opacity: 0.5, fontWeight: 400 }}>{serviceType === 'child' ? '19,900원' : '9,900원'}</span>
                 <span style={{ fontSize: 16, fontWeight: 900 }}>{serviceType === 'child' ? '9,900원' : '1,990원'}</span>
               </span>
             </button>
-          )}
         </div>
       )}
+      {shareDraft !== null && <ShareModal initialText={shareDraft} onClose={() => setShareDraft(null)} />}
     </div>
   )
 }

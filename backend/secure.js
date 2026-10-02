@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
+const { normalizeRelation } = require('./relations');
 
 // 가격·상품명은 서버에서만 정한다. (쿠폰 할인은 운영에 아직 없으므로 적용하지 않는다)
 const PRODUCTS = Object.freeze({
@@ -140,7 +141,7 @@ function standardMail(heading, name, sections) {
 
 // 기존 궁합 결과 화면의 이메일 템플릿
 function gunghabMail(nameA, nameB, sections) {
-  return `${MAIL_WRAP_START}<h1 style="color:#C9A84C;text-align:center;font-size:22px;margin-bottom:24px;">💕 ${escapeHtml(nameA)}님 &amp; ${escapeHtml(nameB)}님 궁합 분석</h1>${MAIL_HR}${mailSections(sections)}${MAIL_FOOTER}`;
+  return `${MAIL_WRAP_START}<h1 style="color:#C9A84C;text-align:center;font-size:22px;margin-bottom:24px;">🔮 ${escapeHtml(nameA)}님 &amp; ${escapeHtml(nameB)}님 궁합 분석</h1>${MAIL_HR}${mailSections(sections)}${MAIL_FOOTER}`;
 }
 
 // 기존 운영자 화면의 심화 결과 재발송 템플릿
@@ -191,7 +192,7 @@ function buildOrderMail(order, events, variant) {
   }
   if (product.kind === 'gunghab') {
     const nameA = input.myName || 'A', nameB = input.partnerName || 'B';
-    return { subject: `💕 ${nameA}님 & ${nameB}님 궁합 분석 결과`, html: gunghabMail(nameA, nameB, parseSections(all)), resultText: all, userName: input.myName || '' };
+    return { subject: `🔮 ${nameA}님 & ${nameB}님 궁합 분석 결과`, html: gunghabMail(nameA, nameB, parseSections(all)), resultText: all, userName: input.myName || '' };
   }
   if (product.kind === 'baeknyeon') {
     const name = input.userName || '';
@@ -478,10 +479,13 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       return { input };
     }
     if (product.kind === 'gunghab') {
+      // 관계 선택값은 서버가 아는 값만 받는다 (모르는 값을 연인으로 바꾸지 않는다).
+      const rel = normalizeRelation(str(r.관계유형, 10), str(r.내역할, 4));
+      if (!rel) return { error: '관계 유형을 확인해주세요.' };
       const input = {
         gender: str(r.gender, 10), birthdate: dateStr(r.birthdate), birthtime: timeStr(r.birthtime), isLunar: bool(r.isLunar),
         partnerGender: str(r.partnerGender, 10), partnerBirthdate: dateStr(r.partnerBirthdate), partnerBirthtime: timeStr(r.partnerBirthtime), partnerIsLunar: bool(r.partnerIsLunar),
-        myName: str(r.myName, 30), partnerName: str(r.partnerName, 30), 관계유형: str(r.관계유형, 10) || '연인',
+        myName: str(r.myName, 30), partnerName: str(r.partnerName, 30), 관계유형: rel.key, 내역할: rel.role,
       };
       if (!input.birthdate || !input.partnerBirthdate) return { error: '생년월일을 입력해주세요.' };
       return { input };
@@ -512,7 +516,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       return {
         gender: i.gender, birthdate: i.birthdate, birthtime: i.birthtime, isLunar: !!i.isLunar,
         partnerGender: i.partnerGender, partnerBirthdate: i.partnerBirthdate, partnerBirthtime: i.partnerBirthtime, partnerIsLunar: !!i.partnerIsLunar,
-        myName: i.myName || 'A', partnerName: i.partnerName || 'B', type: '궁합', isPaid: true, 관계유형: i.관계유형 || '연인',
+        myName: i.myName || 'A', partnerName: i.partnerName || 'B', type: '궁합', isPaid: true, 관계유형: i.관계유형, 내역할: i.내역할 || '',
       };
     }
     if (product.kind === 'baeknyeon') {
