@@ -68,13 +68,13 @@ test('관계마다 프롬프트의 관점·섹션이 그 관계 것이고 다른
   }
 });
 
-test('무료 풀이: 요약·바 3개·잘 맞는 점·조율할 점·대화 문장·공유 문장을 모두 완결하고, 유료 섹션과 점수는 없다', () => {
+test('무료 풀이: 한 줄 요약·관계 요약·바 3개·잘 맞는 점·조율할 점·대화 문장을 모두 완결하고, 유료 섹션과 점수는 없다', () => {
   for (const k of KEYS) {
     const free = R.buildFreeGunghabPrompt(args(k, k === '부모자녀' ? '자녀' : ''));
-    for (const t of ['관계 요약', '잘 맞는 점', '조율할 점', '대화 문장', '공유 문장']) assert.ok(free.includes(`===${t}===`), `${k}:${t}`);
+    for (const t of ['한 줄 요약', '관계 요약', '잘 맞는 점', '조율할 점', '대화 문장']) assert.ok(free.includes(`===${t}===`), `${k}:${t}`);
     for (const [title] of R.RELATIONS[k].paid) assert.ok(!free.includes(`===${title}===`), `${k}: 유료 섹션 ${title}이 무료에 포함`);
     assert.ok(!/\d+\s*점/.test(free));
-    assert.ok(free.includes('이름·성별·생년월일·나이·상대 정보는 절대 넣지 말고'));
+    assert.ok(!free.includes('===공유 문장==='));
   }
 });
 
@@ -104,4 +104,40 @@ test('부모·자녀: 부모/자녀 역할에 따라 읽는 사람의 위치가 
 test('무료 궁합 유형은 주문 없이 호출할 수 있고 상세 풀이는 주문이 필요하다', () => {
   assert.ok(PAID_ONLY_ANALYSIS_TYPES.has('궁합'));
   assert.ok(!PAID_ONLY_ANALYSIS_TYPES.has('궁합무료'));
+});
+
+test('팁·대화 문장은 관계별 실제 상황과 앞선 해석에 연결되고, 어느 관계에나 붙는 일반 조언을 금지한다', () => {
+  for (const k of KEYS) {
+    const role = k === '부모자녀' ? '부모' : '';
+    const free = R.buildFreeGunghabPrompt(args(k, role));
+    assert.ok(free.includes('[이 관계의 실제 상황] ' + R.situationsFor(R.RELATIONS[k], role)), k);
+    assert.ok(free.includes('같은 항목의 해설과 이어져야 합니다'));
+    assert.ok(free.includes("'조율할 점'에서 말한 상황에서 실제로 건넬 수 있는 문장"));
+    assert.ok(free.includes('어느 관계에나 붙는 일반 조언은 쓰지 마세요'));
+  }
+  assert.match(R.buildFreeGunghabPrompt(args('직장동료')), /업무 우선순위.*피드백.*일정.*역할 분담/);
+  // 부모·자녀는 역할에 따라 상황이 다르다
+  assert.notStrictEqual(R.situationsFor(R.RELATIONS.부모자녀, '부모'), R.situationsFor(R.RELATIONS.부모자녀, '자녀'));
+  // 관계 간 상황 목록이 겹치지 않는다
+  const all = KEYS.map(k => R.situationsFor(R.RELATIONS[k], '부모'));
+  assert.strictEqual(new Set(all).size, KEYS.length);
+});
+
+test('유료 안내 묶음: 실제 유료 섹션만 약속하고, 모든 섹션이 한 번씩 묶이며, 한자가 없다', () => {
+  for (const k of KEYS) {
+    const d = R.RELATIONS[k];
+    assert.ok(d.bundles.length >= 3 && d.bundles.length <= 4, k);
+    assert.deepStrictEqual(d.bundles.flatMap(b => b[2]), d.paid.map(p => p[0]), k);
+    assert.ok(!/[一-鿿]/.test(d.paidTitle + d.bundles.map(b => b[0] + b[1]).join('')), k);
+  }
+  assert.strictEqual(R.RELATIONS.직장동료.paidTitle, '이 사람과 더 편하게 일하려면');
+});
+
+test('내 사주 무료 프롬프트: 핵심 한 문장 구조, 점수·유형명 금지, 팁은 주의할 습관과 연결', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, 'server.js'), 'utf8');
+  for (const t of ['핵심 한 문장', '이런 성향이 나오는 이유', '나의 강점', '주의할 습관', '바로 실천할 팁']) assert.ok(src.includes('===' + t + '==='), t);
+  assert.ok(src.includes('"상위 몇 %" 같은 수치 평가는 쓰지 마세요'));
+  assert.ok(src.includes("바로 위 '주의할 습관'과 직접 이어지는 행동"));
+  assert.ok(!src.includes('getScoreOnly') && !src.includes("type: 'score'"));
+  assert.ok(!/===공유 문장===/.test(src.slice(src.indexOf('const basePrompt'), src.indexOf('const paidOnlyPrompt'))));
 });

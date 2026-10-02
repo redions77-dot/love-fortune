@@ -3,7 +3,8 @@ import { API_URL } from './apiConfig.js'
 import { PAYMENT_CONFIG, isAnalyticsHost } from './paymentConfig.js'
 import GunghabBars from './GunghabBars.jsx'
 import ShareModal from './ShareModal.jsx'
-import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID_TOPICS, GUNGHAB_PRICE_TEXT, SAJU_PAID_TOPICS, parseGunghabFree, parseMyFree, buildShareText } from './relations.js'
+import PaidGuide from './PaidGuide.jsx'
+import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, parseGunghabFree, parseMyFree, buildShareText } from './relations.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
 // 없으면 조용히 무시한다. 나중에 다른 분석 도구를 붙일 때도 호출부는 바꿀 필요 없이 이 함수만 확장하면 된다.
@@ -806,7 +807,7 @@ export default function App() {
   const [isBaseStreaming, setIsBaseStreaming] = useState(false)
   const [isPaid, setIsPaid] = useState(false)
   const [isDeepPaid, setIsDeepPaid] = useState(false)
-  const [scoreData, setScoreData] = useState(null)
+  const [showSajuStruct, setShowSajuStruct] = useState(false) // '내 사주 구성 보기' 접기/펼치기
   const [emailModal, setEmailModal] = useState(null)
   const [pdfCapturing, setPdfCapturing] = useState(false)
   const [preEmail, setPreEmail] = useState('')
@@ -932,7 +933,6 @@ export default function App() {
         try {
           const json = JSON.parse(line.slice(6))
           if (json.type === 'saju') onSaju?.(json)
-          else if (json.type === 'score') onBaseText?.(json.text)
           else if (json.type === 'paid_start') isPaidSectionRef.current = true
           else if (json.type === 'done') { gotDone = true; onDone?.() }
           else if (json.type === 'free_ref') freeRefRef.current = json.id
@@ -960,24 +960,7 @@ export default function App() {
       await streamAnalyze({
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: false, isLunar, userName: myName },
         onSaju: (d) => { setSajuData(d) },
-        onBaseText: (t) => {
-  setBaseText(prev => {
-    const next = prev + t
-    
-    // 점수 JSON 파싱 시도
-    const scoreMatch = next.match(/===__운세점수__===([\s\S]*?)(?:===|$)/);
-if (scoreMatch) {
-  try {
-    const jsonStr = scoreMatch[1].match(/\{[\s\S]*?\}/)?.[0];
-    if (jsonStr) {
-      const parsed = JSON.parse(jsonStr);
-      if (parsed.종합) setScoreData(parsed);
-    }
-  } catch {}
-}
-    return next
-  })
-},
+        onBaseText: (t) => setBaseText(prev => prev + t),
         onPaidText: () => {},
         onDone: () => {
           if (failed) return
@@ -1041,7 +1024,6 @@ if (scoreMatch) {
         onReset: () => { setPaidText(''); setBaseText(_baseAtStart); isPaidSectionRef.current = false },
         onEvent: (json) => {
           if (json.type === 'saju') setSajuData(json)
-          else if (json.type === 'score') setBaseText(prev => prev + json.text)
           else if (json.type === 'paid_start') isPaidSectionRef.current = true
           else if (json.text && !json.type) { if (isPaidSectionRef.current) setPaidText(prev => prev + json.text); else setBaseText(prev => prev + json.text) }
         },
@@ -1105,7 +1087,7 @@ if (scoreMatch) {
     setIsLunar(false); setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
     setMbti(''); setBlood(''); setPhase('input'); setSajuData(null); setBaseText(''); setPaidText('')
     setIsBaseStreaming(false); setIsPaidStreaming(false); setIsPaid(false)
-    setGunghabStep(1); set관계유형(''); set관계역할(''); setGunghabFreeText(''); setGunghabFreePhase('input'); setGunghabFreeError(null); setShareDraft(null); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
+    setGunghabStep(1); set관계유형(''); set관계역할(''); setGunghabFreeText(''); setGunghabFreePhase('input'); setGunghabFreeError(null); setShareDraft(null); setShowSajuStruct(false); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
     setPartnerIsLunar(false); setPartnerTimeHour(''); setPartnerTimeMin(''); setPartnerTimeAmPm('오전'); setPartnerTimeUnknown(false)
     setMyName(''); setPartnerName(''); setGunghabText(''); setIsGunghabStreaming(false); setGunghabSajuData(null)
     setGilil목적(''); setGililText(''); setIsGililStreaming(false); isPaidSectionRef.current = false
@@ -1449,30 +1431,6 @@ if (scoreMatch) {
     </div>
   )}
 
-  {/* 운세 점수 카드 */}
-  {scoreData && (
-    <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
-      <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <p style={{ fontSize: 12, color: '#633B50', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>사주 기운 스탯</p>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-          <span style={{ fontSize: 56, fontWeight: 800, color: '#633B50', lineHeight: 1 }}>{scoreData.종합}</span>
-          <span style={{ fontSize: 22, color: '#62616C' }}>점</span>
-        </div>
-        <p style={{ fontSize: 13, color: '#62616C', marginTop: 6 }}>상위 {scoreData.종합 >= 90 ? '5' : scoreData.종합 >= 80 ? '15' : scoreData.종합 >= 70 ? '25' : scoreData.종합 >= 60 ? '40' : '50'}% 수준이에요</p>
-      </div>
-      <div style={{ borderTop: '1px solid #DEDFE5', paddingTop: 16 }}>
-        {[{ label: '재물운', score: scoreData.재물, color: '#5B52C7' }, { label: '애정운', score: scoreData.애정, color: '#B83A66' }, { label: '직업운', score: scoreData.직업, color: '#137A5A' }, { label: '건강운', score: scoreData.건강, color: '#9A5F0F' }].map(({ label, score, color }) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, color: '#62616C', width: 44, flexShrink: 0 }}>{label}</span>
-            <div style={{ flex: 1, height: 8, background: '#FFFFFF', borderRadius: 99, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${score}%`, background: color, borderRadius: 99, transition: 'width 1s ease' }} />
-            </div>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#24232B', width: 32, textAlign: 'right', flexShrink: 0 }}>{score}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )}
 
           {/* ── 미리보기 모드 (결제 전) ── */}
           {!isDeepPaid && !isDeepStreaming && (
@@ -1846,11 +1804,11 @@ if (scoreMatch) {
           )}
           {!isStep0 && !isStep1 && (
             <div style={{ marginTop: 28, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '20px 18px' }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: '#633B50', marginBottom: 10 }}>무료로 바로 확인할 수 있어요</p>
-              {['두 사람의 관계 요약', '이 관계의 핵심 3가지와 짧은 해설·행동 팁', '잘 맞는 점 1개와 조율할 점 1개', '바로 써볼 수 있는 대화 문장 1개'].map(t => (
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#633B50', marginBottom: 10 }}>무료 요약에서 확인할 수 있어요</p>
+              {['관계 한 줄 요약과 짧은 설명', '이 관계의 핵심 3가지와 짧은 해설·행동 팁', '잘 맞는 점 1개와 조율할 점 1개', '바로 써볼 수 있는 대화 문장 1개'].map(t => (
                 <div key={t} style={{ display: 'flex', gap: 8, fontSize: 14, color: '#24232B', lineHeight: 1.6, marginBottom: 6 }}><span style={{ color: '#633B50' }}>✓</span><span>{t}</span></div>
               ))}
-              <p style={{ fontSize: 12, color: '#62616C', lineHeight: 1.6, margin: '10px 0 0', wordBreak: 'keep-all' }}>결제 없이 결과를 끝까지 볼 수 있어요. 더 자세한 풀이는 결과 화면에서 선택할 수 있어요.</p>
+              <p style={{ fontSize: 12, color: '#62616C', lineHeight: 1.6, margin: '10px 0 0', wordBreak: 'keep-all' }}>무료 요약은 결제 없이 볼 수 있어요. 더 깊은 상세 풀이(유료)는 요약을 본 뒤 선택할 수 있어요.</p>
             </div>
           )}
         </div>
@@ -1879,7 +1837,7 @@ if (scoreMatch) {
     const relLabel = gunghabSajuData?.relation?.label || RELATION_OPTIONS.find(o => o.key === 관계유형)?.label || '관계'
     const parsed = gunghabFreePhase === 'done' ? parseGunghabFree(gunghabFreeText, gunghabSajuData?.bars) : null
     const readable = parsed && (parsed.summary || parsed.good || parsed.tune)
-    const topics = GUNGHAB_PAID_TOPICS[관계유형] || []
+    const paidInfo = GUNGHAB_PAID[관계유형]
     const card = { background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '18px', marginBottom: 14 }
     const tag = { fontSize: 12, fontWeight: 700, color: '#633B50', margin: '0 0 6px' }
     const body = { fontSize: 15, lineHeight: 1.8, color: '#24232B', margin: 0, wordBreak: 'keep-all' }
@@ -1887,7 +1845,7 @@ if (scoreMatch) {
       <div style={{ minHeight: '100vh', background: '#F4F5F7' }}>
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 48px', boxSizing: 'border-box' }}>
           <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#633B50', margin: '0 0 4px' }}>관계 궁합 · 무료 결과</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#633B50', margin: '0 0 4px' }}>관계 궁합 · 무료 요약</p>
             <h2 style={{ fontSize: 20, fontWeight: 800, color: '#24232B', margin: 0, wordBreak: 'keep-all' }}>{relLabel} 관계, 한눈에 보기</h2>
           </div>
 
@@ -1917,23 +1875,19 @@ if (scoreMatch) {
 
           {readable && (
             <>
-              {parsed.summary && <div style={card}><p style={tag}>두 사람의 관계 요약</p><p style={body}>{parsed.summary}</p></div>}
+              {parsed.demo && <div role="note" style={{ background: '#FFF8E1', border: '1px solid #E8D9A8', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: '#6B5B1F', wordBreak: 'keep-all' }}>{parsed.demo}</div>}
+              {parsed.headline && <div style={card}><p style={tag}>이 관계를 한 줄로</p><p style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.6, color: '#24232B', margin: 0, wordBreak: 'keep-all' }}>{parsed.headline}</p></div>}
+              {parsed.summary && <div style={card}><p style={tag}>일상에서는 이렇게 나타날 수 있어요</p><p style={body}>{parsed.summary}</p></div>}
               <GunghabBars bars={parsed.bars} />
               {parsed.good && <div style={card}><p style={tag}>잘 맞는 점</p><p style={body}>{parsed.good}</p></div>}
               {parsed.tune && <div style={card}><p style={tag}>조율할 점</p><p style={body}>{parsed.tune}</p></div>}
               {parsed.line && <div style={{ ...card, background: '#F6F0F3' }}><p style={tag}>이렇게 말해보세요</p><p style={{ ...body, fontWeight: 600 }}>{parsed.line}</p></div>}
               <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50', marginBottom: 20 }}
-                onClick={() => setShareDraft(buildShareText({ sentence: parsed.share, fallback: '사주로 우리 관계를 가볍게 살펴봤어요. 너는 어때?', people: [[myName, '나'], [partnerName, '상대']] }))}>
+                onClick={() => setShareDraft(buildShareText({ sentence: parsed.headline, fallback: '사주로 우리 관계를 가볍게 살펴봤어요. 너는 어때?', people: [[myName, '나'], [partnerName, '상대']] }))}>
                 이 결과 요약 공유하기
               </button>
 
-              <div style={{ ...card, border: '1.5px solid #633B50' }}>
-                <p style={{ fontSize: 16, fontWeight: 800, color: '#24232B', margin: '0 0 6px' }}>더 자세히 알고 싶다면 (선택)</p>
-                <p style={{ fontSize: 14, lineHeight: 1.7, color: '#62616C', margin: '0 0 12px', wordBreak: 'keep-all' }}>위 결과는 무료로 끝까지 볼 수 있어요. 상세 풀이에서는 {relLabel} 관계에 맞춰 아래 내용을 상황별 행동과 대화 문장까지 더 깊이 풀어드려요.</p>
-                {topics.map(t => <div key={t} style={{ display: 'flex', gap: 8, fontSize: 14, color: '#24232B', lineHeight: 1.6, marginBottom: 4 }}><span style={{ color: '#633B50' }}>✓</span><span>{t}</span></div>)}
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', margin: '12px 0 10px' }}>가격 {GUNGHAB_PRICE_TEXT} · 1회 결제</p>
-                <button style={{ width: '100%', padding: '15px', fontSize: 16, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer' }} onClick={startGunghabPaid}>상세 풀이 보기 · {GUNGHAB_PRICE_TEXT}</button>
-              </div>
+              {paidInfo && <PaidGuide title={paidInfo.title} bundles={paidInfo.bundles} priceText={GUNGHAB_PRICE_TEXT} buttonText={'상세 풀이 보기 · ' + GUNGHAB_PRICE_TEXT} onBuy={startGunghabPaid} />}
             </>
           )}
 
@@ -2114,7 +2068,7 @@ if (emailModal) {
         <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: '24px 24px 36px', textAlign: 'center', boxSizing: 'border-box' }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>마이사주</p>
           <h1 style={{ wordBreak: 'keep-all', fontSize: 34, fontWeight: 700, color: C.text, marginBottom: 14, lineHeight: 1.3, letterSpacing: '-0.02em' }}>나, 앞으로<br/>잘 풀릴까?</h1>
-          <p style={{ wordBreak: 'keep-all', fontSize: 15, color: C.sub, lineHeight: 1.8, marginBottom: 28 }}>생년월일만 입력하면 나의 성향·강점·주의할 습관과<br/>바로 해볼 수 있는 팁을 무료로 알려드려요.</p>
+          <p style={{ wordBreak: 'keep-all', fontSize: 15, color: C.sub, lineHeight: 1.8, marginBottom: 28 }}>사주로 나를 이해하고,<br/>사람 사이에서 바로 써볼 말을 찾아보세요.</p>
           <button
             style={{ width: '100%', maxWidth: 360, minHeight: 52, padding: '14px 20px', fontSize: 16, fontWeight: 700, background: C.accent, color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', wordBreak: 'keep-all' }}
             onClick={goSaju}>
@@ -2127,11 +2081,11 @@ if (emailModal) {
           <h2 style={{ fontSize: 18, color: C.text, textAlign: 'center', marginBottom: 16, fontWeight: 700 }}>무엇을 알아볼까요?</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { key: 'saju', label: '내 사주', hook: '나의 핵심 성향과 강점, 주의할 습관, 오늘 해볼 수 있는 팁을 무료로 받아보세요.', sub: '일·돈·관계·공부와 배움까지, 나를 이해하는 데 쓸 수 있어요.', btn: '내 사주 무료로 보기 →', onClick: goSaju },
-              { key: 'gunghab', label: '관계 궁합', hook: '연인·부부·가족·친구·직장 동료와의 관계를 핵심 3가지와 바로 써볼 대화 문장으로 알려드려요.', sub: '두 사람의 생년월일만 있으면 돼요. 결과는 무료로 끝까지 볼 수 있어요.', btn: '관계 궁합 무료로 보기 →', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형(''); set관계역할(''); setScreen('gunghab_input') } },
+              { key: 'saju', label: '내 사주', hook: '무료 요약: 핵심 성향 · 강점 1개 · 주의할 습관 1개 · 오늘 해볼 팁 1개', sub: '입력: 성별, 결혼 상태, 생년월일, 태어난 시간(모르면 "모름" 선택). MBTI·혈액형은 선택이에요.', btn: '내 사주 무료 요약 보기 →', onClick: goSaju },
+              { key: 'gunghab', label: '관계 궁합', hook: '무료 요약: 관계 한 줄 요약 · 핵심 3가지 · 잘 맞는 점과 조율할 점 · 바로 써볼 대화 문장', sub: '입력: 두 사람의 성별, 생년월일, 태어난 시간(모르면 "모름" 선택). 연인·부부·가족·친구·직장 동료 중 고를 수 있어요.', btn: '관계 궁합 무료 요약 보기 →', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형(''); set관계역할(''); setScreen('gunghab_input') } },
             ].map(({ key, label, hook, sub, btn, onClick }) => (
               <div key={key} onClick={onClick} style={{ ...cardStyle, minHeight: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 6 }}>무료로 확인</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 6 }}>무료 요약</div>
                 <div style={cardLabelStyle}>{label}</div>
                 <div style={{ ...cardHookStyle, flex: 'none' }}>{hook}</div>
                 <div style={{ fontSize: 12, color: C.sub, lineHeight: 1.6, marginBottom: 10, wordBreak: 'keep-all' }}>{sub}</div>
@@ -2139,7 +2093,7 @@ if (emailModal) {
               </div>
             ))}
           </div>
-          <p style={{ textAlign: 'center', fontSize: 13, color: C.sub, lineHeight: 1.7, padding: '20px 0 0', marginTop: 20, borderTop: '1px solid ' + C.line, wordBreak: 'keep-all' }}>더 자세한 풀이는 결과를 본 뒤 필요할 때 고를 수 있어요.</p>
+          <p style={{ textAlign: 'center', fontSize: 13, color: C.sub, lineHeight: 1.7, padding: '20px 0 0', marginTop: 20, borderTop: '1px solid ' + C.line, wordBreak: 'keep-all' }}>무료 요약은 결제 없이 볼 수 있어요. 더 깊은 상세 풀이는 요약을 본 뒤 선택할 수 있고, 유료(1,990원)예요.</p>
           <p style={{ textAlign: 'center', margin: '8px 0 0' }}><button onClick={() => setScreen('other_services')} style={footerLinkStyle}>다른 풀이 보기</button></p>
         </div>
 
@@ -2170,7 +2124,7 @@ if (screen === 'input') {
       <div style={{ textAlign: 'center', padding: '24px 24px 20px', background: '#FFFFFF', borderBottom: '1px solid #DEDFE5' }}>
         <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
         <h1 style={{ wordBreak: 'keep-all', fontSize: 22, fontWeight: 800, color: '#24232B', marginBottom: 8 }}>{serviceNames[serviceType] || '사주 분석'}</h1>
-        <p style={{ fontSize: 14, color: '#62616C' }}>생년월일을 입력하면 무료로 먼저 확인해드려요</p>
+        <p style={{ fontSize: 14, color: '#62616C' }}>아래 정보를 입력하면 무료 요약을 먼저 확인해드려요</p>
       </div>
 
       {/* 진행바 */}
@@ -2385,12 +2339,32 @@ if (screen === 'input') {
 if (screen === 'result') {
   const baseSections = parseSections(baseText)
   const paidSections = parseSections(paidText)
+  const myFree = serviceType === 'saju' ? parseMyFree(baseText) : null
   return (
     <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
       <div id="result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 20px 120px', boxSizing: 'border-box', width: '100%' }}>
 
+        {/* 예시 응답으로 화면을 볼 때만 나타나는 표시 (실제 AI 풀이에는 없음) */}
+        {myFree && !isBaseStreaming && myFree.demo && (
+          <div role="note" style={{ background: '#FFF8E1', border: '1px solid #E8D9A8', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: '#6B5B1F', wordBreak: 'keep-all' }}>{myFree.demo}</div>
+        )}
+
+        {/* 맨 위: 핵심 성향 한 문장 + 짧은 생활 속 설명 */}
+        {myFree && !isBaseStreaming && myFree.sentence && (
+          <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '22px 20px', marginBottom: 14 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#633B50', margin: '0 0 8px' }}>내 사주의 핵심 성향</p>
+            <p style={{ fontSize: 19, fontWeight: 800, color: '#24232B', lineHeight: 1.6, margin: '0 0 10px', wordBreak: 'keep-all' }}>{myFree.sentence}</p>
+            {myFree.detail && <p style={{ fontSize: 15, lineHeight: 1.8, color: '#62616C', margin: 0, wordBreak: 'keep-all' }}>{myFree.detail}</p>}
+          </div>
+        )}
+
+        {/* 사주팔자 표는 접어 두고 필요할 때만 펼친다 */}
+        {myFree && !isBaseStreaming && sajuData?.사주 && (
+          <button data-pdf-exclude="true" aria-expanded={showSajuStruct} onClick={() => setShowSajuStruct(v => !v)} style={{ width: '100%', padding: '12px 16px', fontSize: 14, fontWeight: 600, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, color: '#633B50', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}><span>내 사주 구성 보기</span><span>{showSajuStruct ? '▲' : '▼'}</span></button>
+        )}
+
         {/* 사주팔자 카드 */}
-        {sajuData?.사주 && (
+        {sajuData?.사주 && (serviceType !== 'saju' || showSajuStruct || pdfCapturing) && (
   <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
     <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
     <p style={{ fontSize: 15, color: '#62616C', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
@@ -2415,7 +2389,7 @@ if (screen === 'result') {
 )}
 
 {/* 일주 타입 카드 */}
-{sajuData?.사주?.일주 && (() => {
+{sajuData?.사주?.일주 && (serviceType !== 'saju' || showSajuStruct || pdfCapturing) && (() => {
   const 일주원문 = sajuData.사주.일주  // 예: "辛신亥해"
 const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   const 타입 = 일주타입명[일주키]
@@ -2424,12 +2398,13 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   const 색 = 오행색[일주키[0]] || '#633B50'
   return (
     <div id="share-card" style={{ background: '#FFFFFF', border: `1px solid ${색}40`, borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
-      <p style={{ fontSize: 11, color: '#633B50', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 12 }}>MY TYPE</p>
+      <p style={{ fontSize: 11, color: '#633B50', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 12 }}>비유로 보는 내 사주 유형</p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
         <div style={{ width: 52, height: 52, borderRadius: 12, background: `${색}18`, border: `1px solid ${색}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: 색, fontFamily: 'Georgia, serif', flexShrink: 0 }}>{일주키}</div>
         <div>
           <p style={{ fontSize: 20, fontWeight: 800, color: '#24232B', marginBottom: 4 }}>{타입.name}</p>
-          <p style={{ fontSize: 13, color: '#62616C', lineHeight: 1.6 }}>{타입.desc}</p>
+          <p style={{ fontSize: 13, color: '#62616C', lineHeight: 1.6 }}>{'이런 이미지로 읽을 수 있어요: ' + 타입.desc}</p>
+          <p style={{ fontSize: 12, color: '#62616C', lineHeight: 1.6, marginTop: 6 }}>사주 글자를 쉽게 떠올리도록 붙인 비유예요. 성격을 단정하는 이름이 아니니 참고만 하세요.</p>
         </div>
       </div>
      
@@ -2437,115 +2412,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   )
 })()}
 
-{/* 운세 점수 카드 — 레이더 차트 */}
-{scoreData && (() => {
-  const categories = [
-    { label: '재물운', score: scoreData.재물, color: '#5B52C7' },
-    { label: '애정운', score: scoreData.애정, color: '#B83A66' },
-    { label: '직업운', score: scoreData.직업, color: '#137A5A' },
-    { label: '건강운', score: scoreData.건강, color: '#9A5F0F' },
-    { label: '종합운', score: scoreData.종합, color: '#633B50' },
-  ]
-  const size = 260
-  const cx = size / 2, cy = size / 2, r = 95
-  const levels = [0.2, 0.4, 0.6, 0.8, 1.0]
-  const n = categories.length
-  const angleOffset = -Math.PI / 2
-
-  const getPoint = (i, ratio) => {
-    const angle = angleOffset + (2 * Math.PI * i) / n
-    return {
-      x: cx + r * ratio * Math.cos(angle),
-      y: cy + r * ratio * Math.sin(angle),
-    }
-  }
-  const getLabelPoint = (i) => {
-    const angle = angleOffset + (2 * Math.PI * i) / n
-    const labelR = r + 22
-    return {
-      x: cx + labelR * Math.cos(angle),
-      y: cy + labelR * Math.sin(angle),
-    }
-  }
-
-  const dataPoints = categories.map((c, i) => getPoint(i, c.score / 100))
-  const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
-
-  return (
-    <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
-      <div style={{ textAlign: 'center', marginBottom: 8 }}>
-       <p style={{ fontSize: 12, color: '#633B50', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 6 }}>사주 기운 스탯</p>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-          <span style={{ fontSize: 52, fontWeight: 800, color: '#633B50', lineHeight: 1 }}>{scoreData.종합}</span>
-          <span style={{ fontSize: 20, color: '#62616C' }}>점</span>
-        </div>
-        <p style={{ fontSize: 13, color: '#62616C', marginTop: 4 }}>
-          상위 {scoreData.종합 >= 90 ? '5' : scoreData.종합 >= 80 ? '15' : scoreData.종합 >= 70 ? '25' : scoreData.종합 >= 60 ? '40' : '50'}% 수준이에요
-        </p>
-      </div>
-
-      {/* 레이더 차트 */}
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          {/* 배경 그물망 */}
-          {levels.map((level, li) => {
-            const pts = categories.map((_, i) => getPoint(i, level))
-            const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ') + ' Z'
-            return <path key={li} d={path} fill="none" stroke="#DEDFE5" strokeWidth="1" />
-          })}
-
-          {/* 축선 */}
-          {categories.map((_, i) => {
-            const outer = getPoint(i, 1.0)
-            return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="#DEDFE5" strokeWidth="1" />
-          })}
-
-          {/* 데이터 영역 */}
-          <path d={dataPath} fill="rgba(99,59,80,0.12)" stroke="#633B50" strokeWidth="2" />
-
-          {/* 데이터 점 */}
-          {dataPoints.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r="4" fill={categories[i].color} stroke="#FFFFFF" strokeWidth="2" />
-          ))}
-
-          {/* 라벨 */}
-          {categories.map((c, i) => {
-            const lp = getLabelPoint(i)
-            return (
-              <g key={i}>
-                <text
-                  x={lp.x} y={lp.y - 6}
-                  textAnchor="middle"
-                  fontSize="11"
-                  fill="#62616C"
-                  fontWeight="600"
-                >{c.label}</text>
-                <text
-                  x={lp.x} y={lp.y + 8}
-                  textAnchor="middle"
-                  fontSize="12"
-                  fill={c.color}
-                  fontWeight="800"
-                >{c.score}</text>
-              </g>
-            )
-          })}
-        </svg>
-      </div>
-
-      {/* 범례 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', borderTop: '1px solid #DEDFE5', paddingTop: 14 }}>
-        {categories.filter(c => c.label !== '종합운').map(({ label, score, color }) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: '#62616C' }}>{label}</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#24232B', marginLeft: 'auto' }}>{score}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-})()}
 
         {/* 스트리밍 텍스트 */}
         {isBaseStreaming && baseText && (
@@ -2579,7 +2445,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         )}
 
         {/* 기본 분석 결과 아코디언 */}
-{!isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수') && s.title !== '공유 문장').map((sec, i) => {
+{!isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수') && s.title !== '공유 문장' && s.title !== '핵심 한 문장' && s.title !== '예시 표시').map((sec, i) => {
   const isBlurred = serviceType !== 'saju' && i >= 1
 
   if (isBlurred && !isPaid) {
@@ -2650,20 +2516,9 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           </>
         )}
 
-        {/* 내 사주 — 무료 풀이로 도움이 끝난 뒤, 선택 사항으로만 안내 */}
+        {/* 내 사주 — 무료 요약 뒤에 선택 사항으로만 안내 */}
         {phase === 'done' && !isPaid && !isPaidStreaming && serviceType === 'saju' && (
-          <div style={{ background: '#FFFFFF', border: '1.5px solid #633B50', borderRadius: 16, padding: '22px 18px', marginBottom: 16 }}>
-            <p style={{ fontSize: 17, fontWeight: 800, color: '#24232B', margin: '0 0 6px' }}>더 깊이 알고 싶다면 (선택)</p>
-            <p style={{ fontSize: 14, lineHeight: 1.7, color: '#62616C', margin: '0 0 12px', wordBreak: 'keep-all' }}>위 풀이는 무료로 끝까지 볼 수 있어요. 전체 분석에서는 아래 풀이가 더해져요.</p>
-            {SAJU_PAID_TOPICS.map(({ title, desc }) => (
-              <div key={title} style={{ marginBottom: 8 }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', margin: 0 }}>✓ {title}</p>
-                <p style={{ fontSize: 13, color: '#62616C', margin: '0 0 0 18px', wordBreak: 'keep-all' }}>{desc}</p>
-              </div>
-            ))}
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', margin: '12px 0 10px' }}>가격 1,990원 · 1회 결제</p>
-            <button style={{ width: '100%', padding: '15px', fontSize: 16, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer' }} onClick={() => openFullAnalysisCheckout('result_card')}>전체 분석 보기 · 1,990원</button>
-          </div>
+          <PaidGuide title={SAJU_PAID.title} bundles={SAJU_PAID.bundles} priceText="1,990원" buttonText="전체 분석 보기 · 1,990원" onBuy={() => openFullAnalysisCheckout('result_card')} />
         )}
 
         {/* 결제 유도 카드 */}
@@ -2854,11 +2709,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
       {/* 결과 요약 공유 — 공유할 내용을 먼저 확인한 뒤 직접 보낸다 */}
       <button style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 600, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50', marginBottom: 10 }}
-        onClick={() => setShareDraft(buildShareText({ sentence: serviceType === 'saju' ? parseMyFree(baseText).share : '', fallback: '사주로 내 성향을 가볍게 살펴봤어요. 너는 어떤 편이야?', people: [[myName, '나']] }))}>
+        onClick={() => setShareDraft(buildShareText({ sentence: serviceType === 'saju' ? parseMyFree(baseText).sentence : '', fallback: '사주로 내 성향을 가볍게 살펴봤어요. 너는 어떤 편이야?', people: [[myName, '나']] }))}>
         결과 요약 공유하기
       </button>
 
-      <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>
+      {isPaid && <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>}
     </div>
       </div>
       {phase === 'done' && !isPaid && !isPaidStreaming && serviceType !== 'saju' && (
