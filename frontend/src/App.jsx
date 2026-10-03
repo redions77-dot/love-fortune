@@ -5,6 +5,7 @@ import GunghabBars from './GunghabBars.jsx'
 import ShareModal from './ShareModal.jsx'
 import PaidGuide from './PaidGuide.jsx'
 import SajuReport from './SajuReport.jsx'
+import { splitAdminParam } from './adminLink.js'
 import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText } from './relations.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
@@ -869,11 +870,26 @@ export default function App() {
   const paidOrdersRef = useRef({})   // [보안] 상품별 결제 완료 주문 { full, deep, gunghab, gilil, baeknyeon }
   const [isAdmin, setIsAdmin] = useState(false)
 
+  // [운영자] 주소의 ?admin=<운영자 토큰> 은 서버 로그인에만 쓰고 주소창에서는 바로 지운다. 맞는 토큰인지는 서버(ADMIN_TOKEN)가 판단하며,
+  // 성공하면 서버 세션(HttpOnly 쿠키)이 생겨 이전과 같은 운영자 흐름(결제 없는 주문)이 열린다. 틀리면 아무 변화가 없다. 프런트엔드에는 비밀값이 없다.
+  useEffect(() => {
+    let token = ''
+    try {
+      const r = splitAdminParam(window.location.search)
+      token = r.token
+      if (window.location.search !== r.search) window.history.replaceState({}, '', window.location.pathname + r.search + window.location.hash)
+    } catch {}
+    if (!token) return
+    fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', cache: 'no-store', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
+      .then((res) => { if (res.ok) { setIsAdmin(true); try { localStorage.setItem(ADMIN_HINT_KEY, '1') } catch {} } })
+      .catch(() => {})
+  }, []) // eslint-disable-line
+
   // [보안] 운영자 로그인 기록이 있는 브라우저에서만 서버에 세션을 확인한다.
   useEffect(() => {
     let hint = false
     try { hint = localStorage.getItem(ADMIN_HINT_KEY) === '1' } catch {}
-    if (!hint || _qs.get('view') === 'admin') return
+    if (!hint || _qs.get('view') === 'admin' || _qs.has('admin')) return
     fetch('/api/admin/session', { credentials: 'same-origin', cache: 'no-store' }).then(readJson)
       .then(j => { setIsAdmin(!!j.admin); if (!j.admin) { try { localStorage.removeItem(ADMIN_HINT_KEY) } catch {} } })
       .catch(() => {})
