@@ -24,5 +24,9 @@ function resolveTarget(): string | null {
 const target = resolveTarget()
 
 export const config: VercelConfig = {
+  // 실행 권한이 빠진 node_modules/.bin 링크(이전 빌드 캐시에 남은 파일 등)에 걸리지 않도록, 설치는 깨끗하게 하고 vite 는 node 로 직접 실행한다.
+  // ("./node_modules/.bin/vite: Permission denied" 로 Production 빌드가 실패하던 문제 대응. 기존 루트 vercel.json 의 buildCommand 와 같은 방식)
+  installCommand: 'rm -rf node_modules && npm install',
+  buildCommand: 'node node_modules/vite/bin/vite.js build',
   rewrites: target ? [routes.rewrite('/api/admin/:path*', `${target}/api/admin/:path*`)] : [],
 }
