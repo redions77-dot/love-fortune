@@ -28,5 +28,9 @@ export const config: VercelConfig = {
   // ("./node_modules/.bin/vite: Permission denied" 로 Production 빌드가 실패하던 문제 대응. 기존 루트 vercel.json 의 buildCommand 와 같은 방식)
   installCommand: 'rm -rf node_modules && npm install',
   buildCommand: 'node node_modules/vite/bin/vite.js build',
-  rewrites: target ? [routes.rewrite('/api/admin/:path*', `${target}/api/admin/:path*`)] : [],
+  rewrites: [
+    // 관리자 전용 주소(즐겨찾기용)도 앱이 열리게 한다. 경로 자체는 비밀이 아니며 권한은 서버 세션에서만 나온다.
+    routes.rewrite('/admin-bomgyeol-2027', '/index.html'),
+    ...(target ? [routes.rewrite('/api/admin/:path*', `${target}/api/admin/:path*`)] : []),
+  ],
 }

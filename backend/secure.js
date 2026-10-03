@@ -30,6 +30,8 @@ const RETRY_COOLDOWN_MINUTES = 30;
 const LEASE_SECONDS = 90;            // 생성 중 작업의 임대 시간 (하트비트로 연장)
 const HEARTBEAT_MS = 30 * 1000;
 const ADMIN_SESSION_HOURS = 8;
+const ADMIN_REMEMBER_HOURS = 24 * 365;   // 관리자 전용 주소에서 "이 기기에서 계속 사용"을 고른 로그인 (쿠키 최대 수명 400일 이내)
+const adminSessionHours = (body) => (body && body.remember === true ? ADMIN_REMEMBER_HOURS : ADMIN_SESSION_HOURS);
 const ADMIN_COOKIE = 'mysaju_admin';
 const ADMIN_TOKEN_MIN_LENGTH = 32;
 
@@ -436,12 +438,13 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       return res.status(401).json({ error: '인증에 실패했습니다.' });
     }
     adminLoginIpLimiter.reset(ip);
+    const hours = adminSessionHours(req.body);
     const sid = randomToken(32);
     await pool.query(
       `INSERT INTO admin_sessions (id_hash, token_fingerprint, expires_at) VALUES ($1, $2, NOW() + make_interval(hours => $3))`,
-      [sha256Hex(sid), fingerprint, ADMIN_SESSION_HOURS]
+      [sha256Hex(sid), fingerprint, hours]
     );
-    setAdminCookie(res, sid, ADMIN_SESSION_HOURS * 3600);
+    setAdminCookie(res, sid, hours * 3600);
     console.log('[ADMIN] 로그인 성공');
     res.json({ success: true });
   }));
@@ -1003,4 +1006,4 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
   return { PAID_ONLY_ANALYSIS_TYPES, rejectPaidWithoutOrder, createFreeTee };
 }
 
-module.exports = { installSecureApi, PRODUCTS, PAID_ONLY_ANALYSIS_TYPES, parseSections, textsFromEvents, buildOrderMail, escapeHtml };
+module.exports = { installSecureApi, adminSessionHours, ADMIN_SESSION_HOURS, ADMIN_REMEMBER_HOURS, PRODUCTS, PAID_ONLY_ANALYSIS_TYPES, parseSections, textsFromEvents, buildOrderMail, escapeHtml };

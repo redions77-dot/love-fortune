@@ -5,7 +5,7 @@ import GunghabBars from './GunghabBars.jsx'
 import ShareModal from './ShareModal.jsx'
 import PaidGuide from './PaidGuide.jsx'
 import SajuReport from './SajuReport.jsx'
-import { splitAdminParam } from './adminLink.js'
+import { isAdminEntry } from './adminLink.js'
 import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText } from './relations.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
@@ -564,11 +564,12 @@ function FullAnalysisPreviewCard({ title, line1, line2 }) {
 }
 
 // ── [보안] 운영자 화면 (?view=admin): 서버 세션으로 인증하고 조회·재발송·재생성은 서버 API로만 처리 ──
-function AdminPanel({ onAuthChange, onExit }) {
+function AdminPanel({ onAuthChange, onExit, entry = false }) {
   const [authState, setAuthState] = useState('checking')
   const [tokenInput, setTokenInput] = useState('')
   const [loginError, setLoginError] = useState('')
   const [loggingIn, setLoggingIn] = useState(false)
+  const [remember, setRemember] = useState(!!entry)   // 관리자 전용 주소로 열렸을 때만 기본 선택: 이 기기를 1년간 기억
   const [adminEmail, setAdminEmail] = useState('')
   const [adminResults, setAdminResults] = useState([])
   const [adminOrders, setAdminOrders] = useState([])
@@ -586,16 +587,16 @@ function AdminPanel({ onAuthChange, onExit }) {
   }
 
   useEffect(() => {
-    adminFetch('/api/admin/session').then(readJson).then(j => setAuthed(!!j.admin)).catch(() => setAuthState('out'))
+    adminFetch('/api/admin/session').then(readJson).then(j => { setAuthed(!!j.admin); if (j.admin && entry) onExit() }).catch(() => setAuthState('out'))
   }, []) // eslint-disable-line
 
   async function login() {
     if (!tokenInput) return
     setLoggingIn(true); setLoginError('')
     try {
-      const res = await adminFetch('/api/admin/login', { token: tokenInput })
+      const res = await adminFetch('/api/admin/login', { token: tokenInput, remember })
       const json = await readJson(res)
-      if (res.ok) { setTokenInput(''); setAuthed(true) }
+      if (res.ok) { setTokenInput(''); setAuthed(true); if (entry) onExit() }
       else setLoginError(json.error || '인증에 실패했습니다.')
     } catch { setLoginError('서버에 연결할 수 없습니다.') }
     setLoggingIn(false)
@@ -672,6 +673,9 @@ function AdminPanel({ onAuthChange, onExit }) {
               <input type="password" autoComplete="off" placeholder="운영자 토큰" value={tokenInput} onChange={e => setTokenInput(e.target.value)} style={inputStyle} />
               <button type="submit" style={primaryBtn} disabled={loggingIn}>{loggingIn ? '확인 중...' : '로그인'}</button>
             </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontSize: 13, color: '#62616C' }}>
+              <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} /> 이 기기에서 계속 관리자로 사용 (1년 · 내 기기에서만 선택하세요)
+            </label>
             {loginError && <p style={{ fontSize: 13, color: '#C53A3A', marginTop: 10 }}>{loginError}</p>}
           </form>
         )}
@@ -745,6 +749,7 @@ function AdminPanel({ onAuthChange, onExit }) {
 
 export default function App() {
   const _qs = new URLSearchParams(window.location.search)
+  const _adminEntry = isAdminEntry(window.location.pathname)   // 관리자 전용 주소(즐겨찾기)로 들어왔는가
   const _mobilePayment = _qs.get('payment')
   const _impSuccess = _qs.get('imp_success')
 
@@ -773,7 +778,7 @@ export default function App() {
   }, []) // eslint-disable-line
 
   const [screen, setScreen] = useState(() => {
-    if (_qs.get('view') === 'admin') return 'admin_email'
+    if (_qs.get('view') === 'admin' || isAdminEntry(window.location.pathname)) return 'admin_email'
     if (_mobilePayment === 'gunghab' && _impSuccess === 'true') return 'result'
     if (_mobilePayment === 'paid' && _impSuccess === 'true') return 'result'
     if (_mobilePayment === 'deep' && _impSuccess === 'true') return 'deep_result'
@@ -870,26 +875,11 @@ export default function App() {
   const paidOrdersRef = useRef({})   // [보안] 상품별 결제 완료 주문 { full, deep, gunghab, gilil, baeknyeon }
   const [isAdmin, setIsAdmin] = useState(false)
 
-  // [운영자] 주소의 ?admin=<운영자 토큰> 은 서버 로그인에만 쓰고 주소창에서는 바로 지운다. 맞는 토큰인지는 서버(ADMIN_TOKEN)가 판단하며,
-  // 성공하면 서버 세션(HttpOnly 쿠키)이 생겨 이전과 같은 운영자 흐름(결제 없는 주문)이 열린다. 틀리면 아무 변화가 없다. 프런트엔드에는 비밀값이 없다.
-  useEffect(() => {
-    let token = ''
-    try {
-      const r = splitAdminParam(window.location.search)
-      token = r.token
-      if (window.location.search !== r.search) window.history.replaceState({}, '', window.location.pathname + r.search + window.location.hash)
-    } catch {}
-    if (!token) return
-    fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', cache: 'no-store', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
-      .then((res) => { if (res.ok) { setIsAdmin(true); try { localStorage.setItem(ADMIN_HINT_KEY, '1') } catch {} } })
-      .catch(() => {})
-  }, []) // eslint-disable-line
-
   // [보안] 운영자 로그인 기록이 있는 브라우저에서만 서버에 세션을 확인한다.
   useEffect(() => {
     let hint = false
     try { hint = localStorage.getItem(ADMIN_HINT_KEY) === '1' } catch {}
-    if (!hint || _qs.get('view') === 'admin' || _qs.has('admin')) return
+    if (!hint || _qs.get('view') === 'admin' || _adminEntry) return   // 관리자 진입 주소는 AdminPanel 이 세션을 확인한다
     fetch('/api/admin/session', { credentials: 'same-origin', cache: 'no-store' }).then(readJson)
       .then(j => { setIsAdmin(!!j.admin); if (!j.admin) { try { localStorage.removeItem(ADMIN_HINT_KEY) } catch {} } })
       .catch(() => {})
@@ -2078,7 +2068,7 @@ if (emailModal) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100svh', background: C.bg, color: C.text }}>
         <div style={{ background: C.card, borderBottom: `1px solid ${C.line}`, textAlign: 'center', padding: '10px 16px', fontSize: 12, fontWeight: 600, color: C.sub, wordBreak: 'keep-all' }}>
-          회원가입 없이 바로 확인 — 무료로 먼저 보세요
+          {isAdmin ? '🔧 관리자 테스트 모드 — 결제 없이 유료 결과를 확인할 수 있어요' : '회원가입 없이 바로 확인 — 무료로 먼저 보세요'}
         </div>
 
         {/* 첫 화면 */}
@@ -2774,7 +2764,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 }
 
   // ── [보안] 운영자 화면 (?view=admin) — 인증·권한 확인은 서버 세션으로만 ──
-  if (screen === 'admin_email') return <AdminPanel onAuthChange={setIsAdmin} onExit={() => { window.history.replaceState({}, '', window.location.pathname); setScreen('landing') }} />
+  if (screen === 'admin_email') return <AdminPanel entry={_adminEntry} onAuthChange={setIsAdmin} onExit={() => { window.history.replaceState({}, '', window.location.pathname); setScreen('landing') }} />
 
   // ── 약관/정책 화면들 ──
   if (screen === 'refund') return (
