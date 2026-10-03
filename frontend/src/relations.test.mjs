@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert'
-import { createRequire } from 'node:module'
 import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { RELATION_OPTIONS, GUNGHAB_PAID, SAJU_PAID, parseGunghabFree, parseMyFree, scrubPersonal, buildShareText, validateDialogueLine, safeGunghabText } from './relations.js'
 
 const require = createRequire(import.meta.url)
@@ -17,10 +17,11 @@ test('프런트 관계 목록·상세 풀이 안내 묶음이 서버 정의와 �
 test('유료 안내에는 한자가 없고 묶음은 3~4개', () => {
   const hanja = /[一-鿿]/
   for (const v of [...Object.values(GUNGHAB_PAID), SAJU_PAID]) {
-    assert.ok(v.bundles.length >= 3 && v.bundles.length <= 4)
+    assert.ok(v === SAJU_PAID ? v.bundles.length === 8 : (v.bundles.length >= 3 && v.bundles.length <= 4))
     assert.ok(!hanja.test(v.title + v.bundles.map(b => b.title + b.desc).join('')))
   }
   assert.strictEqual(SAJU_PAID.title, '내 성향을 일과 관계에 활용하려면')
+  assert.ok(SAJU_PAID.summary.includes('8개 항목') && SAJU_PAID.summary.includes('2027년 1월~12월(12개월)'))
 })
 
 const FREE = `===예시 표시===
@@ -294,4 +295,34 @@ test('프런트 대화 문장 검증은 서버 validateDialogueLine 과 같은 �
   ]
   for (const t of samples) assert.deepStrictEqual(validateDialogueLine(t), server.validateDialogueLine(t), t)
   assert.strictEqual(validateDialogueLine('"말해 줄 수 있을까요?"').ok, true)
+})
+
+
+test('1,990원 안내 항목은 서버 유료 프롬프트의 실제 섹션 수와 같고, 월별 운세는 2027년 1~12월로 요청한다', () => {
+  const srv = readFileSync(new URL('../../backend/server.js', import.meta.url), 'utf8')
+  const paid = srv.slice(srv.indexOf('const paidOnlyPrompt'), srv.indexOf('// 유료 분석 후 점수도 별도 요청'))
+  // 고정 섹션 7개 + 나이별 1개(getAgeBasedPaidSection) = 안내의 8개
+  assert.strictEqual((paid.match(/^===[^=]+===$/gm) || []).length, 7)
+  assert.ok(paid.includes('${getAgeBasedPaidSection('))
+  assert.strictEqual(SAJU_PAID.bundles.length, 8)
+  // 월별 운세: 2027년 1월~12월만. 2026년 7월 시작 표기는 남아 있지 않다
+  assert.ok(!srv.includes('2026년 7월부터'))
+  const parts = srv.split('===月運 · 월별 운세===').slice(1)
+  assert.strictEqual(parts.length, 2)
+  for (const blk of parts) {
+    const head = blk.slice(0, 700)
+    assert.ok(head.includes('2027년 1월부터 12월까지, 총 12개월'))
+    const months = [...head.matchAll(/^(?:2027년 )?(\d{1,2})월: \(내용\)$/gm)].map((m) => +m[1])
+    assert.deepStrictEqual(months, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+  }
+  // 심화 안내는 deepPrompt의 7개 섹션
+  const deepStart = srv.indexOf('const deepPrompt')
+  const deep = srv.slice(deepStart, srv.indexOf('streamToClient(res, deepPrompt'))
+  assert.strictEqual((deep.match(/^===[^\n]+===$/gm) || []).length, 7)
+  const app = readFileSync(new URL('./App.jsx', import.meta.url), 'utf8')
+  assert.strictEqual((app.match(/const DEEP_ITEMS = \[([\s\S]*?)\n\]/)[1].match(/^ {2}'/gm) || []).length, 7)
+  // 기본 풀이 뒤: 문장 중간에서 끊긴 흐림 미리보기를 쓰지 않고, 별도 카드로 심화 안내
+  const upsell = app.slice(app.indexOf('심화분석 업셀'), app.indexOf('하단 액션 영역'))
+  assert.ok(!upsell.includes('_teaser') && !upsell.includes('blur('))
+  assert.ok(upsell.includes('여기까지가 기본 풀이(1,990원)예요') && upsell.includes('선택 · 별도 상품'))
 })

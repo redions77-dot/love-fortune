@@ -409,6 +409,16 @@ const MONEY_TEASER_VARIANTS = {
 대운의 흐름을 보면, 앞으로 3년 안에 반드시 잡아야 할 타이밍이 하나 있어요. 이 시기를 놓치면 다음 기회는 꽤 오래 기다려야 합니다.`,
   },
 }
+// 심화 분석(9,900원)의 실제 항목 — backend/server.js deepPrompt의 7개 섹션과 같아야 한다.
+const DEEP_ITEMS = [
+  '종합 흐름 요약 — 지금 시기의 성격과 작은 기회·큰 결정의 기준',
+  '수비학으로 본 운명수',
+  '10년 대운 흐름',
+  '대운 상세 분석',
+  '내년 흐름',
+  '귀인 분석',
+  '지금 해야 할 것 vs 하지 말아야 할 것',
+]
 function parseSections(text) {
   const sections = []
   const seen = new Set()
@@ -2543,7 +2553,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
         {/* 내 사주 — 무료 요약 뒤에 선택 사항으로만 안내 */}
         {phase === 'done' && !isPaid && !isPaidStreaming && serviceType === 'saju' && (
-          <PaidGuide title={SAJU_PAID.title} bundles={SAJU_PAID.bundles} priceText="1,990원" buttonText="전체 분석 보기 · 1,990원" onBuy={() => openFullAnalysisCheckout('result_card')} />
+          <PaidGuide title={SAJU_PAID.title} bundles={SAJU_PAID.bundles} summary={SAJU_PAID.summary} deepNote={SAJU_PAID.deepNote} priceText="1,990원" buttonText="전체 분석 보기 · 1,990원" onBuy={() => openFullAnalysisCheckout('result_card')} />
         )}
 
         {/* 결제 유도 카드 */}
@@ -2617,48 +2627,16 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 {/* 심화분석 업셀 — 미리보기 인라인. PDF에는 포함하지 않음(data-pdf-exclude) */}
     {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
       <div data-pdf-exclude="true" style={{ marginTop: 28, marginBottom: 10 }}>
-        {/* 페인포인트 후킹 박스 */}
-        <div style={{ background: '#FFFFFF', border: '1.5px solid #DEDFE5', borderRadius: 16, padding: '28px 22px', marginBottom: 20 }}>
-          <p style={{ fontSize: 19, fontWeight: 700, color: '#24232B', marginBottom: 16, lineHeight: 1.5 }}>혹시, 이런 순간 없으셨어요?</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-              <span style={{ fontSize: 14, color: '#633B50', marginTop: 2, flexShrink: 0 }}>•</span>
-              <span style={{ fontSize: 16, color: '#24232B', lineHeight: 1.6 }}>돈이 언제쯤 풀릴지 막막할 때</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-              <span style={{ fontSize: 14, color: '#633B50', marginTop: 2, flexShrink: 0 }}>•</span>
-              <span style={{ fontSize: 16, color: '#24232B', lineHeight: 1.6 }}>이 선택이 맞는지 흔들릴 때</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 블러+컷오프 샘플 텍스트 — 이미 생성된 무료/유료 분석과 같은 재물 패턴으로 표시 */}
-        {(() => { const _teaser = MONEY_TEASER_VARIANTS[getMoneyTeaserVariant(baseText + '\n' + paidText)]; return (
-        <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px 18px', marginBottom: 20, overflow: 'hidden' }}>
-          <div style={{ fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{_teaser.visible}</div>
-          <div style={{ position: 'relative' }}>
-            <div style={{ fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>{_teaser.blurred}</div>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 30%, rgba(255,255,255,0.95) 70%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: '#633B50', textAlign: 'center', lineHeight: 1.6, padding: '0 20px' }}>여기서부터는 더 자세히 봐드려야 해요</p>
-            </div>
-          </div>
-        </div>
-        ) })()}
-
-        {/* 받는 것 리스트 */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '22px 20px', marginBottom: 20 }}>
-          <p style={{ fontSize: 16, fontWeight: 700, color: '#24232B', marginBottom: 16 }}>9,900원 결제하면 이렇게 받아요</p>
-          {[
-            '재물·커리어 심층 분석',
-            '대운 흐름 + 전환점 정확한 연도',
-            '수비학 운명수 분석',
-            '오행으로 본 나의 커리어 계절 (木火土金水)',
-            '귀인 만나는 시기 + 구체적 행동 전략',
-            '절대 하면 안 되는 결정 1가지',
-          ].map((t, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < 5 ? 12 : 0 }}>
+        {/* 기본 풀이가 끝났음을 알리는 구분선 — 아래 카드는 별도 상품(심화 분석) 안내이며 기본 풀이의 일부가 아니다 */}
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#62616C', textAlign: 'center', margin: '0 0 14px', letterSpacing: '0.04em' }}>— 여기까지가 기본 풀이(1,990원)예요 —</p>
+        <div style={{ background: '#FFFFFF', border: '1.5px solid #633B50', borderRadius: 16, padding: '22px 20px', marginBottom: 16 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#633B50', margin: '0 0 4px' }}>선택 · 별도 상품</p>
+          <p style={{ fontSize: 17, fontWeight: 800, color: '#24232B', margin: '0 0 6px', wordBreak: 'keep-all' }}>심화 분석 (9,900원)</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: '#62616C', margin: '0 0 12px', wordBreak: 'keep-all' }}>위 기본 풀이에 더해, 큰 흐름을 따로 깊게 풀어드려요. 기본 풀이의 내용은 그대로 남아 있어요.</p>
+          {DEEP_ITEMS.map((t, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < DEEP_ITEMS.length - 1 ? 10 : 0 }}>
               <span style={{ fontSize: 14, color: '#633B50', marginTop: 1, flexShrink: 0 }}>✓</span>
-              <span style={{ fontSize: 15, color: '#24232B', lineHeight: 1.5 }}>{t}</span>
+              <span style={{ fontSize: 15, color: '#24232B', lineHeight: 1.5, wordBreak: 'keep-all' }}>{t}</span>
             </div>
           ))}
         </div>
