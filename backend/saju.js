@@ -89,10 +89,44 @@ function 관계말(X, Y) {
 }
 
 const 규칙문 = `[설명 규칙]
-- 위 [사주 계산값]에 없는 오행·음양·합·충·십성·신살은 설명하지 마세요. 오행 관계는 아래 표와 계산값에 있는 것만 쓰세요.
+- 위 [사주 계산값]에 없는 오행·음양·합·충·십성·신살은 설명하지 마세요. 오행 관계는 계산값의 '일간 기준 다른 글자의 기운'과 항목별 '근거'에 적힌 것만 쓰고, 그 밖의 오행끼리의 관계(예: 쇠가 흙을 일군다)를 새로 만들어 설명하지 마세요.
 - 상생: 나무→불→흙→쇠→물→나무 / 상극: 나무→흙→물→불→쇠→나무
+- 허용되는 설명은 '계산값 → 표준 오행 관계(위 상생·상극) → 쉬운 말 풀이'까지입니다. 그 관계에서 한 단계 더 추론한 비유·인과(예: '쇠가 나무를 다루고 다듬는 도구로 작동한다', '압력이 성장에 도움이 된다', '눌리면서 오히려 단단해진다')는 쓰지 마세요. 그 관계가 실제 성격·행동·결과를 만든다고 단정하지 말고, 계산값에서 읽히는 구조까지만 설명하세요.
 - 고객에게는 한자 대신 '나무 기운, 불 기운, 흙 기운, 쇠 기운, 물 기운'처럼 쉬운 말로 설명하세요.
-- 기운이 이렇다고 해서 성향이 '그래서 생긴다'고 단정하지 말고 "~로 읽을 수 있어요", "~한 경향으로 볼 수 있어요"처럼 쓰세요.`;
+- 기운이 이렇다고 해서 성향이 '그래서 생긴다'고 단정하지 말고 "~로 읽을 수 있어요", "~한 경향으로 볼 수 있어요"처럼 쓰세요.
+- [역할 분리] 위 계산값의 개수·위치·관계 방향은 서버가 확정했습니다. 당신은 글자를 다시 세거나 오행 관계를 판단·계산하지 말고, '오행별 위치'·'관계별 위치'·'표준 관계' 문장의 숫자·위치·방향을 그대로 쉬운 말로 옮기고 생활 팁으로 연결하는 일만 합니다. 일주 윗글자(일간)는 나 자신이며 '나를 누르는/도와주는 기운'으로 세지 않습니다. 목록에 없는 개수·위치·관계·인과, 비유(토양·도구·물길 등), 오행만으로 만든 성격 형용사(부드럽다·단단하다·유연하다 등)는 쓰지 마세요.
+- [사주 계산값]이나 사용자가 직접 입력한 정보로 뒷받침되지 않는 성격·행동(예: 차분하다, 내향적이다, 활동적이다, 행동력이 좋다, 침묵으로 반발한다, 말없이 챙긴다)은 사실처럼 쓰지 마세요. 입력한 MBTI 등은 사주 계산값과 충돌하거나 근거가 약하면 언급하지 않아도 돼요.
+- 계산값만으로 구체적인 심리·행동(예: 범위를 넓히려 한다, 무게감을 느낀다, 조심스러워한다, 빠르게 표현한다, 책임감이 있다)을 사실처럼 쓰지 마세요. 필요하면 "이 관계에서는 ~하기 쉬울 수 있어요"처럼 생길 수 있는 상황으로만 쓰고, 입력하지 않은 일·프로젝트·직장·과거 경험은 가정하지 마세요.`;
+
+// 서버가 확정하는 오행 사실: 오행별 개수·위치, 일간 기준 관계별 개수·위치, 일간 기준 표준 관계.
+// AI는 이 값을 다시 세거나 판단하지 않고 쉬운 말로 옮기기만 한다. (일주 윗글자 = 일간 자신이므로 '다른 글자'로 세지 않는다.)
+function elementFacts(pillars) {
+  const rows = [['년주', pillars.년주], ['월주', pillars.월주], ['일주', pillars.일주], ['시주', pillars.시주]];
+  const positions = { 목: [], 화: [], 토: [], 금: [], 수: [] };
+  const groups = {};
+  const day = parsePillar(pillars.일주);
+  const X = day ? 간오행[day.gan] : null;
+  for (const [name, str] of rows) {
+    const p = parsePillar(str);
+    if (!p) continue;
+    for (const [slot, ch, el] of [['윗글자', p.gan, 간오행[p.gan]], ['아랫글자', p.ji, 지오행[p.ji]]]) {
+      const where = name + ' ' + slot + ' ' + ch;
+      positions[el].push(where);
+      if (X && !(name === '일주' && slot === '윗글자')) (groups[관계말(X, el)] = groups[관계말(X, el)] || []).push({ where, element: el });
+    }
+  }
+  const counts = {};
+  for (const k of Object.keys(positions)) counts[k] = positions[k].length;
+  const standard = [];
+  if (X) {
+    const helper = Object.keys(상생).find(k => 상생[k] === X), presser = Object.keys(상극).find(k => 상극[k] === X);
+    standard.push(쉬운오행[helper] + ' 기운은 ' + 쉬운오행[X] + ' 기운을 도와주는 관계(상생)');
+    standard.push(쉬운오행[X] + ' 기운은 ' + 쉬운오행[상생[X]] + ' 기운을 키워주는 관계(상생)');
+    standard.push(쉬운오행[X] + ' 기운은 ' + 쉬운오행[상극[X]] + ' 기운을 다루는 관계(상극)');
+    standard.push(쉬운오행[presser] + ' 기운은 ' + 쉬운오행[X] + ' 기운을 누르는 관계(상극)');
+  }
+  return { dayGan: day ? day.gan : null, dayElement: X, counts, positions, groups, standard };
+}
 
 // pillars: { 년주, 월주, 일주, 시주 } (calcSaju 결과 형식). label: 표 머리말(예: '나', '상대방')
 function factsBlock(pillars, label = '') {
@@ -121,8 +155,13 @@ function factsBlock(pillars, label = '') {
     }
     out.push(`- 일간 기준 다른 글자의 기운: ${rel.join(' / ')}`);
     out.push(`- 일주 아랫글자 ${day.ji}=${관계말(X, 지오행[day.ji])}`);
+    const ef = elementFacts(pillars);
+    out.push(`- 오행별 위치(서버 집계 — 이 개수와 위치만 쓰세요): ${Object.keys(ef.counts).map(k => `${쉬운오행[k]} ${ef.counts[k]}곳${ef.positions[k].length ? '(' + ef.positions[k].join(', ') + ')' : ''}`).join(' · ')}`);
+    const order = [['나를 누르는 기운', '나를 누르는 기운'], ['내가 다루는 기운', '내가 다루는 기운'], ['내가 키워주는 기운', '내가 키워주는 기운(내 에너지를 쓰는 쪽)'], ['나를 도와주는 기운', '나를 도와주는 기운'], ['나와 같은 기운', '나와 같은 기운']];
+    out.push(`- 일간 기준 관계별 위치(서버 집계, 일주 윗글자=일간 자신은 제외): ${order.map(([label, key]) => { const a = ef.groups[key] || []; return `${label} ${a.length}곳${a.length ? '(' + 쉬운오행[a[0].element] + ': ' + a.map(x => x.where).join(', ') + ')' : ''}`; }).join(' · ')}`);
+    out.push(`- 일간 기준 표준 관계(이 4가지 외의 오행 관계는 설명 금지): ${ef.standard.join(' / ')}`);
   }
   return out.join('\n');
 }
 
-module.exports = { 천간, 지지, 절기시작일, get일주, get년주, get월주, get시주, get시지index, 간오행, 지오행, 상생, 상극, 쉬운오행, parsePillar, 관계말, 규칙문, factsBlock };
+module.exports = { elementFacts, 천간, 지지, 절기시작일, get일주, get년주, get월주, get시주, get시지index, 간오행, 지오행, 상생, 상극, 쉬운오행, parsePillar, 관계말, 규칙문, factsBlock };

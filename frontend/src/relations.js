@@ -81,44 +81,99 @@ export const SAJU_PAID = {
 }
 
 // ── 무료 결과 파싱 ──────────────────────────────
-function sectionMap(text) {
+// 예상한 섹션 제목(expected)과 글자가 다른 제목(예: AI가 제목을 깨뜨린 경우)이 와도 내용이 사라지지 않게 한다.
+// 모르는 제목은 "앞서 읽은 예상 제목 다음 순서에서 아직 비어 있는 첫 제목"으로 보고 그 자리에 넣는다.
+// 이미 읽은 제목과 같은 제목이 또 오거나 자리를 못 찾으면 버린다. '예시 표시'는 화면 안내용이라 건너뛴다.
+function resolveSections(text, expected) {
   const parts = String(text || '').split(/===(.+?)===/s)
   const map = new Map()
+  let last = -1
   for (let i = 1; i < parts.length; i += 2) {
-    const title = parts[i].trim()
-    if (!map.has(title)) map.set(title, (parts[i + 1] || '').trim())
+    const raw = parts[i].trim()
+    const body = (parts[i + 1] || '').trim()
+    if (raw === '예시 표시') { if (!map.has(raw)) map.set(raw, body); continue }
+    let idx = expected.indexOf(raw)
+    if (idx < 0) idx = expected.findIndex((t, j) => j > last && !map.has(t))
+    if (idx < 0 || map.has(expected[idx])) continue
+    map.set(expected[idx], body)
+    last = idx
   }
   return map
 }
+// 대화 문장 검증 — backend/relations.js 의 validateDialogueLine 과 같은 규칙이다 (relations.test.mjs 가 서로 같은 결과를 내는지 확인한다).
+// 정확히 한 문장 + 존댓말일 때만 화면에 쓴다. 통과하지 못하면 문장을 고쳐 쓰지 않고 숨긴다.
+export function validateDialogueLine(line) {
+  const reasons = []
+  const t = String(line || '').trim().replace(/^["“”']+|["“”']+$/g, '').trim()
+  if (!t) return { ok: false, reasons: ['대화 문장이 비어 있음'] }
+  const sentences = t.split(/(?<=[.?!])\s+/).map(x => x.trim()).filter(Boolean)
+  if (sentences.length !== 1) reasons.push('한 문장이 아님(' + sentences.length + '문장)')
+  const POLITE = /(요|니다|니까|죠|세요|까요)$/
+  const BANMAL = /(까|줄래|할래|볼래|보자|하자|해줘|줘|거야|같아|있어|없어|어|아|지|야|해)$/
+  for (const x of sentences) {
+    const e = x.replace(/[.?!…\s"”'’)]+$/g, '')
+    if (POLITE.test(e)) continue
+    reasons.push((BANMAL.test(e) ? '반말 종결: ' : '존댓말이 아님: ') + e.slice(-12))
+  }
+  return { ok: reasons.length === 0, reasons }
+}
+
 const COMMENT_RE = /^해설\s*[:：]\s*/
 const TIP_RE = /^팁\s*[:：]\s*/
 
 // 바 3개의 해설/팁은 "해설:" "팁:" 줄에서 읽는다. 형식이 어긋나면 섹션 전체를 해설로 보여준다.
 export function parseGunghabFree(text, bars) {
-  const m = sectionMap(text)
+  const m = resolveSections(text, ['한 줄 요약', '관계 요약', ...(bars || []).map(b => b.label), '잘 맞는 점', '조율할 점', '대화 문장'])
   const outBars = (bars || []).map((b) => {
     const body = m.get(b.label)
-    if (!body) return { ...b, comment: '', tip: '' }
+    if (!body) return { ...b, comment: '', tip: '', issues: ['섹션 없음'] }
     const lines = body.split('\n').map(l => l.trim()).filter(Boolean)
-    const comment = lines.find(l => COMMENT_RE.test(l))
-    const tip = lines.find(l => TIP_RE.test(l))
-    if (!comment && !tip) return { ...b, comment: lines.join(' '), tip: '' }
-    return { ...b, comment: comment ? comment.replace(COMMENT_RE, '') : '', tip: tip ? tip.replace(TIP_RE, '') : '' }
+    const commentLine = lines.find(l => COMMENT_RE.test(l))
+    const tipLine = lines.find(l => TIP_RE.test(l))
+    if (!commentLine && !tipLine) return { ...b, comment: lines.join(' '), tip: '', issues: ['해설: 라벨 없음', '팁 없음'] }
+    let comment = commentLine ? commentLine.replace(COMMENT_RE, '') : ''
+    const issues = []
+    if (!commentLine) {
+      // "해설:" 줄만 빠진 경우: 팁 앞에 있는 AI의 원문 줄을 해설로 읽는다 (프런트가 새로 만들지 않는다)
+      const before = lines.slice(0, lines.indexOf(tipLine)).filter(l => !TIP_RE.test(l))
+      if (before.length) { comment = before.join(' '); issues.push('해설: 라벨 없음(팁 앞의 줄을 해설로 읽음)') } else issues.push('해설 없음')
+    }
+    if (!tipLine) issues.push('팁 없음')
+    return { ...b, comment, tip: tipLine ? tipLine.replace(TIP_RE, '') : '', issues }
   })
   return {
     demo: m.get('예시 표시') || '',
     headline: (m.get('한 줄 요약') || '').split('\n')[0].trim(),
     summary: m.get('관계 요약') || '',
     bars: outBars,
+    barIssues: outBars.flatMap(b => (b.issues || []).map(i => b.label + ': ' + i)),
     good: m.get('잘 맞는 점') || '',
     tune: m.get('조율할 점') || '',
-    line: (m.get('대화 문장') || '').trim(),
+    // 검증을 통과한 대화 문장만 내보낸다. 실패하면 빈 값(화면에서 '이렇게 말해보세요' 카드가 사라진다). AI 재호출·문장 변환은 하지 않는다.
+    line: dialogueOrEmpty(m.get('대화 문장')),
+    lineRejected: !!(m.get('대화 문장') || '').trim() && !validateDialogueLine(m.get('대화 문장')).ok,
   }
+}
+
+function dialogueOrEmpty(raw) {
+  const t = (raw || '').trim()
+  return t && validateDialogueLine(t).ok ? t : ''
+}
+
+// 파싱이 안 되어 원문을 그대로 보여주는 경우에도 검증에 실패한 대화 문장은 빼고 보여준다.
+export function safeGunghabText(text, bars) {
+  const raw = String(text || '')
+  if (!raw.includes('===')) return raw
+  const expected = ['한 줄 요약', '관계 요약', ...(bars || []).map(b => b.label), '잘 맞는 점', '조율할 점', '대화 문장']
+  const m = resolveSections(raw, expected)
+  if (!m.size) return raw
+  return expected.filter(t => m.has(t) && !(t === '대화 문장' && !dialogueOrEmpty(m.get(t))))
+    .map(t => '===' + t + '===' + String.fromCharCode(10) + m.get(t)).join(String.fromCharCode(10, 10))
 }
 
 // 내 사주: 핵심 한 문장(첫 줄) + 생활 속 설명(나머지)
 export function parseMyFree(text) {
-  const m = sectionMap(text)
+  const m = resolveSections(text, ['핵심 한 문장', '이런 성향이 나오는 이유', '나의 강점', '주의할 습관', '바로 실천할 팁'])
   const core = (m.get('핵심 한 문장') || '').split('\n').map(l => l.trim()).filter(Boolean)
   return {
     demo: m.get('예시 표시') || '',

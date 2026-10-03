@@ -99,7 +99,7 @@ const RELATIONS = Object.freeze({
       ['갈등을 줄이는 대화', '자주 반복될 수 있는 장면과 바로 써볼 수 있는 말'],
       ['관계 총평', '핵심을 정리하고 이번 주에 해볼 행동 한 가지'],
     ],
-    tone: '가족에게 건넬 수 있는 편안하고 솔직한 말투',
+    tone: '가족에게 건넬 수 있는 자연스러운 존댓말(반말 금지)',
     situations: "연락 주기와 안부, 부탁과 거절, 명절·가족 모임에서의 역할, 생활비·돌봄 같은 생활 분담, 비교하는 말에 반응하기",
     paidTitle: "가족과 거리를 편하게 조절하려면",
     bundles: [
@@ -147,7 +147,7 @@ const RELATIONS = Object.freeze({
       ['부담스러운 상황에서의 대처', '마감·의견 충돌 등 압박 상황에서 관계를 지키는 방법'],
       ['관계 총평', '핵심을 정리하고 이번 주에 해볼 행동 한 가지'],
     ],
-    tone: '직장에서 예의를 지키면서도 분명한 말투(역할은 정해주지 않고 함께 확인하는 문장)',
+    tone: '직장에서 예의를 지키는 존댓말 한 문장(반드시 ~요/~까요/~습니다 같은 존댓말, 반말 절대 금지, 역할은 정해주지 않고 함께 확인하는 문장)',
     situations: "업무 우선순위 정하기, 피드백 주고받기, 일정 조율과 마감 공유, 역할 분담과 책임 범위 확인",
     paidTitle: "이 사람과 더 편하게 일하려면",
     bundles: [
@@ -230,8 +230,69 @@ function calcRelationBasis(saju1, saju2) {
   return [기질, 일지, 월지];
 }
 
+// 두 사람의 오행 관계를 서버가 확정한 사실로 만든다 (누가 누구를 키워주는지/누르는지 방향까지). AI는 방향·종류를 바꾸지 못한다.
+function pairKind(a, b) {
+  if (!a || !b) return null;
+  if (a === b) return { kind: '같음' };
+  if (상생[a] === b) return { kind: '상생', from: a, to: b, aToB: true };
+  if (상생[b] === a) return { kind: '상생', from: b, to: a, aToB: false };
+  if (상극[a] === b) return { kind: '상극', from: a, to: b, aToB: true };
+  if (상극[b] === a) return { kind: '상극', from: b, to: a, aToB: false };
+  return { kind: '없음' };
+}
+const KIND_SPEAK = {
+  상극: "한쪽이 다른 쪽을 누르는 구조라 조율이 필요할 수 있다고만 쓰세요. '보완한다·잘 어울린다·서로 품는다'로 바꿔 쓰지 마세요.",
+  상생: "한쪽이 다른 쪽을 키워주는 흐름이라고만 쓰세요. '부딪힌다·충돌한다'로 바꿔 쓰지 마세요.",
+  같음: "같은 기운이라 닮은 면이 있다고만 쓰세요.",
+  없음: "직접 키워주거나 누르는 관계가 아니라고만 쓰세요.",
+};
+function relationFacts(p1, p2, nameA, nameB) {
+  const a일 = parsePillar(p1.일주), b일 = parsePillar(p2.일주);
+  const items = [];
+  const one = (title, ea, eb, chA, chB) => {
+    const k = pairKind(ea, eb);
+    if (!k) return;
+    const E = (e) => 쉬운오행[e];
+    const text = k.kind === '같음' ? `${nameA}님(${chA}, ${E(ea)} 기운)과 ${nameB}님(${chB}, ${E(eb)} 기운)은 같은 기운`
+      : k.kind === '없음' ? `${nameA}님(${chA}, ${E(ea)} 기운)과 ${nameB}님(${chB}, ${E(eb)} 기운)은 직접 키워주거나 누르는 관계가 아님`
+      : `${k.aToB ? nameA : nameB}님 쪽 ${E(k.from)} 기운이 ${k.aToB ? nameB : nameA}님 쪽 ${E(k.to)} 기운을 ${k.kind === '상생' ? '키워주는' : '누르는'} 관계(${k.kind}) — ${nameA}님 ${chA}(${E(ea)}), ${nameB}님 ${chB}(${E(eb)})`;
+    items.push({ title, kind: k.kind, from: k.from, to: k.to, aToB: k.aToB, text, speak: KIND_SPEAK[k.kind] });
+  };
+  if (a일 && b일) {
+    one('일간(기질)', 간오행[a일.gan], 간오행[b일.gan], a일.gan, b일.gan);
+    if (inPair(충, a일.ji, b일.ji)) items.push({ title: '일지', kind: '충', text: `일지 ${a일.ji}과 ${b일.ji}는 서로 부딪히기 쉬운 짝(충)`, speak: "부딪히기 쉬운 짝이라고만 쓰세요. '잘 어울린다'로 바꿔 쓰지 마세요." });
+    else if (inPair(육합, a일.ji, b일.ji)) items.push({ title: '일지', kind: '육합', text: `일지 ${a일.ji}과 ${b일.ji}는 서로 어울려 묶이는 짝(육합)`, speak: "어울려 묶이는 짝이라고만 쓰세요." });
+    else one('일지', 지오행[a일.ji], 지오행[b일.ji], a일.ji, b일.ji);
+  }
+  const a월 = parsePillar(p1.월주), b월 = parsePillar(p2.월주);
+  if (a월 && b월) one('월지', 지오행[a월.ji], 지오행[b월.ji], a월.ji, b월.ji);
+  return {
+    items,
+    block: items.length ? `[서버가 확정한 두 사람의 오행 관계 — 방향과 종류를 바꾸지 마세요]\n` + items.map(x => `- ${x.title}: ${x.text}\n  쓰는 법: ${x.speak}`).join('\n') + `\n- 위 관계 외의 오행 관계·개수·인과는 만들지 말고, 각 사람을 오행만으로 성격(부드럽다·단단하다 등)으로 설명하지 마세요. 두 사람 사이에서 생길 수 있는 상황으로만 연결하세요.` : '',
+  };
+}
+
 function buildBars(relKey, levels, basis = []) {
   return RELATIONS[relKey].bars.map((b, i) => ({ label: b.label, aspect: b.aspect, basis: basis[i] || '', ...LEVELS[levels[i]] }));
+}
+
+// 대화 문장 검증: 정확히 한 문장 + 존댓말(반말 금지). 생성 결과를 점검·테스트하는 데 쓴다.
+function validateDialogueLine(line) {
+  const reasons = [];
+  const t = String(line || '').trim().replace(/^["“”']+|["“”']+$/g, '').trim();
+  if (!t) return { ok: false, reasons: ['대화 문장이 비어 있음'] };
+  const sentences = t.split(/(?<=[.?!])\s+/).map(x => x.trim()).filter(Boolean);
+  if (sentences.length !== 1) reasons.push('한 문장이 아님(' + sentences.length + '문장)');
+  // 모든 문장 끝이 존댓말이어야 한다. 반말(~을까?, ~줄래?, ~같아, ~해줘 등)은 여기서 걸린다.
+  const POLITE = /(요|니다|니까|죠|세요|까요)$/;
+  // 반말 종결: ~할까/연락할까/줄까/줄래/할래/보자/하자/해줘/거야/같아/있어/없어/해/야 등 (존댓말 끝맺음이 없을 때만 해당)
+  const BANMAL = /(까|줄래|할래|볼래|보자|하자|해줘|줘|거야|같아|있어|없어|어|아|지|야|해)$/;
+  for (const x of sentences) {
+    const e = x.replace(/[.?!…\s"”'’)]+$/g, '');
+    if (POLITE.test(e)) continue;
+    reasons.push((BANMAL.test(e) ? '반말 종결: ' : '존댓말이 아님: ') + e.slice(-12));
+  }
+  return { ok: reasons.length === 0, reasons };
 }
 
 // ── 프롬프트 ──────────────────────────────────────
@@ -246,8 +307,11 @@ const PRINCIPLES = (nameA, nameB) => `[작성 원칙 — 다른 규칙과 충돌
 - 두 사람은 "${nameA}님"(읽는 사람)과 "${nameB}님"으로 부르세요. 이름이 'A'·'B'면 "나"와 "상대방"으로 쓰세요.
 ${TRUST_RULES}
 - 나이는 숫자로 쓰고(예: 30대), 한글 숫자 표기는 쓰지 마세요.
-- 모든 문장은 해요체(~해요, ~이에요, ~예요)로 끝내세요. '~다', '~이다' 같은 평서체는 쓰지 마세요. (대화 문장만 예외)
-- [사주 계산값]과 각 항목의 '근거'에 없는 오행·음양·상생상극·합충은 새로 만들어 설명하지 마세요.`;
+- 모든 문장은 해요체(~해요, ~이에요, ~예요)로 끝내세요. '~다', '~이다' 같은 평서체와 '~합니다', '~습니다', '~입니다', '~맞춥니다' 같은 합쇼체도 쓰지 마세요. (대화 문장만 예외)
+- [사주 계산값]과 각 항목의 '근거'에 없는 오행·음양·상생상극·합충은 새로 만들어 설명하지 마세요. 예: '쇠가 흙을 일군다' 같은 임의 인과 금지.
+- 계산값만으로 한 사람의 구체적인 심리·행동(예: 범위를 넓히려 한다, 무게감을 느낀다, 조심스러워한다, 빠르게 표현한다, 책임감이 있다)을 사실처럼 쓰지 마세요. 필요하면 "이 관계에서는 ~하기 쉬울 수 있어요"처럼 두 사람 사이에서 생길 수 있는 상황으로만 쓰고, 입력하지 않은 일·프로젝트·과거 경험은 가정하지 마세요.
+- 오행 설명은 '계산값 → 표준 상생·상극 관계 → 쉬운 풀이'까지만 하고, 그 관계에서 한 단계 더 추론한 비유·인과(예: '쇠가 도구로 작동한다', '압력이 성장에 도움이 된다')는 쓰지 마세요.
+- 두 사람의 성격·행동(예: 차분하다, 내향적이다, 활동적이다, 행동력이 좋다, 침묵으로 반발한다, 말없이 챙긴다)은 [사주 계산값]이나 사용자가 입력한 정보로 뒷받침되지 않으면 쓰지 마세요. 항목 해설은 '근거'와 수준을 쉬운 말로 풀어쓰고, 구체적인 행동은 '이 관계의 실제 상황'에서 일어날 수 있는 일로 "~할 때가 있을 수 있어요"처럼 쓰세요.`;
 
 function roleBlock(relKey, role, nameA, nameB) {
   if (!RELATIONS[relKey].needsRole) return '';
@@ -263,6 +327,8 @@ ${factsBlock(my)}
 [${nameB}님]
 - 성별: ${partner.gender || '미입력'} / 나이대: ${ages.b}
 ${factsBlock(partner)}
+
+${relationFacts(my, partner, nameA, nameB).block}
 
 ${규칙문}`;
 }
@@ -298,12 +364,14 @@ ${PRINCIPLES(nameA, nameB)}
 - 풀이 본문은 존댓말로 쓰고, 대화 문장만 ${rel.tone}로 쓰세요.
 
 [팁·대화 문장 작성 규칙]
+- 핵심 항목 3개의 본문은 정확히 두 줄입니다. 첫 줄은 반드시 '해설:'로, 둘째 줄은 반드시 '팁:'으로 시작하세요. '팁:'만 쓰거나 '해설:'을 생략하면 잘못된 형식입니다.
 - 각 팁은 같은 항목의 해설과 이어져야 합니다. 해설에서 말한 경향을 다루는 행동을 쓰세요.
 - 세 항목의 팁이 같은 상황이나 같은 행동을 반복하지 않게, '이 관계의 실제 상황'에서 서로 다른 상황을 고르세요.
-- 대화 문장은 '조율할 점'에서 말한 상황에서 실제로 건넬 수 있는 문장이어야 합니다.
+- 대화 문장은 '조율할 점'에서 말한 상황과 직접 연결된 예방형·제안형 문장이어야 합니다(조율할 점의 핵심 단어를 포함). 이미 갈등이 있었다고 가정하지 마세요('그런 뜻이 아니었는데', '미안해', '그렇게 들렸다면' 같은 해명·사과 금지). 특정 행동이 이미 있었다고도 가정하지 마세요('요즘 자꾸', '자주 ~하는데' 같은 지난 일 언급 금지).
+- 대화 문장은 정확히 한 문장이어야 합니다(두 문장을 이어 쓰지 마세요). 가족·직장 관계는 반드시 존댓말로 쓰고, 특히 나이가 많거나 상사일 수 있는 상대에게 반말(~할까?, ~줄까?, ~줄래?, ~보자, ~들어 줄 수 있을까?, ~것 같아)을 쓰지 마세요.
 - "대화를 많이 하세요", "서로 존중하세요", "이해하려고 노력하세요"처럼 어느 관계에나 붙는 일반 조언은 쓰지 마세요.
 
-아래 형식 그대로, 각 섹션 제목은 ===제목=== 으로 쓰세요. 다른 섹션은 추가하지 마세요.
+아래 형식 그대로, 각 섹션 제목은 ===제목=== 으로 쓰세요. 섹션 제목은 아래에 적힌 글자를 한 글자도 바꾸지 말고 그대로 복사하고, 다른 섹션은 추가하지 마세요.
 
 ===한 줄 요약===
 (이름 없이, 이 관계의 핵심을 한 문장으로. '${rel.label}' 관계에 맞는 말로.)
@@ -320,7 +388,7 @@ ${barSections}
 (한 문장. 누구의 잘못으로 쓰지 말고 방식의 차이로 쓰세요. 어떤 상황에서 생기는지 함께.)
 
 ===대화 문장===
-('조율할 점'의 상황에서 상대에게 직접 건넬 수 있는 문장 딱 1개. 큰따옴표로 감싸세요. 상대 이름을 3인칭으로 부르며 말하지 말고, 호칭은 생략해도 자연스럽게 쓰세요. ${rel.tone}.)`;
+('조율할 점'의 상황에서 상대에게 직접 건넬 수 있는 문장 딱 1개. 큰따옴표로 감싸고 한 문장으로만 쓰세요. 상대 이름을 3인칭으로 부르며 말하지 말고, 호칭은 생략해도 자연스럽게 쓰세요. ${rel.tone}.)`;
 }
 
 // 유료: 관계별 상세 풀이. 구체적 적용 방법(상황·문장·행동)을 담는다.
@@ -351,4 +419,4 @@ ${PRINCIPLES(nameA, nameB)}
 ${sections}`;
 }
 
-module.exports = { calcRelationBasis, situationsFor, TRUST_RULES, RELATIONS, LEVELS, ROLES, normalizeRelation, calcRelationLevels, buildBars, buildFreeGunghabPrompt, buildPaidGunghabPrompt };
+module.exports = { relationFacts, pairKind, validateDialogueLine, calcRelationBasis, situationsFor, TRUST_RULES, RELATIONS, LEVELS, ROLES, normalizeRelation, calcRelationLevels, buildBars, buildFreeGunghabPrompt, buildPaidGunghabPrompt };

@@ -12,7 +12,7 @@ const fs = require('fs');
 const BANNER = '===예시 표시===\n이 화면은 로컬 확인용 예시 결과입니다. 실제 AI 풀이가 아닙니다.\n\n';
 // 저장해 둔 실제 결과를 다시 보여주는 모드(추가 AI 호출 없음): SAMPLE_REPLAY=quality-outputs.json 경로
 const REPLAY = process.env.SAMPLE_REPLAY ? JSON.parse(fs.readFileSync(process.env.SAMPLE_REPLAY, 'utf8')) : null;
-const REPLAY_BANNER = '===예시 표시===\n수정 전 실제 AI 결과를 다시 보여주는 화면입니다(추가 AI 호출 없음). 수정 후 결과가 아니며, 수정 후 품질은 아직 확인하지 않았습니다.\n\n';
+const REPLAY_BANNER = process.env.SAMPLE_REPLAY_BANNER || ('===예시 표시===\n수정 전 실제 AI 결과를 다시 보여주는 화면입니다(추가 AI 호출 없음). 수정 후 결과가 아니며, 수정 후 품질은 아직 확인하지 않았습니다.\n\n');
 function replayFor(p) {
   if (!REPLAY) return null;
   if (p.includes('===나의 강점===') && p.includes('===바로 실천할 팁===')) return REPLAY_BANNER + REPLAY.saju;

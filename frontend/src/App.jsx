@@ -4,7 +4,7 @@ import { PAYMENT_CONFIG, isAnalyticsHost } from './paymentConfig.js'
 import GunghabBars from './GunghabBars.jsx'
 import ShareModal from './ShareModal.jsx'
 import PaidGuide from './PaidGuide.jsx'
-import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, parseGunghabFree, parseMyFree, buildShareText } from './relations.js'
+import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText } from './relations.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
 // 없으면 조용히 무시한다. 나중에 다른 분석 도구를 붙일 때도 호출부는 바꿀 필요 없이 이 함수만 확장하면 된다.
@@ -1870,7 +1870,7 @@ export default function App() {
           )}
 
           {parsed && !readable && (
-            <div style={card}><p style={{ ...body, whiteSpace: 'pre-wrap' }}>{removeMarkers(gunghabFreeText)}</p></div>
+            <div style={card}><p style={{ ...body, whiteSpace: 'pre-wrap' }}>{removeMarkers(safeGunghabText(gunghabFreeText, gunghabSajuData?.bars))}</p></div>
           )}
 
           {readable && (

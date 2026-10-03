@@ -1,7 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert'
 import { createRequire } from 'node:module'
-import { RELATION_OPTIONS, GUNGHAB_PAID, SAJU_PAID, parseGunghabFree, parseMyFree, scrubPersonal, buildShareText } from './relations.js'
+import { readFileSync } from 'node:fs'
+import { RELATION_OPTIONS, GUNGHAB_PAID, SAJU_PAID, parseGunghabFree, parseMyFree, scrubPersonal, buildShareText, validateDialogueLine, safeGunghabText } from './relations.js'
 
 const require = createRequire(import.meta.url)
 const server = require('../../backend/relations.js')
@@ -84,4 +85,213 @@ test('공유 문구: 실제 결과의 핵심 한 문장 + 서비스 주소만 (�
   assert.strictEqual(link, 'https://www.mysaju.shop')   // 쿼리·경로 없이 서비스 첫 주소만
   assert.ok(!/orderId|orderToken|merchant_uid/.test(t))
   assert.ok(buildShareText({ sentence: '', fallback: '대체 문구' }).startsWith('대체 문구'))
+})
+
+test('섹션 제목이 깨져도 결과가 사라지지 않는다 (예: ===의사소transitions===)', () => {
+  const bars = [{ label: '업무 호흡' }, { label: '의사소통' }, { label: '역할 조율' }]
+  const text = `===한 줄 요약===
+요약이에요.
+
+===관계 요약===
+관계 요약이에요.
+
+===업무 호흡===
+해설: 호흡 해설이에요.
+팁: 호흡 팁이에요.
+
+===의사소transitions===
+해설: 소통 해설이에요.
+팁: 소통 팁이에요.
+
+===역할 조율===
+해설: 역할 해설이에요.
+팁: 역할 팁이에요.
+
+===잘 맞는 점===
+잘 맞아요.
+
+===조율할 점===
+조율해요.
+
+===대화 문장===
+"함께 정리해 볼까요?"`
+  const r = parseGunghabFree(text, bars)
+  assert.deepStrictEqual(r.bars.map(b => [b.comment, b.tip]), [['호흡 해설이에요.', '호흡 팁이에요.'], ['소통 해설이에요.', '소통 팁이에요.'], ['역할 해설이에요.', '역할 팁이에요.']])
+  assert.ok(r.headline && r.summary && r.good && r.tune && r.line)
+  // 알 수 없는 제목이 끝에 추가돼도(예상 자리를 못 찾음) 앞의 결과는 그대로
+  const extra = parseGunghabFree(text + '\n\n===덤===\n쓸데없는 말', bars)
+  assert.deepStrictEqual(extra.bars, r.bars)
+  assert.strictEqual(extra.line, r.line)
+  // 같은 제목이 두 번 오면 처음 것을 유지한다
+  const dup = parseGunghabFree(text.replace('===조율할 점===', '===잘 맞는 점==='), bars)
+  assert.strictEqual(dup.good, '잘 맞아요.')
+})
+
+test('내 사주 무료도 제목이 어긋나면 순서대로 채운다', () => {
+  const t = `===핵심 한 문장===
+첫 문장이에요.
+둘째 줄이에요.
+
+===이유가 이런 이유===
+이유예요.
+
+===나의 강점===
+강점이에요.
+
+===주의할 습관===
+습관이에요.
+
+===바로 실천할 팁===
+팁이에요.`
+  const r = parseMyFree(t)
+  assert.deepStrictEqual([r.sentence, r.why, r.strength, r.habit, r.tip], ['첫 문장이에요.', '이유예요.', '강점이에요.', '습관이에요.', '팁이에요.'])
+})
+
+const FAMILY_BARS = [{ label: '표현 이해' }, { label: '거리 조절' }, { label: '갈등 조율' }]
+const famText = (bodies) => `===한 줄 요약===
+요약이에요.
+
+===관계 요약===
+관계 요약이에요.
+
+===표현 이해===
+${bodies[0]}
+
+===거리 조절===
+${bodies[1]}
+
+===갈등 조율===
+${bodies[2]}
+
+===잘 맞는 점===
+잘 맞아요.
+
+===조율할 점===
+조율해요.
+
+===대화 문장===
+"먼저 말씀해 주실 수 있을까요?"`
+
+test('가족 바 3개: 해설+팁이 모두 있으면 누락 신호가 없다', () => {
+  const full = famText(['해설: 해설1이에요.\n팁: 팁1이에요.', '해설: 해설2예요.\n팁: 팁2예요.', '해설: 해설3이에요.\n팁: 팁3이에요.'])
+  const r = parseGunghabFree(full, FAMILY_BARS)
+  assert.deepStrictEqual(r.barIssues, [])
+  assert.deepStrictEqual(r.bars.map(b => [b.comment, b.tip]), [['해설1이에요.', '팁1이에요.'], ['해설2예요.', '팁2예요.'], ['해설3이에요.', '팁3이에요.']])
+})
+
+test('가족 바: 실제 출력처럼 "해설:" 라벨이 빠지면 감지하고, AI 원문 줄만 해설로 읽는다 (새로 만들지 않는다)', () => {
+  // 3차 실제 AI 출력 형태: 해설 줄은 있으나 "해설:" 라벨이 없고 "팁:"만 있다
+  const bad = famText([
+    '도윤님과 서연님은 표현하는 방식에 차이가 있어요.\n\n팁: 가볍게 확인해 보세요.',
+    '기준이 조금 다르기 쉬워요.\n\n팁: 언제쯤 괜찮은지 물어보세요.',
+    '의견이 부딪힐 때 답답할 수 있어요.\n\n팁: 나눠서 이야기하세요.',
+  ])
+  const r = parseGunghabFree(bad, FAMILY_BARS)
+  assert.strictEqual(r.barIssues.length, 3)
+  assert.ok(r.barIssues.every(i => i.includes('해설: 라벨 없음')))
+  assert.deepStrictEqual(r.bars.map(b => b.comment), ['도윤님과 서연님은 표현하는 방식에 차이가 있어요.', '기준이 조금 다르기 쉬워요.', '의견이 부딪힐 때 답답할 수 있어요.'])
+  assert.deepStrictEqual(r.bars.map(b => b.tip), ['가볍게 확인해 보세요.', '언제쯤 괜찮은지 물어보세요.', '나눠서 이야기하세요.'])
+})
+
+test('가족 바: 해설만 있거나 팁만 있고 앞 줄도 없으면 빈 채로 두고 누락을 알린다 (임의로 채우지 않는다)', () => {
+  const t = famText(['해설: 해설만 있어요.', '팁: 팁만 있어요.', '해설: 둘 다 있어요.\n팁: 둘 다 있어요.'])
+  const r = parseGunghabFree(t, FAMILY_BARS)
+  assert.deepStrictEqual([r.bars[0].comment, r.bars[0].tip], ['해설만 있어요.', ''])
+  assert.deepStrictEqual([r.bars[1].comment, r.bars[1].tip], ['', '팁만 있어요.'])
+  assert.deepStrictEqual(r.barIssues, ['표현 이해: 팁 없음', '거리 조절: 해설 없음'])
+  assert.deepStrictEqual([r.bars[2].comment, r.bars[2].tip], ['둘 다 있어요.', '둘 다 있어요.'])
+  // 섹션 통째로 없으면 그 사실도 알린다
+  const r2 = parseGunghabFree('===한 줄 요약===\n요약이에요.', FAMILY_BARS)
+  assert.strictEqual(r2.barIssues.length, 3)
+})
+
+const dlgBars = [{ label: '표현 이해' }, { label: '거리 조절' }, { label: '갈등 조율' }]
+const dlgText = (line) => `===한 줄 요약===
+요약이에요.
+
+===관계 요약===
+관계 요약이에요.
+
+===표현 이해===
+해설: 해설1이에요.
+팁: 팁1이에요.
+
+===거리 조절===
+해설: 해설2예요.
+팁: 팁2예요.
+
+===갈등 조율===
+해설: 해설3이에요.
+팁: 팁3이에요.
+
+===잘 맞는 점===
+잘 맞아요.
+
+===조율할 점===
+조율해요.
+
+===대화 문장===
+${line}`
+
+test('대화 문장 안전장치: 반말·두 문장은 화면에 쓰지 않고, 존댓말 한 문장만 표시한다', () => {
+  const hidden = [
+    '"이 부분에 대해 내가 어떻게 생각하는지 나중에 또 얘기할 수 있는 거라고 생각하고 들어 줄 수 있을까?"',
+    '"내 생각이 확실하지 않을 때도 있으니까, 바로 결론을 내려고 하기보다 여유 있게 얘기할 수 있을까?"',
+    '"먼저 말해 줄 수 있을까?"',
+    '"이 부분은 맡아 줄래?"',
+    '"같이 정리해 보자."',
+    '"먼저 정리해 볼까요? 그러면 덜 헷갈릴 것 같아요."',   // 존댓말이어도 두 문장
+  ]
+  for (const t of hidden) {
+    const r = parseGunghabFree(dlgText(t), dlgBars)
+    assert.strictEqual(r.line, '', t)
+    assert.strictEqual(r.lineRejected, true, t)
+  }
+  const shown = '"먼저 말해 줄 수 있을까요?"'
+  const ok = parseGunghabFree(dlgText(shown), dlgBars)
+  assert.strictEqual(ok.line, shown)
+  assert.strictEqual(ok.lineRejected, false)
+})
+
+test('대화 문장이 숨겨져도 한 줄 요약·요약·해설·팁·잘 맞는 점·조율할 점은 그대로 유지된다', () => {
+  const good = parseGunghabFree(dlgText('"먼저 말씀해 주실 수 있을까요?"'), dlgBars)
+  const bad = parseGunghabFree(dlgText('"여유 있게 얘기할 수 있을까?"'), dlgBars)
+  const { line: _a, lineRejected: _b, ...goodRest } = good
+  const { line: _c, lineRejected: _d, ...badRest } = bad
+  assert.deepStrictEqual(badRest, goodRest)
+  assert.deepStrictEqual(bad.bars.map(b => [b.comment, b.tip]), [['해설1이에요.', '팁1이에요.'], ['해설2예요.', '팁2예요.'], ['해설3이에요.', '팁3이에요.']])
+  assert.ok(bad.headline && bad.summary && bad.good && bad.tune)
+  assert.deepStrictEqual(bad.barIssues, [])
+})
+
+test('대화 문장 섹션이 없거나 비어 있으면 line이 비어 화면의 "이렇게 말해보세요" 카드가 숨겨진다', () => {
+  const none = parseGunghabFree(dlgText('').replace('===대화 문장===\n', ''), dlgBars)
+  assert.strictEqual(none.line, ''); assert.strictEqual(none.lineRejected, false)
+  const empty = parseGunghabFree(dlgText(''), dlgBars)
+  assert.strictEqual(empty.line, '')
+  // App.jsx 는 parsed.line 이 비어 있으면 카드를 그리지 않는다
+  const app = readFileSync(new URL('./App.jsx', import.meta.url), 'utf8')
+  assert.ok(app.includes("{parsed.line && <div style={{ ...card, background: '#F6F0F3' }}>"))
+})
+
+test('원문 대체 표시(파싱 실패 화면)에서도 검증에 실패한 대화 문장은 나오지 않는다', () => {
+  const bad = safeGunghabText(dlgText('"여유 있게 얘기할 수 있을까?"'), dlgBars)
+  assert.ok(!bad.includes('얘기할 수 있을까') && !bad.includes('===대화 문장==='))
+  assert.ok(bad.includes('요약이에요.') && bad.includes('팁3이에요.') && bad.includes('조율해요.'))
+  const good = safeGunghabText(dlgText('"먼저 말씀해 주실 수 있을까요?"'), dlgBars)
+  assert.ok(good.includes('먼저 말씀해 주실 수 있을까요?'))
+  assert.strictEqual(safeGunghabText('제목 없는 원문입니다', dlgBars), '제목 없는 원문입니다')
+  const app = readFileSync(new URL('./App.jsx', import.meta.url), 'utf8')
+  assert.ok(app.includes('removeMarkers(safeGunghabText(gunghabFreeText'))
+  assert.ok(!app.includes('removeMarkers(gunghabFreeText)'))   // 원문을 그대로 그리는 경로가 남아 있지 않다
+})
+
+test('프런트 대화 문장 검증은 서버 validateDialogueLine 과 같은 결과를 낸다 (가족·직장 공통)', () => {
+  const samples = [
+    '"들어 줄 수 있을까?"', '"말해 줄 수 있을까?"', '"말해 줄 수 있을까요?"', '"이 부분은 맡아 줄래?"', '"같이 정리해 보자."', '"내가 먼저 연락할까?"',
+    '"먼저 정리해 볼까요? 그러면 덜 헷갈릴 것 같아요."', '"이번 업무에서 각각 어떤 부분을 담당하면 좋을지 함께 정리해 볼까요?"',
+    '"이 부분은 제가 먼저 연락드릴게요."', '"일정부터 함께 확인해 주시면 감사하겠습니다."', '', '"시간 될 때 알려 줘."',
+  ]
+  for (const t of samples) assert.deepStrictEqual(validateDialogueLine(t), server.validateDialogueLine(t), t)
+  assert.strictEqual(validateDialogueLine('"말해 줄 수 있을까요?"').ok, true)
 })
