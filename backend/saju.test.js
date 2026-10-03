@@ -184,3 +184,21 @@ test('이번 실제 오류 사례(1991-08-23 07:30)의 서버 확정값: 쇠 3�
   assert.ok(block.includes('이 4가지 외의 오행 관계는 설명 금지'));
   assert.ok(S.규칙문.includes('[역할 분리]') && S.규칙문.includes('다시 세거나 오행 관계를 판단·계산하지 말고') && S.규칙문.includes('토양'));
 });
+
+test('내 사주 무료 프롬프트: 강점·주의할 습관만 분량을 늘렸고(2~3문단), 새 이론 금지·역할 분리·나머지 분량은 그대로다', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, 'server.js'), 'utf8');
+  const free = src.slice(src.indexOf('const basePrompt'), src.indexOf('const paidOnlyPrompt'));
+  // 강점·주의: 200~330자, 2~3문단, 문단 사이 빈 줄, 새로운 사주 이론·계산값 밖 근거 금지
+  assert.strictEqual((free.match(/\(200~330자, 2~3문단\)/g) || []).length, 2);
+  assert.ok(free.includes('나의 강점·주의할 습관은 2~3개 문단으로 나누어 쓰고 문단 사이는 빈 줄로 구분하세요'));
+  assert.strictEqual((free.match(/\[사주 계산값\]에 없는 근거나 새로운 사주 이론은 더하지 마세요/g) || []).length, 2);
+  assert.ok(free.includes('관계·일에서 나타날 수 있는 모습') && free.includes('이 성향이 지나칠 때 피곤해지거나 어려움이 생길 수 있는 상황'));
+  // 기존 역할 분리 규칙은 유지: 강점에는 강점만, 주의에는 주의점만, 행동은 팁에만
+  assert.ok(free.includes('강점만 쓰세요') && free.includes('주의점만 쓰세요') && free.includes("행동 권유는 아래 '바로 실천할 팁'에만 쓰세요"));
+  // 다른 섹션 분량은 그대로
+  assert.ok(free.includes('(150~300자) 위 [사주 계산값]에서 가장 뚜렷한 근거 1~2개만 골라') && free.includes('(짧은 1~2문장)'));
+  assert.ok(!/\(100~200자\)/.test(free));
+  // 분량이 늘어도 끊기지 않도록 출력 한도를 늘렸다 (무료 사주 호출만)
+  assert.ok(src.includes('streamToClient(res, basePrompt, MODEL_FREE, 3600)'));
+  assert.ok(src.includes('streamToClient(res, childBasePrompt, MODEL_FREE, 2500)') && src.includes('streamToClient(res, nohuBasePrompt, MODEL_FREE, 2500)'));
+});

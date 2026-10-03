@@ -4,6 +4,7 @@ import { PAYMENT_CONFIG, isAnalyticsHost } from './paymentConfig.js'
 import GunghabBars from './GunghabBars.jsx'
 import ShareModal from './ShareModal.jsx'
 import PaidGuide from './PaidGuide.jsx'
+import SajuReport from './SajuReport.jsx'
 import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText } from './relations.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
@@ -2340,8 +2341,11 @@ if (screen === 'result') {
   const baseSections = parseSections(baseText)
   const paidSections = parseSections(paidText)
   const myFree = serviceType === 'saju' ? parseMyFree(baseText) : null
+  const useSajuReport = serviceType === 'saju' && !!myFree && !isBaseStreaming && !!myFree.sentence && !!sajuData?.사주
+  const 리포트일주 = sajuData?.사주?.일주 || ''
+  const 리포트유형 = 리포트일주 ? (일주타입명[리포트일주[0] + 리포트일주[2]] || null) : null
   return (
-    <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: useSajuReport ? '#FAF7F2' : '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
       <div id="result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 20px 120px', boxSizing: 'border-box', width: '100%' }}>
 
         {/* 예시 응답으로 화면을 볼 때만 나타나는 표시 (실제 AI 풀이에는 없음) */}
@@ -2349,8 +2353,23 @@ if (screen === 'result') {
           <div role="note" style={{ background: '#FFF8E1', border: '1px solid #E8D9A8', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: '#6B5B1F', wordBreak: 'keep-all' }}>{myFree.demo}</div>
         )}
 
-        {/* 맨 위: 핵심 성향 한 문장 + 짧은 생활 속 설명 */}
-        {myFree && !isBaseStreaming && myFree.sentence && (
+        {/* 내 사주 무료 결과 리포트: 핵심 성향 → 사주 한눈에 → 이유 → 강점 → 주의 → 팁 */}
+        {useSajuReport && (
+          <SajuReport
+            name={myName}
+            dateLine={`${sajuData.생년월일}${isLunar ? '' : ' · 양력'}${birthtime ? ' · ' + birthtime : ''}`}
+            pillars={sajuData.사주}
+            core={{ sentence: myFree.sentence, detail: myFree.detail }}
+            why={removeMarkers(myFree.why)}
+            strength={removeMarkers(myFree.strength)}
+            habit={removeMarkers(myFree.habit)}
+            tip={removeMarkers(myFree.tip)}
+            typeInfo={리포트유형}
+          />
+        )}
+
+        {/* 맨 위: 핵심 성향 한 문장 + 짧은 생활 속 설명 (리포트가 아닐 때의 기존 화면) */}
+        {!useSajuReport && myFree && !isBaseStreaming && myFree.sentence && (
           <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '22px 20px', marginBottom: 14 }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#633B50', margin: '0 0 8px' }}>내 사주의 핵심 성향</p>
             <p style={{ fontSize: 19, fontWeight: 800, color: '#24232B', lineHeight: 1.6, margin: '0 0 10px', wordBreak: 'keep-all' }}>{myFree.sentence}</p>
@@ -2359,12 +2378,12 @@ if (screen === 'result') {
         )}
 
         {/* 사주팔자 표는 접어 두고 필요할 때만 펼친다 */}
-        {myFree && !isBaseStreaming && sajuData?.사주 && (
+        {!useSajuReport && myFree && !isBaseStreaming && sajuData?.사주 && (
           <button data-pdf-exclude="true" aria-expanded={showSajuStruct} onClick={() => setShowSajuStruct(v => !v)} style={{ width: '100%', padding: '12px 16px', fontSize: 14, fontWeight: 600, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, color: '#633B50', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}><span>내 사주 구성 보기</span><span>{showSajuStruct ? '▲' : '▼'}</span></button>
         )}
 
         {/* 사주팔자 카드 */}
-        {sajuData?.사주 && (serviceType !== 'saju' || showSajuStruct || pdfCapturing) && (
+        {!useSajuReport && sajuData?.사주 && (serviceType !== 'saju' || showSajuStruct || pdfCapturing) && (
   <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
     <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
     <p style={{ fontSize: 15, color: '#62616C', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
@@ -2389,7 +2408,7 @@ if (screen === 'result') {
 )}
 
 {/* 일주 타입 카드 */}
-{sajuData?.사주?.일주 && (serviceType !== 'saju' || showSajuStruct || pdfCapturing) && (() => {
+{!useSajuReport && sajuData?.사주?.일주 && (serviceType !== 'saju' || showSajuStruct || pdfCapturing) && (() => {
   const 일주원문 = sajuData.사주.일주  // 예: "辛신亥해"
 const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   const 타입 = 일주타입명[일주키]
@@ -2445,7 +2464,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         )}
 
         {/* 기본 분석 결과 아코디언 */}
-{!isBaseStreaming && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수') && s.title !== '공유 문장' && s.title !== '핵심 한 문장' && s.title !== '예시 표시').map((sec, i) => {
+{!isBaseStreaming && !useSajuReport && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수') && s.title !== '공유 문장' && s.title !== '핵심 한 문장' && s.title !== '예시 표시').map((sec, i) => {
   const isBlurred = serviceType !== 'saju' && i >= 1
 
   if (isBlurred && !isPaid) {
