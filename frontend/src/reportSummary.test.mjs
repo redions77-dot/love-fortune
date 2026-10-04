@@ -133,20 +133,33 @@ const PAID = `===財運 · 인생 재물 전체===
 2월: 사람을 만날 일이 늘어요.
 3월: 한 해를 돌아보는 달이에요.`
 
-test('재물·직업 요약: 소제목이 실제로 있을 때만 돈이 들어오는 방식 · 새기 쉬운 곳 · 맞는 일의 환경', () => {
+test('재물·직업 요약: 실제 프롬프트 구조("인생 단계별 돈 흐름")에서는 단계별 첫 항목을 쓰지 않고 이 항목만 생략한다', () => {
   const secs = sectionsOf(PAID)
   const s = summarizeMoney(secs)
-  assert.deepStrictEqual(s.rows.map(r => r.label), ['돈이 들어오는 방식', '돈이 새기 쉬운 곳', '나에게 맞는 일의 환경'])
-  assert.strictEqual(s.rows[0].text, '젊은 시절은 월급처럼 꾸준히 들어오는 흐름이 중심이에요.')
-  assert.strictEqual(s.rows[1].text, '사람 때문에 쓰는 돈이 생각보다 많아요.')
-  assert.strictEqual(s.rows[2].text, '역할이 분명한 조직에서 실력이 잘 드러나요.')
+  assert.deepStrictEqual(s.rows.map(r => r.label), ['돈이 새기 쉬운 곳', '나에게 맞는 일의 환경'])
+  assert.strictEqual(s.rows[0].text, '사람 때문에 쓰는 돈이 생각보다 많아요.')
+  assert.strictEqual(s.rows[1].text, '역할이 분명한 조직에서 실력이 잘 드러나요.')
   assert.ok(inSource(s, PAID))
+  // 젊은 시절 같은 단계별 문장은 어떤 항목에도 들어가지 않는다
+  assert.ok(!JSON.stringify(s).includes('젊은 시절'))
+  assert.ok(!s.rows.some(r => r.label === '돈이 들어오는 방식'))
   // 재물/직업 섹션이 없거나 소제목이 없으면 만들지 않는다
   assert.strictEqual(summarizeMoney([{ title: '月運 · 월별 운세', content: '2027년 1월: 좋아요.' }]), null)
   assert.strictEqual(summarizeMoney([{ title: '財運', content: '그냥 문단이에요.' }]), null)
-  const partial = summarizeMoney([secs[0]])
-  assert.deepStrictEqual(partial.rows.map(r => r.label), ['돈이 들어오는 방식', '돈이 새기 쉬운 곳'])
+  assert.strictEqual(summarizeMoney([{ title: '財運 · 인생 재물 전체', content: '📌 인생 단계별 돈 흐름\n1. 젊은 시절은 꾸준해요.\n\n2. 중년에는 커져요.' }]), null)
   assert.strictEqual(summarizeMoney([]), null)
+})
+
+test('재물·직업 요약: 수입 방식·재물 흐름을 직접 설명하는 소제목이 결과에 있으면 그 문장을 쓴다(일반 문단만)', () => {
+  const base = (head, body) => [{ title: '財運 · 재물', content: `${head}\n${body}\n\n⚠️ 돈 새는 패턴\n충동구매가 잦아요.` }]
+  const direct = summarizeMoney(base('📌 돈이 들어오는 방식', '월급처럼 꾸준히 들어오는 편이에요. 큰 한 방은 드물어요.'))
+  assert.deepStrictEqual(direct.rows.map(r => r.label), ['돈이 들어오는 방식', '돈이 새기 쉬운 곳'])
+  assert.strictEqual(direct.rows[0].text, '월급처럼 꾸준히 들어오는 편이에요.')
+  const flow = summarizeMoney(base('📌 재물 흐름', '들어오는 돈보다 나가는 돈의 시기가 눈에 띄어요.'))
+  assert.strictEqual(flow.rows[0].label, '돈이 들어오는 방식')
+  // 같은 소제목이어도 나이·시기로 나뉜 제목이거나 번호 목록이면 쓰지 않는다
+  assert.ok(!summarizeMoney(base('📌 20~30대 돈이 들어오는 방식', '꾸준해요.')).rows.some(r => r.label === '돈이 들어오는 방식'))
+  assert.ok(!summarizeMoney(base('📌 돈이 들어오는 방식', '1. 첫째는 월급이에요.\n\n2. 둘째는 부수입이에요.')).rows.some(r => r.label === '돈이 들어오는 방식'))
 })
 
 test('관계 상세 풀이 요약: ✅/⚠️ 소제목이 있을 때만, 대화 문장은 무료 요약의 검증된 문장일 때만', () => {

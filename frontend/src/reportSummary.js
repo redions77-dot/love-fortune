@@ -47,17 +47,20 @@ export function summarizeGunghabFree(parsed) {
 // 하위 소제목 아래 첫 문장. 소제목은 h3 이거나, 이모지로 시작하는 긴 줄(문단으로 읽힌 소제목)일 수 있다.
 // 본문은 문단·번호 항목·단계 목록의 첫 항목에서 가져온다. 다음 소제목·강조상자·비교표를 만나면 멈춘다.
 const startsWithMark = (t) => ['📌', '✅', '⚠️', '🔑', '💡', '🌟'].some(e => String(t || '').startsWith(e))
-function bodyUnder(blocks, headRe) {
+// opts.denyRe: 이 소제목은 쓰지 않는다 / opts.paragraphOnly: 번호 항목·단계 목록은 건너뛰고 일반 문단만 쓴다
+function bodyUnder(blocks, headRe, opts = {}) {
+  const { denyRe = null, paragraphOnly = false } = opts
   for (let i = 0; i < blocks.length; i++) {
     const b = blocks[i]
-    const isHead = (b.type === 'h3' || (b.type === 'p' && startsWithMark(b.text))) && headRe.test(b.text)
+    const isHead = (b.type === 'h3' || (b.type === 'p' && startsWithMark(b.text))) && headRe.test(b.text) && !(denyRe && denyRe.test(b.text))
     if (!isHead) continue
     for (let j = i + 1; j < blocks.length; j++) {
       const n = blocks[j]
       if (n.type === 'h3' || n.type === 'callout' || n.type === 'compare' || (n.type === 'p' && startsWithMark(n.text))) break
       let text = null
-      if (n.type === 'p' || n.type === 'li') text = String(n.text || '').replace(/^\d+\.\s*/, '')
-      else if (n.type === 'steps' && n.items.length) text = n.items[0].text
+      if (n.type === 'p') text = String(n.text || '')
+      else if (!paragraphOnly && n.type === 'li') text = String(n.text || '').replace(/^\d+\.\s*/, '')
+      else if (!paragraphOnly && n.type === 'steps' && n.items.length) text = n.items[0].text
       if (text) { const got = takeSentences(text, 1); if (got) return got }
     }
   }
@@ -66,6 +69,10 @@ function bodyUnder(blocks, headRe) {
 
 // 재물·직업(유료 전체 분석 / 심화): 돈이 들어오는 방식 / 돈이 새기 쉬운 곳 / 나에게 맞는 일의 환경.
 // 제목에 財運·재물 이 있는 섹션과 職·직업 이 있는 섹션에서, 해당 소제목이 실제로 있을 때만 뽑는다.
+// '돈이 들어오는 방식'은 수입 방식·재물 흐름을 직접 설명하는 소제목의 일반 문단만 쓴다.
+// "인생 단계별 돈 흐름"처럼 나이·시기별로 나뉜 항목(첫 항목이 고객의 현재 상황으로 오해될 수 있음)은 쓰지 않고, 없으면 이 항목만 생략한다.
+const INFLOW_HEAD = /(수입|돈|재물)(이|의)?\s*(들어오는|버는|흐름)|재물\s*흐름|돈이\s*들어오/
+const STAGE_HEAD = /단계|시절|젊은|중년|말년|연령|나이|세대|\d+\s*대/
 export function summarizeMoney(sections) {
   const list = Array.isArray(sections) ? sections : []
   const money = list.find(s => /財運|재물/.test(s.title))
@@ -73,7 +80,7 @@ export function summarizeMoney(sections) {
   const mb = money ? parseContentBlocks(money.content) : []
   const jb = job ? parseContentBlocks(job.content) : []
   const rows = []
-  const inflow = bodyUnder(mb, /돈\s*흐름|돈이 (들어|모)/)
+  const inflow = bodyUnder(mb, INFLOW_HEAD, { denyRe: STAGE_HEAD, paragraphOnly: true })
   const leak = bodyUnder(mb, /새는|새기|샐/)
   const env = bodyUnder(jb, /환경|구조/)
   if (inflow) rows.push({ label: '돈이 들어오는 방식', text: inflow })
