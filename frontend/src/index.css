@@ -296,28 +296,79 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .pdf-doc .rpt-timeline li, .pdf-page .rpt-timeline li { padding-bottom: 14px; }
 .pdf-doc .rpt-sum-headline, .pdf-page .rpt-sum-headline { font-size: 21px; }
 
-/* ── 브라우저 인쇄(인쇄 → PDF로 저장): A4, 글자는 그대로 선택·검색 가능 ──
+/* ── 항상 밝은 테마: 사이트는 라이트 전용이다. 브라우저·휴대폰이 다크모드(강제 다크 포함)여도 화면과 인쇄가 뒤집히지 않도록
+   색 구성표를 라이트로 고정한다(index.html 의 meta color-scheme 과 같은 선언). ── */
+:root { color-scheme: only light; }
+
+/* ── 다운로드 PDF(이미지 방식): 캡처용 문서는 화면 테마와 무관하게 흰 바탕·진한 글자로 고정 ── */
+.pdf-stage { color-scheme: only light; background: #fff;
+  --rp-bg: #fff; --rp-ink: #111; --rp-muted: #444; --rp-title: #14301f; --rp-green: #1f5a3a; --rp-green-soft: #eef4ea; --rp-green-line: #8fb08a; --rp-border: #c9c9c9; }
+.pdf-page { background: #fff; color: #111; }
+.pdf-footer { color: #444; }
+
+/* ── 브라우저 인쇄(인쇄 → PDF로 저장): A4, 흰 바탕·진한 글자, 글자는 그대로 선택·검색 가능 ──
    메뉴·결제 버튼·고정 바·관리자 안내·공유/이메일 영역은 data-pdf-exclude / .no-print 로 표시해 인쇄에서 뺀다.
-   화면에 보이는(= 볼 권한이 있는) 결과만 인쇄된다. 색 유지를 위해 print-color-adjust 를 켠다(배경 그래픽 설정이 꺼져 있어도 유지). */
+   화면에 보이는(= 볼 권한이 있는) 결과만 인쇄된다.
+   색 처리: 페이지·본문 영역의 배경은 인쇄하지 않고(흰 종이), 의미가 있는 색(그래프·오행 칸·강조 상자·타임라인 점)에만
+   print-color-adjust: exact 를 걸어 "배경 그래픽" 설정이 꺼져 있어도 유지한다. */
 @page { size: A4; margin: 16mm 15mm 18mm; }
 @media print {
-  html, body { background: #fff !important; }
-  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  :root {
+    color-scheme: only light;
+    --rp-bg: #fff; --rp-ink: #111; --rp-muted: #444; --rp-title: #14301f; --rp-green: #1f5a3a;
+    --rp-green-soft: #eef4ea; --rp-green-line: #8fb08a; --rp-border: #bdbdbd;
+  }
+  html, body, #root { background: #fff !important; color: #111 !important; }
+  *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; forced-color-adjust: none; }
+
+  /* 배경 그래픽이 꼭 필요한 요소만 색을 유지 */
+  .rpt-card, .rpt-card *, [data-pdf-card], [data-pdf-card] *, [data-distribution], [data-distribution] *, [data-pillar], [data-pillar] *,
+  .rpt-callout, .rpt-compare-col, .rpt-step-n, .rpt-timeline li::before, .rpt-badge, .rpt-summary { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
   .no-print, [data-pdf-exclude="true"], .rpt-print-btn { display: none !important; }
-  .rpt-page { background: #fff; min-height: 0; overflow: visible; }
-  .rpt-hero { background: none !important; color: var(--rp-title); padding: 0 0 10pt; margin: 0 0 14pt; border-bottom: 2pt solid var(--rp-green); }
-  .rpt-hero .rpt-eyebrow, .rpt-hero .rpt-sub { color: var(--rp-muted); opacity: 1; }
-  .rpt-title { color: var(--rp-title); font-size: 24pt; }
+  .rpt-page { background: #fff !important; min-height: 0; overflow: visible; color: #111; }
   .rpt-inner { max-width: none; padding-left: 0; padding-right: 0; }
   .rpt-wrap { padding-bottom: 0; }
-  .rpt-section { margin-top: 22pt; }
-  .rpt-h2 { font-size: 17pt; }
-  .rpt-h3 { font-size: 13.5pt; margin-top: 16pt; }
+
+  /* 상단 띠: 배경 없이 진한 글자 + 초록 선 */
+  .rpt-hero { background: none !important; color: #14301f; padding: 0 0 10pt; margin: 0 0 14pt; border-bottom: 2pt solid #1f5a3a; }
+  .rpt-hero .rpt-eyebrow, .rpt-hero .rpt-sub { color: #444; opacity: 1; }
+  .rpt-title { color: #14301f; font-size: 24pt; }
+
+  /* 글자: 본문은 검정에 가까운 색, 보조 설명은 진한 회색, 제목은 진한 초록 */
+  .rpt-p, .rpt-stream, .rpt-tl-text, .rpt-step-text, .rpt-compare-text, .rpt-sum-row dd,
+  [data-section] p { color: #111 !important; }
   .rpt-p, .rpt-stream, .rpt-tl-text, .rpt-step-text, .rpt-compare-text, .rpt-sum-row dd { font-size: 11.5pt; line-height: 1.75; }
+  [data-section] p { font-size: 11.5pt !important; line-height: 1.75 !important; }
+  .rpt-note, .rpt-list-item .rpt-note { color: #444; }
   .rpt-callout .rpt-p { font-size: 11pt; }
-  .rpt-h2, .rpt-h3, .rpt-kicker, .rpt-callout-head, .rpt-compare-label { break-after: avoid; page-break-after: avoid; }
+  .rpt-h2, .rpt-sum-headline, [data-section] h2 { color: #14301f !important; }
+  .rpt-h2, [data-section] h2 { font-size: 17pt !important; }
+  .rpt-h3 { font-size: 13.5pt; margin-top: 16pt; }
+  .rpt-h3, .rpt-kicker, .rpt-lead, .rpt-callout-head, .rpt-compare-label, .rpt-sum-row dt, .rpt-tl-when, .rpt-lock { color: #1f5a3a; }
+  .rpt-compare-warn .rpt-compare-label { color: #6b4e0e; }
+  .rpt-section { margin-top: 22pt; }
+
+  /* 카드·표·구분선: 흰 바탕에서 선명한 테두리, 강조 상자는 아주 연한 색 + 굵은 왼쪽 선 */
+  .rpt-card { background: #fff !important; border: 1px solid #a8a8a8 !important; margin-top: 14pt; }
+  .rpt-summary { background: #fff !important; border: 1px solid #a8a8a8 !important; border-top: 3pt solid #1f5a3a !important; }
+  .rpt-callout { background: #eef4ea !important; border-left: 4pt solid #4f8a5a !important; }
+  .rpt-compare-col { border: 1px solid #bdbdbd; }
+  .rpt-compare-good { background: #eef4ea !important; border-left: 4pt solid #4f8a5a; }
+  .rpt-compare-warn { background: #f8f1df !important; border-left: 4pt solid #b8943f; }
+  .rpt-sum-row { border-top: 1px solid #cfcfcf; }
+  .rpt-list-item { border-top: 1px solid #cfcfcf; }
+  .rpt-timeline li { border-left-color: #6f9f78; }
+  .rpt-timeline li::before { background: #1f5a3a; border-color: #fff; }
+  .rpt-step-n { background: #1f5a3a !important; color: #fff !important; }
+  .rpt-badge { background: #eef4ea !important; color: #1f5a3a; border-color: #8fb08a; }
+
+  /* 페이지 나눔: 제목은 다음 본문과 함께, 짧은 카드·강조 상자·표·타임라인 한 줄은 쪼개지 않음. 긴 문단과 큰 블록은 자연스럽게 다음 쪽으로 이어짐 */
+  .rpt-h2, .rpt-h3, .rpt-kicker, .rpt-callout-head, .rpt-compare-label, [data-section] h2 { break-after: avoid; page-break-after: avoid; }
   .rpt-callout, .rpt-card, .rpt-summary, .rpt-compare, .rpt-compare-col, .rpt-sum-row, .rpt-timeline li, .rpt-steps li, .rpt-list-item { break-inside: avoid; page-break-inside: avoid; }
+  /* 사주 표(네 기둥)·오행 분포·유형 상자는 한 덩어리로 — 제목만 앞 쪽에 남고 표가 뒤 쪽으로 쪼개지지 않게 */
+  [data-section] > div, [role="table"], #share-card, [data-pdf-card] { break-inside: avoid; page-break-inside: avoid; }
   p, li { orphans: 3; widows: 3; }
   .rpt-compare { grid-template-columns: 1fr 1fr; }
-  .rpt-card { margin-top: 14pt; }
+  .rpt-card, .rpt-summary, img, svg { max-width: 100%; }
 }

@@ -238,3 +238,27 @@ test('요약은 보이는 범위만 쓴다: 재물·직업은 결제 후 전체 
   assert.ok(css.includes('@page { size: A4;') && css.includes('@media print') && css.includes('[data-pdf-exclude="true"]') && css.includes('print-color-adjust: exact'))
   for (const sel of ['.no-print', '.rpt-callout', '.rpt-compare', '.rpt-timeline li']) assert.ok(css.slice(css.indexOf('@media print')).includes(sel), sel)
 })
+
+// ── 다크모드/강제 다크에도 인쇄·PDF는 항상 밝게 ──
+test('밝은 테마 고정: meta color-scheme, :root color-scheme, 인쇄 색 명시, 다운로드 PDF 흰 바탕', () => {
+  const html = readFileSync(here('../index.html'), 'utf8')
+  assert.ok(/<meta name="color-scheme" content="only light"/.test(html) && /<meta name="supported-color-schemes" content="light"/.test(html))
+  const css = readFileSync(here('./index.css'), 'utf8')
+  assert.ok(css.includes(':root { color-scheme: only light; }'))
+  const print = css.slice(css.indexOf('@media print'))
+  // 인쇄: 흰 바탕·진한 글자를 명시하고, 그림자는 제거
+  assert.ok(/html, body, #root \{ background: #fff !important; color: #111 !important; \}/.test(print))
+  assert.ok(print.includes('box-shadow: none !important') && print.includes('color-scheme: only light'))
+  assert.ok(/\.rpt-card \{ background: #fff !important/.test(print) && /\.rpt-summary \{ background: #fff !important/.test(print))
+  // 모든 요소를 한꺼번에 검정으로 덮지 않는다(오행·그래프 색 유지) / 배경 색 유지(exact)는 필요한 요소에만
+  assert.ok(!/\*\s*\{[^}]*\bcolor:\s*#?(000|111)/.test(print.replace(/html, body, #root[^}]*\}/, '')))
+  assert.ok(!/(^|\n)\s*\* \{[^}]*print-color-adjust: exact/.test(print))
+  assert.ok(print.includes('[data-distribution]') && print.includes('[data-pillar]'))
+  // 다운로드 PDF(이미지 방식): 캡처 바탕은 흰색, 캡처 문서는 라이트 고정
+  const pdf = readFileSync(here('./pdfExport.jsx'), 'utf8')
+  assert.ok(!pdf.includes('#FBFAF5') && (pdf.match(/backgroundColor: '#FFFFFF'/g) || []).length === 2 && pdf.includes("stage.style.colorScheme = 'light'"))
+  assert.ok(css.includes('.pdf-page { background: #fff; color: #111; }'))
+  // 화면 상태를 바꾸지 않는다: 인쇄는 window.print() 만 호출하고 API 호출이 없다
+  const blocks = readFileSync(here('./reportBlocks.jsx'), 'utf8')
+  assert.ok(blocks.includes('onClick={() => window.print()}') && !/fetch\(/.test(blocks))
+})

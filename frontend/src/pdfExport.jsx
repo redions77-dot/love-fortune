@@ -156,13 +156,14 @@ export async function exportResultPDF({ filename, eyebrow = 'MYSAJU REPORT', tit
     if (it.kind !== 'card') { resolved.push(it); continue }
     const el = document.querySelector(it.selector)
     if (!el) continue
-    const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: '#FBFAF5', useCORS: true, logging: false })
+    const canvas = await window.html2canvas(el, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false })
     resolved.push({ kind: 'img', src: canvas.toDataURL('image/png'), w: Math.round(canvas.width / 2) })
   }
 
   const stage = document.createElement('div')
   stage.className = 'pdf-stage'
   stage.setAttribute('aria-hidden', 'true')
+  stage.style.colorScheme = 'light'   // 화면 테마와 무관하게 밝은 문서로 캡처한다 (index.css .pdf-stage 도 같은 값을 흰 바탕·진한 글자로 지정)
   document.body.appendChild(stage)
   const measure = document.createElement('div')
   measure.className = 'pdf-measure pdf-doc'
@@ -209,7 +210,7 @@ export async function exportResultPDF({ filename, eyebrow = 'MYSAJU REPORT', tit
       footer.innerHTML = '<span>마이사주 · mysaju.shop</span><span>' + (pi + 1) + ' / ' + pages.length + '</span>'
       pageEl.appendChild(footer)
       stage.appendChild(pageEl)
-      const canvas = await window.html2canvas(pageEl, { scale: 2, backgroundColor: '#FBFAF5', useCORS: true, logging: false, width: PDF_PAGE_W, height: PDF_PAGE_H, windowWidth: PDF_PAGE_W })
+      const canvas = await window.html2canvas(pageEl, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false, width: PDF_PAGE_W, height: PDF_PAGE_H, windowWidth: PDF_PAGE_W })
       if (pi > 0) pdf.addPage()
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH)
       canvas.width = 0; canvas.height = 0
