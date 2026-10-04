@@ -5,6 +5,10 @@ import GunghabBars from './GunghabBars.jsx'
 import ShareModal from './ShareModal.jsx'
 import PaidGuide from './PaidGuide.jsx'
 import SajuReport from './SajuReport.jsx'
+import { SUBHEAD_EMOJIS } from './contentBlocks.js'
+import { ReportHero, ReportSection, ReportSummary, PrintButton, CompareBlock, renderFormattedContent } from './reportBlocks.jsx'
+import { exportResultPDF } from './pdfExport.jsx'
+import { summarizeSaju, summarizeMoney, summarizeGunghabFree, summarizeGunghabPaid } from './reportSummary.js'
 import { isAdminEntry } from './adminLink.js'
 import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText } from './relations.js'
 
@@ -16,159 +20,6 @@ function trackEvent(name, params = {}) {
     if (typeof window.gtag === 'function') window.gtag('event', name, params)
     if (typeof window.fbq === 'function') window.fbq('trackCustom', name, params)
   } catch {}
-}
-
-// 아코디언이 펼쳐지며 요소 높이가 바뀌는 게 끝날 때까지 기다린다 (rAF로 scrollHeight가
-// 몇 프레임 연속 그대로일 때 "안정됐다"고 판단 — 고정 setTimeout 대신 실제 레이아웃 완료를 감지).
-function waitForStableLayout(element, { stableFrames = 4, timeout = 4000 } = {}) {
-  return new Promise(resolve => {
-    const start = performance.now()
-    let lastHeight = -1
-    let count = 0
-    function tick() {
-      const h = element.scrollHeight
-      if (h === lastHeight) count++
-      else { count = 0; lastHeight = h }
-      if (count >= stableFrames || performance.now() - start > timeout) resolve()
-      else requestAnimationFrame(tick)
-    }
-    requestAnimationFrame(tick)
-  })
-}
-
-// forceOpen을 켠 뒤에도 실제로 모든 아코디언이 DOM에 "펼쳐진 상태"로 커밋됐는지
-// 직접 확인한다 (타이밍을 추측하지 않고 data-accordion-open 속성으로 검증).
-function waitForAccordionsOpen(element, { timeout = 4000 } = {}) {
-  return new Promise(resolve => {
-    const start = performance.now()
-    function tick() {
-      const stillClosed = element.querySelectorAll('[data-accordion="true"][data-accordion-open="0"]').length
-      if (stillClosed === 0 || performance.now() - start > timeout) resolve()
-      else requestAnimationFrame(tick)
-    }
-    requestAnimationFrame(tick)
-  })
-}
-
-// PDF 저장 버튼 클릭 시 호출: 아코디언을 전부 강제로 펼친 뒤(setForceOpen(true)),
-// 실제로 펼쳐졌는지 확인 + 레이아웃 안정 + 폰트 로딩까지 기다리고 나서 캡처한다.
-async function exportResultPDF(elementId, filename, setForceOpen) {
-  setForceOpen(true)
-  try {
-    // React가 forceOpen 상태를 반영해 실제로 DOM에 커밋될 시간을 준다.
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
-    const element = document.getElementById(elementId)
-    if (element) {
-      await waitForAccordionsOpen(element)
-      await waitForStableLayout(element)
-    }
-    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready } catch {} }
-    await generatePDF(elementId, filename)
-  } finally {
-    setForceOpen(false)
-  }
-}
-
-// element의 직계 자식(카드/아코디언/차트 등 하나의 "블록" 단위)의 상대 위치 범위를 구한다.
-// 페이지를 나눌 때 이 블록 중간을 자르지 않기 위해 사용한다.
-function getBlockRanges(element) {
-  const containerTop = element.getBoundingClientRect().top
-  return Array.from(element.children)
-    .map(child => {
-      const r = child.getBoundingClientRect()
-      return { top: r.top - containerTop, bottom: r.bottom - containerTop }
-    })
-    .filter(b => b.bottom > b.top)
-}
-
-// 블록 경계를 넘지 않는 선에서 페이지 컷 지점을 계산한다.
-// 컷 지점이 어떤 블록의 중간에 걸리면, 그 블록의 시작 지점으로 컷을 당겨서
-// 블록 전체를 다음 페이지로 넘긴다. (단, 블록 하나가 페이지보다 큰 경우는 예외적으로 자른다)
-function computePageBreaks(blockRanges, totalHeight, pageHeight) {
-  const breaks = [0]
-  let cursor = 0
-  let guard = 0
-  while (cursor < totalHeight - 0.5 && guard < 500) {
-    guard++
-    let target = Math.min(cursor + pageHeight, totalHeight)
-    const straddler = blockRanges.find(b => b.top < target - 0.5 && b.bottom > target + 0.5 && b.top >= cursor - 0.5)
-    if (straddler && straddler.top > cursor + 0.5) target = straddler.top
-    if (target <= cursor + 0.5) target = Math.min(cursor + pageHeight, totalHeight)
-    breaks.push(target)
-    cursor = target
-  }
-  return breaks
-}
-
-async function generatePDF(elementId, filename) {
-  if (!window.jspdf) {
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script')
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
-      s.onload = resolve; s.onerror = () => reject(new Error('jsPDF 로드 실패'))
-      document.head.appendChild(s)
-    })
-  }
-  if (!window.html2canvas) {
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script')
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
-      s.onload = resolve; s.onerror = () => reject(new Error('html2canvas 로드 실패'))
-      document.head.appendChild(s)
-    })
-  }
-  const element = document.getElementById(elementId)
-  if (!element) return
-  const allEls = element.querySelectorAll('*')
-  const origStyles = []
-  const origElementBg = element.style.background
-  const origElementColor = element.style.color
-  element.style.background = '#FFFFFF'
-  element.style.color = '#1A1A1A'
-  allEls.forEach(el => { origStyles.push(el.style.cssText); el.style.background = '#FFFFFF'; el.style.color = '#1A1A1A' })
-  // PDF에 넣지 않을 요소(마케팅 배너 등)는 캡처 직전 실제로 display:none 처리해서
-  // 레이아웃 공간 자체를 없앤다 — html2canvas의 ignoreElements는 내부 clone에서만
-  // 요소를 빼서 caption 대상 실제 DOM(getBlockRanges 측정 대상)과 높이가 어긋났었다.
-  const excludedEls = element.querySelectorAll('[data-pdf-exclude="true"]')
-  const excludedOrigDisplay = []
-  excludedEls.forEach(el => { excludedOrigDisplay.push(el.style.display); el.style.display = 'none' })
-  try {
-    // 블록(카드/아코디언/차트 등) 경계는 제외 요소를 실제로 숨긴 뒤의 레이아웃 기준으로 측정해야
-    // 캡처될 캔버스 좌표와 정확히 일치한다.
-    const blockRangesDom = getBlockRanges(element)
-    const canvas = await window.html2canvas(element, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true, logging: false, windowWidth: element.scrollWidth, windowHeight: element.scrollHeight })
-    const { jsPDF } = window.jspdf
-    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
-    const pageW = pdf.internal.pageSize.getWidth()
-    const pageH = pdf.internal.pageSize.getHeight()
-    const margin = 10
-    const imgW = pageW - margin * 2
-    const imgH = (canvas.height * imgW) / canvas.width
-    const usableH = pageH - margin * 2
-    const pxScale = canvas.height / element.scrollHeight
-    const blockRangesCanvasPx = blockRangesDom.map(b => ({ top: b.top * pxScale, bottom: b.bottom * pxScale }))
-    const usableHCanvasPx = usableH * (canvas.height / imgH)
-    // 페이지 컷 지점을 블록 경계에 맞춰 계산한다 — 카드/아코디언/차트 중간이 잘리지 않도록.
-    const breaksCanvasPx = computePageBreaks(blockRangesCanvasPx, canvas.height, usableHCanvasPx)
-    const pageCount = breaksCanvasPx.length - 1
-    for (let i = 0; i < pageCount; i++) {
-      const srcY = breaksCanvasPx[i]
-      const srcH = breaksCanvasPx[i + 1] - srcY
-      if (srcH <= 0) continue
-      const sliceHmm = srcH * (imgH / canvas.height)
-      const sliceCanvas = document.createElement('canvas')
-      sliceCanvas.width = canvas.width; sliceCanvas.height = srcH
-      const ctx = sliceCanvas.getContext('2d')
-      ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH)
-      pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, imgW, sliceHmm)
-      if (i < pageCount - 1) pdf.addPage()
-    }
-    pdf.save(filename + '.pdf')
-  } finally {
-    element.style.background = origElementBg; element.style.color = origElementColor
-    allEls.forEach((el, i) => { el.style.cssText = origStyles[i] })
-    excludedEls.forEach((el, i) => { el.style.display = excludedOrigDisplay[i] })
-  }
 }
 
 const 일주타입명 = {
@@ -333,37 +184,6 @@ function clearPaymentReturnUrl() {
 
 const LOADING_STAGES = ['사주 데이터를 읽고 있어요', '기운의 흐름을 분석하고 있어요', '당신만의 풀이를 만들고 있어요']
 
-const SUBHEAD_EMOJIS = ['📌', '✅', '⚠️', '🔑', '💡', '🌟']
-const MONTH_RE = /^(\d{1,4}년?\s*\d{1,2}월):\s*(.*)/
-const ITEM_RE = /^(색깔|마스코트|방향|숫자|아이템):\s*(.*)/
-function renderFormattedContent(text) {
-  if (!text?.trim()) return null
-  return text.split('\n').map((line, i) => {
-    const t = line.trim()
-    if (!t) return <div key={i} style={{ height: 8 }} />
-    if (/^###\s/.test(t)) return <div key={i} style={{ fontSize: 14, fontWeight: 700, color: '#633B50', marginTop: 10, marginBottom: 4 }}>{t.replace(/^###\s+/, '')}</div>
-    if (/^##\s/.test(t)) return <div key={i} style={{ fontSize: 15, fontWeight: 800, color: '#633B50', marginTop: 16, marginBottom: 4 }}>{t.replace(/^##\s+/, '')}</div>
-    if (/^#\s/.test(t)) return <div key={i} style={{ fontSize: 16, fontWeight: 800, color: '#24232B', marginTop: 18, marginBottom: 6 }}>{t.replace(/^#\s+/, '')}</div>
-    if (SUBHEAD_EMOJIS.some(e => t.startsWith(e))) {
-      return <div key={i} style={{ fontWeight: 700, color: '#633B50', marginTop: 16, marginBottom: 4, lineHeight: 1.6 }}>{line}</div>
-    }
-    if (/^\d+\./.test(t)) {
-      return <div key={i} style={{ paddingLeft: 4, marginBottom: 6, lineHeight: 1.9 }}>{line}</div>
-    }
-    if (t.startsWith('🔒')) {
-      return <div key={i} style={{ color: '#633B50', marginTop: 12, lineHeight: 1.8 }}>{line}</div>
-    }
-    const monthMatch = t.match(MONTH_RE)
-    if (monthMatch) {
-      return <div key={i} style={{ lineHeight: 1.9, marginBottom: 4 }}><span style={{ fontWeight: 700, color: '#633B50' }}>{monthMatch[1]}:</span> {monthMatch[2]}</div>
-    }
-    const itemMatch = t.match(ITEM_RE)
-    if (itemMatch) {
-      return <div key={i} style={{ lineHeight: 1.9, marginBottom: 4 }}><span style={{ fontWeight: 700, color: '#633B50' }}>{itemMatch[1]}:</span> {itemMatch[2]}</div>
-    }
-    return <div key={i} style={{ lineHeight: 1.9, marginBottom: 2 }}>{line}</div>
-  })
-}
 function removeMarkers(text) {
   return text.split('===').filter((_, i) => i % 2 === 0).join('').replace(/^#{1,6}\s+.+$/gm, '').replace(/\n{3,}/g, '\n\n').trim()
 }
@@ -499,33 +319,6 @@ function DateRow({ year, setYear, month, setMonth, day, setDay, lunar, setLunar 
 }
 
 
-function renderBracketItems(text) {
-  const parts = text.split(/(\[.+?\]\n)/g)
-  return parts.map((part, i) => {
-    const m = part.match(/^\[(.+?)\]\n$/)
-    if (m) return <div key={i} style={{ fontWeight: 700, color: '#633B50', marginTop: i > 0 ? 16 : 0 }}>✦ {m[1]}</div>
-    if (!part.trim()) return null
-    return <span key={i}>{part}</span>
-  })
-}
-const BRACKET_SECTIONS = new Set(['이 아이에게 맞는 직업 방향', '추천학과 5개'])
-function Accordion({ title, content, isPaid = false, isChild = false, isGunghab = false, isGilil = false, defaultOpen = false, forceOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen)
-  const isOpen = open || forceOpen
-  const borderColor = isGunghab ? 'rgba(155,29,58,0.4)' : isChild ? 'rgba(45,122,82,0.4)' : isGilil ? '#DEDFE5' : isPaid ? '#DEDFE5' : '#DEDFE5'
-  const openBg = isGunghab ? 'rgba(155,29,58,0.1)' : isChild ? 'rgba(45,122,82,0.1)' : '#F6F0F3'
-  const useBracket = BRACKET_SECTIONS.has(title)
-  return (
-    <div data-accordion="true" data-accordion-open={isOpen ? '1' : '0'} style={{ marginBottom: 10, border: `1px solid ${borderColor}`, borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px', cursor: 'pointer', background: isOpen ? openBg : '#FFFFFF', transition: 'all 0.2s' }} onClick={() => setOpen(o => !o)}>
-        <span style={{ fontSize: 17, fontWeight: 700, color: isOpen ? '#633B50' : '#24232B', flex: 1, wordBreak: 'keep-all' }}>{title}</span>
-        <span style={{ fontSize: 14, color: '#633B50', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 12 }}>▼</span>
-      </div>
-      {isOpen && <div style={{ wordBreak: 'keep-all', padding: '20px 20px', fontSize: 18, color: '#24232B', background: '#F4F5F7', borderTop: '1px solid #DEDFE5' }}>{useBracket ? renderBracketItems(content) : renderFormattedContent(content)}</div>}
-    </div>
-  )
-}
-
 // 섹션이 화면에 실제로 노출됐을 때 한 번만 이벤트를 쏘는 감지용 마커.
 // 레이아웃에 영향을 주지 않도록 높이 1px짜리 요소를 섹션 바로 앞에 둔다.
 function SectionViewTracker({ eventName, params }) {
@@ -565,10 +358,10 @@ const FULL_ANALYSIS_MORE = [
 ]
 function FullAnalysisPreviewCard({ title, line1, line2 }) {
   return (
-    <div style={{ marginBottom: 10, padding: '14px 16px', background: '#FFFFFF', borderRadius: 10, border: '1px solid #DEDFE5' }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>✦ {title}</p>
-      <p style={{ fontSize: 15, lineHeight: 1.7, color: '#24232B', wordBreak: 'keep-all', margin: 0, marginBottom: 4 }}>{line1}</p>
-      <p style={{ fontSize: 13, lineHeight: 1.7, color: '#62616C', wordBreak: 'keep-all', margin: 0 }}>{line2}</p>
+    <div className="rpt-list-item">
+      <h3 className="rpt-h3">✦ {title}</h3>
+      <p className="rpt-p">{line1}</p>
+      <p className="rpt-note">{line2}</p>
     </div>
   )
 }
@@ -827,6 +620,15 @@ export default function App() {
   const [showSajuStruct, setShowSajuStruct] = useState(false) // '내 사주 구성 보기' 접기/펼치기
   const [emailModal, setEmailModal] = useState(null)
   const [pdfCapturing, setPdfCapturing] = useState(false)
+  // 다운로드 PDF(이미지 방식). 접혀 있던 사주 표를 저장하는 동안만 펼쳐서 캡처한다.
+  const savePdf = async (spec) => {
+    setPdfCapturing(true)
+    try {
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+      await exportResultPDF(spec)
+    } catch (e) { alert('PDF 오류: ' + e.message) }
+    finally { setPdfCapturing(false) }
+  }
   const [preEmail, setPreEmail] = useState('')
   const [deepText, setDeepText] = useState('')
   const [isDeepStreaming, setIsDeepStreaming] = useState(false)
@@ -1310,47 +1112,39 @@ export default function App() {
         .catch((e) => alert(e.message))
     }
     return (
-      <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ textAlign: 'center', padding: '28px 24px 16px', background: '#FFFFFF', borderBottom: '1px solid #DEDFE5' }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 4 }}>100년 사주 인생 꿀팁</h1>
-          {백년Name && <p style={{ fontSize: 13, color: '#62616C' }}>{백년Name}님 · {백년BirthYear}년생</p>}
-        </div>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 80px', width: '100%', boxSizing: 'border-box' }}>
+      <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
+        <ReportHero eyebrow="MYSAJU REPORT · 100 YEARS" title="100년 사주 인생 꿀팁" sub={백년Name ? `${백년Name}님 · ${백년BirthYear}년생` : ''} />
+        <div className="rpt-inner rpt-wrap" style={{ paddingTop: 28 }}>
           {is백년Streaming && yearBlocks.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#62616C' }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: '#633B50' }}>{백년Name || ''}님의 100년 인생 꿀팁 생성 중...</p>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#5F5E55' }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: '#2F5D44' }}>{백년Name || ''}님의 100년 인생 꿀팁 생성 중...</p>
               <p style={{ fontSize: 13, marginTop: 8 }}>지금부터 100세까지 매년 분석 중이에요</p>
             </div>
           )}
           {!is백년Streaming && !백년EmailSent && 백년Text && (
-            <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px', marginBottom: 20 }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>📧 이메일로 전체 결과 받기</p>
+            <div style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 12, padding: '20px', marginBottom: 20 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#2F5D44', marginBottom: 8 }}>📧 이메일로 전체 결과 받기</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid #DEDFE5', borderRadius: 8, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={백년EmailInput} onChange={e => set백년EmailInput(e.target.value)} />
-                <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={send백년Email}>발송</button>
+                <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid #E4E1D4', borderRadius: 8, background: '#FFFFFF', color: '#22211C', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={백년EmailInput} onChange={e => set백년EmailInput(e.target.value)} />
+                <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={send백년Email}>발송</button>
               </div>
             </div>
           )}
-          {백년EmailSent && <p style={{ textAlign: 'center', fontSize: 13, color: '#633B50', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>}
+          {백년EmailSent && <p style={{ textAlign: 'center', fontSize: 13, color: '#2F5D44', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>}
           {yearBlocks.length > 0 ? yearBlocks.map((block, i) => (
-            <div key={i} style={{ marginBottom: 20, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, overflow: 'hidden' }}>
-              {block.header && (
-                <div style={{ background: '#F6F0F3', borderBottom: '1px solid #DEDFE5', padding: '12px 16px' }}>
-                  <span style={{ fontSize: 15, fontWeight: 800, color: '#633B50' }}>{block.header}</span>
-                </div>
-              )}
-              <div style={{ padding: '16px', fontSize: 15, color: '#24232B', lineHeight: 1.8, wordBreak: 'keep-all' }}>{renderFormattedContent(block.body)}</div>
-            </div>
+            <section key={i} className="rpt-section" style={{ marginTop: i === 0 ? 8 : 44 }}>
+              {block.header && <h2 className="rpt-h2">{block.header}</h2>}
+              {renderFormattedContent(block.body)}
+            </section>
           )) : (백년Text && !is백년Streaming && (
-            <div style={{ padding: '16px', fontSize: 15, color: '#24232B', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{백년Text}</div>
+            <div className="rpt-stream">{백년Text}</div>
           ))}
           {is백년Streaming && yearBlocks.length > 0 && (
-            <div style={{ textAlign: 'center', padding: '20px', color: '#62616C', fontSize: 13 }}>⟳ 계속 생성 중...</div>
+            <div style={{ textAlign: 'center', padding: '20px', color: '#5F5E55', fontSize: 13 }}>⟳ 계속 생성 중...</div>
           )}
         </div>
-        <div style={{ position: 'fixed', bottom: 0, background: '#F4F5F7', borderTop: '1px solid #DEDFE5', padding: '12px 16px 24px', maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
-          <button style={{ width: '100%', padding: '14px', fontSize: 14, fontWeight: 600, background: '#F6F0F3', color: '#633B50', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer' }} onClick={handleRestart}>← 처음으로</button>
+        <div style={{ position: 'fixed', bottom: 0, background: '#FBFAF5', borderTop: '1px solid #E4E1D4', padding: '12px 16px 24px', maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
+          <button style={{ width: '100%', padding: '14px', fontSize: 14, fontWeight: 600, background: '#EEF3EA', color: '#2F5D44', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer' }} onClick={handleRestart}>← 처음으로</button>
         </div>
       </div>
     )
@@ -1416,30 +1210,42 @@ export default function App() {
       { key: 'metal', icon: '金', color: '#5F6B7A', bgColor: 'rgba(95,107,122,0.08)', borderColor: 'rgba(95,107,122,0.3)' },
       { key: 'water', icon: '水', color: '#2563EB', bgColor: 'rgba(96,165,250,0.08)', borderColor: 'rgba(96,165,250,0.3)' },
     ] : []
+    const deepShown = deepSections.filter(sec => sec.title !== '분석 결과' && !sec.title.includes('운의계절') && sec.content?.trim())
+    const deepSubtitle = [myName && myName + '님', sajuData?.생년월일].filter(Boolean).join(' · ')
+    const deepMoneySummary = !isDeepStreaming ? summarizeMoney(deepShown) : null
+    const saveDeepPdf = () => savePdf({
+      filename: '마이사주_심화분석_' + (myName || '결과'),
+      title: '사주 심화 분석', eyebrow: 'MYSAJU REPORT · DEEP', subtitle: deepSubtitle,
+      items: [
+        ...(deepMoneySummary ? [{ kind: 'summary', data: deepMoneySummary }] : []),
+        { kind: 'card', selector: '[data-pdf-card="saju"]' },
+        ...(deepShown.length > 0
+          ? deepShown.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: i + 1 }))
+          : [{ kind: 'section', title: '심화 분석', content: removeMarkers(deepText) }]),
+        { kind: 'card', selector: '[data-pdf-card="season"]' },
+      ],
+    })
     return (
-      <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: '#FFFFFF', borderBottom: '1px solid #DEDFE5' }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>사주 심화 분석</h1>
-        </div>
-        <div id="deep-result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 40px', width: '100%', boxSizing: 'border-box' }}>
+      <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
+        <ReportHero eyebrow="MYSAJU REPORT · DEEP" title="사주 심화 분석" sub={deepSubtitle} />
+        <div id="deep-result-content" className="rpt-inner rpt-wrap">
   {/* 사주팔자 카드 */}
   {sajuData?.사주 && (
-    <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
-      <p style={{ fontSize: 15, color: '#62616C', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
+    <div data-pdf-card="saju" className="rpt-card">
+      <p style={{ fontSize: 15, fontWeight: 700, color: '#2F5D44', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
+      <p style={{ fontSize: 15, color: '#5F5E55', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         {[{ label: '시주(時)', value: sajuData.사주.시주 }, { label: '일주(日)', value: sajuData.사주.일주 }, { label: '월주(月)', value: sajuData.사주.월주 }, { label: '년주(年)', value: sajuData.사주.년주 }].map(({ label, value }) => {
           const 오행색 = { '甲갑': '#1E7F4F', '乙을': '#1E7F4F', '丙병': '#C53A3A', '丁정': '#C53A3A', '戊무': '#8A5F0E', '己기': '#8A5F0E', '庚경': '#5F6B7A', '辛신': '#5F6B7A', '壬임': '#2563EB', '癸계': '#2563EB' }
-          const 색 = 오행색[value?.slice(0, 2)] || '#24232B'
+          const 색 = 오행색[value?.slice(0, 2)] || '#22211C'
           return (
             <div key={label} style={{ textAlign: 'center', background: `${색}15`, borderRadius: 12, padding: '18px 4px', border: `2px solid ${색}50` }}>
-              <span style={{ fontSize: 12, color: '#62616C', marginBottom: 10, display: 'block' }}>{label}</span>
+              <span style={{ fontSize: 12, color: '#5F5E55', marginBottom: 10, display: 'block' }}>{label}</span>
               <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 <span style={{ fontSize: 22, fontWeight: 900, color: 색, lineHeight: 1.2 }}>{value?.slice(0,1) || '-'}</span>
-                <span style={{ fontSize: 11, color: '#62616C', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
+                <span style={{ fontSize: 11, color: '#5F5E55', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
                 <span style={{ fontSize: 16, fontWeight: 700, color: 색, marginTop: 2 }}>{value?.slice(2,3) || ''}</span>
-                <span style={{ fontSize: 11, color: '#62616C', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
+                <span style={{ fontSize: 11, color: '#5F5E55', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
               </span>
             </div>
           )
@@ -1453,16 +1259,16 @@ export default function App() {
           {!isDeepPaid && !isDeepStreaming && (
             <>
               {/* 페인포인트 후킹 박스 */}
-              <div style={{ background: '#FFFFFF', border: '1.5px solid #DEDFE5', borderRadius: 16, padding: '28px 22px', marginBottom: 20 }}>
-                <p style={{ fontSize: 19, fontWeight: 700, color: '#24232B', marginBottom: 16, lineHeight: 1.5 }}>혹시, 이런 순간 없으셨어요?</p>
+              <div style={{ background: '#FFFFFF', border: '1.5px solid #E4E1D4', borderRadius: 16, padding: '28px 22px', marginBottom: 20 }}>
+                <p style={{ fontSize: 19, fontWeight: 700, color: '#22211C', marginBottom: 16, lineHeight: 1.5 }}>혹시, 이런 순간 없으셨어요?</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <span style={{ fontSize: 14, color: '#633B50', marginTop: 2, flexShrink: 0 }}>•</span>
-                    <span style={{ fontSize: 16, color: '#24232B', lineHeight: 1.6 }}>돈이 언제쯤 풀릴지 막막할 때</span>
+                    <span style={{ fontSize: 14, color: '#2F5D44', marginTop: 2, flexShrink: 0 }}>•</span>
+                    <span style={{ fontSize: 16, color: '#22211C', lineHeight: 1.6 }}>돈이 언제쯤 풀릴지 막막할 때</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <span style={{ fontSize: 14, color: '#633B50', marginTop: 2, flexShrink: 0 }}>•</span>
-                    <span style={{ fontSize: 16, color: '#24232B', lineHeight: 1.6 }}>이 선택이 맞는지 흔들릴 때</span>
+                    <span style={{ fontSize: 14, color: '#2F5D44', marginTop: 2, flexShrink: 0 }}>•</span>
+                    <span style={{ fontSize: 16, color: '#22211C', lineHeight: 1.6 }}>이 선택이 맞는지 흔들릴 때</span>
                   </div>
                 </div>
               </div>
@@ -1471,12 +1277,12 @@ export default function App() {
               {(() => {
                 const _teaser = MONEY_TEASER_VARIANTS[getMoneyTeaserVariant(baseText)]
                 return (
-                  <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px 18px', marginBottom: 20, overflow: 'hidden' }}>
-                    <div style={{ fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{_teaser.visible}</div>
+                  <div style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 12, padding: '20px 18px', marginBottom: 20, overflow: 'hidden' }}>
+                    <div style={{ fontSize: 18, lineHeight: 2.2, color: '#22211C', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{_teaser.visible}</div>
                     <div style={{ position: 'relative' }}>
-                      <div style={{ fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>{_teaser.blurred}</div>
+                      <div style={{ fontSize: 18, lineHeight: 2.2, color: '#22211C', whiteSpace: 'pre-wrap', wordBreak: 'keep-all', filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }}>{_teaser.blurred}</div>
                       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 30%, rgba(255,255,255,0.95) 70%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <p style={{ fontSize: 15, fontWeight: 600, color: '#633B50', textAlign: 'center', lineHeight: 1.6, padding: '0 20px' }}>여기서부터는 더 자세히 봐드려야 해요</p>
+                        <p style={{ fontSize: 15, fontWeight: 600, color: '#2F5D44', textAlign: 'center', lineHeight: 1.6, padding: '0 20px' }}>여기서부터는 더 자세히 봐드려야 해요</p>
                       </div>
                     </div>
                   </div>
@@ -1484,8 +1290,8 @@ export default function App() {
               })()}
 
               {/* 받는 것 리스트 */}
-              <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '22px 20px', marginBottom: 20 }}>
-                <p style={{ fontSize: 16, fontWeight: 700, color: '#24232B', marginBottom: 16 }}>9,900원 결제하면 이렇게 받아요</p>
+              <div style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 16, padding: '22px 20px', marginBottom: 20 }}>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#22211C', marginBottom: 16 }}>9,900원 결제하면 이렇게 받아요</p>
                 {[
                   '재물·커리어 심층 분석',
                   '대운 흐름 + 전환점 정확한 연도',
@@ -1495,8 +1301,8 @@ export default function App() {
                   '절대 하면 안 되는 결정 1가지',
                 ].map((t, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < 5 ? 12 : 0 }}>
-                    <span style={{ fontSize: 14, color: '#633B50', marginTop: 1, flexShrink: 0 }}>✓</span>
-                    <span style={{ fontSize: 15, color: '#24232B', lineHeight: 1.5 }}>{t}</span>
+                    <span style={{ fontSize: 14, color: '#2F5D44', marginTop: 1, flexShrink: 0 }}>✓</span>
+                    <span style={{ fontSize: 15, color: '#22211C', lineHeight: 1.5 }}>{t}</span>
                   </div>
                 ))}
               </div>
@@ -1508,70 +1314,74 @@ export default function App() {
                   { icon: '📄', label: 'PDF 저장' },
                   { icon: '♾️', label: '평생 재열람' },
                 ].map(({ icon, label }) => (
-                  <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10 }}>
+                  <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10 }}>
                     <span style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>{icon}</span>
-                    <span style={{ fontSize: 12, color: '#62616C', fontWeight: 500 }}>{label}</span>
+                    <span style={{ fontSize: 12, color: '#5F5E55', fontWeight: 500 }}>{label}</span>
                   </div>
                 ))}
               </div>
 
               {/* 결제 버튼 */}
-              <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: 'none', marginBottom: 8 }}
+              <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: 'none', marginBottom: 8 }}
                 onClick={() => { requestPayWithEmail('심화 분석', (email) => startCheckout(deepCheckout(email, (order) => handleDeepAnalyze(order)))) }}>지금 심화분석 확인하기 →</button>
-              <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center', marginBottom: 20 }}>결제 즉시 분석이 시작돼요</p>
+              <p style={{ fontSize: 12, color: '#5F5E55', textAlign: 'center', marginBottom: 20 }}>결제 즉시 분석이 시작돼요</p>
 
-              <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C' }} onClick={handleRestart}>← 처음으로</button>
+              <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#5F5E55' }} onClick={handleRestart}>← 처음으로</button>
             </>
           )}
 
           {/* ── 실제 결과 모드 (결제 후) ── */}
 
           {isDeepStreaming && !deepText && (
-            <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>
+            <div style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#633B50', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
-                <span style={{ fontSize: 14, color: '#62616C', marginLeft: 8 }}>🔮 심화 분석 중이에요...</span>
+                {[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#2F5D44', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
+                <span style={{ fontSize: 14, color: '#5F5E55', marginLeft: 8 }}>🔮 심화 분석 중이에요...</span>
               </div>
             </div>
           )}
           {isDeepStreaming && deepText && (
-            <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(deepText)}<span style={{ opacity: 0.4 }}>▌</span></div>
+            <div className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(deepText)}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
           {!isDeepStreaming && (() => {
-            const filtered = deepSections.filter(sec => sec.title !== '분석 결과' && !sec.title.includes('운의계절') && sec.content?.trim())
-            if (filtered.length > 0) return filtered.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} forceOpen={pdfCapturing} />)
-            if (isDeepPaid && deepText.trim()) return <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(deepText)}</div>
+            if (deepShown.length > 0) return (
+              <>
+                <ReportSummary data={deepMoneySummary} />
+                {deepShown.map((sec, i) => <ReportSection key={i} title={sec.title} content={sec.content} part={i + 1} />)}
+              </>
+            )
+            if (isDeepPaid && deepText.trim()) return <div className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(deepText)}</div>
             return null
           })()}
 
           {/* 나의 운의 계절 타임라인 */}
           {!isDeepStreaming && seasonData && (
-            <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '28px 20px', marginTop: 20, marginBottom: 20 }}>
+            <div data-pdf-card="season" className="rpt-card" style={{ padding: '28px 20px', marginTop: 56, marginBottom: 20 }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <p style={{ fontSize: 11, color: '#633B50', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 8 }}>CAREER SEASON</p>
-                <p style={{ fontSize: 20, fontWeight: 800, color: '#24232B' }}>나의 운의 계절</p>
-                <p style={{ fontSize: 13, color: '#62616C', marginTop: 6 }}>사주와 수비학 기반 오행 커리어 흐름</p>
+                <p style={{ fontSize: 11, color: '#2F5D44', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 8 }}>CAREER SEASON</p>
+                <p style={{ fontSize: 20, fontWeight: 800, color: '#22211C' }}>나의 운의 계절</p>
+                <p style={{ fontSize: 13, color: '#5F5E55', marginTop: 6 }}>사주와 수비학 기반 오행 커리어 흐름</p>
               </div>
 
               {seasonData.yearsToEarth > 0 && (
-                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12 }}>
-                  <p style={{ fontSize: 14, color: '#62616C', marginBottom: 4 }}>커리어/재물 정점까지</p>
+                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 12 }}>
+                  <p style={{ fontSize: 14, color: '#5F5E55', marginBottom: 4 }}>커리어/재물 정점까지</p>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-                    <span style={{ fontSize: 40, fontWeight: 900, color: '#633B50', lineHeight: 1 }}>{seasonData.yearsToEarth}</span>
-                    <span style={{ fontSize: 16, fontWeight: 600, color: '#633B50' }}>년 남았어요</span>
+                    <span style={{ fontSize: 40, fontWeight: 900, color: '#2F5D44', lineHeight: 1 }}>{seasonData.yearsToEarth}</span>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: '#2F5D44' }}>년 남았어요</span>
                   </div>
                 </div>
               )}
               {seasonData.yearsToEarth === 0 && seasonData.current === 'earth' && (
-                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12 }}>
-                  <p style={{ fontSize: 16, fontWeight: 800, color: '#633B50' }}>지금이 전성기입니다</p>
-                  <p style={{ fontSize: 13, color: '#62616C', marginTop: 4 }}>커리어와 재물의 정점을 지나고 있어요</p>
+                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 12 }}>
+                  <p style={{ fontSize: 16, fontWeight: 800, color: '#2F5D44' }}>지금이 전성기입니다</p>
+                  <p style={{ fontSize: 13, color: '#5F5E55', marginTop: 4 }}>커리어와 재물의 정점을 지나고 있어요</p>
                 </div>
               )}
 
               <div style={{ position: 'relative', paddingLeft: 28 }}>
                 {/* 타임라인 세로 선 */}
-                <div style={{ position: 'absolute', left: 11, top: 24, bottom: 24, width: 2, background: '#F6F0F3' }} />
+                <div style={{ position: 'absolute', left: 11, top: 24, bottom: 24, width: 2, background: '#EEF3EA' }} />
 
                 {seasonPhases.map((phase, idx) => {
                   const data = seasonData[phase.key]
@@ -1586,25 +1396,25 @@ export default function App() {
                         width: isCurrent ? 18 : 12, height: isCurrent ? 18 : 12,
                         borderRadius: '50%',
                         background: isCurrent ? phase.color : isPast ? '#FFFFFF' : '#FFFFFF',
-                        border: `2px solid ${isCurrent ? phase.color : isPast ? '#DEDFE5' : phase.borderColor}`,
+                        border: `2px solid ${isCurrent ? phase.color : isPast ? '#E4E1D4' : phase.borderColor}`,
                         marginLeft: isCurrent ? -3 : 0, marginTop: isCurrent ? -3 : 0,
                         boxShadow: isCurrent ? `0 0 12px ${phase.color}60` : 'none',
                         zIndex: 1,
                       }} />
 
                       <div style={{
-                        background: isCurrent ? phase.bgColor : isPast ? '#F4F5F7' : '#FFFFFF',
-                        border: `${isCurrent ? 2 : 1}px solid ${isCurrent ? phase.color + '80' : '#DEDFE5'}`,
+                        background: isCurrent ? phase.bgColor : isPast ? '#FBFAF5' : '#FFFFFF',
+                        border: `${isCurrent ? 2 : 1}px solid ${isCurrent ? phase.color + '80' : '#E4E1D4'}`,
                         borderRadius: 14,
                         padding: '18px 16px',
                         transition: 'all 0.3s ease',
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span style={{ fontSize: 28, fontWeight: 900, color: isCurrent ? phase.color : '#62616C', fontFamily: 'Georgia, serif' }}>{phase.icon}</span>
+                            <span style={{ fontSize: 28, fontWeight: 900, color: isCurrent ? phase.color : '#5F5E55', fontFamily: 'Georgia, serif' }}>{phase.icon}</span>
                             <div>
-                              <p style={{ fontSize: 15, fontWeight: 700, color: isCurrent ? '#24232B' : '#62616C' }}>{data.label?.split(' · ')[1] || data.label}</p>
-                              <p style={{ fontSize: 12, color: isCurrent ? '#62616C' : '#62616C', marginTop: 2 }}>{data.desc}</p>
+                              <p style={{ fontSize: 15, fontWeight: 700, color: isCurrent ? '#22211C' : '#5F5E55' }}>{data.label?.split(' · ')[1] || data.label}</p>
+                              <p style={{ fontSize: 12, color: isCurrent ? '#5F5E55' : '#5F5E55', marginTop: 2 }}>{data.desc}</p>
                             </div>
                           </div>
                           {isCurrent && (
@@ -1613,12 +1423,12 @@ export default function App() {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-                          <span style={{ fontSize: 12, color: isCurrent ? '#62616C' : '#62616C' }}>{data.start}년 ~ {data.end}년</span>
+                          <span style={{ fontSize: 12, color: isCurrent ? '#5F5E55' : '#5F5E55' }}>{data.start}년 ~ {data.end}년</span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 60, height: 6, background: '#DEDFE5', borderRadius: 99, overflow: 'hidden' }}>
+                            <div style={{ width: 60, height: 6, background: '#E4E1D4', borderRadius: 99, overflow: 'hidden' }}>
                               <div style={{ height: '100%', width: `${data.score}%`, background: isCurrent ? phase.color : '#8A8994', borderRadius: 99, transition: 'width 1s ease' }} />
                             </div>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: isCurrent ? phase.color : '#62616C' }}>{data.score}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: isCurrent ? phase.color : '#5F5E55' }}>{data.score}</span>
                           </div>
                         </div>
                       </div>
@@ -1632,20 +1442,21 @@ export default function App() {
           {isDeepPaid && (
             <div data-pdf-exclude="true">
               {!deepEmailSent ? (
-                <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px', marginBottom: 16 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>📧 이메일로 결과 받기</p>
+                <div style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 12, padding: '20px', marginBottom: 16 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#2F5D44', marginBottom: 8 }}>📧 이메일로 결과 받기</p>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid #DEDFE5', borderRadius: 8, background: '#FFFFFF', color: '#24232B', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={deepEmailInput} onChange={e => setDeepEmailInput(e.target.value)} />
-                    <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={sendDeepEmail}>발송</button>
+                    <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid #E4E1D4', borderRadius: 8, background: '#FFFFFF', color: '#22211C', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={deepEmailInput} onChange={e => setDeepEmailInput(e.target.value)} />
+                    <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={sendDeepEmail}>발송</button>
                   </div>
                 </div>
               ) : (
-                <p style={{ textAlign: 'center', fontSize: 13, color: '#633B50', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>
+                <p style={{ textAlign: 'center', fontSize: 13, color: '#2F5D44', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>
               )}
-              <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50', marginBottom: 10 }} onClick={async () => { try { await exportResultPDF('deep-result-content', '마이사주_심화분석_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 심화 분석 저장하기 (PDF)</button>
-              <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
+              <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#2F5D44', marginBottom: 10 }} onClick={saveDeepPdf}>📄 심화 분석 저장하기 (PDF)</button>
+              <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#5F5E55', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
             </div>
           )}
+          {isDeepPaid && !isDeepStreaming && <PrintButton />}
         </div>
       </div>
     )
@@ -1658,22 +1469,19 @@ export default function App() {
     const [selDay, setSelDay] = useState(null)
     const cur = months[selMonth]
     return (
-      <div style={{ minHeight: '100vh', background: '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ textAlign: 'center', padding: '32px 24px 20px', background: '#FFFFFF' }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#24232B', marginBottom: 10 }}>마이사주</p>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: '#24232B', marginTop: 8 }}>{gilil목적} 길일 추천</h1>
-        </div>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 100px', width: '100%', boxSizing: 'border-box' }}>
-          {isGililStreaming && <div style={{ textAlign: 'center', padding: '60px 0', color: '#62616C', fontSize: 14 }}>🔍 길일을 찾고 있어요...</div>}
+      <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
+        <ReportHero eyebrow="MYSAJU REPORT · AUSPICIOUS DAYS" title={`${gilil목적} 길일 추천`} />
+        <div className="rpt-inner" style={{ paddingBottom: 100 }}>
+          {isGililStreaming && <div style={{ textAlign: 'center', padding: '60px 0', color: '#5F5E55', fontSize: 14 }}>🔍 길일을 찾고 있어요...</div>}
           {!isGililStreaming && gililData && (
             <>
               <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '16px 0 12px', scrollbarWidth: 'none' }}>
-                {months.map((m, i) => <button key={i} aria-pressed={selMonth === i} onClick={() => { setSelMonth(i); setSelDay(null) }} style={{ flexShrink: 0, padding: '5px 14px', borderRadius: 20, fontSize: 12, border: '1px solid', cursor: 'pointer', borderColor: selMonth === i ? '#633B50' : '#DEDFE5', background: selMonth === i ? '#F6F0F3' : '#FFFFFF', color: selMonth === i ? '#633B50' : '#62616C', fontWeight: selMonth === i ? 700 : 400 }}>{selMonth === i ? '✓ ' : ''}{m.month}월</button>)}
+                {months.map((m, i) => <button key={i} aria-pressed={selMonth === i} onClick={() => { setSelMonth(i); setSelDay(null) }} style={{ flexShrink: 0, padding: '5px 14px', borderRadius: 20, fontSize: 12, border: '1px solid', cursor: 'pointer', borderColor: selMonth === i ? '#2F5D44' : '#E4E1D4', background: selMonth === i ? '#EEF3EA' : '#FFFFFF', color: selMonth === i ? '#2F5D44' : '#5F5E55', fontWeight: selMonth === i ? 700 : 400 }}>{selMonth === i ? '✓ ' : ''}{m.month}월</button>)}
               </div>
               {cur && (
-                <div style={{ background: '#FFFFFF', border: '0.5px solid #DEDFE5', borderRadius: 12, padding: '14px 12px' }}>
+                <div style={{ background: '#FFFFFF', border: '0.5px solid #E4E1D4', borderRadius: 12, padding: '14px 12px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', marginBottom: 8 }}>
-                    {['일','월','화','수','목','금','토'].map((d, i) => <div key={d} style={{ fontSize: 11, padding: '2px 0', color: i === 0 ? '#C53A3A' : '#62616C' }}>{d}</div>)}
+                    {['일','월','화','수','목','금','토'].map((d, i) => <div key={d} style={{ fontSize: 11, padding: '2px 0', color: i === 0 ? '#C53A3A' : '#5F5E55' }}>{d}</div>)}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
                     {(() => {
@@ -1684,15 +1492,15 @@ export default function App() {
                       for (let i = 0; i < startDay; i++) cells.push(<div key={`e${i}`} />)
                       for (let d = 1; d <= daysInMonth; d++) {
                         const isGilil = !!gililMap[d], isSun = (startDay + d - 1) % 7 === 0, isSelected = selDay === d
-                        cells.push(<div key={d} onClick={() => isGilil && setSelDay(isSelected ? null : d)} style={{ aspectRatio: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontSize: 12, borderRadius: 8, cursor: isGilil ? 'pointer' : 'default', background: isGilil ? '#F6F0F3' : 'transparent', border: isSelected ? '1.5px solid #633B50' : isGilil ? '0.5px solid #633B50' : 'none', color: isGilil ? (isSun ? '#C53A3A' : '#633B50') : (isSun ? '#C53A3A' : '#62616C'), fontWeight: isGilil ? 600 : 400 }}>
-                          {d}{isGilil && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#633B50', marginTop: 2 }} />}
+                        cells.push(<div key={d} onClick={() => isGilil && setSelDay(isSelected ? null : d)} style={{ aspectRatio: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontSize: 12, borderRadius: 8, cursor: isGilil ? 'pointer' : 'default', background: isGilil ? '#EEF3EA' : 'transparent', border: isSelected ? '1.5px solid #2F5D44' : isGilil ? '0.5px solid #2F5D44' : 'none', color: isGilil ? (isSun ? '#C53A3A' : '#2F5D44') : (isSun ? '#C53A3A' : '#5F5E55'), fontWeight: isGilil ? 600 : 400 }}>
+                          {d}{isGilil && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#2F5D44', marginTop: 2 }} />}
                         </div>)
                       }
                       return cells
                     })()}
                   </div>
                   {selDay && cur.days.find(d => d.date === selDay) && (
-                    <div style={{ background: '#F6F0F3', border: '0.5px solid #DEDFE5', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#633B50', lineHeight: 1.6, marginTop: 10 }}>
+                    <div style={{ background: '#EEF3EA', border: '0.5px solid #E4E1D4', borderRadius: 8, padding: '8px 12px', fontSize: 16, color: '#2F5D44', lineHeight: 1.7, marginTop: 12 }}>
                       {cur.month}월 {selDay}일 — {cur.days.find(d => d.date === selDay).comment}
                     </div>
                   )}
@@ -1701,8 +1509,8 @@ export default function App() {
             </>
           )}
         </div>
-        <div style={{ position: 'fixed', bottom: 0, width: '100%', background: '#F4F5F7', borderTop: '1px solid #DEDFE5', padding: '12px 20px' }}>
-          <button onClick={handleRestart} style={{ width: '100%', padding: '14px', borderRadius: 10, border: '1px solid #DEDFE5', background: 'transparent', color: '#62616C', fontSize: 14, cursor: 'pointer' }}>처음으로 돌아가기</button>
+        <div style={{ position: 'fixed', bottom: 0, width: '100%', background: '#FBFAF5', borderTop: '1px solid #E4E1D4', padding: '12px 20px' }}>
+          <button onClick={handleRestart} style={{ width: '100%', padding: '14px', borderRadius: 10, border: '1px solid #E4E1D4', background: 'transparent', color: '#5F5E55', fontSize: 14, cursor: 'pointer' }}>처음으로 돌아가기</button>
         </div>
       </div>
     )
@@ -1855,60 +1663,75 @@ export default function App() {
     const parsed = gunghabFreePhase === 'done' ? parseGunghabFree(gunghabFreeText, gunghabSajuData?.bars) : null
     const readable = parsed && (parsed.summary || parsed.good || parsed.tune)
     const paidInfo = GUNGHAB_PAID[관계유형]
-    const card = { background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '18px', marginBottom: 14 }
-    const tag = { fontSize: 12, fontWeight: 700, color: '#633B50', margin: '0 0 6px' }
-    const body = { fontSize: 15, lineHeight: 1.8, color: '#24232B', margin: 0, wordBreak: 'keep-all' }
+    const card = { background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 14, padding: '20px 18px', marginTop: 28 }
+    const compareItems = (t) => String(t || '').split(/\n+/).map(x => x.trim()).filter(Boolean).map(x => ({ text: x }))
     return (
-      <div style={{ minHeight: '100vh', background: '#F4F5F7' }}>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 48px', boxSizing: 'border-box' }}>
-          <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#633B50', margin: '0 0 4px' }}>관계 궁합 · 무료 요약</p>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: '#24232B', margin: 0, wordBreak: 'keep-all' }}>{relLabel} 관계, 한눈에 보기</h2>
-          </div>
+      <div className="rpt-page">
+        <ReportHero eyebrow="관계 궁합 · 무료 요약" title={relLabel + ' 관계, 한눈에 보기'} />
+        <div id="gunghab-free-content" className="rpt-inner rpt-wrap">
 
           {gunghabFreePhase === 'streaming' && (
             <div role="status" style={card}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                {[0,1,2].map(n => <div key={n} style={{ width: 10, height: 10, borderRadius: '50%', background: '#633B50', animation: 'pulse 1.2s ease-in-out ' + (n * 0.2) + 's infinite' }} />)}
-                <span style={{ fontSize: 16, color: '#24232B', marginLeft: 10 }}>두 사람의 관계를 살펴보고 있어요</span>
+                {[0,1,2].map(n => <div key={n} style={{ width: 10, height: 10, borderRadius: '50%', background: '#2F5D44', animation: 'pulse 1.2s ease-in-out ' + (n * 0.2) + 's infinite' }} />)}
+                <span style={{ fontSize: 17, color: '#22211C', marginLeft: 10 }}>두 사람의 관계를 살펴보고 있어요</span>
               </div>
             </div>
           )}
 
           {gunghabFreePhase === 'error' && (
             <div role="alert" style={{ ...card, border: '1px solid #C53A3A' }}>
-              <p style={{ fontSize: 16, fontWeight: 700, color: '#C53A3A', margin: '0 0 6px' }}>풀이를 불러오지 못했어요</p>
-              <p style={{ fontSize: 14, color: '#62616C', lineHeight: 1.6, margin: '0 0 16px', wordBreak: 'keep-all' }}>{gunghabFreeError || '잠시 후 다시 시도해주세요.'}</p>
+              <p style={{ fontSize: 17, fontWeight: 700, color: '#C53A3A', margin: '0 0 6px' }}>풀이를 불러오지 못했어요</p>
+              <p style={{ fontSize: 15, color: '#5F5E55', lineHeight: 1.7, margin: '0 0 16px', wordBreak: 'keep-all' }}>{gunghabFreeError || '잠시 후 다시 시도해주세요.'}</p>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 700, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer' }} onClick={handleGunghabFree}>다시 시도</button>
-                <button style={{ flex: 1, padding: '14px', fontSize: 15, background: '#FFFFFF', color: '#24232B', border: '1px solid #DEDFE5', borderRadius: 12, cursor: 'pointer' }} onClick={() => { setGunghabFreePhase('input'); setScreen('gunghab_input') }}>입력 화면으로</button>
+                <button style={{ flex: 1, padding: '14px', fontSize: 16, fontWeight: 700, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer' }} onClick={handleGunghabFree}>다시 시도</button>
+                <button style={{ flex: 1, padding: '14px', fontSize: 16, background: '#FFFFFF', color: '#22211C', border: '1px solid #E4E1D4', borderRadius: 12, cursor: 'pointer' }} onClick={() => { setGunghabFreePhase('input'); setScreen('gunghab_input') }}>입력 화면으로</button>
               </div>
             </div>
           )}
 
           {parsed && !readable && (
-            <div style={card}><p style={{ ...body, whiteSpace: 'pre-wrap' }}>{removeMarkers(safeGunghabText(gunghabFreeText, gunghabSajuData?.bars))}</p></div>
+            <p className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(safeGunghabText(gunghabFreeText, gunghabSajuData?.bars))}</p>
           )}
 
           {readable && (
             <>
-              {parsed.demo && <div role="note" style={{ background: '#FFF8E1', border: '1px solid #E8D9A8', borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: '#6B5B1F', wordBreak: 'keep-all' }}>{parsed.demo}</div>}
-              {parsed.headline && <div style={card}><p style={tag}>이 관계를 한 줄로</p><p style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.6, color: '#24232B', margin: 0, wordBreak: 'keep-all' }}>{parsed.headline}</p></div>}
-              {parsed.summary && <div style={card}><p style={tag}>일상에서는 이렇게 나타날 수 있어요</p><p style={body}>{parsed.summary}</p></div>}
+              {parsed.demo && <div role="note" style={{ background: '#FFF8E1', border: '1px solid #E8D9A8', borderRadius: 10, padding: '10px 14px', marginTop: 20, fontSize: 14, color: '#6B5B1F', wordBreak: 'keep-all' }}>{parsed.demo}</div>}
+              {parsed.headline && <ReportSummary data={{ kind: 'gunghab-head', title: '이 관계를 한 줄로', headline: parsed.headline }} />}
+              {parsed.summary && (
+                <section className="rpt-section" style={{ marginTop: 40 }}>
+                  <h3 className="rpt-h3" style={{ marginTop: 0 }}>일상에서는 이렇게 나타날 수 있어요</h3>
+                  {renderFormattedContent(parsed.summary)}
+                </section>
+              )}
               <GunghabBars bars={parsed.bars} />
-              {parsed.good && <div style={card}><p style={tag}>잘 맞는 점</p><p style={body}>{parsed.good}</p></div>}
-              {parsed.tune && <div style={card}><p style={tag}>조율할 점</p><p style={body}>{parsed.tune}</p></div>}
-              {parsed.line && <div style={{ ...card, background: '#F6F0F3' }}><p style={tag}>이렇게 말해보세요</p><p style={{ ...body, fontWeight: 600 }}>{parsed.line}</p></div>}
-              <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50', marginBottom: 20 }}
-                onClick={() => setShareDraft(buildShareText({ sentence: parsed.headline, fallback: '사주로 우리 관계를 가볍게 살펴봤어요. 너는 어때?', people: [[myName, '나'], [partnerName, '상대']] }))}>
-                이 결과 요약 공유하기
-              </button>
+              {(parsed.good && parsed.tune) ? (
+                <CompareBlock left={{ head: '잘 맞는 점', items: compareItems(parsed.good) }} right={{ head: '조율할 점', items: compareItems(parsed.tune) }} />
+              ) : (
+                <>
+                  {parsed.good && <section className="rpt-section" style={{ marginTop: 32 }}><h3 className="rpt-h3" style={{ marginTop: 0 }}>잘 맞는 점</h3>{renderFormattedContent(parsed.good)}</section>}
+                  {parsed.tune && <section className="rpt-section" style={{ marginTop: 32 }}><h3 className="rpt-h3" style={{ marginTop: 0 }}>조율할 점</h3>{renderFormattedContent(parsed.tune)}</section>}
+                </>
+              )}
+              {parsed.line && (
+                <div className="rpt-callout">
+                  <p className="rpt-callout-head">이렇게 말해보세요</p>
+                  <p className="rpt-p" style={{ fontWeight: 600, marginBottom: 0 }}>{parsed.line}</p>
+                </div>
+              )}
+              <div data-pdf-exclude="true">
+                <button style={{ width: '100%', padding: '14px', fontSize: 16, fontWeight: 600, background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#2F5D44', margin: '20px 0' }}
+                  onClick={() => setShareDraft(buildShareText({ sentence: parsed.headline, fallback: '사주로 우리 관계를 가볍게 살펴봤어요. 너는 어때?', people: [[myName, '나'], [partnerName, '상대']] }))}>
+                  이 결과 요약 공유하기
+                </button>
 
-              {paidInfo && <PaidGuide title={paidInfo.title} bundles={paidInfo.bundles} priceText={GUNGHAB_PRICE_TEXT} buttonText={'상세 풀이 보기 · ' + GUNGHAB_PRICE_TEXT} onBuy={startGunghabPaid} />}
+                {paidInfo && <PaidGuide title={paidInfo.title} bundles={paidInfo.bundles} priceText={GUNGHAB_PRICE_TEXT} buttonText={'상세 풀이 보기 · ' + GUNGHAB_PRICE_TEXT} onBuy={startGunghabPaid} />}
+              </div>
+              <PrintButton />
             </>
           )}
 
-          <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C' }} onClick={handleRestart}>처음으로 돌아가기</button>
+          <button data-pdf-exclude="true" style={{ width: '100%', padding: '14px', fontSize: 15, background: 'none', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#5F5E55', marginTop: 20 }} onClick={handleRestart}>처음으로 돌아가기</button>
         </div>
         {shareDraft !== null && <ShareModal initialText={shareDraft} onClose={() => setShareDraft(null)} />}
       </div>
@@ -1918,24 +1741,38 @@ export default function App() {
   // ── 궁합 결과 ──
   if (screen === 'result' && serviceType === 'gunghab') {
     const gunghabSections = parseSections(gunghabText)
+    const gunghabTitle = (gunghabSajuData?.relation?.label || '관계') + ' 상세 풀이'
+    const gunghabSubtitle = gunghabSajuData?.my?.name && gunghabSajuData?.partner?.name ? gunghabSajuData.my.name + '님 · ' + gunghabSajuData.partner.name + '님' : ''
+    // 무료 요약에서 검증을 통과한 대화 문장이 있을 때만 '바로 써볼 대화 방법'으로 쓴다
+    const gunghabFreeLine = gunghabFreeText ? parseGunghabFree(gunghabFreeText, gunghabSajuData?.bars).line : ''
+    const gunghabSummary = !isGunghabStreaming ? summarizeGunghabPaid(gunghabSections, gunghabFreeLine) : null
+    const saveGunghabPdf = () => savePdf({
+      filename: '마이사주_궁합분석_' + (myName || '결과'),
+      title: gunghabTitle, eyebrow: 'MYSAJU REPORT · RELATIONSHIP', subtitle: gunghabSubtitle,
+      items: [
+        ...(gunghabSummary ? [{ kind: 'summary', data: gunghabSummary }] : []),
+        { kind: 'card', selector: '[data-pdf-card="pair"]' },
+        { kind: 'card', selector: '[data-pdf-card="bars"]' },
+        ...gunghabSections.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: i + 1 })),
+      ],
+    })
     return (
-      <div style={{ minHeight: '100vh', background: '#F4F5F7' }}>
-        <div id="gunghab-result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '12px 16px 40px', boxSizing: 'border-box' }}>
-          <div style={{ textAlign: 'center', padding: '20px 0 16px' }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginTop: 8 }}>{(gunghabSajuData?.relation?.label || '관계') + ' 상세 풀이'}</h2>
-          </div>
+      <div className="rpt-page">
+        <ReportHero eyebrow="MYSAJU REPORT · RELATIONSHIP" title={gunghabTitle} sub={gunghabSubtitle} />
+        <div id="gunghab-result-content" className="rpt-inner rpt-wrap">
+          <ReportSummary data={gunghabSummary} />
           {gunghabSajuData && (
-            <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#633B50', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 10 }}>두 사람의 사주팔자</p>
+            <div data-pdf-card="pair" className="rpt-card" style={{ padding: '22px 14px' }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#2F5D44', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 10 }}>두 사람의 사주팔자</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {[{ label: gunghabSajuData.my.name + '님', data: gunghabSajuData.my }, { label: gunghabSajuData.partner.name + '님', data: gunghabSajuData.partner }].map(({ label, data }) => (
-                  <div key={label} style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 10, padding: '14px 10px' }}>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', textAlign: 'center', marginBottom: 8 }}>{label}</p>
+                  <div key={label} style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 10, padding: '14px 10px' }}>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#2F5D44', textAlign: 'center', marginBottom: 8 }}>{label}</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                       {[{ k: '시주(時)', v: data.시주 }, { k: '일주(日)', v: data.일주 }, { k: '월주(月)', v: data.월주 }, { k: '년주(年)', v: data.년주 }].map(({ k, v }) => (
-                        <div key={k} style={{ textAlign: 'center', background: '#FFFFFF', borderRadius: 7, padding: '10px 4px', border: '1px solid #DEDFE5' }}>
-                          <span style={{ fontSize: 11, color: '#62616C', display: 'block', marginBottom: 4 }}>{k}</span>
-                          <span style={{ fontSize: 16, fontWeight: 700, color: '#24232B' }}>{v}</span>
+                        <div key={k} style={{ textAlign: 'center', background: '#FFFFFF', borderRadius: 7, padding: '10px 4px', border: '1px solid #E4E1D4' }}>
+                          <span style={{ fontSize: 11, color: '#5F5E55', display: 'block', marginBottom: 4 }}>{k}</span>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: '#22211C' }}>{v}</span>
                         </div>
                       ))}
                     </div>
@@ -1944,26 +1781,27 @@ export default function App() {
               </div>
             </div>
           )}
-          {isGunghabStreaming && gunghabText && <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px 18px', marginBottom: 8, fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{removeMarkers(gunghabText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
-          {isGunghabStreaming && !gunghabText && <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}><div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>{[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#633B50', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}<span style={{ fontSize: 14, color: '#62616C', marginLeft: 8 }}>💕 두 사람의 궁합을 분석하고 있어요...</span></div></div>}
+          {isGunghabStreaming && gunghabText && <div className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(gunghabText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
+          {isGunghabStreaming && !gunghabText && <div style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}><div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>{[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#2F5D44', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}<span style={{ fontSize: 14, color: '#5F5E55', marginLeft: 8 }}>💕 두 사람의 궁합을 분석하고 있어요...</span></div></div>}
           {!isGunghabStreaming && <GunghabBars bars={gunghabSajuData?.bars} />}
-          {!isGunghabStreaming && gunghabSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isGunghab={true} defaultOpen={i === 0} forceOpen={pdfCapturing} />)}
+          {!isGunghabStreaming && gunghabSections.map((sec, i) => <ReportSection key={i} title={sec.title} content={sec.content} part={i + 1} />)}
           <div data-pdf-exclude="true">
-          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50', marginBottom: 10 }} onClick={async () => { try { await exportResultPDF('gunghab-result-content', '마이사주_궁합분석_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>📄 궁합 분석 저장하기 (PDF)</button>
-          <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center', marginTop: 6, lineHeight: 1.6 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요. PC에서 이용해주세요.</p>
-          <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
+          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#2F5D44', marginBottom: 10 }} onClick={saveGunghabPdf}>📄 궁합 분석 저장하기 (PDF)</button>
+          <p style={{ fontSize: 12, color: '#5F5E55', textAlign: 'center', marginTop: 6, lineHeight: 1.6 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요. PC에서 이용해주세요.</p>
+          {!isGunghabStreaming && gunghabText && <PrintButton />}
+          <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#5F5E55', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
           {preEmail ? (
-            <div style={{ marginTop: 20, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px', textAlign: 'center' }}>
+            <div style={{ marginTop: 20, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 12, padding: '20px', textAlign: 'center' }}>
               <p style={{ fontSize: 20, marginBottom: 6 }}>✅</p>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 4 }}>이메일 발송 완료!</p>
-              <p style={{ fontSize: 13, color: '#62616C', lineHeight: 1.7 }}>{preEmail}<br/>로 결과를 보내드렸어요.</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#2F5D44', marginBottom: 4 }}>이메일 발송 완료!</p>
+              <p style={{ fontSize: 13, color: '#5F5E55', lineHeight: 1.7 }}>{preEmail}<br/>로 결과를 보내드렸어요.</p>
             </div>
           ) : (
-            <div style={{ marginTop: 20, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12, padding: '20px' }}>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 6 }}>📧 이메일로 결과 받기</p>
+            <div style={{ marginTop: 20, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 12, padding: '20px' }}>
+              <p style={{ fontSize: 15, fontWeight: 700, color: '#2F5D44', marginBottom: 6 }}>📧 이메일로 결과 받기</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <input id="gunghab-email-input" type="email" placeholder="이메일 주소 입력" style={{ flex: 1, padding: '10px 14px', fontSize: 13, border: '1px solid rgba(180,160,110,0.4)', borderRadius: 8, background: '#FFFFFF', color: '#24232B' }} />
-                <button style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                <input id="gunghab-email-input" type="email" placeholder="이메일 주소 입력" style={{ flex: 1, padding: '10px 14px', fontSize: 13, border: '1px solid rgba(180,160,110,0.4)', borderRadius: 8, background: '#FFFFFF', color: '#22211C' }} />
+                <button style={{ padding: '10px 16px', fontSize: 13, fontWeight: 600, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }}
                   onClick={async () => {
                     const email = document.getElementById('gunghab-email-input').value
                     if (!email || !email.includes('@')) { alert('이메일 주소를 확인해주세요.'); return }
@@ -2360,9 +2198,46 @@ if (screen === 'result') {
   const useSajuReport = serviceType === 'saju' && !!myFree && !isBaseStreaming && !!myFree.sentence && !!sajuData?.사주
   const 리포트일주 = sajuData?.사주?.일주 || ''
   const 리포트유형 = 리포트일주 ? (일주타입명[리포트일주[0] + 리포트일주[2]] || null) : null
+  const baseShown = baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수') && s.title !== '공유 문장' && s.title !== '핵심 한 문장' && s.title !== '예시 표시')
+  const reportDateLine = sajuData?.생년월일 ? `${sajuData.생년월일}${isLunar ? '' : ' · 양력'}${birthtime ? ' · ' + birthtime : ''}` : ''
+  const reportTitle = useSajuReport ? (myName ? `${myName}님의 사주 리포트` : '나의 사주 리포트') : serviceType === 'child' ? '우리 아이 진로·학과 풀이' : serviceType === '노후' ? '노후 운세 풀이' : '나의 사주 풀이'
+  const reportEyebrow = useSajuReport ? '마이사주 · 내 사주 무료 결과' : 'MYSAJU REPORT'
+  const reportSub = useSajuReport ? reportDateLine : [myName && myName + '님', sajuData?.생년월일].filter(Boolean).join(' · ')
+  // 핵심 요약: 이미 나온 풀이 문장에서만 고른다(새 AI 호출·점수·예측 없음). 무료 화면에는 무료 내용만, 재물·직업은 결제 후 전체 분석에서만.
+  const sajuSummary = useSajuReport ? summarizeSaju(myFree) : null
+  const moneySummary = isPaid && !isPaidStreaming && paidSections.length ? summarizeMoney(paidSections) : null
+  const reportCoreSections = useSajuReport ? [
+    { title: '나의 핵심 성향', content: [myFree.sentence, myFree.detail].filter(Boolean).join('\n') },
+    { title: '이런 성향이 나오는 이유', content: removeMarkers(myFree.why || '') },
+    { title: '나의 강점', content: removeMarkers(myFree.strength || '') },
+    { title: '주의할 습관', content: removeMarkers(myFree.habit || '') },
+    { title: '바로 실천할 팁', content: removeMarkers(myFree.tip || '') },
+  ].filter(s => s.content.trim()) : []
+  const saveResultPdf = () => savePdf({
+    filename: '마이사주_분석결과_' + (myName || '결과'),
+    title: reportTitle, eyebrow: reportEyebrow, subtitle: reportSub,
+    items: [
+      ...(sajuSummary ? [{ kind: 'summary', data: sajuSummary }] : []),
+      ...(useSajuReport
+        ? [
+            ...reportCoreSections.slice(0, 1).map(s => ({ kind: 'section', ...s, part: 1 })),
+            { kind: 'card', selector: '[data-section="saju"]' },
+            ...reportCoreSections.slice(1).map((s, i) => ({ kind: 'section', ...s, part: i + 2 })),
+          ]
+        : [
+            { kind: 'card', selector: '[data-pdf-card="saju"]' },
+            { kind: 'card', selector: '[data-pdf-card="type"]' },
+            ...baseShown.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: i + 1 })),
+          ]),
+      ...(paidSections.length ? [{ kind: 'label', text: '✦ 전체 분석 결과 ✦' }] : []),
+      ...(moneySummary ? [{ kind: 'summary', data: moneySummary }] : []),
+      ...paidSections.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: (useSajuReport ? reportCoreSections.length + 1 : baseShown.length) + i + 1 })),
+    ],
+  })
   return (
-    <div style={{ minHeight: '100vh', background: useSajuReport ? '#FAF7F2' : '#F4F5F7', display: 'flex', flexDirection: 'column' }}>
-      <div id="result-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 20px 120px', boxSizing: 'border-box', width: '100%' }}>
+    <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
+      <ReportHero eyebrow={reportEyebrow} title={reportTitle} sub={reportSub} />
+      <div id="result-content" className="rpt-inner rpt-wrap">
 
         {/* 예시 응답으로 화면을 볼 때만 나타나는 표시 (실제 AI 풀이에는 없음) */}
         {myFree && !isBaseStreaming && myFree.demo && (
@@ -2372,6 +2247,8 @@ if (screen === 'result') {
         {/* 내 사주 무료 결과 리포트: 핵심 성향 → 사주 한눈에 → 이유 → 강점 → 주의 → 팁 */}
         {useSajuReport && (
           <SajuReport
+            headless
+            summary={sajuSummary}
             name={myName}
             dateLine={`${sajuData.생년월일}${isLunar ? '' : ' · 양력'}${birthtime ? ' · ' + birthtime : ''}`}
             pillars={sajuData.사주}
@@ -2386,35 +2263,35 @@ if (screen === 'result') {
 
         {/* 맨 위: 핵심 성향 한 문장 + 짧은 생활 속 설명 (리포트가 아닐 때의 기존 화면) */}
         {!useSajuReport && myFree && !isBaseStreaming && myFree.sentence && (
-          <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '22px 20px', marginBottom: 14 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: '#633B50', margin: '0 0 8px' }}>내 사주의 핵심 성향</p>
-            <p style={{ fontSize: 19, fontWeight: 800, color: '#24232B', lineHeight: 1.6, margin: '0 0 10px', wordBreak: 'keep-all' }}>{myFree.sentence}</p>
-            {myFree.detail && <p style={{ fontSize: 15, lineHeight: 1.8, color: '#62616C', margin: 0, wordBreak: 'keep-all' }}>{myFree.detail}</p>}
+          <div style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 16, padding: '22px 20px', marginBottom: 14 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#2F5D44', margin: '0 0 8px' }}>내 사주의 핵심 성향</p>
+            <p style={{ fontSize: 19, fontWeight: 800, color: '#22211C', lineHeight: 1.6, margin: '0 0 10px', wordBreak: 'keep-all' }}>{myFree.sentence}</p>
+            {myFree.detail && <p style={{ fontSize: 15, lineHeight: 1.8, color: '#5F5E55', margin: 0, wordBreak: 'keep-all' }}>{myFree.detail}</p>}
           </div>
         )}
 
         {/* 사주팔자 표는 접어 두고 필요할 때만 펼친다 */}
         {!useSajuReport && myFree && !isBaseStreaming && sajuData?.사주 && (
-          <button data-pdf-exclude="true" aria-expanded={showSajuStruct} onClick={() => setShowSajuStruct(v => !v)} style={{ width: '100%', padding: '12px 16px', fontSize: 14, fontWeight: 600, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 12, color: '#633B50', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}><span>내 사주 구성 보기</span><span>{showSajuStruct ? '▲' : '▼'}</span></button>
+          <button data-pdf-exclude="true" aria-expanded={showSajuStruct} onClick={() => setShowSajuStruct(v => !v)} style={{ width: '100%', padding: '12px 16px', fontSize: 14, fontWeight: 600, background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 12, color: '#2F5D44', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}><span>내 사주 구성 보기</span><span>{showSajuStruct ? '▲' : '▼'}</span></button>
         )}
 
         {/* 사주팔자 카드 */}
         {!useSajuReport && sajuData?.사주 && (serviceType !== 'saju' || showSajuStruct || pdfCapturing) && (
-  <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
-    <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
-    <p style={{ fontSize: 15, color: '#62616C', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
+  <div data-pdf-card="saju" className="rpt-card">
+    <p style={{ fontSize: 15, fontWeight: 700, color: '#2F5D44', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
+    <p style={{ fontSize: 15, color: '#5F5E55', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
       {[{ label: '시주(時)', value: sajuData.사주.시주 }, { label: '일주(日)', value: sajuData.사주.일주 }, { label: '월주(月)', value: sajuData.사주.월주 }, { label: '년주(年)', value: sajuData.사주.년주 }].map(({ label, value }) => {
         const 오행색 = { '甲갑': '#1E7F4F', '乙을': '#1E7F4F', '丙병': '#C53A3A', '丁정': '#C53A3A', '戊무': '#8A5F0E', '己기': '#8A5F0E', '庚경': '#5F6B7A', '辛신': '#5F6B7A', '壬임': '#2563EB', '癸계': '#2563EB' }
-        const 색 = 오행색[value?.slice(0, 2)] || '#24232B'
+        const 색 = 오행색[value?.slice(0, 2)] || '#22211C'
         return (
           <div key={label} style={{ textAlign: 'center', background: `${색}15`, borderRadius: 12, padding: '18px 4px', border: `2px solid ${색}50` }}>
-            <span style={{ fontSize: 12, color: '#62616C', marginBottom: 10, display: 'block' }}>{label}</span>
+            <span style={{ fontSize: 12, color: '#5F5E55', marginBottom: 10, display: 'block' }}>{label}</span>
             <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
  <span style={{ fontSize: 22, fontWeight: 900, color: 색, lineHeight: 1.2 }}>{value?.slice(0,1) || '-'}</span>
-<span style={{ fontSize: 11, color: '#62616C', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
+<span style={{ fontSize: 11, color: '#5F5E55', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
 <span style={{ fontSize: 16, fontWeight: 700, color: 색, marginTop: 2 }}>{value?.slice(2,3) || ''}</span>
-<span style={{ fontSize: 11, color: '#62616C', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
+<span style={{ fontSize: 11, color: '#5F5E55', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
 </span>
           </div>
         )
@@ -2430,16 +2307,16 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   const 타입 = 일주타입명[일주키]
   if (!타입) return null
   const 오행색 = { '甲': '#1E7F4F', '乙': '#1E7F4F', '丙': '#C53A3A', '丁': '#C53A3A', '戊': '#8A5F0E', '己': '#8A5F0E', '庚': '#5F6B7A', '辛': '#5F6B7A', '壬': '#2563EB', '癸': '#2563EB' }
-  const 색 = 오행색[일주키[0]] || '#633B50'
+  const 색 = 오행색[일주키[0]] || '#2F5D44'
   return (
-    <div id="share-card" style={{ background: '#FFFFFF', border: `1px solid ${색}40`, borderRadius: 16, padding: '24px 20px', marginBottom: 20 }}>
-      <p style={{ fontSize: 11, color: '#633B50', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 12 }}>비유로 보는 내 사주 유형</p>
+    <div id="share-card" data-pdf-card="type" className="rpt-card" style={{ borderColor: `${색}40` }}>
+      <p style={{ fontSize: 11, color: '#2F5D44', fontWeight: 600, letterSpacing: '0.12em', marginBottom: 12 }}>비유로 보는 내 사주 유형</p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
         <div style={{ width: 52, height: 52, borderRadius: 12, background: `${색}18`, border: `1px solid ${색}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 900, color: 색, fontFamily: 'Georgia, serif', flexShrink: 0 }}>{일주키}</div>
         <div>
-          <p style={{ fontSize: 20, fontWeight: 800, color: '#24232B', marginBottom: 4 }}>{타입.name}</p>
-          <p style={{ fontSize: 13, color: '#62616C', lineHeight: 1.6 }}>{'이런 이미지로 읽을 수 있어요: ' + 타입.desc}</p>
-          <p style={{ fontSize: 12, color: '#62616C', lineHeight: 1.6, marginTop: 6 }}>사주 글자를 쉽게 떠올리도록 붙인 비유예요. 성격을 단정하는 이름이 아니니 참고만 하세요.</p>
+          <p style={{ fontSize: 20, fontWeight: 800, color: '#22211C', marginBottom: 4 }}>{타입.name}</p>
+          <p style={{ fontSize: 13, color: '#5F5E55', lineHeight: 1.6 }}>{'이런 이미지로 읽을 수 있어요: ' + 타입.desc}</p>
+          <p style={{ fontSize: 12, color: '#5F5E55', lineHeight: 1.6, marginTop: 6 }}>사주 글자를 쉽게 떠올리도록 붙인 비유예요. 성격을 단정하는 이름이 아니니 참고만 하세요.</p>
         </div>
       </div>
      
@@ -2450,17 +2327,17 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
         {/* 스트리밍 텍스트 */}
         {isBaseStreaming && baseText && (
-          <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+          <div className="rpt-stream" style={{ marginTop: 28 }}>
             {removeMarkers(baseText)}<span style={{ opacity: 0.4 }}>▌</span>
           </div>
         )}
 
         {/* 무료 풀이 첫 응답 대기 */}
         {phase === 'streaming' && isBaseStreaming && !baseText && (
-          <div role="status" style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 14, padding: '28px 20px', marginBottom: 14 }}>
+          <div role="status" style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 14, padding: '28px 20px', marginBottom: 14 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: '#633B50', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
-              <span style={{ fontSize: 16, color: '#24232B', marginLeft: 10 }}>사주 풀이를 준비하고 있어요</span>
+              {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: '#2F5D44', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
+              <span style={{ fontSize: 16, color: '#22211C', marginLeft: 10 }}>사주 풀이를 준비하고 있어요</span>
             </div>
           </div>
         )}
@@ -2469,18 +2346,18 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         {phase === 'error' && (
           <div role="alert" style={{ background: '#FFFFFF', border: '1px solid #C53A3A', borderRadius: 14, padding: '22px 20px', marginBottom: 14 }}>
             <p style={{ fontSize: 16, fontWeight: 700, color: '#C53A3A', marginBottom: 6 }}>풀이를 불러오지 못했어요</p>
-            <p style={{ fontSize: 14, color: '#62616C', lineHeight: 1.6, wordBreak: 'keep-all', marginBottom: 16 }}>{freeError || '잠시 후 다시 시도해주세요.'}</p>
+            <p style={{ fontSize: 14, color: '#5F5E55', lineHeight: 1.6, wordBreak: 'keep-all', marginBottom: 16 }}>{freeError || '잠시 후 다시 시도해주세요.'}</p>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 700, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer' }}
+              <button style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 700, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer' }}
                 onClick={handleFreeAnalyze}>다시 시도</button>
-              <button style={{ flex: 1, padding: '14px', fontSize: 15, background: '#FFFFFF', color: '#24232B', border: '1px solid #DEDFE5', borderRadius: 12, cursor: 'pointer' }}
+              <button style={{ flex: 1, padding: '14px', fontSize: 15, background: '#FFFFFF', color: '#22211C', border: '1px solid #E4E1D4', borderRadius: 12, cursor: 'pointer' }}
                 onClick={() => { setPhase('input'); setFreeError(null); setScreen('input') }}>입력 화면으로</button>
             </div>
           </div>
         )}
 
-        {/* 기본 분석 결과 아코디언 */}
-{!isBaseStreaming && !useSajuReport && baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수') && s.title !== '공유 문장' && s.title !== '핵심 한 문장' && s.title !== '예시 표시').map((sec, i) => {
+        {/* 기본 분석 결과 — 보고서처럼 이어지는 본문 */}
+{!isBaseStreaming && !useSajuReport && baseShown.map((sec, i) => {
   const isBlurred = serviceType !== 'saju' && i >= 1
 
   if (isBlurred && !isPaid) {
@@ -2493,32 +2370,31 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       <div key={i}>
         {isMoneySection && <SectionViewTracker eventName="money_section_viewed" params={{ service_type: serviceType }} />}
         {isCurrentPeriodSection && <SectionViewTracker eventName="current_period_section_viewed" params={{ service_type: serviceType }} />}
-        <div style={{ marginBottom: 10, border: '1px solid #DEDFE5', borderRadius: 14, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px', background: '#FFFFFF' }}>
-            <span style={{ fontSize: 17, fontWeight: 700, color: '#24232B' }}>{sec.title}</span>
-            <span style={{ fontSize: 12, color: '#633B50', background: '#F6F0F3', padding: '3px 10px', borderRadius: 20, border: '1px solid #DEDFE5' }}>전체 분석 공개</span>
+        <section className="rpt-section">
+          <p className="rpt-kicker">PART {i + 1}</p>
+          <div className="rpt-h2-row">
+            <h2 className="rpt-h2">{sec.title}</h2>
+            <span className="rpt-badge">전체 분석 공개</span>
           </div>
-          <div style={{ padding: '16px 20px 20px', fontSize: 18, color: '#24232B', wordBreak: 'keep-all', background: '#F4F5F7' }}>
-            {blocks.map((block, bi) => {
-              if (block.isLock) {
-                return <div key={bi} style={{ color: '#633B50', marginTop: 12, lineHeight: 1.8 }}>{block.bodyLines.join('\n')}</div>
-              }
-              headerCount++
-              const bodyText = block.bodyLines.join(' ').replace(/\s+/g, ' ').trim()
-              const shouldBlur = blurIdx.includes(headerCount) && bodyText
-              const { visible, hidden } = shouldBlur ? splitLastSentences(bodyText, 2) : { visible: bodyText, hidden: '' }
-              return (
-                <div key={bi} style={{ marginTop: 16, marginBottom: 4 }}>
-                  {block.header && <div style={{ fontWeight: 700, color: '#633B50', marginBottom: 4, lineHeight: 1.6 }}>{block.header}</div>}
-                  <div style={{ lineHeight: 1.9 }}>
-                    {visible && <span>{visible} </span>}
-                    {hidden && <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{hidden}</span>}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+          {blocks.map((block, bi) => {
+            if (block.isLock) {
+              return <p key={bi} className="rpt-lock">{block.bodyLines.join('\n')}</p>
+            }
+            headerCount++
+            const bodyText = block.bodyLines.join(' ').replace(/\s+/g, ' ').trim()
+            const shouldBlur = blurIdx.includes(headerCount) && bodyText
+            const { visible, hidden } = shouldBlur ? splitLastSentences(bodyText, 2) : { visible: bodyText, hidden: '' }
+            return (
+              <div key={bi}>
+                {block.header && <h3 className="rpt-h3">{block.header}</h3>}
+                <p className="rpt-p">
+                  {visible && <span>{visible} </span>}
+                  {hidden && <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{hidden}</span>}
+                </p>
+              </div>
+            )
+          })}
+        </section>
       </div>
     )
   }
@@ -2526,11 +2402,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
   return (
     <div key={i}>
       {i === 0 && (
-        <p style={{ fontSize: 12, color: '#633B50', fontWeight: 600, letterSpacing: '0.04em', margin: '0 2px 6px' }}>
+        <p className="rpt-note" style={{ margin: '28px 0 -36px', fontWeight: 600, color: '#2F5D44' }}>
           🔮 사주 분석으로 읽는 나의 성향{mbti ? ' (MBTI 교차분석 포함)' : ''}
         </p>
       )}
-      <Accordion title={sec.title} content={sec.content} defaultOpen={serviceType === 'saju' || i === 0} forceOpen={pdfCapturing} />
+      <ReportSection title={sec.title} content={sec.content} part={i + 1} />
     </div>
   )
 })}
@@ -2538,7 +2414,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
         {/* 유료 스트리밍 텍스트 */}
         {isPaidStreaming && paidText && (
-          <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 14, padding: '20px', marginBottom: 10, fontSize: 18, lineHeight: 2.2, color: '#24232B', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+          <div className="rpt-stream" style={{ marginTop: 28 }}>
             {removeMarkers(paidText)}<span style={{ opacity: 0.4 }}>▌</span>
           </div>
         )}
@@ -2546,20 +2422,21 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         {/* 유료 분석 아코디언 */}
         {!isPaidStreaming && paidSections.length > 0 && (
           <>
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#633B50', textAlign: 'center', margin: '20px 0 12px', letterSpacing: '0.08em' }}>✦ 전체 분석 결과 ✦</p>
-            {paidSections.map((sec, i) => <Accordion key={i} title={sec.title} content={sec.content} isPaid={true} defaultOpen={i === 0} forceOpen={pdfCapturing} />)}
+            <p className="rpt-kicker rpt-divider-label">✦ 전체 분석 결과 ✦</p>
+            <ReportSummary data={moneySummary} />
+            {paidSections.map((sec, i) => <ReportSection key={i} title={sec.title} content={sec.content} part={(useSajuReport ? reportCoreSections.length + 1 : baseShown.length) + i + 1} />)}
           </>
         )}
 
         {/* 내 사주 — 무료 요약 뒤에 선택 사항으로만 안내 */}
         {phase === 'done' && !isPaid && !isPaidStreaming && serviceType === 'saju' && (
-          <PaidGuide title={SAJU_PAID.title} bundles={SAJU_PAID.bundles} summary={SAJU_PAID.summary} deepNote={SAJU_PAID.deepNote} priceText="1,990원" buttonText="전체 분석 보기 · 1,990원" onBuy={() => openFullAnalysisCheckout('result_card')} />
+          <div data-pdf-exclude="true"><PaidGuide title={SAJU_PAID.title} bundles={SAJU_PAID.bundles} summary={SAJU_PAID.summary} deepNote={SAJU_PAID.deepNote} priceText="1,990원" buttonText="전체 분석 보기 · 1,990원" onBuy={() => openFullAnalysisCheckout('result_card')} /></div>
         )}
 
         {/* 결제 유도 카드 */}
         {phase === 'done' && !isPaid && !isPaidStreaming && serviceType !== 'saju' && (
-  <div style={{ background: '#FFFFFF', borderRadius: 16, padding: '28px 20px', marginBottom: 16, border: '1px solid #DEDFE5' }}>
-    <p style={{ fontSize: 12, color: '#633B50', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 16, textAlign: 'center' }}>FULL ANALYSIS</p>
+  <div data-pdf-exclude="true" style={{ background: '#FFFFFF', borderRadius: 16, padding: '28px 20px', marginBottom: 16, border: '1px solid #E4E1D4' }}>
+    <p style={{ fontSize: 12, color: '#2F5D44', fontWeight: 600, letterSpacing: '0.1em', marginBottom: 16, textAlign: 'center' }}>FULL ANALYSIS</p>
     {serviceType === 'child' || serviceType === '노후' ? (
       (serviceType === 'child'
         ? [
@@ -2588,12 +2465,12 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             { title: '총운 정리', first: '전체 분석을 한 문장으로 정리해드려요. ', blurred: '이 사주의 핵심 키워드와 앞으로 가장 중요한 시기, 지금 당장 해야 할 한 가지가 나와요.' },
           ]
       ).map((item, idx) => (
-        <div key={idx} style={{ marginBottom: 10, padding: '14px 16px', background: '#FFFFFF', borderRadius: 10, border: '1px solid #DEDFE5' }}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>✦ {item.title}</p>
-          <div style={{ fontSize: 17, lineHeight: 2.0, color: '#24232B', wordBreak: 'keep-all' }}>
+        <div key={idx} className="rpt-list-item">
+          <h3 className="rpt-h3">✦ {item.title}</h3>
+          <p className="rpt-p">
             <span>{item.first}</span>
             <span style={{ filter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' }}>{item.blurred}</span>
-          </div>
+          </p>
         </div>
       ))
     ) : (
@@ -2601,25 +2478,25 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         {FULL_ANALYSIS_PRIMARY.map((item, idx) => <FullAnalysisPreviewCard key={idx} {...item} />)}
         <button
           onClick={() => setMoreAnalysisOpen(o => !o)}
-          style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 700, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10, color: '#633B50', cursor: 'pointer', marginBottom: moreAnalysisOpen ? 10 : 0 }}>
+          style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 700, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10, color: '#2F5D44', cursor: 'pointer', marginBottom: moreAnalysisOpen ? 10 : 0 }}>
           {moreAnalysisOpen ? '숨기기 ▲' : '그 밖에 포함된 분석 4개 더 보기 ▼'}
         </button>
         {moreAnalysisOpen && FULL_ANALYSIS_MORE.map((item, idx) => <FullAnalysisPreviewCard key={idx} {...item} />)}
       </>
     )}
-    <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center', marginTop: 10 }}>총 {serviceType === 'child' ? '11' : '10'}개 섹션 · 이 모든 내용이 {serviceType === 'child' ? '9,900원' : '1,990원'}</p>
+    <p style={{ fontSize: 12, color: '#5F5E55', textAlign: 'center', marginTop: 10 }}>총 {serviceType === 'child' ? '11' : '10'}개 섹션 · 이 모든 내용이 {serviceType === 'child' ? '9,900원' : '1,990원'}</p>
     <div style={{ textAlign: 'center', marginTop: 12 }}>
-      <p style={{ fontSize: 14, color: '#62616C' }}>↓ 아래 버튼으로 결제하세요</p>
+      <p style={{ fontSize: 14, color: '#5F5E55' }}>↓ 아래 버튼으로 결제하세요</p>
     </div>
   </div>
 )}
 
         {/* 유료 분석 로딩 */}
         {isPaidStreaming && !paidText && (
-          <div style={{ background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 14, padding: '28px 20px', marginBottom: 14 }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 14, padding: '28px 20px', marginBottom: 14 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: '#633B50', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
-              <span style={{ fontSize: 16, color: '#62616C', marginLeft: 10 }}>전체 사주를 분석하고 있어요...</span>
+              {[0,1,2].map(i => <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: '#2F5D44', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}
+              <span style={{ fontSize: 16, color: '#5F5E55', marginLeft: 10 }}>전체 사주를 분석하고 있어요...</span>
             </div>
           </div>
         )}
@@ -2628,15 +2505,15 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
       <div data-pdf-exclude="true" style={{ marginTop: 28, marginBottom: 10 }}>
         {/* 기본 풀이가 끝났음을 알리는 구분선 — 아래 카드는 별도 상품(심화 분석) 안내이며 기본 풀이의 일부가 아니다 */}
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#62616C', textAlign: 'center', margin: '0 0 14px', letterSpacing: '0.04em' }}>— 여기까지가 기본 풀이(1,990원)예요 —</p>
-        <div style={{ background: '#FFFFFF', border: '1.5px solid #633B50', borderRadius: 16, padding: '22px 20px', marginBottom: 16 }}>
-          <p style={{ fontSize: 12, fontWeight: 700, color: '#633B50', margin: '0 0 4px' }}>선택 · 별도 상품</p>
-          <p style={{ fontSize: 17, fontWeight: 800, color: '#24232B', margin: '0 0 6px', wordBreak: 'keep-all' }}>심화 분석 (9,900원)</p>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: '#62616C', margin: '0 0 12px', wordBreak: 'keep-all' }}>위 기본 풀이에 더해, 큰 흐름을 따로 깊게 풀어드려요. 기본 풀이의 내용은 그대로 남아 있어요.</p>
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#5F5E55', textAlign: 'center', margin: '0 0 14px', letterSpacing: '0.04em' }}>— 여기까지가 기본 풀이(1,990원)예요 —</p>
+        <div style={{ background: '#FFFFFF', border: '1.5px solid #2F5D44', borderRadius: 16, padding: '22px 20px', marginBottom: 16 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#2F5D44', margin: '0 0 4px' }}>선택 · 별도 상품</p>
+          <p style={{ fontSize: 17, fontWeight: 800, color: '#22211C', margin: '0 0 6px', wordBreak: 'keep-all' }}>심화 분석 (9,900원)</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: '#5F5E55', margin: '0 0 12px', wordBreak: 'keep-all' }}>위 기본 풀이에 더해, 큰 흐름을 따로 깊게 풀어드려요. 기본 풀이의 내용은 그대로 남아 있어요.</p>
           {DEEP_ITEMS.map((t, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < DEEP_ITEMS.length - 1 ? 10 : 0 }}>
-              <span style={{ fontSize: 14, color: '#633B50', marginTop: 1, flexShrink: 0 }}>✓</span>
-              <span style={{ fontSize: 15, color: '#24232B', lineHeight: 1.5, wordBreak: 'keep-all' }}>{t}</span>
+              <span style={{ fontSize: 14, color: '#2F5D44', marginTop: 1, flexShrink: 0 }}>✓</span>
+              <span style={{ fontSize: 15, color: '#22211C', lineHeight: 1.5, wordBreak: 'keep-all' }}>{t}</span>
             </div>
           ))}
         </div>
@@ -2648,38 +2525,38 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
             { icon: '📄', label: 'PDF 저장' },
             { icon: '♾️', label: '평생 재열람' },
           ].map(({ icon, label }) => (
-            <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10 }}>
+            <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10 }}>
               <span style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>{icon}</span>
-              <span style={{ fontSize: 12, color: '#62616C', fontWeight: 500 }}>{label}</span>
+              <span style={{ fontSize: 12, color: '#5F5E55', fontWeight: 500 }}>{label}</span>
             </div>
           ))}
         </div>
 
         {/* 결제 버튼 */}
-        <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: 'none', marginBottom: 8 }}
+        <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: 'none', marginBottom: 8 }}
           onClick={() => { requestPayWithEmail('심화 분석', (email) => startCheckout(deepCheckout(email, (order) => { setScreen('deep_result'); handleDeepAnalyze(order) }))) }}>지금 심화분석 확인하기 →</button>
-        <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center' }}>결제 즉시 분석이 시작돼요</p>
+        <p style={{ fontSize: 12, color: '#5F5E55', textAlign: 'center' }}>결제 즉시 분석이 시작돼요</p>
       </div>
     )}
 
 
     {/* 하단 액션 영역 — 버튼/공유 등 UI 전용이라 PDF에는 포함하지 않음 */}
-    <div data-pdf-exclude="true" style={{ borderTop: '1px solid #DEDFE5', marginTop: 32, paddingTop: 24 }}>
+    <div data-pdf-exclude="true" style={{ borderTop: '1px solid #E4E1D4', marginTop: 32, paddingTop: 24 }}>
 
       {/* 이메일 — 접이식 */}
       {isPaid && (
         preEmail ? (
-          <div style={{ background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12, padding: '18px', textAlign: 'center', marginBottom: 20 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 4 }}>✅ 이메일 발송 완료</p>
-            <p style={{ fontSize: 13, color: '#62616C' }}>{preEmail}로 결과를 보내드렸어요.</p>
+          <div style={{ background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 12, padding: '18px', textAlign: 'center', marginBottom: 20 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#2F5D44', marginBottom: 4 }}>✅ 이메일 발송 완료</p>
+            <p style={{ fontSize: 13, color: '#5F5E55' }}>{preEmail}로 결과를 보내드렸어요.</p>
           </div>
         ) : (
           <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', marginBottom: 10 }}>📧 결과를 이메일로 받아두면 언제든 다시 볼 수 있어요</p>
+            <p style={{ fontSize: 13, color: '#5F5E55', textAlign: 'center', marginBottom: 10 }}>📧 결과를 이메일로 받아두면 언제든 다시 볼 수 있어요</p>
             <div style={{ display: 'flex', gap: 8 }}>
               <input id="result-email-input" type="email" placeholder="이메일 주소 입력"
-                style={{ flex: 1, padding: '12px 14px', fontSize: 14, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B' }} />
-              <button style={{ padding: '12px 18px', fontSize: 14, fontWeight: 600, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 10, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                style={{ flex: 1, padding: '12px 14px', fontSize: 14, border: '1px solid #E4E1D4', borderRadius: 10, background: '#FFFFFF', color: '#22211C' }} />
+              <button style={{ padding: '12px 18px', fontSize: 14, fontWeight: 600, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 10, cursor: 'pointer', whiteSpace: 'nowrap' }}
                 onClick={async () => {
                   const email = document.getElementById('result-email-input').value
                   if (!email || !email.includes('@')) { alert('이메일 주소를 확인해주세요.'); return }
@@ -2699,35 +2576,36 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       {/* PDF + 처음으로 — 결제 완료 후에만 표시 */}
       {isPaid && <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
         <button
-          style={{ flex: 1, padding: '14px', fontSize: 14, fontWeight: 600, background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50' }}
-          onClick={async () => { try { await exportResultPDF('result-content', '마이사주_분석결과_' + (myName || '결과'), setPdfCapturing) } catch(e) { alert('PDF 오류: ' + e.message) } }}>
+          style={{ flex: 1, padding: '14px', fontSize: 14, fontWeight: 600, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#2F5D44' }}
+          onClick={saveResultPdf}>
           📄 PDF 저장
         </button>
         <button
-          style={{ flex: 1, padding: '14px', fontSize: 14, background: 'none', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#62616C' }}
+          style={{ flex: 1, padding: '14px', fontSize: 14, background: 'none', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#5F5E55' }}
           onClick={handleRestart}>
           ← 처음으로
         </button>
       </div>}
 
       {/* 결과 요약 공유 — 공유할 내용을 먼저 확인한 뒤 직접 보낸다 */}
-      <button style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 600, background: '#FFFFFF', border: '1px solid #DEDFE5', borderRadius: 10, cursor: 'pointer', color: '#633B50', marginBottom: 10 }}
+      <button style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 600, background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#2F5D44', marginBottom: 10 }}
         onClick={() => setShareDraft(buildShareText({ sentence: serviceType === 'saju' ? parseMyFree(baseText).sentence : '', fallback: '사주로 내 성향을 가볍게 살펴봤어요. 너는 어떤 편이야?', people: [[myName, '나']] }))}>
         결과 요약 공유하기
       </button>
 
-      {isPaid && <p style={{ fontSize: 12, color: '#62616C', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>}
+      {isPaid && <p style={{ fontSize: 12, color: '#5F5E55', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>}
     </div>
+    {!isBaseStreaming && !isPaidStreaming && phase !== 'error' && (baseText || paidText) && <PrintButton />}
       </div>
       {phase === 'done' && !isPaid && !isPaidStreaming && serviceType !== 'saju' && (
-        <div style={{
+        <div className="no-print" style={{
           position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
           width: '100%', maxWidth: 480, zIndex: 999,
-          background: '#FFFFFF', borderTop: '1px solid #DEDFE5',
+          background: '#FFFFFF', borderTop: '1px solid #E4E1D4',
           padding: '10px 16px calc(10px + env(safe-area-inset-bottom))', boxSizing: 'border-box',
         }}>
             <button
-              style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: '#633B50', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+              style={{ width: '100%', padding: '16px', fontSize: 17, fontWeight: 800, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
               onClick={() => { requestPayWithEmail(serviceType === 'child' ? '자녀운 프리미엄' : '전체 분석', (email) => startCheckout({ product: fullProductFor(serviceType), input: { ...personalInput(), previousText: baseText, freeRef: freeRefRef.current }, email, buyerName: myName || '고객', buyerEmail: email || '', redirectParams: { payment: 'paid', st: serviceType || 'saju', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' }, onPaid: (order, comp) => { if (comp) setIsPaid(true); else if (window.fbq) window.fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); handlePaidAnalyze(order) } })) }}>
               <span>{serviceType === 'child' ? '자녀 풀이 전체 보기 →' : '전체 분석 보기 →'}</span>
               <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.3 }}>

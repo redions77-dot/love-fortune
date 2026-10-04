@@ -1,14 +1,16 @@
 import { sajuFacts, pillarView, ELEMENTS, ELEMENT_LABEL, ELEMENT_COLOR } from './sajuFacts.js'
+import { ReportSummary } from './reportBlocks.jsx'
 
 // "내 사주 무료 결과" 리포트 — 기존 무료 풀이(핵심 성향·이유·강점·주의·팁)와 서버가 계산한 사주 데이터를 한 장의 글처럼 보여 준다.
 // 새 입력·새 결과 항목은 없다. 비어 있는 섹션은 숨기고 번호는 보이는 섹션 기준으로 매긴다.
-const C = { page: '#FAF7F2', text: '#24232B', sub: '#62616C', accent: '#633B50', soft: '#F6F0F3', line: '#E6E1D8', bar: '#EEE9DF' }
-const SERIF = "var(--font-display, 'Nanum Myeongjo', serif)"
+// 화면 디자인은 index.css 의 보고서 규칙(.rpt-*)과 같은 색·글자 크기를 쓴다: 아이보리 배경 · 먹색 본문 · 짙은 초록 제목/강조.
+const C = { page: '#FBFAF5', text: '#22211C', title: '#1F3A2C', sub: '#5F5E55', accent: '#2F5D44', soft: '#EEF3EA', softLine: '#A9C4A0', line: '#E4E1D4', bar: '#E9E6D8' }
+const SERIF = 'inherit'
 const s = {
-  num: { fontSize: 12, fontWeight: 700, color: C.sub, letterSpacing: '0.08em', margin: '0 0 6px' },
-  h2: { fontFamily: SERIF, fontSize: 21, lineHeight: 1.5, fontWeight: 800, margin: '0 0 14px', color: C.text, wordBreak: 'keep-all' },
-  body: { fontSize: 17, lineHeight: 1.95, color: C.text, margin: '0 0 12px', wordBreak: 'keep-all' },
-  note: { fontSize: 14, lineHeight: 1.8, color: C.sub, margin: '10px 0 0', wordBreak: 'keep-all' },
+  num: { fontSize: 13, fontWeight: 700, color: C.accent, letterSpacing: '0.1em', margin: '0 0 8px' },
+  h2: { fontSize: 'clamp(22px, 6.3vw, 24px)', lineHeight: 1.4, fontWeight: 800, margin: '0 0 18px', color: C.title, letterSpacing: '-0.01em', wordBreak: 'keep-all' },
+  body: { fontSize: 18, lineHeight: 1.8, color: C.text, margin: '0 0 18px', wordBreak: 'keep-all' },
+  note: { fontSize: 15, lineHeight: 1.7, color: C.sub, margin: '10px 0 0', wordBreak: 'keep-all' },
 }
 
 // 문단 나누기 + 이모지 소제목 기호 제거 (프롬프트가 쓰는 📌 같은 표시는 화면에 보이지 않게)
@@ -69,7 +71,7 @@ function Distribution({ facts }) {
 }
 
 // props: name, dateLine, pillars({년주,월주,일주,시주}), core({sentence,detail}), why, strength, habit, tip(문자열), typeInfo({name,desc}|null)
-export default function SajuReport({ name, dateLine, pillars, core, why, strength, habit, tip, typeInfo }) {
+export default function SajuReport({ name, dateLine, pillars, core, why, strength, habit, tip, typeInfo, summary, headless = false }) {
   const facts = sajuFacts(pillars)
   const dayEl = facts.dayElement
   const tipParts = splitTip(tip)
@@ -87,28 +89,34 @@ export default function SajuReport({ name, dateLine, pillars, core, why, strengt
   if (habitParas.length) blocks.push('habit')
   const numOf = (id) => String(blocks.indexOf(id) + 1).padStart(2, '0')
   const tipNum = String(blocks.length + 1).padStart(2, '0')
-  const sec = (id, i) => ({ 'data-section': id, style: { paddingTop: i === 0 ? 0 : 36, marginBottom: 44, borderTop: i === 0 ? 'none' : `1px solid ${C.line}` } })
+  const sec = (id, i) => ({ 'data-section': id, style: { marginTop: i === 0 ? 0 : 56 } })
 
   return (
-    <article aria-label="내 사주 무료 결과 리포트" style={{ padding: '16px 4px 0', color: C.text }}>
+    <article aria-label="내 사주 무료 결과 리포트" style={{ padding: 0, color: C.text }}>
+      {!headless && (
       <header style={{ marginBottom: 44 }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: C.accent, margin: '0 0 8px' }}>마이사주 · 내 사주 무료 결과</p>
         <h1 style={{ fontFamily: SERIF, fontSize: 28, lineHeight: 1.5, fontWeight: 800, margin: '0 0 6px', wordBreak: 'keep-all' }}>{name ? `${name}님의 사주 리포트` : '나의 사주 리포트'}</h1>
         {dateLine && <p style={{ fontSize: 14, color: C.sub, margin: 0 }}>{dateLine}</p>}
       </header>
+      )}
+
+      {/* 핵심 요약: 아래 풀이에서 고른 문장만 모아 먼저 보여 준다(상세 풀이는 그대로 이어진다) */}
+      <ReportSummary data={summary} />
+      <div style={{ height: summary ? 40 : 0 }} />
 
       {core && core.sentence && (
         <section {...sec('core', blocks.indexOf('core'))}>
-          <p style={s.num}>{numOf('core')}</p>
-          <h2 style={s.h2}>나의 핵심 성향</h2>
-          <p style={{ fontFamily: SERIF, fontSize: 24, lineHeight: 1.7, fontWeight: 800, margin: '0 0 14px', wordBreak: 'keep-all' }}>{core.sentence}</p>
+          <p className="rpt-kicker" style={s.num}>{numOf('core')}</p>
+          <h2 className="rpt-h2" style={s.h2}>나의 핵심 성향</h2>
+          <p style={{ fontSize: 'clamp(20px, 5.6vw, 22px)', lineHeight: 1.6, fontWeight: 800, color: C.title, margin: '0 0 18px', wordBreak: 'keep-all' }}>{core.sentence}</p>
           {detailParas.map((p, i) => <p key={i} style={s.body}>{p}</p>)}
         </section>
       )}
 
       <section {...sec('saju', blocks.indexOf('saju'))}>
-        <p style={s.num}>{numOf('saju')}</p>
-        <h2 style={s.h2}>내 사주 한눈에</h2>
+        <p className="rpt-kicker" style={s.num}>{numOf('saju')}</p>
+        <h2 className="rpt-h2" style={s.h2}>내 사주 한눈에</h2>
         <Pillars pillars={pillars} dayGan={facts.dayGan} />
         <Distribution facts={facts} />
         {facts.dayGan && <p style={s.note}>일간(나를 대표하는 글자)은 {facts.dayGan}, {ELEMENT_LABEL[dayEl]} 기운이에요.</p>}
@@ -123,8 +131,8 @@ export default function SajuReport({ name, dateLine, pillars, core, why, strengt
 
       {whyParas.length > 0 && (
         <section {...sec('why', blocks.indexOf('why'))}>
-          <p style={s.num}>{numOf('why')}</p>
-          <h2 style={s.h2}>이런 성향이 나오는 이유</h2>
+          <p className="rpt-kicker" style={s.num}>{numOf('why')}</p>
+          <h2 className="rpt-h2" style={s.h2}>이런 성향이 나오는 이유</h2>
           {whyParas.map((p, i) => <p key={i} style={s.body}>{p}</p>)}
           {facts.relations.length > 0 && (
             <div data-facts style={{ marginTop: 18, paddingLeft: 14, borderLeft: `2px solid ${C.line}` }}>
@@ -137,30 +145,30 @@ export default function SajuReport({ name, dateLine, pillars, core, why, strengt
 
       {strengthParas.length > 0 && (
         <section {...sec('strength', blocks.indexOf('strength'))}>
-          <p style={s.num}>{numOf('strength')}</p>
-          <h2 style={s.h2}>나의 강점</h2>
+          <p className="rpt-kicker" style={s.num}>{numOf('strength')}</p>
+          <h2 className="rpt-h2" style={s.h2}>나의 강점</h2>
           {strengthParas.map((p, i) => <p key={i} style={s.body}>{p}</p>)}
         </section>
       )}
 
       {habitParas.length > 0 && (
         <section {...sec('habit', blocks.indexOf('habit'))}>
-          <p style={s.num}>{numOf('habit')}</p>
-          <h2 style={s.h2}>주의할 습관</h2>
+          <p className="rpt-kicker" style={s.num}>{numOf('habit')}</p>
+          <h2 className="rpt-h2" style={s.h2}>주의할 습관</h2>
           {habitParas.map((p, i) => <p key={i} style={s.body}>{p}</p>)}
         </section>
       )}
 
       {tipParts.main && (
-        <div data-section="tip" style={{ margin: '12px 0 40px', padding: '34px 26px', background: C.soft, borderRadius: 4 }}>
-          <p style={{ ...s.num, color: C.accent }}>{tipNum}</p>
-          <h2 style={{ ...s.h2, marginBottom: 12 }}>바로 실천할 팁</h2>
-          <p style={{ fontFamily: SERIF, fontSize: 20, lineHeight: 1.85, fontWeight: 700, margin: 0, wordBreak: 'keep-all' }}>{tipParts.main}</p>
-          {tipParts.rest && <p style={{ fontSize: 15, lineHeight: 1.8, color: C.sub, margin: '14px 0 0', wordBreak: 'keep-all' }}>{tipParts.rest}</p>}
+        <div data-section="tip" className="rpt-callout" style={{ margin: '56px 0 40px', padding: '24px 22px' }}>
+          <p className="rpt-kicker" style={{ ...s.num, color: C.accent }}>{tipNum}</p>
+          <h2 className="rpt-h2" style={{ ...s.h2, marginBottom: 12 }}>바로 실천할 팁</h2>
+          <p style={{ fontSize: 19, lineHeight: 1.75, fontWeight: 700, color: C.text, margin: 0, wordBreak: 'keep-all' }}>{tipParts.main}</p>
+          {tipParts.rest && <p style={{ fontSize: 16, lineHeight: 1.8, color: C.sub, margin: '14px 0 0', wordBreak: 'keep-all' }}>{tipParts.rest}</p>}
         </div>
       )}
 
-      <p style={{ fontSize: 13, lineHeight: 1.8, color: C.sub, textAlign: 'center', margin: '0 0 24px', wordBreak: 'keep-all' }}>사주는 정답이 아니라 나를 바라보는 하나의 관점이에요. 맞는 부분과 아닌 부분을 스스로 골라 읽어 보세요.</p>
+      <p style={{ fontSize: 14, lineHeight: 1.8, color: C.sub, textAlign: 'center', margin: '0 0 24px', wordBreak: 'keep-all' }}>사주는 정답이 아니라 나를 바라보는 하나의 관점이에요. 맞는 부분과 아닌 부분을 스스로 골라 읽어 보세요.</p>
     </article>
   )
 }

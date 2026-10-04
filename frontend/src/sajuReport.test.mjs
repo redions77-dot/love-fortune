@@ -84,9 +84,9 @@ test('리포트: 01~06 구조 — 핵심 성향 → 사주 한눈에 → 이유 
   assert.ok(html.includes('하늘님의 사주 리포트') && html.includes('1991년 8월 23일 · 양력 · 07:30') && html.includes('마이사주 · 내 사주 무료 결과'))
   // mock 시안의 안내 띠는 없다
   assert.ok(!/시안|mock|AI도 호출하지/.test(html))
-  // 첫 문장은 명조체 24px 로 강조, 팁은 박스(연한 배경) + 명조체 20px
-  assert.ok(/data-section="core"[^>]*>.*font-size:24px/.test(html))
-  assert.ok(/data-section="tip"[^>]*background:#F6F0F3/.test(html) && /font-size:20px/.test(html))
+  // 첫 문장은 크게(20~22px) 강조, 팁은 연한 초록 강조상자(.rpt-callout) + 19px
+  assert.ok(/data-section="core"[^>]*>.*font-size:clamp[(]20px, 5[.]6vw, 22px[)]/.test(html))
+  assert.ok(/data-section="tip" class="rpt-callout"/.test(html) && /font-size:19px/.test(html))
   assert.ok(html.includes('사주는 정답이 아니라 나를 바라보는 하나의 관점이에요'))
 })
 
@@ -114,13 +114,13 @@ test('리포트: 사주 원국(시·일·월·년 순)과 오행 분포, 일간,
 test('리포트: 강점·주의는 문단별로 나뉘어 읽기 쉽게 보이고, 팁은 첫 문장이 강조된다', () => {
   const html = render(base())
   const strength = html.slice(html.indexOf('data-section="strength"'), html.indexOf('data-section="habit"'))
-  assert.strictEqual((strength.match(/<p style="font-size:17px/g) || []).length, 3)
+  assert.strictEqual((strength.match(/<p style="font-size:18px/g) || []).length, 3)
   const habit = html.slice(html.indexOf('data-section="habit"'), html.indexOf('data-section="tip"'))
-  assert.strictEqual((habit.match(/<p style="font-size:17px/g) || []).length, 3)
+  assert.strictEqual((habit.match(/<p style="font-size:18px/g) || []).length, 3)
   // 팁: 첫 문장은 크게, 두 번째 문장은 보조 설명
   const tip = html.slice(html.indexOf('data-section="tip"'))
   assert.ok(tip.indexOf('부탁을 받으면 바로 답하기 전에 달력부터 확인해 보세요.') < tip.indexOf('이번 주는 어렵고'))
-  assert.ok(/font-size:15px[^>]*>자리가 없으면/.test(tip))
+  assert.ok(/font-size:16px[^>]*>자리가 없으면/.test(tip))
   // 소제목 이모지 기호는 화면에 나오지 않는다
   const marked = render(base({ strength: '📌 첫 문단이에요.\n\n✅ 둘째 문단이에요.' }))
   assert.ok(!/📌|✅/.test(marked) && marked.includes('첫 문단이에요.') && marked.includes('둘째 문단이에요.'))
@@ -146,11 +146,11 @@ test('기존 결과 화면은 그대로: 리포트는 내 사주 무료 결과�
   assert.ok(app.includes("import SajuReport from './SajuReport.jsx'"))
   assert.ok(app.includes("const useSajuReport = serviceType === 'saju' && !!myFree && !isBaseStreaming && !!myFree.sentence && !!sajuData?.사주"))
   // 기존 카드·아코디언은 삭제되지 않고 리포트일 때만 가려진다
-  for (const gate of ['{!useSajuReport && myFree && !isBaseStreaming && myFree.sentence && (', '{!useSajuReport && myFree && !isBaseStreaming && sajuData?.사주 && (', '{!useSajuReport && sajuData?.사주 && (serviceType', '{!useSajuReport && sajuData?.사주?.일주 && (serviceType', '{!isBaseStreaming && !useSajuReport && baseSections.filter(']) assert.ok(app.includes(gate), gate)
+  for (const gate of ['{!useSajuReport && myFree && !isBaseStreaming && myFree.sentence && (', '{!useSajuReport && myFree && !isBaseStreaming && sajuData?.사주 && (', '{!useSajuReport && sajuData?.사주 && (serviceType', '{!useSajuReport && sajuData?.사주?.일주 && (serviceType', '{!isBaseStreaming && !useSajuReport && baseShown.map(']) assert.ok(app.includes(gate), gate)
   // 유료 안내·공유·결제·이메일·PDF 는 그대로
-  for (const keep of ['<PaidGuide title={SAJU_PAID.title}', 'openFullAnalysisCheckout', 'buildShareText', '<ShareModal', 'pdfCapturing', "id=\"result-content\"", 'requestPayWithEmail', "key: 'gunghab'", "screen === 'gunghab_free'", 'parseGunghabFree', 'function Accordion(']) assert.ok(app.includes(keep), keep)
-  // 배경은 리포트일 때만 아이보리
-  assert.ok(app.includes("background: useSajuReport ? '#FAF7F2' : '#F4F5F7'"))
+  for (const keep of ['<PaidGuide title={SAJU_PAID.title}', 'openFullAnalysisCheckout', 'buildShareText', '<ShareModal', 'pdfCapturing', "id=\"result-content\"", 'requestPayWithEmail', "key: 'gunghab'", "screen === 'gunghab_free'", 'parseGunghabFree', 'function FullAnalysisPreviewCard(', '<ReportSection ', 'saveResultPdf', '<PrintButton']) assert.ok(app.includes(keep), keep)
+  // 결과 화면은 보고서 디자인(아이보리 배경 · 초록 상단 띠)을 쓰고, 리포트일 때는 SajuReport 가 헤더 없이(headless) 같은 띠 아래에 붙는다
+  assert.ok(app.includes('<div className="rpt-page"') && app.includes('<ReportHero eyebrow={reportEyebrow} title={reportTitle} sub={reportSub} />') && app.includes('headless'))
   // 이 브랜치에는 삶의 이정표 코드가 없다
   assert.ok(!/DirectionFlow|이정표무료/.test(app))
   // 리포트는 입력·결제·저장 코드를 쓰지 않는다

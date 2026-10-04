@@ -77,3 +77,247 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
+/* ───────────────────────── 리포트형 결과 화면 (웹 + PDF 공용) ─────────────────────────
+   기준: 아이보리 배경 · 먹색 본문 · 짙은 초록 제목/강조 · 모바일 18px / 줄간격 1.8.
+   화면 확대가 아니라 글자 크기·여백·폭으로 읽기 편함을 맞춘다. */
+:root {
+  --rp-bg: #FBFAF5;
+  --rp-ink: #22211C;
+  --rp-muted: #5F5E55;
+  --rp-title: #1F3A2C;
+  --rp-green: #2F5D44;
+  --rp-green-soft: #EEF3EA;
+  --rp-green-line: #A9C4A0;
+  --rp-border: #E4E1D4;
+}
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+.rpt-page {
+  min-height: 100vh;
+  background: var(--rp-bg);
+  color: var(--rp-ink);
+  font-family: var(--font-body), 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  overflow-x: hidden;
+}
+.rpt-page, .rpt-page * { overflow-wrap: break-word; }
+
+.rpt-hero {
+  background: linear-gradient(135deg, #2A5240 0%, #3C6C51 62%, #4D7E60 100%);
+  color: #fff;
+  padding: 40px 0 44px;
+}
+.rpt-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  padding-left: 22px;
+  padding-right: 22px;
+  width: 100%;
+}
+.rpt-eyebrow {
+  font-size: 13px; font-weight: 500; letter-spacing: 0.14em;
+  text-transform: uppercase; opacity: 0.78; margin: 0;
+}
+.rpt-title {
+  font-size: clamp(28px, 8vw, 32px); line-height: 1.32; font-weight: 800;
+  letter-spacing: -0.01em; word-break: keep-all; margin: 14px 0 0;
+}
+.rpt-sub {
+  font-size: 17px; line-height: 1.7; opacity: 0.9; word-break: keep-all; margin: 14px 0 0;
+}
+
+.rpt-wrap { padding-top: 12px; padding-bottom: calc(132px + env(safe-area-inset-bottom)); }
+.rpt-wrap > *:first-child { margin-top: 0; }
+
+/* 본문 블록 */
+.rpt-section { margin-top: 56px; }
+.rpt-kicker {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--rp-green); margin: 0 0 8px;
+}
+.rpt-h2 {
+  font-size: clamp(22px, 6.3vw, 24px); line-height: 1.4; font-weight: 800;
+  color: var(--rp-title); letter-spacing: -0.01em; word-break: keep-all;
+  margin: 0 0 18px;
+}
+.rpt-h2-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.rpt-h2-row .rpt-h2 { margin-bottom: 0; }
+.rpt-badge {
+  font-size: 13px; font-weight: 600; color: var(--rp-green); background: var(--rp-green-soft);
+  border: 1px solid var(--rp-green-line); padding: 3px 11px; border-radius: 999px; white-space: nowrap;
+}
+.rpt-h3 {
+  font-size: 20px; line-height: 1.5; font-weight: 700; color: var(--rp-green);
+  word-break: keep-all; margin: 34px 0 10px;
+}
+.rpt-p {
+  font-size: 18px; line-height: 1.8; color: var(--rp-ink); font-weight: 400;
+  word-break: keep-all; margin: 0 0 18px;
+}
+.rpt-p b, .rpt-lead { font-weight: 700; color: var(--rp-green); }
+.rpt-li { margin-bottom: 14px; }
+.rpt-lock { color: var(--rp-green); font-size: 16px; line-height: 1.75; word-break: keep-all; margin: 22px 0 18px; }
+.rpt-note { font-size: 15px; line-height: 1.7; color: var(--rp-muted); word-break: keep-all; margin: 0 0 14px; }
+.rpt-callout {
+  background: var(--rp-green-soft); border-left: 4px solid var(--rp-green-line);
+  border-radius: 0 8px 8px 0; padding: 18px 20px; margin: 28px 0;
+}
+.rpt-callout .rpt-callout-head { font-size: 17px; line-height: 1.6; font-weight: 700; color: var(--rp-green); margin: 0 0 8px; word-break: keep-all; }
+.rpt-callout .rpt-p { font-size: 17px; line-height: 1.8; margin: 0 0 10px; }
+.rpt-callout > *:last-child { margin-bottom: 0; }
+.rpt-stream { font-size: 18px; line-height: 1.8; color: var(--rp-ink); white-space: pre-wrap; word-break: keep-all; margin: 0 0 18px; }
+
+/* 데이터 시각화 카드(사주팔자·점수·타임라인)만 카드로 유지 */
+.rpt-card {
+  background: #fff; border: 1px solid var(--rp-border); border-radius: 14px;
+  padding: 24px 18px; margin: 28px 0 0;
+}
+/* 마케팅/미리보기 목록: 작은 카드 대신 구분선 목록 */
+.rpt-list-item { padding: 18px 0; border-top: 1px solid var(--rp-border); }
+.rpt-list-item:first-of-type { border-top: 0; padding-top: 4px; }
+.rpt-list-item .rpt-h3 { margin: 0 0 6px; font-size: 18px; }
+.rpt-list-item .rpt-p { font-size: 17px; margin: 0; }
+.rpt-list-item .rpt-note { margin: 4px 0 0; }
+
+@media (min-width: 400px) { .rpt-inner { padding-left: 24px; padding-right: 24px; } }
+@media (min-width: 720px) {
+  .rpt-inner { padding-left: 32px; padding-right: 32px; }
+  .rpt-hero { padding: 56px 0 60px; }
+  .rpt-title { font-size: 36px; }
+  .rpt-p, .rpt-stream { font-size: 19px; }
+  .rpt-callout .rpt-p { font-size: 18px; }
+  .rpt-h2 { font-size: 26px; }
+  .rpt-h3 { font-size: 21px; }
+}
+@media (max-width: 350px) {
+  .rpt-p, .rpt-stream { font-size: 17px; }
+}
+
+/* ── PDF 전용 문서 (A4 794×1123px). 웹과 같은 클래스를 쓰되 인쇄 크기로 지정 ── */
+.pdf-stage { position: fixed; left: -12000px; top: 0; width: 794px; pointer-events: none; }
+.pdf-stage * { box-sizing: border-box; }
+.pdf-doc, .pdf-page {
+  font-family: 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  color: var(--rp-ink); -webkit-font-smoothing: antialiased;
+}
+.pdf-measure { width: 666px; }
+.pdf-page { position: relative; width: 794px; height: 1123px; background: var(--rp-bg); overflow: hidden; }
+.pdf-page .pdf-body { padding: 0 64px; }
+.pdf-hero {
+  background: linear-gradient(135deg, #2A5240 0%, #3C6C51 62%, #4D7E60 100%);
+  color: #fff; padding: 42px 64px 38px;
+}
+.pdf-hero .rpt-eyebrow { font-size: 12px; }
+.pdf-hero .rpt-title { font-size: 34px; margin-top: 12px; }
+.pdf-hero .rpt-sub { font-size: 16px; margin-top: 12px; }
+.pdf-footer {
+  position: absolute; left: 64px; right: 64px; bottom: 30px; display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--rp-muted); border-top: 1px solid var(--rp-border); padding-top: 10px;
+}
+.pdf-doc .rpt-section, .pdf-page .rpt-section { margin-top: 0; }
+.pdf-doc .rpt-p, .pdf-page .rpt-p { font-size: 17px; line-height: 1.85; margin: 0 0 14px; }
+.pdf-doc .rpt-h2, .pdf-page .rpt-h2 { font-size: 25px; margin: 0 0 14px; }
+.pdf-doc .rpt-h3, .pdf-page .rpt-h3 { font-size: 19px; margin: 26px 0 8px; }
+.pdf-doc .rpt-kicker, .pdf-page .rpt-kicker { margin: 0 0 6px; }
+.pdf-doc .rpt-callout, .pdf-page .rpt-callout { margin: 22px 0; padding: 16px 20px; }
+.pdf-doc .rpt-callout .rpt-p, .pdf-page .rpt-callout .rpt-p { font-size: 16.5px; }
+
+.pdf-img { display: block; max-width: 100%; max-height: 900px; margin: 0 auto 18px; }
+.pdf-blk { display: flow-root; }
+.pdf-head { padding-top: 40px; }
+.pdf-label { padding-top: 24px; }
+.pdf-cont .rpt-p { margin-bottom: 0; }
+.rpt-type-desc { font-size: 15px; line-height: 1.65; color: var(--rp-muted); word-break: keep-all; text-wrap: balance; margin: 0; }
+.rpt-divider-label { text-align: center; margin: 36px 0 -30px; }
+
+/* ── 핵심 요약(인포그래픽) · 비교표 · 타임라인 · 단계 ── 실제 내용이 있을 때만 쓰인다 */
+.rpt-summary {
+  margin: 28px 0 0; padding: 22px 20px 24px; background: #fff;
+  border: 1px solid var(--rp-border); border-top: 4px solid var(--rp-green); border-radius: 4px 4px 14px 14px;
+}
+.rpt-summary .rpt-kicker { margin: 0 0 12px; }
+.rpt-sum-headline {
+  font-size: 21px; line-height: 1.55; font-weight: 800; color: var(--rp-title);
+  word-break: keep-all; margin: 0 0 18px;
+}
+.rpt-compare { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 18px 0; }
+.rpt-compare-col { border: 1px solid var(--rp-border); border-radius: 10px; padding: 14px 16px; background: #fff; }
+.rpt-compare-good { border-left: 4px solid var(--rp-green-line); background: var(--rp-green-soft); }
+.rpt-compare-warn { border-left: 4px solid #D8BE8A; background: #F8F3E6; }
+.rpt-compare-label { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; color: var(--rp-green); margin: 0 0 6px; word-break: keep-all; }
+.rpt-compare-warn .rpt-compare-label { color: #7A5A12; }
+.rpt-compare-text { font-size: 17px; line-height: 1.75; color: var(--rp-ink); margin: 0 0 8px; word-break: keep-all; }
+.rpt-compare-col > *:last-child { margin-bottom: 0; }
+.rpt-sum-rows { margin: 0 0 18px; }
+.rpt-sum-row { padding: 14px 0; border-top: 1px solid var(--rp-border); }
+.rpt-sum-row:first-child { border-top: 0; padding-top: 0; }
+.rpt-sum-row dt { font-size: 14px; font-weight: 700; color: var(--rp-green); margin: 0 0 4px; }
+.rpt-sum-row dd { margin: 0; font-size: 17px; line-height: 1.75; color: var(--rp-ink); word-break: keep-all; }
+.rpt-summary > *:last-child { margin-bottom: 0; }
+
+.rpt-timeline-wrap, .rpt-steps-wrap { margin: 8px 0 20px; }
+.rpt-timeline, .rpt-steps { list-style: none; margin: 0; padding: 0; }
+.rpt-timeline li { position: relative; margin-left: 6px; padding: 0 0 18px 26px; border-left: 2px solid var(--rp-green-line); }
+.rpt-timeline-wrap > .rpt-timeline:last-child li { border-left-color: transparent; padding-bottom: 0; }
+.rpt-timeline li::before {
+  content: ''; position: absolute; left: -7px; top: 7px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--rp-green); border: 2px solid var(--rp-bg);
+}
+.rpt-tl-when { display: block; font-size: 15px; font-weight: 700; color: var(--rp-green); margin: 0 0 2px; }
+.rpt-tl-text { display: block; font-size: 18px; line-height: 1.75; color: var(--rp-ink); word-break: keep-all; }
+.rpt-steps li { display: flex; gap: 14px; align-items: flex-start; padding: 0 0 14px; }
+.rpt-step-n {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; background: var(--rp-green); color: #fff;
+  font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 2px;
+}
+.rpt-step-text { font-size: 18px; line-height: 1.75; color: var(--rp-ink); word-break: keep-all; }
+
+.rpt-print-btn {
+  display: block; margin: 20px auto 0; padding: 11px 18px; font-size: 14px; font-weight: 600;
+  color: var(--rp-green); background: #fff; border: 1px solid var(--rp-border); border-radius: 8px; cursor: pointer;
+}
+
+@media (min-width: 720px) {
+  .rpt-compare { grid-template-columns: 1fr 1fr; }
+  .rpt-sum-row { display: grid; grid-template-columns: 190px 1fr; gap: 16px; align-items: baseline; }
+  .rpt-sum-row dt { margin: 0; }
+  .rpt-sum-headline { font-size: 24px; }
+  .rpt-tl-text, .rpt-step-text { font-size: 19px; }
+}
+
+/* PDF(이미지 방식) 안의 요약·비교·타임라인은 한 줄 폭으로 쌓는다 */
+.pdf-doc .rpt-summary, .pdf-page .rpt-summary { margin: 0 0 18px; padding: 20px 20px 22px; }
+.pdf-doc .rpt-compare, .pdf-page .rpt-compare { grid-template-columns: 1fr; margin: 14px 0; }
+.pdf-doc .rpt-compare-text, .pdf-page .rpt-compare-text, .pdf-doc .rpt-sum-row dd, .pdf-page .rpt-sum-row dd { font-size: 16.5px; }
+.pdf-doc .rpt-sum-row, .pdf-page .rpt-sum-row { display: block; }
+.pdf-doc .rpt-tl-text, .pdf-page .rpt-tl-text, .pdf-doc .rpt-step-text, .pdf-page .rpt-step-text { font-size: 17px; }
+.pdf-doc .rpt-timeline-wrap, .pdf-page .rpt-timeline-wrap { margin: 0; }
+.pdf-doc .rpt-timeline li, .pdf-page .rpt-timeline li { padding-bottom: 14px; }
+.pdf-doc .rpt-sum-headline, .pdf-page .rpt-sum-headline { font-size: 21px; }
+
+/* ── 브라우저 인쇄(인쇄 → PDF로 저장): A4, 글자는 그대로 선택·검색 가능 ──
+   메뉴·결제 버튼·고정 바·관리자 안내·공유/이메일 영역은 data-pdf-exclude / .no-print 로 표시해 인쇄에서 뺀다.
+   화면에 보이는(= 볼 권한이 있는) 결과만 인쇄된다. 색 유지를 위해 print-color-adjust 를 켠다(배경 그래픽 설정이 꺼져 있어도 유지). */
+@page { size: A4; margin: 16mm 15mm 18mm; }
+@media print {
+  html, body { background: #fff !important; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .no-print, [data-pdf-exclude="true"], .rpt-print-btn { display: none !important; }
+  .rpt-page { background: #fff; min-height: 0; overflow: visible; }
+  .rpt-hero { background: none !important; color: var(--rp-title); padding: 0 0 10pt; margin: 0 0 14pt; border-bottom: 2pt solid var(--rp-green); }
+  .rpt-hero .rpt-eyebrow, .rpt-hero .rpt-sub { color: var(--rp-muted); opacity: 1; }
+  .rpt-title { color: var(--rp-title); font-size: 24pt; }
+  .rpt-inner { max-width: none; padding-left: 0; padding-right: 0; }
+  .rpt-wrap { padding-bottom: 0; }
+  .rpt-section { margin-top: 22pt; }
+  .rpt-h2 { font-size: 17pt; }
+  .rpt-h3 { font-size: 13.5pt; margin-top: 16pt; }
+  .rpt-p, .rpt-stream, .rpt-tl-text, .rpt-step-text, .rpt-compare-text, .rpt-sum-row dd { font-size: 11.5pt; line-height: 1.75; }
+  .rpt-callout .rpt-p { font-size: 11pt; }
+  .rpt-h2, .rpt-h3, .rpt-kicker, .rpt-callout-head, .rpt-compare-label { break-after: avoid; page-break-after: avoid; }
+  .rpt-callout, .rpt-card, .rpt-summary, .rpt-compare, .rpt-compare-col, .rpt-sum-row, .rpt-timeline li, .rpt-steps li, .rpt-list-item { break-inside: avoid; page-break-inside: avoid; }
+  p, li { orphans: 3; widows: 3; }
+  .rpt-compare { grid-template-columns: 1fr 1fr; }
+  .rpt-card { margin-top: 14pt; }
+}

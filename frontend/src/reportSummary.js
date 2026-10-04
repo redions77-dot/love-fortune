@@ -1,0 +1,116 @@
+// 결과 상단 "한눈에 보기" 요약을 만든다. 이미 나온 풀이 문장에서 골라 올 뿐, 새 문장·점수·확률·예측을 만들지 않는다.
+// 문장이 너무 길거나 찾지 못하면 그 항목은 생략한다(null). 새 AI 호출은 없다.
+import { parseContentBlocks, stripMarker } from './contentBlocks.js'
+
+const MAX_ONE = 190   // 한 항목에 쓸 수 있는 최대 글자(문장 단위로만 자른다)
+
+const clean = (t) => String(t || '').replace(/\s+/g, ' ').trim()
+const sentencesOf = (t) => clean(t).split(/(?<=[.!?。])\s+/).filter(Boolean)
+
+// 앞에서부터 문장 단위로 maxSentences개까지, 글자 수 한도 안에서만 가져온다. 첫 문장부터 한도를 넘으면 null(생략).
+export function takeSentences(text, maxSentences = 1, maxChars = MAX_ONE) {
+  const ss = sentencesOf(stripMarker(text))
+  if (!ss.length || ss[0].length > maxChars) return null
+  let out = ss[0]
+  for (let i = 1; i < Math.min(ss.length, maxSentences); i++) {
+    if ((out + ' ' + ss[i]).length > maxChars) break
+    out += ' ' + ss[i]
+  }
+  return out
+}
+
+const nonEmpty = (v) => (v ? v : null)
+
+// 내 사주 무료 결과(parseMyFree) → 핵심 성향 / 강점·주의할 점 / 지금 해볼 행동
+export function summarizeSaju(myFree) {
+  if (!myFree) return null
+  const headline = nonEmpty(takeSentences(myFree.sentence, 1, 220))
+  const strength = takeSentences(myFree.strength, 1)
+  const caution = takeSentences(myFree.habit, 1)
+  const action = takeSentences(myFree.tip, 2, 240)
+  const compare = strength && caution ? { left: { label: '강점', text: strength }, right: { label: '주의할 점', text: caution } } : null
+  if (!headline && !compare && !action) return null
+  return { kind: 'saju', title: '한눈에 보기', headline, compare, strengthOnly: !compare ? strength : null, cautionOnly: !compare ? caution : null, action, actionLabel: '지금 해볼 행동' }
+}
+
+// 관계 궁합 무료 결과(parseGunghabFree) → 잘 맞는 점 / 부딪히기 쉬운 점(= 조율할 점) / 바로 써볼 대화 방법
+export function summarizeGunghabFree(parsed) {
+  if (!parsed) return null
+  const good = takeSentences(parsed.good, 1)
+  const tune = takeSentences(parsed.tune, 1)
+  const line = parsed.line ? clean(parsed.line) : null     // 서버 규칙(한 문장·존댓말)을 통과한 문장만 parsed.line 에 들어온다
+  const compare = good && tune ? { left: { label: '잘 맞는 점', text: good }, right: { label: '부딪히기 쉬운 점', text: tune } } : null
+  if (!compare && !line) return null
+  return { kind: 'gunghab', title: '한눈에 보기', headline: null, compare, strengthOnly: !compare ? good : null, cautionOnly: !compare ? tune : null, action: line, actionLabel: '바로 써볼 대화 방법' }
+}
+
+// 하위 소제목 아래 첫 문장. 소제목은 h3 이거나, 이모지로 시작하는 긴 줄(문단으로 읽힌 소제목)일 수 있다.
+// 본문은 문단·번호 항목·단계 목록의 첫 항목에서 가져온다. 다음 소제목·강조상자·비교표를 만나면 멈춘다.
+const startsWithMark = (t) => ['📌', '✅', '⚠️', '🔑', '💡', '🌟'].some(e => String(t || '').startsWith(e))
+function bodyUnder(blocks, headRe) {
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i]
+    const isHead = (b.type === 'h3' || (b.type === 'p' && startsWithMark(b.text))) && headRe.test(b.text)
+    if (!isHead) continue
+    for (let j = i + 1; j < blocks.length; j++) {
+      const n = blocks[j]
+      if (n.type === 'h3' || n.type === 'callout' || n.type === 'compare' || (n.type === 'p' && startsWithMark(n.text))) break
+      let text = null
+      if (n.type === 'p' || n.type === 'li') text = String(n.text || '').replace(/^\d+\.\s*/, '')
+      else if (n.type === 'steps' && n.items.length) text = n.items[0].text
+      if (text) { const got = takeSentences(text, 1); if (got) return got }
+    }
+  }
+  return null
+}
+
+// 재물·직업(유료 전체 분석 / 심화): 돈이 들어오는 방식 / 돈이 새기 쉬운 곳 / 나에게 맞는 일의 환경.
+// 제목에 財運·재물 이 있는 섹션과 職·직업 이 있는 섹션에서, 해당 소제목이 실제로 있을 때만 뽑는다.
+export function summarizeMoney(sections) {
+  const list = Array.isArray(sections) ? sections : []
+  const money = list.find(s => /財運|재물/.test(s.title))
+  const job = list.find(s => /職|직업/.test(s.title))
+  const mb = money ? parseContentBlocks(money.content) : []
+  const jb = job ? parseContentBlocks(job.content) : []
+  const rows = []
+  const inflow = bodyUnder(mb, /돈\s*흐름|돈이 (들어|모)/)
+  const leak = bodyUnder(mb, /새는|새기|샐/)
+  const env = bodyUnder(jb, /환경|구조/)
+  if (inflow) rows.push({ label: '돈이 들어오는 방식', text: inflow })
+  if (leak) rows.push({ label: '돈이 새기 쉬운 곳', text: leak })
+  if (env) rows.push({ label: '나에게 맞는 일의 환경', text: env })
+  if (!rows.length) return null
+  return { kind: 'money', title: '재물·직업 한눈에 보기', rows }
+}
+
+// 관계 상세 풀이(유료): ✅ 소제목 → 잘 맞는 점, ⚠️ 소제목 → 부딪히기 쉬운 점. 대화 문장은 무료 요약에서 검증된 문장(line)이 있을 때만.
+export function summarizeGunghabPaid(sections, freeLine) {
+  const list = Array.isArray(sections) ? sections : []
+  let good = null, tune = null
+  for (const s of list) {
+    const bs = parseContentBlocks(s.content)
+    if (!good) good = firstByEmoji(bs, '✅')
+    if (!tune) tune = firstByEmoji(bs, '⚠️')
+    if (good && tune) break
+  }
+  const line = freeLine ? clean(freeLine) : null
+  const compare = good && tune ? { left: { label: '잘 맞는 점', text: good }, right: { label: '부딪히기 쉬운 점', text: tune } } : null
+  if (!compare && !line) return null
+  return { kind: 'gunghab', title: '한눈에 보기', headline: null, compare, strengthOnly: !compare ? good : null, cautionOnly: !compare ? tune : null, action: line, actionLabel: '바로 써볼 대화 방법' }
+}
+
+function firstByEmoji(blocks, emoji) {
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i]
+    const isHead = b.type === 'h3' && b.text.startsWith(emoji)
+    const cmp = b.type === 'compare' && (emoji === '✅' ? b.left : b.right)
+    if (cmp) { const side = emoji === '✅' ? b.left : b.right; const g = takeSentences(side.items[0]?.text, 1); if (g) return g; continue }
+    if (!isHead) continue
+    for (let j = i + 1; j < blocks.length; j++) {
+      const n = blocks[j]
+      if (n.type === 'h3' || n.type === 'callout' || n.type === 'compare') break
+      if (n.type === 'p' || n.type === 'li') { const g = takeSentences(String(n.text).replace(/^\d+\.\s*/, ''), 1); if (g) return g }
+    }
+  }
+  return null
+}

@@ -272,7 +272,7 @@ test('대화 문장 섹션이 없거나 비어 있으면 line이 비어 화면�
   assert.strictEqual(empty.line, '')
   // App.jsx 는 parsed.line 이 비어 있으면 카드를 그리지 않는다
   const app = readFileSync(new URL('./App.jsx', import.meta.url), 'utf8')
-  assert.ok(app.includes("{parsed.line && <div style={{ ...card, background: '#F6F0F3' }}>"))
+  assert.ok(app.includes('{parsed.line && (') && app.includes('이렇게 말해보세요'))
 })
 
 test('원문 대체 표시(파싱 실패 화면)에서도 검증에 실패한 대화 문장은 나오지 않는다', () => {
