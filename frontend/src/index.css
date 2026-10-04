@@ -321,9 +321,14 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   html, body, #root { background: #fff !important; color: #111 !important; }
   *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; forced-color-adjust: none; }
 
-  /* 배경 그래픽이 꼭 필요한 요소만 색을 유지 */
-  .rpt-card, .rpt-card *, [data-pdf-card], [data-pdf-card] *, [data-distribution], [data-distribution] *, [data-pillar], [data-pillar] *,
-  .rpt-callout, .rpt-compare-col, .rpt-step-n, .rpt-timeline li::before, .rpt-badge, .rpt-summary { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* 배경은 어떤 것도 어둡게 인쇄되지 않게 한다.
+     - 오행 분포 막대·관계 항목 칸처럼 "그래프 채움"만 색을 유지한다(print-color-adjust: exact).
+     - 그 밖의 모든 배경(카드·요약·비교 칸·강조 상자·표 셀·배지 등)은 투명 = 흰 종이. 구분은 테두리와 글자색으로 한다.
+     (기기가 밝은 배경을 어둡게 바꿔도, 배경을 그리지 않으므로 검게 인쇄될 수 없다) */
+  [data-distribution] i, [data-pdf-card="bars"] div[style*="flex: 1"] { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rpt-page *:not(i):not([style*="flex: 1"]), .rpt-page *::before, .rpt-page *::after { background-color: transparent !important; background-image: none !important; }
+  [data-pdf-card="bars"] div[style*="flex: 1"] { border: 1px solid #8a8a8a; }
+  [data-pdf-card="bars"] div[style*="flex: 1"][style*="228, 229, 234"] { background-color: transparent !important; }
 
   .no-print, [data-pdf-exclude="true"], .rpt-print-btn { display: none !important; }
   .rpt-page { background: #fff !important; min-height: 0; overflow: visible; color: #111; }
@@ -349,19 +354,19 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .rpt-compare-warn .rpt-compare-label { color: #6b4e0e; }
   .rpt-section { margin-top: 22pt; }
 
-  /* 카드·표·구분선: 흰 바탕에서 선명한 테두리, 강조 상자는 아주 연한 색 + 굵은 왼쪽 선 */
-  .rpt-card { background: #fff !important; border: 1px solid #a8a8a8 !important; margin-top: 14pt; }
-  .rpt-summary { background: #fff !important; border: 1px solid #a8a8a8 !important; border-top: 3pt solid #1f5a3a !important; }
-  .rpt-callout { background: #eef4ea !important; border-left: 4pt solid #4f8a5a !important; }
+  /* 카드·표·구분선: 흰 바탕에서 선명한 테두리. 강조 상자·비교 칸은 배경 대신 굵은 왼쪽 선(초록/호박색)으로 구분 */
+  .rpt-card { border: 1px solid #a8a8a8 !important; margin-top: 14pt; }
+  .rpt-summary { border: 1px solid #a8a8a8 !important; border-top: 3pt solid #1f5a3a !important; }
+  .rpt-callout { border: 1px solid #bdbdbd !important; border-left: 4pt solid #1f5a3a !important; }
   .rpt-compare-col { border: 1px solid #bdbdbd; }
-  .rpt-compare-good { background: #eef4ea !important; border-left: 4pt solid #4f8a5a; }
-  .rpt-compare-warn { background: #f8f1df !important; border-left: 4pt solid #b8943f; }
+  .rpt-compare-good { border-left: 4pt solid #1f5a3a; }
+  .rpt-compare-warn { border-left: 4pt solid #b8943f; }
   .rpt-sum-row { border-top: 1px solid #cfcfcf; }
   .rpt-list-item { border-top: 1px solid #cfcfcf; }
   .rpt-timeline li { border-left-color: #6f9f78; }
-  .rpt-timeline li::before { background: #1f5a3a; border-color: #fff; }
-  .rpt-step-n { background: #1f5a3a !important; color: #fff !important; }
-  .rpt-badge { background: #eef4ea !important; color: #1f5a3a; border-color: #8fb08a; }
+  .rpt-timeline li::before { width: 5pt; height: 5pt; border: 2.5pt solid #1f5a3a !important; }
+  .rpt-step-n { color: #1f5a3a !important; border: 1.5pt solid #1f5a3a; }
+  .rpt-badge { color: #1f5a3a; border-color: #6f9f78; }
 
   /* 페이지 나눔: 제목은 다음 본문과 함께, 짧은 카드·강조 상자·표·타임라인 한 줄은 쪼개지 않음. 긴 문단과 큰 블록은 자연스럽게 다음 쪽으로 이어짐 */
   .rpt-h2, .rpt-h3, .rpt-kicker, .rpt-callout-head, .rpt-compare-label, [data-section] h2 { break-after: avoid; page-break-after: avoid; }

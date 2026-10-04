@@ -249,11 +249,16 @@ test('밝은 테마 고정: meta color-scheme, :root color-scheme, 인쇄 색 �
   // 인쇄: 흰 바탕·진한 글자를 명시하고, 그림자는 제거
   assert.ok(/html, body, #root \{ background: #fff !important; color: #111 !important; \}/.test(print))
   assert.ok(print.includes('box-shadow: none !important') && print.includes('color-scheme: only light'))
-  assert.ok(/\.rpt-card \{ background: #fff !important/.test(print) && /\.rpt-summary \{ background: #fff !important/.test(print))
-  // 모든 요소를 한꺼번에 검정으로 덮지 않는다(오행·그래프 색 유지) / 배경 색 유지(exact)는 필요한 요소에만
+  // 인쇄에서는 그래프 채움을 뺀 모든 배경(카드·요약·비교 칸·강조 상자·표 셀)을 투명(흰 종이)으로 — 어둡게 바뀐 배경이 인쇄될 수 없다
+  assert.ok(print.includes('.rpt-page *:not(i):not([style*="flex: 1"])') && /background-color: transparent !important; background-image: none !important;/.test(print))
+  // 모든 요소를 한꺼번에 검정으로 덮지 않는다(오행·그래프 색 유지)
   assert.ok(!/\*\s*\{[^}]*\bcolor:\s*#?(000|111)/.test(print.replace(/html, body, #root[^}]*\}/, '')))
-  assert.ok(!/(^|\n)\s*\* \{[^}]*print-color-adjust: exact/.test(print))
-  assert.ok(print.includes('[data-distribution]') && print.includes('[data-pillar]'))
+  // 배경 색 유지(exact)는 그래프 채움(오행 분포 막대·관계 항목 칸)에만. 카드·요약·강조 상자·비교 칸에는 걸지 않는다
+  const exactRules = print.split('\n').filter(l => l.includes('{') && l.includes('print-color-adjust: exact'))
+  assert.strictEqual(exactRules.length, 1)
+  assert.ok(exactRules[0].includes('[data-distribution] i') && exactRules[0].includes('flex: 1'))
+  assert.ok(!/rpt-(card|summary|callout|compare-col|badge|step-n)/.test(exactRules[0]))
+  assert.ok(!/\.rpt-(callout|compare-good|compare-warn|badge|step-n)\s*\{[^}]*background:\s*#/.test(print))
   // 다운로드 PDF(이미지 방식): 캡처 바탕은 흰색, 캡처 문서는 라이트 고정
   const pdf = readFileSync(here('./pdfExport.jsx'), 'utf8')
   assert.ok(!pdf.includes('#FBFAF5') && (pdf.match(/backgroundColor: '#FFFFFF'/g) || []).length === 2 && pdf.includes("stage.style.colorScheme = 'light'"))
