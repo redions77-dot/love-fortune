@@ -57,3 +57,15 @@ export function sajuFacts(pillars) {
     .slice(0, 2)
   return { counts, total, dayGan: day ? day.gan : null, dayElement: X, groups, relations }
 }
+
+// 서버가 계산한 여덟 글자의 오행 개수. 네 기둥이 모두 읽히고 다섯 개수의 합이 8일 때만 값을 돌려주고, 아니면 null(표를 숨긴다).
+export function elementDistribution(pillars) {
+  const counts = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 }
+  for (const key of ['년주', '월주', '일주', '시주']) {
+    const v = pillarView(pillars && pillars[key])
+    if (!v || !v.ganEl || !v.jiEl) return null
+    counts[v.ganEl]++; counts[v.jiEl]++
+  }
+  const total = ELEMENTS.reduce((n, el) => n + counts[el], 0)
+  return total === 8 ? { counts, total } : null
+}

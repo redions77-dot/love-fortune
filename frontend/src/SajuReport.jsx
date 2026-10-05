@@ -1,5 +1,6 @@
-import { sajuFacts, pillarView, ELEMENTS, ELEMENT_LABEL, ELEMENT_COLOR } from './sajuFacts.js'
+import { sajuFacts, pillarView, ELEMENT_LABEL, ELEMENT_COLOR } from './sajuFacts.js'
 import { ReportSummary } from './reportBlocks.jsx'
+import ElementDistribution from './ElementDistribution.jsx'
 
 // "내 사주 무료 결과" 리포트 — 기존 무료 풀이(핵심 성향·이유·강점·주의·팁)와 서버가 계산한 사주 데이터를 한 장의 글처럼 보여 준다.
 // 새 입력·새 결과 항목은 없다. 비어 있는 섹션은 숨기고 번호는 보이는 섹션 기준으로 매긴다.
@@ -51,25 +52,6 @@ function Pillars({ pillars, dayGan }) {
   )
 }
 
-function Distribution({ facts }) {
-  return (
-    <>
-      <p style={{ fontSize: 14, fontWeight: 700, margin: '0 0 10px', color: C.text }}>여덟 글자의 기운 분포</p>
-      <div data-distribution style={{ display: 'grid', gridTemplateColumns: '44px 1fr 26px', alignItems: 'center', rowGap: 8, columnGap: 10, marginBottom: 6 }}>
-        {ELEMENTS.map((el) => (
-          <div key={el} style={{ display: 'contents' }}>
-            <span style={{ fontSize: 14, color: ELEMENT_COLOR[el] }}>{ELEMENT_LABEL[el]}</span>
-            <div style={{ height: 6, background: C.bar, borderRadius: 3, position: 'relative', overflow: 'hidden' }}>
-              <i style={{ position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 3, width: `${facts.total ? (facts.counts[el] / facts.total) * 100 : 0}%`, background: ELEMENT_COLOR[el] }} />
-            </div>
-            <span style={{ fontSize: 14, color: C.sub, textAlign: 'right' }}>{facts.counts[el]}</span>
-          </div>
-        ))}
-      </div>
-    </>
-  )
-}
-
 // props: name, dateLine, pillars({년주,월주,일주,시주}), core({sentence,detail}), why, strength, habit, tip(문자열), typeInfo({name,desc}|null)
 export default function SajuReport({ name, dateLine, pillars, core, why, strength, habit, tip, typeInfo, summary, headless = false }) {
   const facts = sajuFacts(pillars)
@@ -118,7 +100,7 @@ export default function SajuReport({ name, dateLine, pillars, core, why, strengt
         <p className="rpt-kicker" style={s.num}>{numOf('saju')}</p>
         <h2 className="rpt-h2" style={s.h2}>내 사주 한눈에</h2>
         <Pillars pillars={pillars} dayGan={facts.dayGan} />
-        <Distribution facts={facts} />
+        <ElementDistribution pillars={pillars} />
         {facts.dayGan && <p style={s.note}>일간(나를 대표하는 글자)은 {facts.dayGan}, {ELEMENT_LABEL[dayEl]} 기운이에요.</p>}
         {typeInfo && (
           <div id="share-card" style={{ marginTop: 22, paddingLeft: 14, borderLeft: `2px solid ${C.line}` }}>

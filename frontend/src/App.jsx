@@ -6,6 +6,7 @@ import ShareModal from './ShareModal.jsx'
 import PaidGuide from './PaidGuide.jsx'
 import PaidIntro from './PaidIntro.jsx'
 import SajuReport from './SajuReport.jsx'
+import ElementDistribution from './ElementDistribution.jsx'
 import { SUBHEAD_EMOJIS } from './contentBlocks.js'
 import { ReportHero, ReportSection, ReportSummary, PdfSaveArea, CompareBlock, renderFormattedContent } from './reportBlocks.jsx'
 import { exportResultPDF } from './pdfExport.jsx'
@@ -637,7 +638,6 @@ export default function App() {
   const [deepText, setDeepText] = useState('')
   const [isDeepStreaming, setIsDeepStreaming] = useState(false)
   const [openCheongan, setOpenCheongan] = useState(null)
-  const [seasonData, setSeasonData] = useState(null)
   const [deepEmailInput, setDeepEmailInput] = useState('')
   const [deepEmailSent, setDeepEmailSent] = useState(false)
   const [moreAnalysisOpen, setMoreAnalysisOpen] = useState(false)
@@ -859,16 +859,15 @@ export default function App() {
 
   async function handleDeepAnalyze(order) {
     paidOrdersRef.current.deep = order
-    setDeepText(''); setIsDeepStreaming(true); setSeasonData(null)
+    setDeepText(''); setIsDeepStreaming(true)
     let fullDeepText = ''
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
       const result = await streamOrderAnalysis(order, {
         signal: ctrl.signal,
-        onReset: () => { fullDeepText = ''; setDeepText(''); setSeasonData(null) },
+        onReset: () => { fullDeepText = ''; setDeepText('') },
         onEvent: (json) => {
           if (json.type === 'saju') setSajuData(json.사주 ? { 사주: json.사주, 생년월일: json.생년월일 } : null)
-          else if (json.type === 'season') setSeasonData(json.data)
           else if (json.text) { fullDeepText += json.text; setDeepText(prev => prev + json.text) }
         },
       })
@@ -917,7 +916,7 @@ export default function App() {
     setPartnerIsLunar(false); setPartnerTimeHour(''); setPartnerTimeMin(''); setPartnerTimeAmPm('오전'); setPartnerTimeUnknown(false)
     setMyName(''); setPartnerName(''); setGunghabText(''); setIsGunghabStreaming(false); setGunghabSajuData(null)
     setGilil목적(''); setGililText(''); setIsGililStreaming(false); isPaidSectionRef.current = false
-    setSeasonData(null); setDeepText(''); setIsDeepStreaming(false); setIsDeepPaid(false); setDeepEmailInput(''); setDeepEmailSent(false)
+    setDeepText(''); setIsDeepStreaming(false); setIsDeepPaid(false); setDeepEmailInput(''); setDeepEmailSent(false)
     set백년Text(''); setIs백년Streaming(false); set백년Name(''); set백년BirthYear(''); set백년BirthMonth(''); set백년BirthDay(''); set백년TimeHour(''); set백년TimeMin(''); set백년TimeAmPm('오전'); set백년TimeUnknown(false); set백년Email(''); set백년EmailSent(false); set백년EmailInput(''); set백년Gender('')
   }
 
@@ -1210,13 +1209,6 @@ export default function App() {
         .then(() => setDeepEmailSent(true))
         .catch((e) => alert(e.message))
     }
-    const seasonPhases = seasonData ? [
-      { key: 'wood', icon: '木', color: '#1E7F4F', bgColor: 'rgba(74,222,128,0.08)', borderColor: 'rgba(74,222,128,0.3)' },
-      { key: 'fire', icon: '火', color: '#C53A3A', bgColor: 'rgba(248,113,113,0.08)', borderColor: 'rgba(248,113,113,0.3)' },
-      { key: 'earth', icon: '土', color: '#8A5F0E', bgColor: 'rgba(138,95,14,0.08)', borderColor: 'rgba(138,95,14,0.3)' },
-      { key: 'metal', icon: '金', color: '#5F6B7A', bgColor: 'rgba(95,107,122,0.08)', borderColor: 'rgba(95,107,122,0.3)' },
-      { key: 'water', icon: '水', color: '#2563EB', bgColor: 'rgba(96,165,250,0.08)', borderColor: 'rgba(96,165,250,0.3)' },
-    ] : []
     const deepShown = deepSections.filter(sec => sec.title !== '분석 결과' && !sec.title.includes('운의계절') && sec.content?.trim())
     const deepSubtitle = [myName && myName + '님', sajuData?.생년월일].filter(Boolean).join(' · ')
     const deepMoneySummary = !isDeepStreaming ? summarizeMoney(deepShown) : null
@@ -1229,7 +1221,6 @@ export default function App() {
         ...(deepShown.length > 0
           ? deepShown.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: i + 1 }))
           : [{ kind: 'section', title: '심화 분석', content: removeMarkers(deepText) }]),
-        { kind: 'card', selector: '[data-pdf-card="season"]' },
       ],
     })
     return (
@@ -1258,6 +1249,7 @@ export default function App() {
           )
         })}
       </div>
+      <div style={{ marginTop: 22 }}><ElementDistribution pillars={sajuData.사주} /></div>
     </div>
   )}
 
@@ -1342,91 +1334,6 @@ export default function App() {
             if (isDeepPaid && deepText.trim()) return <div className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(deepText)}</div>
             return null
           })()}
-
-          {/* 나의 운의 계절 타임라인 */}
-          {!isDeepStreaming && seasonData && (
-            <div data-pdf-card="season" className="rpt-card" style={{ padding: '28px 20px', marginTop: 56, marginBottom: 20 }}>
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <p style={{ fontSize: 11, color: '#2F5D44', fontWeight: 600, letterSpacing: '0.15em', marginBottom: 8 }}>CAREER SEASON</p>
-                <p style={{ fontSize: 20, fontWeight: 800, color: '#22211C' }}>나의 운의 계절</p>
-                <p style={{ fontSize: 13, color: '#5F5E55', marginTop: 6 }}>사주와 수비학 기반 오행 커리어 흐름</p>
-              </div>
-
-              {seasonData.yearsToEarth > 0 && (
-                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 12 }}>
-                  <p style={{ fontSize: 14, color: '#5F5E55', marginBottom: 4 }}>커리어/재물 정점까지</p>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 4 }}>
-                    <span style={{ fontSize: 40, fontWeight: 900, color: '#2F5D44', lineHeight: 1 }}>{seasonData.yearsToEarth}</span>
-                    <span style={{ fontSize: 16, fontWeight: 600, color: '#2F5D44' }}>년 남았어요</span>
-                  </div>
-                </div>
-              )}
-              {seasonData.yearsToEarth === 0 && seasonData.current === 'earth' && (
-                <div style={{ textAlign: 'center', marginBottom: 24, padding: '14px 16px', background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 12 }}>
-                  <p style={{ fontSize: 16, fontWeight: 800, color: '#2F5D44' }}>지금이 전성기입니다</p>
-                  <p style={{ fontSize: 13, color: '#5F5E55', marginTop: 4 }}>커리어와 재물의 정점을 지나고 있어요</p>
-                </div>
-              )}
-
-              <div style={{ position: 'relative', paddingLeft: 28 }}>
-                {/* 타임라인 세로 선 */}
-                <div style={{ position: 'absolute', left: 11, top: 24, bottom: 24, width: 2, background: '#EEF3EA' }} />
-
-                {seasonPhases.map((phase, idx) => {
-                  const data = seasonData[phase.key]
-                  if (!data) return null
-                  const isCurrent = seasonData.current === phase.key
-                  const isPast = seasonPhases.findIndex(p => p.key === seasonData.current) > idx
-                  return (
-                    <div key={phase.key} style={{ position: 'relative', marginBottom: idx < seasonPhases.length - 1 ? 16 : 0 }}>
-                      {/* 타임라인 점 */}
-                      <div style={{
-                        position: 'absolute', left: -22, top: 20,
-                        width: isCurrent ? 18 : 12, height: isCurrent ? 18 : 12,
-                        borderRadius: '50%',
-                        background: isCurrent ? phase.color : isPast ? '#FFFFFF' : '#FFFFFF',
-                        border: `2px solid ${isCurrent ? phase.color : isPast ? '#E4E1D4' : phase.borderColor}`,
-                        marginLeft: isCurrent ? -3 : 0, marginTop: isCurrent ? -3 : 0,
-                        boxShadow: isCurrent ? `0 0 12px ${phase.color}60` : 'none',
-                        zIndex: 1,
-                      }} />
-
-                      <div style={{
-                        background: isCurrent ? phase.bgColor : isPast ? '#FBFAF5' : '#FFFFFF',
-                        border: `${isCurrent ? 2 : 1}px solid ${isCurrent ? phase.color + '80' : '#E4E1D4'}`,
-                        borderRadius: 14,
-                        padding: '18px 16px',
-                        transition: 'all 0.3s ease',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span style={{ fontSize: 28, fontWeight: 900, color: isCurrent ? phase.color : '#5F5E55', fontFamily: 'Georgia, serif' }}>{phase.icon}</span>
-                            <div>
-                              <p style={{ fontSize: 15, fontWeight: 700, color: isCurrent ? '#22211C' : '#5F5E55' }}>{data.label?.split(' · ')[1] || data.label}</p>
-                              <p style={{ fontSize: 12, color: isCurrent ? '#5F5E55' : '#5F5E55', marginTop: 2 }}>{data.desc}</p>
-                            </div>
-                          </div>
-                          {isCurrent && (
-                            <span style={{ fontSize: 10, fontWeight: 700, color: '#FFFFFF', background: phase.color, padding: '3px 8px', borderRadius: 10, border: `1px solid ${phase.color}` }}>NOW</span>
-                          )}
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-                          <span style={{ fontSize: 12, color: isCurrent ? '#5F5E55' : '#5F5E55' }}>{data.start}년 ~ {data.end}년</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <div style={{ width: 60, height: 6, background: '#E4E1D4', borderRadius: 99, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${data.score}%`, background: isCurrent ? phase.color : '#8A8994', borderRadius: 99, transition: 'width 1s ease' }} />
-                            </div>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: isCurrent ? phase.color : '#5F5E55' }}>{data.score}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
 
           {isDeepPaid && (
             <div data-pdf-exclude="true">
@@ -2286,6 +2193,7 @@ if (screen === 'result') {
         )
       })}
     </div>
+    <div style={{ marginTop: 22 }}><ElementDistribution pillars={sajuData.사주} /></div>
   </div>
 )}
 

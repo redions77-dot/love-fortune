@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { buildSync } from 'esbuild'
 import { createElement as h } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { sajuFacts, pillarView, ELEMENT_LABEL } from './sajuFacts.js'
+import { sajuFacts, pillarView, elementDistribution, ELEMENT_LABEL } from './sajuFacts.js'
 
 const require = createRequire(import.meta.url)
 const S = require('../../backend/saju.js')
@@ -96,9 +96,9 @@ test('리포트: 사주 원국(시·일·월·년 순)과 오행 분포, 일간,
   assert.ok(order.every((v, i) => v > 0 && (i === 0 || v > order[i - 1])))
   for (const ch of ['庚', '辰', '乙', '丑', '丙', '申', '辛', '未']) assert.ok(html.includes(ch), ch)
   assert.ok(html.includes('나를 대표하는 글자') && html.includes('일간(나를 대표하는 글자)은 乙, 나무 기운이에요.'))
-  assert.ok(html.includes('여덟 글자의 기운 분포'))
-  const dist = html.slice(html.indexOf('data-distribution'), html.indexOf('일간(나를'))
-  assert.deepStrictEqual([...dist.matchAll(/text-align:right">(\d)<\/span>/g)].map((m) => m[1]), ['1', '1', '3', '3', '0'])
+  assert.ok(html.includes('내 사주의 오행 분포') && html.includes('사주 8글자의 오행 구성을 보여주는 표예요.') && !html.includes('여덟 글자의 기운 분포'))
+  const dist = html.slice(html.indexOf('data-element-distribution'), html.indexOf('일간(나를'))
+  assert.deepStrictEqual([...dist.matchAll(/text-align:right;font-weight:600">(\d)개<\/span>/g)].map((m) => m[1]), ['1', '1', '3', '3', '0'])
   assert.ok(dist.includes('width:37.5%') && dist.includes('width:0%'))
   assert.ok(html.includes('비유로 보는 내 사주 유형') && html.includes('뚝심 승부사형') && html.includes('이런 이미지로 읽을 수 있어요: 느리지만 반드시 이긴다, 포기를 모르는 덩굴.'))
   // 이렇게 풀이한 이유 (옛 표현은 없다)
@@ -108,7 +108,27 @@ test('리포트: 사주 원국(시·일·월·년 순)과 오행 분포, 일간,
   // 시간을 모르는 경우: 시주 칸은 '-' 로 표시되고 오류 없이 그려진다
   const noTime = render(base({ pillars: { ...P1991, 시주: '-' }, dateLine: '1991년 8월 23일 · 양력' }))
   assert.ok(noTime.includes('data-pillar="시주"') && !noTime.includes('庚'))
-  assert.ok(noTime.includes('>0</span>') || noTime.includes('>1</span>'))
+  assert.ok(!noTime.includes('data-element-distribution'))  // 여덟 글자가 아니면(합 8 아님) 표를 숨긴다
+})
+
+test('오행 분포: 서버가 계산한 8글자에서 합이 항상 8, 출생 연도가 달라도 일치하고 점수·길흉 표현이 없다', () => {
+  for (const y of [1959, 1985, 1991, 2000, 2009, 2015]) {
+    const ilju = S.get일주(`${y}-06-15`), nyun = S.get년주(y)
+    const pillars = { 년주: nyun.간지, 월주: S.get월주(y, 6, 15, nyun.천간index), 일주: ilju.간지, 시주: S.get시주('12:00', ilju.천간index) }
+    const d = elementDistribution(pillars)
+    assert.ok(d, String(y))
+    assert.strictEqual(Object.values(d.counts).reduce((a, b) => a + b, 0), 8)
+    assert.deepStrictEqual(d.counts, sajuFacts(pillars).counts)
+    const html = render(base({ pillars }))
+    const dist = html.slice(html.indexOf('data-element-distribution'), html.indexOf('일간(나를'))
+    assert.deepStrictEqual([...dist.matchAll(/text-align:right;font-weight:600">(\d)개<\/span>/g)].map((m) => Number(m[1])), ['목', '화', '토', '금', '수'].map((e) => d.counts[e]))
+    assert.ok(!/점수|등급|좋|나쁜|길|흉|부족|과다/.test(dist.replace(/<[^>]+>/g, '')))
+    assert.ok(!html.includes('운의 계절') && !html.includes('전성기'))
+  }
+  // 값이 없거나 8글자가 아니면 채우지 않고 숨긴다
+  assert.strictEqual(elementDistribution(null), null)
+  assert.strictEqual(elementDistribution({ 년주: '辛신未미', 월주: '丙병申신', 일주: '乙을丑축', 시주: '-' }), null)
+  assert.strictEqual(elementDistribution({ 년주: '辛신未미', 월주: '丙병申신', 일주: '乙을丑축' }), null)
 })
 
 test('리포트: 강점·주의는 문단별로 나뉘어 읽기 쉽게 보이고, 팁은 첫 문장이 강조된다', () => {
