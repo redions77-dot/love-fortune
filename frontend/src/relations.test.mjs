@@ -324,5 +324,6 @@ test('1,990원 안내 항목은 서버 유료 프롬프트의 실제 섹션 수�
   // 기본 풀이 뒤: 문장 중간에서 끊긴 흐림 미리보기를 쓰지 않고, 별도 카드로 심화 안내
   const upsell = app.slice(app.indexOf('심화분석 업셀'), app.indexOf('하단 액션 영역'))
   assert.ok(!upsell.includes('_teaser') && !upsell.includes('blur('))
-  assert.ok(upsell.includes('여기까지가 기본 풀이(1,990원)예요') && upsell.includes('선택 · 별도 상품'))
+  // 상품명은 정확히: 무료 풀이 / 전체 분석(1,990원) / 심화 분석(9,900원). ('기본 풀이'는 첫 화면에서 무료 풀이를 뜻하므로 1,990원 구간에는 쓰지 않는다)
+  assert.ok(upsell.includes('여기까지가 전체 분석(1,990원)이에요') && upsell.includes('선택 · 별도 상품'))
 })

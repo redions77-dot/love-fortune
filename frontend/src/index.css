@@ -377,3 +377,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .rpt-compare { grid-template-columns: 1fr 1fr; }
   .rpt-card, .rpt-summary, img, svg { max-width: 100%; }
 }
+
+/* ── 내 사주 무료 결과 마지막 유료 안내(소개 + 펼침 상품 안내) ── */
+.rpt-paid-intro { margin: 48px 0 24px; padding: 26px 20px 22px; background: #fff; border: 1px solid var(--rp-border); border-radius: 14px; text-align: center; }
+.rpt-paid-intro-title { font-size: clamp(21px, 5.8vw, 24px); line-height: 1.4; font-weight: 800; color: var(--rp-title); letter-spacing: -0.01em; margin: 0 0 12px; word-break: keep-all; }
+.rpt-paid-intro-text { font-size: 17px; line-height: 1.75; color: var(--rp-ink); margin: 0 0 10px; word-break: keep-all; text-wrap: balance; }
+.rpt-paid-intro-note { font-size: 15px; line-height: 1.7; color: var(--rp-muted); margin: 0 0 18px; word-break: keep-all; text-wrap: balance; }
+.rpt-paid-intro-btn { width: 100%; min-height: 52px; padding: 14px 18px; font-size: 17px; font-weight: 800; color: #fff; background: var(--rp-green); border: none; border-radius: 12px; cursor: pointer; word-break: keep-all; }
+.rpt-paid-intro #paid-product-area { text-align: left; }
+@media (min-width: 720px) { .rpt-paid-intro { padding: 32px 32px 28px; } .rpt-paid-intro-btn { max-width: 420px; } }

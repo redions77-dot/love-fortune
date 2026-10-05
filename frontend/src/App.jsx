@@ -4,13 +4,15 @@ import { PAYMENT_CONFIG, isAnalyticsHost } from './paymentConfig.js'
 import GunghabBars from './GunghabBars.jsx'
 import ShareModal from './ShareModal.jsx'
 import PaidGuide from './PaidGuide.jsx'
+import PaidIntro from './PaidIntro.jsx'
 import SajuReport from './SajuReport.jsx'
 import { SUBHEAD_EMOJIS } from './contentBlocks.js'
 import { ReportHero, ReportSection, ReportSummary, PrintButton, CompareBlock, renderFormattedContent } from './reportBlocks.jsx'
 import { exportResultPDF } from './pdfExport.jsx'
 import { summarizeSaju, summarizeMoney, summarizeGunghabFree, summarizeGunghabPaid } from './reportSummary.js'
 import { isAdminEntry } from './adminLink.js'
-import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText } from './relations.js'
+import { emailPrefillFor, prefillSignature } from './emailPrefill.js'
+import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, SAJU_PAID_FREE_NOTE, SAJU_PAID_HIGHLIGHTS, SAJU_PAID_FACTS, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText } from './relations.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
 // 없으면 조용히 무시한다. 나중에 다른 분석 도구를 붙일 때도 호출부는 바꿀 필요 없이 이 함수만 확장하면 된다.
@@ -630,6 +632,8 @@ export default function App() {
     finally { setPdfCapturing(false) }
   }
   const [preEmail, setPreEmail] = useState('')
+  const [emailPrefill, setEmailPrefill] = useState(null)   // { email, sig } 같은 입력의 심화 결제에만 미리 채움 (새 분석·입력 변경 시 사용 안 함)
+  const [deepAutoEmail, setDeepAutoEmail] = useState(null)   // 심화 결제 때 입력한 이메일: null=알 수 없음, ''=이메일 없이 결제
   const [deepText, setDeepText] = useState('')
   const [isDeepStreaming, setIsDeepStreaming] = useState(false)
   const [openCheongan, setOpenCheongan] = useState(null)
@@ -828,7 +832,7 @@ export default function App() {
     return {
       product: 'deep', input: { ...personalInput(), previousText: [baseText, paidText].filter(t => t && t.trim()).join('\n\n') }, email, buyerName: myName || '고객', buyerEmail: email || '',
       redirectParams: { payment: 'deep', g: gender, ms: maritalStatus, by: birthYear, bm: birthMonth, bd: birthDay, il: isLunar ? '1' : '0', bt: birthtime || '', mbti: mbti || '', blood: blood || '', mn: myName || '' },
-      onPaid: (order, comp) => { if (!comp && window.fbq) window.fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); afterPaid(order) },
+      onPaid: (order, comp) => { if (!comp && window.fbq) window.fbq('track', 'Purchase', { value: order.amount, currency: 'KRW' }); setDeepAutoEmail(email || ''); afterPaid(order) },
     }
   }
 
@@ -875,8 +879,10 @@ export default function App() {
   }
 
   function requestPayWithEmail(productName, onConfirm) {
-    setPreEmail('')
-    setEmailModal({ productName, onConfirm: (email) => { if (email) setPreEmail(email); onConfirm(email) } })
+    // 같은 사람·같은 입력으로 이어지는 심화 결제에만 방금 쓴 이메일을 미리 채운다. (고객이 확인·수정 가능)
+    const sig = prefillSignature(personalInput())
+    setPreEmail(emailPrefillFor(productName, emailPrefill, sig))
+    setEmailModal({ productName, onConfirm: (email) => { setPreEmail(email || ''); if (email) setEmailPrefill({ email, sig }); onConfirm(email) } })
   }
 
   // 무료 결과 페이지의 '전체 분석 1,990원' 결제 진입점 — 어느 teaser에서 눌렀는지(location)만 추가로 기록한다.
@@ -901,6 +907,7 @@ export default function App() {
     if (isPaid && !wasEmailSent) { const confirmed = window.confirm('📧 이메일로 결과를 받으셨나요?\n\n[취소] 돌아가서 이메일 받기\n[확인] 그냥 나가기'); if (!confirmed) return }
     abortRef.current?.abort()
     freeResultViewedRef.current = false
+    setPreEmail(''); setEmailPrefill(null); setDeepAutoEmail(null)
     setScreen('landing'); setServiceType(null); setStep(0)
     setGender(''); setMaritalStatus(''); setBirthYear(''); setBirthMonth(''); setBirthDay('')
     setIsLunar(false); setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
@@ -1292,15 +1299,8 @@ export default function App() {
               {/* 받는 것 리스트 */}
               <div style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 16, padding: '22px 20px', marginBottom: 20 }}>
                 <p style={{ fontSize: 16, fontWeight: 700, color: '#22211C', marginBottom: 16 }}>9,900원 결제하면 이렇게 받아요</p>
-                {[
-                  '재물·커리어 심층 분석',
-                  '대운 흐름 + 전환점 정확한 연도',
-                  '수비학 운명수 분석',
-                  '오행으로 본 나의 커리어 계절 (木火土金水)',
-                  '귀인 만나는 시기 + 구체적 행동 전략',
-                  '절대 하면 안 되는 결정 1가지',
-                ].map((t, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < 5 ? 12 : 0 }}>
+                {DEEP_ITEMS.map((t, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < DEEP_ITEMS.length - 1 ? 12 : 0 }}>
                     <span style={{ fontSize: 14, color: '#2F5D44', marginTop: 1, flexShrink: 0 }}>✓</span>
                     <span style={{ fontSize: 15, color: '#22211C', lineHeight: 1.5 }}>{t}</span>
                   </div>
@@ -1310,9 +1310,9 @@ export default function App() {
               {/* 혜택 3종 세트 */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 {[
-                  { icon: '⚡', label: '즉시 열림' },
+                  { icon: '⚡', label: '결제 후 생성' },
                   { icon: '📄', label: 'PDF 저장' },
-                  { icon: '♾️', label: '평생 재열람' },
+                  { icon: '📧', label: '이메일 받기' },
                 ].map(({ icon, label }) => (
                   <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10 }}>
                     <span style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>{icon}</span>
@@ -1441,6 +1441,11 @@ export default function App() {
 
           {isDeepPaid && (
             <div data-pdf-exclude="true">
+              {!deepEmailSent && deepAutoEmail !== null && (
+                <p style={{ fontSize: 13, color: '#2F5D44', textAlign: 'center', lineHeight: 1.7, marginBottom: 10, wordBreak: 'keep-all' }}>
+                  {deepAutoEmail ? <>📧 입력하신 {deepAutoEmail}로도 결과를 보내드려요.<br/>메일이 보이지 않으면 아래에서 직접 받을 수 있어요.</> : '이메일 없이 결제하셨어요. 아래에서 이메일로 받거나 PDF로 저장해주세요.'}
+                </p>
+              )}
               {!deepEmailSent ? (
                 <div style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 12, padding: '20px', marginBottom: 16 }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#2F5D44', marginBottom: 8 }}>📧 이메일로 결과 받기</p>
@@ -1790,13 +1795,6 @@ export default function App() {
           <p style={{ fontSize: 12, color: '#5F5E55', textAlign: 'center', marginTop: 6, lineHeight: 1.6 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요. PC에서 이용해주세요.</p>
           {!isGunghabStreaming && gunghabText && <PrintButton />}
           <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#5F5E55', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
-          {preEmail ? (
-            <div style={{ marginTop: 20, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 12, padding: '20px', textAlign: 'center' }}>
-              <p style={{ fontSize: 20, marginBottom: 6 }}>✅</p>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#2F5D44', marginBottom: 4 }}>이메일 발송 완료!</p>
-              <p style={{ fontSize: 13, color: '#5F5E55', lineHeight: 1.7 }}>{preEmail}<br/>로 결과를 보내드렸어요.</p>
-            </div>
-          ) : (
             <div style={{ marginTop: 20, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 12, padding: '20px' }}>
               <p style={{ fontSize: 15, fontWeight: 700, color: '#2F5D44', marginBottom: 6 }}>📧 이메일로 결과 받기</p>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -1811,7 +1809,6 @@ export default function App() {
                   }}>발송</button>
               </div>
             </div>
-          )}
           </div>
         </div>
       </div>
@@ -1826,13 +1823,13 @@ if (emailModal) {
         {emailModal.productName === '심화 분석' ? (
           <>
             <p style={{ fontSize: 20, fontWeight: 700, color: '#24232B', textAlign: 'center', marginBottom: 8, lineHeight: 1.5 }}>막혔던 부분,<br/>지금 다 풀어드릴게요</p>
-            <p style={{ fontSize: 13, color: '#24232B', textAlign: 'center', marginBottom: 18, lineHeight: 1.6 }}>재물·커리어 심층 분석 · 대운 흐름 · 수비학 운명수 · 귀인 시기 · 행동 전략</p>
+            <p style={{ fontSize: 13, color: '#24232B', textAlign: 'center', marginBottom: 18, lineHeight: 1.6 }}>종합 흐름 요약 · 수비학 운명수 · 10년 대운 · 귀인 · 해야 할 것과 하지 말아야 할 것</p>
             <div style={{ textAlign: 'center', marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10 }}>
                 <span style={{ fontSize: 32, fontWeight: 800, color: '#633B50' }}>9,900원</span>
               </div>
             </div>
-            <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', marginBottom: 20 }}>한 번 결제하면 이 결과를 계속 볼 수 있어요</p>
+            <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', marginBottom: 20 }}>결제 후 풀이를 생성해요.</p>
           </>
         ) : emailModal.productName === '자녀운 프리미엄' ? (
           <>
@@ -1843,7 +1840,7 @@ if (emailModal) {
                 <span style={{ fontSize: 32, fontWeight: 800, color: '#633B50' }}>9,900원</span>
               </div>
             </div>
-            <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', marginBottom: 20 }}>한 번 결제하면 이 결과를 계속 볼 수 있어요</p>
+            <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', marginBottom: 20 }}>결제 후 풀이를 생성해요.</p>
           </>
         ) : (
           <>
@@ -1852,10 +1849,10 @@ if (emailModal) {
           </>
         )}
         <div style={{ background: '#FFFFFF', borderRadius: 12, padding: '16px 18px', marginBottom: 20 }}>
-          <p style={{ fontSize: 14, color: '#24232B', lineHeight: 2.2, margin: 0 }}>
-            📧 결과는 이메일로 바로 전송돼요<br/>
-            🔒 이메일은 결과 발송에만 사용돼요<br/>
-            ♾️ 언제든 다시 볼 수 있어요
+          <p style={{ fontSize: 14, color: '#24232B', lineHeight: 2.2, margin: 0, wordBreak: 'keep-all' }}>
+            {emailModal.productName === '전체 분석' || emailModal.productName === '자녀운 프리미엄' || emailModal.productName === '심화 분석' ? '📧 결과가 완성되면 이메일로도 보내드려요' : '📧 결과가 완성되면 결과 화면에서 이메일로 받을 수 있어요'}<br/>
+            🔒 이메일은 결과 발송과 결제·문의 확인에만 쓰이고, 구매 기록과 함께 저장돼요<br/>
+            📄 결과 화면에서 PDF로 저장할 수도 있어요
           </p>
         </div>
         <input
@@ -1874,7 +1871,7 @@ if (emailModal) {
           onClick={() => { const cb = emailModal.onConfirm; setEmailModal(null); cb(null) }}>
           이메일 없이 결제하기
         </button>
-        <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', marginTop: 6 }}>이메일 없이 결제하면 결과를 저장할 수 없어요.</p>
+        <p style={{ fontSize: 13, color: '#62616C', textAlign: 'center', marginTop: 6, wordBreak: 'keep-all', textWrap: 'balance' }}>이메일 없이 결제하시면 결과를 자동으로 보내드릴 수 없어요. 완료 후 PDF 저장이나 이메일 받기를 이용해주세요.</p>
       </div>
     </div>
   )
@@ -1923,12 +1920,19 @@ if (emailModal) {
         <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: '24px 24px 36px', textAlign: 'center', boxSizing: 'border-box' }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>마이사주</p>
           <h1 style={{ wordBreak: 'keep-all', fontSize: 34, fontWeight: 700, color: C.text, marginBottom: 14, lineHeight: 1.3, letterSpacing: '-0.02em' }}>나, 앞으로<br/>잘 풀릴까?</h1>
-          <p style={{ wordBreak: 'keep-all', fontSize: 15, color: C.sub, lineHeight: 1.8, marginBottom: 28 }}>사주로 나를 이해하고,<br/>사람 사이에서 바로 써볼 말을 찾아보세요.</p>
+          <p style={{ wordBreak: 'keep-all', fontSize: 16, color: C.text, lineHeight: 1.75, marginBottom: 28 }}>
+            <span style={{ display: 'block' }}>일도, 돈도, 사람 관계도.</span>
+            <span style={{ display: 'block', textWrap: 'balance' }}>내 사주에는 어떤 이야기가 담겨 있을까요?</span>
+          </p>
           <button
             style={{ width: '100%', maxWidth: 360, minHeight: 52, padding: '14px 20px', fontSize: 16, fontWeight: 700, background: C.accent, color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', wordBreak: 'keep-all' }}
             onClick={goSaju}>
             내 사주 무료로 보기 →
           </button>
+          <div style={{ maxWidth: 360, margin: '16px auto 0' }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: C.text, lineHeight: 1.7, margin: 0, wordBreak: 'keep-all' }}>기본 풀이는 무료로 볼 수 있어요.</p>
+            <p style={{ fontSize: 15, color: C.sub, lineHeight: 1.7, margin: 0, wordBreak: 'keep-all', textWrap: 'balance' }}>더 자세한 풀이를 원할 때 유료 상품을 선택해주세요.</p>
+          </div>
         </div>
 
         {/* 메뉴 2개 — 메뉴 이름보다 얻는 도움을 먼저 설명 */}
@@ -1948,7 +1952,7 @@ if (emailModal) {
               </div>
             ))}
           </div>
-          <p style={{ textAlign: 'center', fontSize: 13, color: C.sub, lineHeight: 1.7, padding: '20px 0 0', marginTop: 20, borderTop: '1px solid ' + C.line, wordBreak: 'keep-all' }}>무료 요약은 결제 없이 볼 수 있어요. 더 깊은 상세 풀이는 요약을 본 뒤 선택할 수 있고, 유료(1,990원)예요.</p>
+          <div style={{ borderTop: '1px solid ' + C.line, marginTop: 20 }} />
           <p style={{ textAlign: 'center', margin: '8px 0 0' }}><button onClick={() => setScreen('other_services')} style={footerLinkStyle}>다른 풀이 보기</button></p>
         </div>
 
@@ -2430,7 +2434,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
         {/* 내 사주 — 무료 요약 뒤에 선택 사항으로만 안내 */}
         {phase === 'done' && !isPaid && !isPaidStreaming && serviceType === 'saju' && (
-          <div data-pdf-exclude="true"><PaidGuide title={SAJU_PAID.title} bundles={SAJU_PAID.bundles} summary={SAJU_PAID.summary} deepNote={SAJU_PAID.deepNote} priceText="1,990원" buttonText="전체 분석 보기 · 1,990원" onBuy={() => openFullAnalysisCheckout('result_card')} /></div>
+          <div data-pdf-exclude="true">
+            <PaidIntro>
+              <PaidGuide title={SAJU_PAID.title} bundles={SAJU_PAID.bundles} summary={SAJU_PAID.summary} deepNote={SAJU_PAID.deepNote} highlights={SAJU_PAID_HIGHLIGHTS} freeNote={SAJU_PAID_FREE_NOTE} facts={SAJU_PAID_FACTS} priceText="1,990원" buttonText="전체 분석 보기 · 1,990원" onBuy={() => openFullAnalysisCheckout('result_card')} />
+            </PaidIntro>
+          </div>
         )}
 
         {/* 결제 유도 카드 */}
@@ -2505,11 +2513,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     {((isPaid && serviceType === 'saju') || serviceType === 'deep') && (
       <div data-pdf-exclude="true" style={{ marginTop: 28, marginBottom: 10 }}>
         {/* 기본 풀이가 끝났음을 알리는 구분선 — 아래 카드는 별도 상품(심화 분석) 안내이며 기본 풀이의 일부가 아니다 */}
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#5F5E55', textAlign: 'center', margin: '0 0 14px', letterSpacing: '0.04em' }}>— 여기까지가 기본 풀이(1,990원)예요 —</p>
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#5F5E55', textAlign: 'center', margin: '0 0 14px', letterSpacing: '0.04em' }}>— 여기까지가 전체 분석(1,990원)이에요 —</p>
         <div style={{ background: '#FFFFFF', border: '1.5px solid #2F5D44', borderRadius: 16, padding: '22px 20px', marginBottom: 16 }}>
           <p style={{ fontSize: 12, fontWeight: 700, color: '#2F5D44', margin: '0 0 4px' }}>선택 · 별도 상품</p>
           <p style={{ fontSize: 17, fontWeight: 800, color: '#22211C', margin: '0 0 6px', wordBreak: 'keep-all' }}>심화 분석 (9,900원)</p>
-          <p style={{ fontSize: 13, lineHeight: 1.7, color: '#5F5E55', margin: '0 0 12px', wordBreak: 'keep-all' }}>위 기본 풀이에 더해, 큰 흐름을 따로 깊게 풀어드려요. 기본 풀이의 내용은 그대로 남아 있어요.</p>
+          <p style={{ fontSize: 13, lineHeight: 1.7, color: '#5F5E55', margin: '0 0 12px', wordBreak: 'keep-all' }}>전체 분석과 별도 상품이에요. 아래 7가지를 따로 풀어드려요.</p>
           {DEEP_ITEMS.map((t, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < DEEP_ITEMS.length - 1 ? 10 : 0 }}>
               <span style={{ fontSize: 14, color: '#2F5D44', marginTop: 1, flexShrink: 0 }}>✓</span>
@@ -2521,9 +2529,9 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         {/* 혜택 3종 세트 */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           {[
-            { icon: '⚡', label: '즉시 열림' },
+            { icon: '⚡', label: '결제 후 생성' },
             { icon: '📄', label: 'PDF 저장' },
-            { icon: '♾️', label: '평생 재열람' },
+            { icon: '📧', label: '이메일 받기' },
           ].map(({ icon, label }) => (
             <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10 }}>
               <span style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>{icon}</span>
@@ -2545,14 +2553,9 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
       {/* 이메일 — 접이식 */}
       {isPaid && (
-        preEmail ? (
-          <div style={{ background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 12, padding: '18px', textAlign: 'center', marginBottom: 20 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#2F5D44', marginBottom: 4 }}>✅ 이메일 발송 완료</p>
-            <p style={{ fontSize: 13, color: '#5F5E55' }}>{preEmail}로 결과를 보내드렸어요.</p>
-          </div>
-        ) : (
           <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 13, color: '#5F5E55', textAlign: 'center', marginBottom: 10 }}>📧 결과를 이메일로 받아두면 언제든 다시 볼 수 있어요</p>
+            {preEmail && <p style={{ fontSize: 13, color: '#2F5D44', textAlign: 'center', lineHeight: 1.7, marginBottom: 10, wordBreak: 'keep-all' }}>📧 입력하신 {preEmail}로 결과를 보내드려요.<br/>메일이 보이지 않으면 아래에서 직접 받을 수 있어요.</p>}
+            <p style={{ fontSize: 13, color: '#5F5E55', textAlign: 'center', marginBottom: 10 }}>📧 결과를 이메일로 받아 두면 받은 메일함에서 다시 볼 수 있어요</p>
             <div style={{ display: 'flex', gap: 8 }}>
               <input id="result-email-input" type="email" placeholder="이메일 주소 입력"
                 style={{ flex: 1, padding: '12px 14px', fontSize: 14, border: '1px solid #E4E1D4', borderRadius: 10, background: '#FFFFFF', color: '#22211C' }} />
@@ -2570,7 +2573,6 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
                 }}>발송</button>
             </div>
           </div>
-        )
       )}
 
       {/* PDF + 처음으로 — 결제 완료 후에만 표시 */}

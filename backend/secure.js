@@ -15,7 +15,7 @@ const PRODUCTS = Object.freeze({
   full_saju:  { amount: 1990,  name: '마이사주 전체 분석',          kind: 'personal',  analysisType: '전체',     prefix: 'saju',    autoEmail: true,  resultType: 'base',      emailLabel: '✨ 나의 사주 분석' },
   full_child: { amount: 9900,  name: '마이사주 자녀운 프리미엄',    kind: 'personal',  analysisType: '자녀천명', prefix: 'child',   autoEmail: true,  resultType: 'child',     emailLabel: '🌱 우리 아이 진로·학과 프리미엄' },
   full_nohu:  { amount: 1990,  name: '마이사주 전체 분석',          kind: 'personal',  analysisType: '노후',     prefix: 'saju',    autoEmail: true,  resultType: 'nohu',      emailLabel: '🌅 노후 운세 분석' },
-  deep:       { amount: 9900,  name: '마이사주 심화 분석',          kind: 'personal',  analysisType: '심화',     prefix: 'deep',    autoEmail: false, resultType: 'deep' },
+  deep:       { amount: 9900,  name: '마이사주 심화 분석',          kind: 'personal',  analysisType: '심화',     prefix: 'deep',    autoEmail: true,  resultType: 'deep' },
   gunghab:    { amount: 1990,  name: '마이사주 궁합 분석',          kind: 'gunghab',   analysisType: '궁합',     prefix: 'gunghab', autoEmail: false, resultType: 'gunghab' },
   gilil:      { amount: 9900,  name: '마이사주 길일 추천',          kind: 'gilil',                               prefix: 'gilil' },
   baeknyeon:  { amount: 99000, name: '마이사주 100년 사주 인생 꿀팁', kind: 'baeknyeon', analysisType: '100년꿀팁', prefix: 'baek',    autoEmail: false, resultType: '100년꿀팁' },
