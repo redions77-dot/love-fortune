@@ -148,7 +148,7 @@ test('기존 결과 화면은 그대로: 리포트는 내 사주 무료 결과�
   // 기존 카드·아코디언은 삭제되지 않고 리포트일 때만 가려진다
   for (const gate of ['{!useSajuReport && myFree && !isBaseStreaming && myFree.sentence && (', '{!useSajuReport && myFree && !isBaseStreaming && sajuData?.사주 && (', '{!useSajuReport && sajuData?.사주 && (serviceType', '{!useSajuReport && sajuData?.사주?.일주 && (serviceType', '{!isBaseStreaming && !useSajuReport && baseShown.map(']) assert.ok(app.includes(gate), gate)
   // 유료 안내·공유·결제·이메일·PDF 는 그대로
-  for (const keep of ['<PaidGuide title={SAJU_PAID.title}', 'openFullAnalysisCheckout', 'buildShareText', '<ShareModal', 'pdfCapturing', "id=\"result-content\"", 'requestPayWithEmail', "key: 'gunghab'", "screen === 'gunghab_free'", 'parseGunghabFree', 'function FullAnalysisPreviewCard(', '<ReportSection ', 'saveResultPdf', '<PrintButton']) assert.ok(app.includes(keep), keep)
+  for (const keep of ['<PaidGuide title={SAJU_PAID.title}', 'openFullAnalysisCheckout', 'buildShareText', '<ShareModal', 'pdfCapturing', "id=\"result-content\"", 'requestPayWithEmail', "key: 'gunghab'", "screen === 'gunghab_free'", 'parseGunghabFree', 'function FullAnalysisPreviewCard(', '<ReportSection ', 'saveResultPdf', '<PdfSaveArea']) assert.ok(app.includes(keep), keep)
   // 결과 화면은 보고서 디자인(아이보리 배경 · 초록 상단 띠)을 쓰고, 리포트일 때는 SajuReport 가 헤더 없이(headless) 같은 띠 아래에 붙는다
   assert.ok(app.includes('<div className="rpt-page"') && app.includes('<ReportHero eyebrow={reportEyebrow} title={reportTitle} sub={reportSub} />') && app.includes('headless'))
   // 이 브랜치에는 삶의 이정표 코드가 없다

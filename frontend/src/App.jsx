@@ -7,7 +7,7 @@ import PaidGuide from './PaidGuide.jsx'
 import PaidIntro from './PaidIntro.jsx'
 import SajuReport from './SajuReport.jsx'
 import { SUBHEAD_EMOJIS } from './contentBlocks.js'
-import { ReportHero, ReportSection, ReportSummary, PrintButton, CompareBlock, renderFormattedContent } from './reportBlocks.jsx'
+import { ReportHero, ReportSection, ReportSummary, PdfSaveArea, CompareBlock, renderFormattedContent } from './reportBlocks.jsx'
 import { exportResultPDF } from './pdfExport.jsx'
 import { summarizeSaju, summarizeMoney, summarizeGunghabFree, summarizeGunghabPaid } from './reportSummary.js'
 import { isAdminEntry } from './adminLink.js'
@@ -627,7 +627,8 @@ export default function App() {
     try {
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
       await exportResultPDF(spec)
-    } catch (e) { alert('PDF 오류: ' + e.message) }
+      return true
+    } catch (e) { console.error('PDF 저장 실패', e); return false }   // 실패 안내는 PdfSaveArea 가 '저장이 안 되나요?'를 펼쳐 보여준다
     finally { setPdfCapturing(false) }
   }
   const [preEmail, setPreEmail] = useState('')
@@ -1306,19 +1307,8 @@ export default function App() {
                 ))}
               </div>
 
-              {/* 혜택 3종 세트 */}
-              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                {[
-                  { icon: '⚡', label: '결제 후 생성' },
-                  { icon: '📄', label: 'PDF 저장' },
-                  { icon: '📧', label: '이메일 받기' },
-                ].map(({ icon, label }) => (
-                  <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10 }}>
-                    <span style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>{icon}</span>
-                    <span style={{ fontSize: 12, color: '#5F5E55', fontWeight: 500 }}>{label}</span>
-                  </div>
-                ))}
-              </div>
+              {/* 결과 받는 방법 안내 */}
+              <p style={{ fontSize: 13, color: '#5F5E55', textAlign: 'center', lineHeight: 1.6, marginBottom: 16, wordBreak: 'keep-all' }}>결제 후 분석이 시작되며, 완성된 결과는 PDF로 저장하거나 이메일로 받을 수 있어요.</p>
 
               {/* 결제 버튼 */}
               <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: 'none', marginBottom: 8 }}
@@ -1456,11 +1446,10 @@ export default function App() {
               ) : (
                 <p style={{ textAlign: 'center', fontSize: 13, color: '#2F5D44', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>
               )}
-              <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#2F5D44', marginBottom: 10 }} onClick={saveDeepPdf}>📄 심화 분석 저장하기 (PDF)</button>
+              <PdfSaveArea onSave={saveDeepPdf} />
               <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#5F5E55', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
             </div>
           )}
-          {isDeepPaid && !isDeepStreaming && <PrintButton />}
         </div>
       </div>
     )
@@ -1669,6 +1658,24 @@ export default function App() {
     const paidInfo = GUNGHAB_PAID[관계유형]
     const card = { background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 14, padding: '20px 18px', marginTop: 28 }
     const compareItems = (t) => String(t || '').split(/\n+/).map(x => x.trim()).filter(Boolean).map(x => ({ text: x }))
+    // 화면에 보이는 무료 요약 그대로(한 줄 요약·일상·그래프·잘 맞는 점·조율할 점·대화 문장)를 PDF로 저장한다.
+    const saveGunghabFreePdf = () => {
+      const fs = parsed ? [
+        parsed.summary && { title: '일상에서는 이렇게 나타날 수 있어요', content: parsed.summary },
+        parsed.good && { title: '잘 맞는 점', content: parsed.good },
+        parsed.tune && { title: '조율할 점', content: parsed.tune },
+        parsed.line && { title: '이렇게 말해보세요', content: parsed.line },
+      ].filter(Boolean) : []
+      return savePdf({
+        filename: '마이사주_궁합요약_' + (myName || '결과'),
+        title: relLabel + ' 관계, 한눈에 보기', eyebrow: '관계 궁합 · 무료 요약', subtitle: '',
+        items: [
+          ...(parsed?.headline ? [{ kind: 'summary', data: { kind: 'gunghab-head', title: '이 관계를 한 줄로', headline: parsed.headline } }] : []),
+          { kind: 'card', selector: '[data-pdf-card="bars"]' },
+          ...fs.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: i + 1 })),
+        ],
+      })
+    }
     return (
       <div className="rpt-page">
         <ReportHero eyebrow="관계 궁합 · 무료 요약" title={relLabel + ' 관계, 한눈에 보기'} />
@@ -1731,7 +1738,7 @@ export default function App() {
 
                 {paidInfo && <PaidGuide title={paidInfo.title} bundles={paidInfo.bundles} priceText={GUNGHAB_PRICE_TEXT} buttonText={'상세 풀이 보기 · ' + GUNGHAB_PRICE_TEXT} onBuy={startGunghabPaid} />}
               </div>
-              <PrintButton />
+              <PdfSaveArea onSave={saveGunghabFreePdf} />
             </>
           )}
 
@@ -1790,9 +1797,7 @@ export default function App() {
           {!isGunghabStreaming && <GunghabBars bars={gunghabSajuData?.bars} />}
           {!isGunghabStreaming && gunghabSections.map((sec, i) => <ReportSection key={i} title={sec.title} content={sec.content} part={i + 1} />)}
           <div data-pdf-exclude="true">
-          <button style={{ width: '100%', padding: '13px', fontSize: 15, fontWeight: 600, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#2F5D44', marginBottom: 10 }} onClick={saveGunghabPdf}>📄 궁합 분석 저장하기 (PDF)</button>
-          <p style={{ fontSize: 12, color: '#5F5E55', textAlign: 'center', marginTop: 6, lineHeight: 1.6 }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요. PC에서 이용해주세요.</p>
-          {!isGunghabStreaming && gunghabText && <PrintButton />}
+          <PdfSaveArea onSave={saveGunghabPdf} disabled={isGunghabStreaming || !gunghabText} />
           <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#5F5E55', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
             <div style={{ marginTop: 20, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 12, padding: '20px' }}>
               <p style={{ fontSize: 15, fontWeight: 700, color: '#2F5D44', marginBottom: 6 }}>📧 이메일로 결과 받기</p>
@@ -2506,19 +2511,8 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           ))}
         </div>
 
-        {/* 혜택 3종 세트 */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          {[
-            { icon: '⚡', label: '결제 후 생성' },
-            { icon: '📄', label: 'PDF 저장' },
-            { icon: '📧', label: '이메일 받기' },
-          ].map(({ icon, label }) => (
-            <div key={label} style={{ flex: 1, textAlign: 'center', padding: '10px 4px', background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10 }}>
-              <span style={{ fontSize: 16, display: 'block', marginBottom: 4 }}>{icon}</span>
-              <span style={{ fontSize: 12, color: '#5F5E55', fontWeight: 500 }}>{label}</span>
-            </div>
-          ))}
-        </div>
+        {/* 결과 받는 방법 안내 */}
+        <p style={{ fontSize: 13, color: '#5F5E55', textAlign: 'center', lineHeight: 1.6, marginBottom: 16, wordBreak: 'keep-all' }}>결제 후 분석이 시작되며, 완성된 결과는 PDF로 저장하거나 이메일로 받을 수 있어요.</p>
 
         {/* 결제 버튼 */}
         <button style={{ width: '100%', padding: '18px', fontSize: 18, fontWeight: 800, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.02em', boxShadow: 'none', marginBottom: 8 }}
@@ -2556,18 +2550,12 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       )}
 
       {/* PDF + 처음으로 — 결제 완료 후에만 표시 */}
-      {isPaid && <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        <button
-          style={{ flex: 1, padding: '14px', fontSize: 14, fontWeight: 600, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#2F5D44' }}
-          onClick={saveResultPdf}>
-          📄 PDF 저장
-        </button>
-        <button
+      {isPaid && <PdfSaveArea onSave={saveResultPdf} disabled={isBaseStreaming || isPaidStreaming}
+        beside={<button
           style={{ flex: 1, padding: '14px', fontSize: 14, background: 'none', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#5F5E55' }}
           onClick={handleRestart}>
           ← 처음으로
-        </button>
-      </div>}
+        </button>} />}
 
       {/* 결과 요약 공유 — 공유할 내용을 먼저 확인한 뒤 직접 보낸다 */}
       <button style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 600, background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#2F5D44', marginBottom: 10 }}
@@ -2575,9 +2563,8 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         결과 요약 공유하기
       </button>
 
-      {isPaid && <p style={{ fontSize: 12, color: '#5F5E55', textAlign: 'center' }}>📱 모바일에서는 PDF 저장이 되지 않을 수 있어요.</p>}
     </div>
-    {!isBaseStreaming && !isPaidStreaming && phase !== 'error' && (baseText || paidText) && <PrintButton />}
+    {!isPaid && !isBaseStreaming && !isPaidStreaming && phase !== 'error' && (baseText || paidText) && <PdfSaveArea onSave={saveResultPdf} />}
       </div>
       {phase === 'done' && !isPaid && !isPaidStreaming && serviceType !== 'saju' && (
         <div className="no-print" style={{

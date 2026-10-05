@@ -38,7 +38,7 @@ test('풀이 기간과 결과 받기는 구분해서 적고, 확인된 내용만
   assert.strictEqual(SAJU_PAID_FACTS[1].text, '결제 후 풀이를 생성해요. 완료된 결과는 PDF로 저장하거나 이메일로 받을 수 있어요.')
   assert.ok(!/보관|재열람|다시 볼|평생|언제든/.test(SAJU_PAID_FACTS[1].text))
   // 앱 안에 실제 PDF 저장·이메일 받기가 있다
-  assert.ok(app.includes('📄 PDF 저장') && app.includes('sendOrderEmail(paidOrdersRef.current.full'))
+  assert.ok(app.includes('<PdfSaveArea onSave={saveResultPdf}') && readFileSync(here('./reportBlocks.jsx'), 'utf8').includes('📄 PDF 저장하기') && app.includes('sendOrderEmail(paidOrdersRef.current.full'))
 })
 
 test('새 안내 문구에는 불안 자극·확정·수치·할인·마감 표현이 없다', () => {
@@ -105,7 +105,9 @@ const productOf = (key) => {
 
 test('결제 후 문구: 재열람·보관 약속이 없고, 생성 흐름·PDF 저장·이메일 받기만 안내한다', () => {
   for (const bad of ['평생 재열람', '언제든 다시', '계속 볼 수', '즉시 열림', '바로 만들어', '바로 전송돼요', '결과를 저장할 수 없어요']) assert.ok(!app.includes(bad), bad)
-  assert.ok(app.includes("{ icon: '⚡', label: '결제 후 생성' }") && app.includes("{ icon: '📧', label: '이메일 받기' }") && app.includes("{ icon: '📄', label: 'PDF 저장' }"))
+  // 심화 상품 안내의 '결제 후 생성 / PDF 저장 / 이메일 받기' 3칸은 한 줄 안내로 바뀌었다
+  assert.ok(!app.includes("label: '결제 후 생성'") && !app.includes("label: 'PDF 저장'") && !app.includes("label: '이메일 받기'"))
+  assert.strictEqual(app.split('결제 후 분석이 시작되며, 완성된 결과는 PDF로 저장하거나 이메일로 받을 수 있어요.').length - 1, 2)   // 심화 결제 화면 + 전체 분석 결과의 심화 업셀
   assert.ok(app.includes('결제 후 풀이를 생성해요.') && app.includes('이메일 없이 결제하시면 결과를 자동으로 보내드릴 수 없어요. 완료 후 PDF 저장이나 이메일 받기를 이용해주세요.'))
   assert.ok(!app.includes('화면을 닫으면 결과를 다시 볼 수 없어요'))
   assert.ok(app.includes('받은 메일함에서 다시 볼 수 있어요'))     // 고객의 메일함 이야기이지 서비스 보관 약속이 아니다

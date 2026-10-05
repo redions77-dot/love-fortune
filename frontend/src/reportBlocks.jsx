@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { parseContentBlocks } from './contentBlocks.js'
 
 // 결과 화면·PDF 공통 본문 컴포넌트. 스타일은 index.css 의 .rpt-* 클래스에 있다(웹/인쇄/PDF가 같은 규칙을 쓴다).
@@ -14,12 +15,62 @@ export function ReportHero({ eyebrow = 'MYSAJU REPORT', title, sub }) {
   )
 }
 
-// 화면 전용 작은 인쇄 버튼 — 브라우저 "인쇄 → PDF로 저장"(글자 선택·검색 가능). 인쇄물에는 나오지 않는다.
+// 화면 전용 인쇄 버튼 — 브라우저 "인쇄 → PDF로 저장"(글자 선택·검색 가능). 인쇄물에는 나오지 않는다.
+// 기본 화면에는 두지 않고 PdfSaveArea 의 '저장이 안 되나요?' 안내 안에서만 쓴다.
 export function PrintButton() {
   return (
     <button type="button" className="rpt-print-btn no-print" onClick={() => window.print()}>
       인쇄 · PDF로 저장 (글자 선택 가능)
     </button>
+  )
+}
+
+// 결과 화면의 저장 영역. 주요 버튼은 'PDF 저장하기' 하나뿐이고(기기 가림 없이 파일을 바로 만들어 내려받는 방식),
+// 저장이 안 될 때만 '저장이 안 되나요?' 안내를 펼쳐 기존 인쇄 방식을 쓰게 한다. 화면 전용이라 PDF·인쇄물에는 나오지 않는다.
+// onSave 는 성공하면 true, 실패하면 false 를 돌려주는 함수. beside 는 같은 줄 오른쪽에 놓을 버튼(예: 처음으로).
+export function PdfSaveArea({ onSave, disabled = false, beside = null }) {
+  const [saving, setSaving] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [open, setOpen] = useState(false)
+  const canPrint = typeof window !== 'undefined' && typeof window.print === 'function'   // 화면 크기가 아니라 브라우저가 인쇄를 지원하는지로 판단
+  const save = async () => {
+    if (saving || disabled) return
+    setSaving(true); setFailed(false)
+    let ok = false
+    try { ok = (await onSave()) !== false } catch { ok = false }
+    setSaving(false)
+    if (!ok) { setFailed(true); setOpen(true) }
+  }
+  return (
+    <div className="no-print" data-pdf-exclude="true" style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button type="button" disabled={saving || disabled} onClick={save}
+          style={{ flex: 1, padding: '14px', fontSize: 15, fontWeight: 700, background: '#EEF3EA', border: '1px solid #E4E1D4', borderRadius: 10, cursor: saving || disabled ? 'default' : 'pointer', color: '#2F5D44', opacity: disabled ? 0.55 : 1 }}>
+          {saving ? 'PDF 만드는 중… 잠시만 기다려주세요' : '📄 PDF 저장하기'}
+        </button>
+        {beside}
+      </div>
+      {failed && <p role="alert" style={{ fontSize: 13, color: '#C53A3A', textAlign: 'center', lineHeight: 1.6, margin: '10px 0 0', wordBreak: 'keep-all' }}>PDF를 만들지 못했어요. 아래 안내대로 저장해보세요.</p>}
+      <div style={{ textAlign: 'center', marginTop: 8 }}>
+        <button type="button" aria-expanded={open} aria-controls="pdf-save-help" onClick={() => setOpen(v => !v)}
+          style={{ background: 'none', border: 'none', padding: '6px 8px', fontSize: 13, color: '#5F5E55', textDecoration: 'underline', cursor: 'pointer' }}>
+          저장이 안 되나요?
+        </button>
+      </div>
+      {open && (
+        <div id="pdf-save-help" style={{ marginTop: 6, padding: '14px 16px', background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 10 }}>
+          <p style={{ fontSize: 13, color: '#5F5E55', lineHeight: 1.7, margin: 0, wordBreak: 'keep-all' }}>
+            PDF 파일이 만들어지지 않거나 저장 창이 열리지 않으면, 브라우저의 인쇄 기능으로 저장할 수 있어요. 글자를 선택하고 검색할 수 있는 PDF가 만들어져요.
+          </p>
+          {canPrint
+            ? <PrintButton />
+            : <p style={{ fontSize: 13, color: '#5F5E55', lineHeight: 1.7, margin: '10px 0 0', wordBreak: 'keep-all' }}>이 브라우저에서는 인쇄 기능을 쓸 수 없어요. Chrome이나 Safari에서 열어 다시 시도해주세요.</p>}
+          <p style={{ fontSize: 12, color: '#5F5E55', lineHeight: 1.7, margin: '12px 0 0', wordBreak: 'keep-all' }}>
+            📱 모바일에서는 PDF 저장이 되지 않을 수 있어요. 카카오톡·인스타그램 같은 앱 안에서 열었다면 Chrome이나 Safari로 열어 다시 시도하거나, PC에서 이용해주세요.
+          </p>
+        </div>
+      )}
+    </div>
   )
 }
 
