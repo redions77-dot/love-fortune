@@ -86,9 +86,8 @@ const 일주타입명 = {
   '癸酉': { name: '이슬형', desc: '새벽 이슬처럼 섬세하고 순수한, 디테일에서 차이가 난다' },
   '癸亥': { name: '대해의 근원형', desc: '모든 물의 시작점, 깊이를 알 수 없는 내면의 소유자' },
 }
-const MBTI_LIST = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP']
 const BLOOD_LIST = ['A', 'B', 'O', 'AB']
-const STEPS = ['gender', 'marital', 'birthdate', 'birthtime', 'mbti', 'blood']
+const STEPS = ['gender', 'marital', 'birthdate', 'birthtime', 'blood']
 // [보안] 운영자 여부는 서버 세션(HttpOnly 쿠키)으로만 판단한다. 관리자 비밀값은 프런트엔드에 두지 않는다.
 // 운영자 API(/api/admin/*)는 같은 도메인으로 요청한다 (운영: Vercel rewrite → 백엔드, 로컬: Vite 프록시).
 const ORDER_STORE_KEY = 'mysaju_orders'
@@ -607,7 +606,7 @@ export default function App() {
   const [timeMin, setTimeMin] = useState('')
   const [timeAmPm, setTimeAmPm] = useState('오전')
   const [timeUnknown, setTimeUnknown] = useState(false)
-  const [mbti, setMbti] = useState(() => _qs.get('mbti') || '')
+  const [mbti, setMbti] = useState('')
   const [blood, setBlood] = useState(() => _qs.get('blood') || '')
   const [phase, setPhase] = useState('input')
   const [freeError, setFreeError] = useState(null)
@@ -1940,7 +1939,7 @@ if (emailModal) {
           <h2 style={{ fontSize: 18, color: C.text, textAlign: 'center', marginBottom: 16, fontWeight: 700 }}>무엇을 알아볼까요?</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { key: 'saju', label: '내 사주', hook: '무료 요약: 핵심 성향 · 강점 1개 · 주의할 습관 1개 · 오늘 해볼 팁 1개', sub: '입력: 성별, 결혼 상태, 생년월일, 태어난 시간(모르면 "모름" 선택). MBTI·혈액형은 선택이에요.', btn: '내 사주 무료 요약 보기 →', onClick: goSaju },
+              { key: 'saju', label: '내 사주', hook: '무료 요약: 핵심 성향 · 강점 1개 · 주의할 습관 1개 · 오늘 해볼 팁 1개', sub: '입력: 성별, 결혼 상태, 생년월일, 태어난 시간(모르면 "모름" 선택). 혈액형은 선택이에요.', btn: '내 사주 무료 요약 보기 →', onClick: goSaju },
               { key: 'gunghab', label: '관계 궁합', hook: '무료 요약: 관계 한 줄 요약 · 핵심 3가지 · 잘 맞는 점과 조율할 점 · 바로 써볼 대화 문장', sub: '입력: 두 사람의 성별, 생년월일, 태어난 시간(모르면 "모름" 선택). 연인·부부·가족·친구·직장 동료 중 고를 수 있어요.', btn: '관계 궁합 무료 요약 보기 →', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형(''); set관계역할(''); setScreen('gunghab_input') } },
             ].map(({ key, label, hook, sub, btn, onClick }) => (
               <div key={key} onClick={onClick} style={{ ...cardStyle, minHeight: 0 }}>
@@ -2004,7 +2003,6 @@ if (screen === 'input') {
             {currentStepId === 'marital' && '결혼 상태를 알려주세요'}
             {currentStepId === 'birthdate' && '생년월일을 알려주세요'}
             {currentStepId === 'birthtime' && '태어난 시간을 알려주세요'}
-            {currentStepId === 'mbti' && 'MBTI를 선택해주세요'}
             {currentStepId === 'blood' && '혈액형을 선택해주세요'}
           </h2>
           <p style={{ fontSize: 15, color: '#62616C', margin: 0 }}>
@@ -2012,7 +2010,6 @@ if (screen === 'input') {
             {currentStepId === 'marital' && '사주 풀이에 사용돼요'}
             {currentStepId === 'birthdate' && '숫자로 직접 입력해주세요'}
             {currentStepId === 'birthtime' && '모르셔도 괜찮아요'}
-            {currentStepId === 'mbti' && '모르시면 건너뛰어도 돼요'}
             {currentStepId === 'blood' && '선택하지 않아도 분석은 가능해요'}
           </p>
         </div>
@@ -2140,23 +2137,6 @@ if (screen === 'input') {
           </>
         )}
 
-        {/* ── MBTI ── */}
-        {currentStepId === 'mbti' && (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 10 }}>
-              {MBTI_LIST.map(m => (
-                <button key={m}
-                  aria-pressed={mbti === m}
-                  style={{ position: 'relative', padding: '20px 4px', fontSize: 16, fontWeight: mbti === m ? 800 : 500, border: `2px solid ${mbti === m ? '#633B50' : '#DEDFE5'}`, borderRadius: 12, background: mbti === m ? '#F6F0F3' : '#FFFFFF', color: mbti === m ? '#633B50' : '#62616C', cursor: 'pointer' }}
-                  onClick={() => setMbti(mbti === m ? '' : m)}><CheckMark on={mbti === m} />{m}</button>
-              ))}
-            </div>
-            <button
-              style={{ width: '100%', padding: '20px', fontSize: 16, fontWeight: 500, border: `2px solid #DEDFE5`, borderRadius: 12, background: '#FFFFFF', color: '#62616C', cursor: 'pointer', marginTop: 4 }}
-              onClick={() => { setMbti(''); goNext(); }}>MBTI를 모릅니다</button>
-          </>
-        )}
-
         {/* ── 혈액형 ── */}
         {currentStepId === 'blood' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
@@ -2187,7 +2167,7 @@ if (screen === 'input') {
           onClick={goNext} disabled={!canGoNext()}>
           {currentStepId === 'blood'
             ? (serviceType === 'deep' ? '심화 분석받기 (9,900원) 🔮' : serviceType === 'child' ? '무료로 자녀 풀이 보기 →' : '무료로 내 사주 보기 →')
-            : currentStepId === 'mbti' ? '다음 (건너뛰기 가능)' : '다음 →'}
+            : '다음 →'}
         </button>
         </div>
       </div>
@@ -2407,7 +2387,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     <div key={i}>
       {i === 0 && (
         <p className="rpt-note" style={{ margin: '28px 0 -36px', fontWeight: 600, color: '#2F5D44' }}>
-          🔮 사주 분석으로 읽는 나의 성향{mbti ? ' (MBTI 교차분석 포함)' : ''}
+          🔮 사주 분석으로 읽는 나의 성향
         </p>
       )}
       <ReportSection title={sec.title} content={sec.content} part={i + 1} />
