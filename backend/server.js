@@ -7,6 +7,7 @@ require('dotenv').config();
 const { installSecureApi } = require('./secure');
 const { buildAllowedOrigins } = require('./origins');
 const { deepYearContext } = require('./deepYear');
+const { TIMING_RULES, DEEP_BIG_DECISION_LINE, PAID_CAUTION_HEADING } = require('./timingRules');
 const { TRUST_RULES, RELATIONS, normalizeRelation, calcRelationLevels, calcRelationBasis, buildBars, buildFreeGunghabPrompt, buildPaidGunghabPrompt } = require('./relations');
 
 const BASE_ALLOWED_ORIGINS = [
@@ -958,6 +959,7 @@ ${infoBlock}
 
 ${공통규칙}
 ${일관성블록}
+${TIMING_RULES}
 각 섹션은 ===섹션제목=== 형태로 구분하세요.
 
 [출력 형식 규칙 — 반드시 지킬 것]
@@ -983,7 +985,7 @@ ${일관성블록}
 
 📌 작은 기회 vs 큰 결정 기준
 1. 작은 기회(이직 제안, 소규모 투자, 새로운 인연, 작은 프로젝트 등)는 몇 년부터 반갑게 받아들여도 되는지 구체적 연도로.
-2. 큰 결정(사업 확장, 큰 투자, 결혼, 퇴사 등)은 몇 년까지 신중해야 하고 몇 년 이후에 풀리는지 구체적 연도로.
+${DEEP_BIG_DECISION_LINE}
 
 🔑 이 결론은 아래 大運, 運路, 年運, 道 섹션 전체에서 절대 바뀌지 않는 기준입니다. 이 기준과 다른 시기 조언은 쓰지 마세요.
 
@@ -1170,6 +1172,7 @@ ${infoBlock}
 
 ${공통규칙}
 ${일관성블록}
+${TIMING_RULES}
 [중요] 무료 분석에서 이미 다룬 내용 (사주 기운, 재물 패턴 힌트, 나이대별 핵심운 방향)은 절대 반복하지 마세요.
 
 각 섹션은 ===섹션제목=== 형태로 구분하세요.
@@ -1210,7 +1213,7 @@ ${일관성블록}
 
 📌 커리어 타이밍
 ✅ 크게 도약할 수 있는 시기
-⚠️ 절대 큰 결정 내리면 안 되는 시기
+${PAID_CAUTION_HEADING}
 
 ===富 · 투자와 부동산===
 (500~600자)
