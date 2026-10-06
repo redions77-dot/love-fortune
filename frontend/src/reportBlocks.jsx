@@ -159,6 +159,62 @@ export function ReportSection({ title, content, part }) {
   )
 }
 
+// 표 (최대 4열): 머리글 진한 초록 · 본문 흰색/연한 초록 줄무늬. 칸은 문자열이거나 { main, sub } (sub 는 작은 보조 줄).
+// 값이 없는 칸(null)은 '—'. 웹 모바일(좁은 화면)에서는 CSS 가 행을 카드로 바꾸되 칸 순서는 그대로다.
+// cont 가 true 면 앞 쪽에서 이어지는 표(제목에 '— 이어서', 머리글 반복).
+export function ReportTable({ title, cols, rows, note, cont = false, rowOffset = 0, display = 'table', className = '' }) {
+  const cards = display === 'cards'     // 빈 칸이 많은 표: 행별 카드로 보여 주고 비어 있는 칸은 그리지 않는다('—' 반복 방지)
+  if (!cols || !rows || !rows.length) return null
+  return (
+    <div className={'rpt-table-wrap ' + (cards ? 'rpt-as-cards ' : '') + className} data-report-table data-display={display}>
+      {title ? <p className="rpt-table-title">{title}{cont ? ' — 이어서' : ''}</p> : null}
+      <table className={'rpt-table cols-' + cols.length}>
+        <colgroup>{cols.map((c) => <col key={c} />)}</colgroup>
+        <thead><tr>{cols.map((c) => <th key={c} scope="col">{c}</th>)}</tr></thead>
+        <tbody>
+          {rows.map((r, ri) => {
+            // 행 끝에서 빈 칸이 둘 이상 이어지면 마지막으로 채워진 칸을 그만큼 넓혀 '—' 가 나란히 반복되지 않게 한다(내용은 그대로)
+            const filled = cols.map((_, ci) => { const v = r[ci]; return !!(v && typeof v === 'object' ? v.main : v) })
+            const last = filled.lastIndexOf(true)
+            const trailing = cols.length - 1 - last
+            const spanAt = !cards && last >= 1 && trailing >= 2 ? last : -1
+            return (
+            <tr key={ri} className={(ri + rowOffset) % 2 === 1 ? 'rpt-row-even' : ''}>
+              {cols.map((c, ci) => {
+                if (spanAt >= 0 && ci > spanAt) return null
+                const v = r[ci]
+                const main = v && typeof v === 'object' ? v.main : v
+                const sub = v && typeof v === 'object' ? v.sub : ''
+                if (cards && ci > 0 && !main) return null
+                return (
+                  <td key={ci} data-label={c} colSpan={ci === spanAt ? trailing + 1 : undefined} className={ci === 0 ? 'rpt-td-key' : ''}>
+                    {main ? <span className="rpt-td-main">{main}</span> : <span className="rpt-td-empty">—</span>}
+                    {sub ? <span className="rpt-td-sub">{sub}</span> : null}
+                  </td>
+                )
+              })}
+            </tr>
+            )
+          })}
+        </tbody>
+      </table>
+      {note ? <p className="rpt-table-note">{note}</p> : null}
+    </div>
+  )
+}
+
+// 심화 마지막 '앞으로 기억할 나의 기준': 이 고객의 풀이에서 뽑은 핵심 한 줄 + 행동 계획표(기간은 행동 계획 기준, 운세 예측 기간 아님).
+export function ClosingBlock({ closing }) {
+  if (!closing) return null
+  return (
+    <section className="rpt-section" data-closing aria-label={closing.title}>
+      <h2 className="rpt-h2">{closing.title}</h2>
+      {closing.keyline ? <ContentBlock b={{ type: 'callout', head: '이 결과에서 뽑은 핵심 한 줄', items: [{ type: 'p', text: closing.keyline }] }} /> : null}
+      {closing.table ? <ReportTable title={closing.table.title} cols={closing.table.cols} rows={closing.table.rows} note={closing.table.note} /> : null}
+    </section>
+  )
+}
+
 // 핵심 요약 (인포그래픽): 핵심 한 문장 / 비교표 / 항목 목록 / 행동 강조상자. 값이 있는 것만 나온다.
 export function ReportSummary({ data }) {
   if (!data) return null

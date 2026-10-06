@@ -21,13 +21,13 @@ export function takeSentences(text, maxSentences = 1, maxChars = MAX_ONE) {
 
 const nonEmpty = (v) => (v ? v : null)
 
-// 내 사주 무료 결과(parseMyFree) → 핵심 성향 / 강점·주의할 점 / 지금 해볼 행동
+// 내 사주 무료 결과(parseMyFree) → 핵심 성향 / 강점·주의할 점 / 지금 해볼 행동 (요약은 항목마다 핵심 한 문장 — 이유·상황·실천 예시는 본문이 맡는다)
 export function summarizeSaju(myFree) {
   if (!myFree) return null
   const headline = nonEmpty(takeSentences(myFree.sentence, 1, 220))
   const strength = takeSentences(myFree.strength, 1)
   const caution = takeSentences(myFree.habit, 1)
-  const action = takeSentences(myFree.tip, 2, 240)
+  const action = takeSentences(myFree.tip, 1, 240)
   const compare = strength && caution ? { left: { label: '강점', text: strength }, right: { label: '주의할 점', text: caution } } : null
   if (!headline && !compare && !action) return null
   return { kind: 'saju', title: '한눈에 보기', headline, compare, strengthOnly: !compare ? strength : null, cautionOnly: !compare ? caution : null, action, actionLabel: '지금 해볼 행동' }

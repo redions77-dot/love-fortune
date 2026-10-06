@@ -6,10 +6,13 @@ import ShareModal from './ShareModal.jsx'
 import PaidGuide from './PaidGuide.jsx'
 import PaidIntro from './PaidIntro.jsx'
 import SajuReport from './SajuReport.jsx'
-import ElementDistribution from './ElementDistribution.jsx'
+import SajuTable from './SajuTable.jsx'
 import { SUBHEAD_EMOJIS } from './contentBlocks.js'
-import { ReportHero, ReportSection, ReportSummary, PdfSaveArea, CompareBlock, renderFormattedContent } from './reportBlocks.jsx'
+import { ReportHero, ReportSection, ReportSummary, ReportTable, ClosingBlock, PdfSaveArea, CompareBlock, renderFormattedContent } from './reportBlocks.jsx'
 import { exportResultPDF } from './pdfExport.jsx'
+import { PRODUCT, productTitle, pdfFileName, birthMetaLine } from './reportMeta.js'
+import { buildResultPdfItems, buildDeepPdfItems } from './pdfItems.js'
+import { buildDeepFlowTable, buildDeepChoiceTable, buildDeepClosing } from './deepTables.js'
 import { summarizeSaju, summarizeMoney, summarizeGunghabFree, summarizeGunghabPaid } from './reportSummary.js'
 import { isAdminEntry } from './adminLink.js'
 import { emailPrefillFor, prefillSignature } from './emailPrefill.js'
@@ -1210,47 +1213,29 @@ export default function App() {
         .catch((e) => alert(e.message))
     }
     const deepShown = deepSections.filter(sec => sec.title !== '분석 결과' && !sec.title.includes('운의계절') && sec.content?.trim())
-    const deepSubtitle = [myName && myName + '님', sajuData?.생년월일].filter(Boolean).join(' · ')
+    const deepSubtitle = sajuData?.생년월일 ? birthMetaLine({ dateText: sajuData.생년월일, isLunar, birthtime, pillars: sajuData.사주 }) : ''
+    const deepTitle = productTitle('deep', myName)
     const deepMoneySummary = !isDeepStreaming ? summarizeMoney(deepShown) : null
+    // 심화 표·마무리: 같은 고객의 심화 풀이 문장에서만 고른다(새 AI 호출 없음). 근거가 부족하면 해당 표는 만들지 않는다.
+    const deepFlowTable = !isDeepStreaming ? buildDeepFlowTable(deepShown) : null
+    const deepChoiceTable = !isDeepStreaming ? buildDeepChoiceTable(deepShown) : null
+    const deepClosing = !isDeepStreaming ? buildDeepClosing(deepShown) : null
+    const deepSummaryIdx = deepShown.findIndex(sec => /종합s*흐름/.test(sec.title))   // 표는 종합 요약 바로 다음에 놓는다
     const saveDeepPdf = () => savePdf({
-      filename: '마이사주_심화분석_' + (myName || '결과'),
-      title: '사주 심화 분석', eyebrow: 'MYSAJU REPORT · DEEP', subtitle: deepSubtitle,
-      items: [
-        ...(deepMoneySummary ? [{ kind: 'summary', data: deepMoneySummary }] : []),
-        { kind: 'card', selector: '[data-pdf-card="saju"]' },
-        ...(deepShown.length > 0
-          ? deepShown.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: i + 1 }))
-          : [{ kind: 'section', title: '심화 분석', content: removeMarkers(deepText) }]),
-      ],
+      filename: pdfFileName('deep', myName),
+      title: deepTitle, eyebrow: `마이사주 · ${PRODUCT.deep.label}`, subtitle: deepSubtitle, footerLabel: PRODUCT.deep.label,
+      items: buildDeepPdfItems({ sajuData, moneySummary: deepMoneySummary, sections: deepShown, fallbackText: removeMarkers(deepText), flowTable: deepFlowTable, choiceTable: deepChoiceTable, closing: deepClosing }),
     })
     return (
       <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
-        <ReportHero eyebrow="MYSAJU REPORT · DEEP" title="사주 심화 분석" sub={deepSubtitle} />
+        <ReportHero eyebrow={`마이사주 · ${PRODUCT.deep.label}`} title={deepTitle} sub={deepSubtitle} />
         <div id="deep-result-content" className="rpt-inner rpt-wrap">
-  {/* 사주팔자 카드 */}
+  {/* 공통 사주표 (무료·전체·심화 같은 모양) */}
   {sajuData?.사주 && (
-    <div data-pdf-card="saju" className="rpt-card">
-      <p style={{ fontSize: 15, fontWeight: 700, color: '#2F5D44', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
-      <p style={{ fontSize: 15, color: '#5F5E55', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-        {[{ label: '시주(時)', value: sajuData.사주.시주 }, { label: '일주(日)', value: sajuData.사주.일주 }, { label: '월주(月)', value: sajuData.사주.월주 }, { label: '년주(年)', value: sajuData.사주.년주 }].map(({ label, value }) => {
-          const 오행색 = { '甲갑': '#1E7F4F', '乙을': '#1E7F4F', '丙병': '#C53A3A', '丁정': '#C53A3A', '戊무': '#8A5F0E', '己기': '#8A5F0E', '庚경': '#5F6B7A', '辛신': '#5F6B7A', '壬임': '#2563EB', '癸계': '#2563EB' }
-          const 색 = 오행색[value?.slice(0, 2)] || '#22211C'
-          return (
-            <div key={label} style={{ textAlign: 'center', background: `${색}15`, borderRadius: 12, padding: '18px 4px', border: `2px solid ${색}50` }}>
-              <span style={{ fontSize: 12, color: '#5F5E55', marginBottom: 10, display: 'block' }}>{label}</span>
-              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                <span style={{ fontSize: 22, fontWeight: 900, color: 색, lineHeight: 1.2 }}>{value?.slice(0,1) || '-'}</span>
-                <span style={{ fontSize: 11, color: '#5F5E55', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: 색, marginTop: 2 }}>{value?.slice(2,3) || ''}</span>
-                <span style={{ fontSize: 11, color: '#5F5E55', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
-              </span>
-            </div>
-          )
-        })}
-      </div>
-      <div style={{ marginTop: 22 }}><ElementDistribution pillars={sajuData.사주} /></div>
-    </div>
+    <section className="rpt-section" style={{ marginTop: 28 }}>
+      <h2 className="rpt-h2">내 사주 한눈에</h2>
+      <SajuTable pillars={sajuData.사주} />
+    </section>
   )}
 
 
@@ -1328,7 +1313,14 @@ export default function App() {
             if (deepShown.length > 0) return (
               <>
                 <ReportSummary data={deepMoneySummary} />
-                {deepShown.map((sec, i) => <ReportSection key={i} title={sec.title} content={sec.content} part={i + 1} />)}
+                {deepSummaryIdx < 0 && <>{deepFlowTable && <ReportTable {...deepFlowTable} />}{deepChoiceTable && <ReportTable {...deepChoiceTable} />}</>}
+                {deepShown.map((sec, i) => (
+                  <div key={i}>
+                    <ReportSection title={sec.title} content={sec.content} part={i + 1} />
+                    {i === deepSummaryIdx && <>{deepFlowTable && <ReportTable {...deepFlowTable} />}{deepChoiceTable && <ReportTable {...deepChoiceTable} />}</>}
+                  </div>
+                ))}
+                {deepClosing && <ClosingBlock closing={deepClosing} />}
               </>
             )
             if (isDeepPaid && deepText.trim()) return <div className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(deepText)}</div>
@@ -2095,9 +2087,12 @@ if (screen === 'result') {
   const 리포트일주 = sajuData?.사주?.일주 || ''
   const 리포트유형 = 리포트일주 ? (일주타입명[리포트일주[0] + 리포트일주[2]] || null) : null
   const baseShown = baseSections.filter(s => !s.title.includes('행운미리보기') && !s.title.includes('운세점수') && s.title !== '공유 문장' && s.title !== '핵심 한 문장' && s.title !== '예시 표시')
-  const reportDateLine = sajuData?.생년월일 ? `${sajuData.생년월일}${isLunar ? '' : ' · 양력'}${birthtime ? ' · ' + birthtime : ''}` : ''
-  const reportTitle = useSajuReport ? (myName ? `${myName}님의 사주 리포트` : '나의 사주 리포트') : serviceType === 'child' ? '우리 아이 진로·학과 풀이' : serviceType === '노후' ? '노후 운세 풀이' : '나의 사주 풀이'
-  const reportEyebrow = useSajuReport ? '마이사주 · 내 사주 무료 결과' : 'MYSAJU REPORT'
+  // 상품 표시: 무료 핵심 풀이 / 전체 분석 — 표지 제목·상단 띠·PDF 파일명·쪽 아래 글자가 같은 기준을 쓴다(reportMeta.js).
+  const paidShown = paidSections.filter(s => s.content?.trim())    // 내용이 없는 항목 때문에 PART 번호가 건너뛰지 않게
+  const productKind = useSajuReport && paidShown.length > 0 && !isPaidStreaming ? 'full' : 'free'
+  const reportDateLine = sajuData?.생년월일 ? birthMetaLine({ dateText: sajuData.생년월일, isLunar, birthtime, pillars: sajuData.사주 }) : ''
+  const reportTitle = useSajuReport ? productTitle(productKind, myName) : serviceType === 'child' ? '우리 아이 진로·학과 풀이' : serviceType === '노후' ? '노후 운세 풀이' : '나의 사주 풀이'
+  const reportEyebrow = useSajuReport ? `마이사주 · ${PRODUCT[productKind].label}` : 'MYSAJU REPORT'
   const reportSub = useSajuReport ? reportDateLine : [myName && myName + '님', sajuData?.생년월일].filter(Boolean).join(' · ')
   // 핵심 요약: 이미 나온 풀이 문장에서만 고른다(새 AI 호출·점수·예측 없음). 무료 화면에는 무료 내용만, 재물·직업은 결제 후 전체 분석에서만.
   const sajuSummary = useSajuReport ? summarizeSaju(myFree) : null
@@ -2109,26 +2104,11 @@ if (screen === 'result') {
     { title: '주의할 습관', content: removeMarkers(myFree.habit || '') },
     { title: '바로 실천할 팁', content: removeMarkers(myFree.tip || '') },
   ].filter(s => s.content.trim()) : []
+  const corePartCount = useSajuReport ? reportCoreSections.length : baseShown.length   // 웹·PDF 모두 PART 번호는 여기서 이어 붙인다(사주표는 번호 없음)
   const saveResultPdf = () => savePdf({
-    filename: '마이사주_분석결과_' + (myName || '결과'),
-    title: reportTitle, eyebrow: reportEyebrow, subtitle: reportSub,
-    items: [
-      ...(sajuSummary ? [{ kind: 'summary', data: sajuSummary }] : []),
-      ...(useSajuReport
-        ? [
-            ...reportCoreSections.slice(0, 1).map(s => ({ kind: 'section', ...s, part: 1 })),
-            { kind: 'card', selector: '[data-section="saju"]' },
-            ...reportCoreSections.slice(1).map((s, i) => ({ kind: 'section', ...s, part: i + 2 })),
-          ]
-        : [
-            { kind: 'card', selector: '[data-pdf-card="saju"]' },
-            { kind: 'card', selector: '[data-pdf-card="type"]' },
-            ...baseShown.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: i + 1 })),
-          ]),
-      ...(paidSections.length ? [{ kind: 'label', text: '✦ 전체 분석 결과 ✦' }] : []),
-      ...(moneySummary ? [{ kind: 'summary', data: moneySummary }] : []),
-      ...paidSections.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: (useSajuReport ? reportCoreSections.length + 1 : baseShown.length) + i + 1 })),
-    ],
+    filename: useSajuReport ? pdfFileName(productKind, myName) : '마이사주_분석결과_' + (myName || '결과'),
+    title: reportTitle, eyebrow: reportEyebrow, subtitle: reportSub, footerLabel: useSajuReport ? PRODUCT[productKind].label : '',
+    items: buildResultPdfItems({ useSajuReport, sajuSummary, coreSections: reportCoreSections, baseShown, paidSections: paidShown, moneySummary, sajuData, typeInfo: 리포트유형 }),
   })
   return (
     <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -2173,29 +2153,11 @@ if (screen === 'result') {
 
         {/* 사주팔자 카드 */}
         {!useSajuReport && sajuData?.사주 && (serviceType !== 'saju' || showSajuStruct || pdfCapturing) && (
-  <div data-pdf-card="saju" className="rpt-card">
-    <p style={{ fontSize: 15, fontWeight: 700, color: '#2F5D44', marginBottom: 8, letterSpacing: '0.1em' }}>나의 사주팔자</p>
-    <p style={{ fontSize: 15, color: '#5F5E55', marginBottom: 18, textAlign: 'center', fontWeight: 500 }}>{sajuData.생년월일}</p>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-      {[{ label: '시주(時)', value: sajuData.사주.시주 }, { label: '일주(日)', value: sajuData.사주.일주 }, { label: '월주(月)', value: sajuData.사주.월주 }, { label: '년주(年)', value: sajuData.사주.년주 }].map(({ label, value }) => {
-        const 오행색 = { '甲갑': '#1E7F4F', '乙을': '#1E7F4F', '丙병': '#C53A3A', '丁정': '#C53A3A', '戊무': '#8A5F0E', '己기': '#8A5F0E', '庚경': '#5F6B7A', '辛신': '#5F6B7A', '壬임': '#2563EB', '癸계': '#2563EB' }
-        const 색 = 오행색[value?.slice(0, 2)] || '#22211C'
-        return (
-          <div key={label} style={{ textAlign: 'center', background: `${색}15`, borderRadius: 12, padding: '18px 4px', border: `2px solid ${색}50` }}>
-            <span style={{ fontSize: 12, color: '#5F5E55', marginBottom: 10, display: 'block' }}>{label}</span>
-            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
- <span style={{ fontSize: 22, fontWeight: 900, color: 색, lineHeight: 1.2 }}>{value?.slice(0,1) || '-'}</span>
-<span style={{ fontSize: 11, color: '#5F5E55', fontWeight: 400 }}>{value?.slice(1,2) || ''}</span>
-<span style={{ fontSize: 16, fontWeight: 700, color: 색, marginTop: 2 }}>{value?.slice(2,3) || ''}</span>
-<span style={{ fontSize: 11, color: '#5F5E55', fontWeight: 400 }}>{value?.slice(3,4) || ''}</span>
-</span>
-          </div>
-        )
-      })}
-    </div>
-    <div style={{ marginTop: 22 }}><ElementDistribution pillars={sajuData.사주} /></div>
-  </div>
-)}
+          <section className="rpt-section" style={{ marginTop: 28 }}>
+            <h2 className="rpt-h2">내 사주 한눈에</h2>
+            <SajuTable pillars={sajuData.사주} />
+          </section>
+        )}
 
 {/* 일주 타입 카드 */}
 {!useSajuReport && sajuData?.사주?.일주 && (serviceType !== 'saju' || showSajuStruct || pdfCapturing) && (() => {
@@ -2317,11 +2279,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         )}
 
         {/* 유료 분석 아코디언 */}
-        {!isPaidStreaming && paidSections.length > 0 && (
+        {!isPaidStreaming && paidShown.length > 0 && (
           <>
             <p className="rpt-kicker rpt-divider-label">✦ 전체 분석 결과 ✦</p>
             <ReportSummary data={moneySummary} />
-            {paidSections.map((sec, i) => <ReportSection key={i} title={sec.title} content={sec.content} part={(useSajuReport ? reportCoreSections.length + 1 : baseShown.length) + i + 1} />)}
+            {paidShown.map((sec, i) => <ReportSection key={i} title={sec.title} content={sec.content} part={corePartCount + i + 1} />)}
           </>
         )}
 

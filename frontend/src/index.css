@@ -226,7 +226,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .pdf-img { display: block; max-width: 100%; max-height: 900px; margin: 0 auto 18px; }
 .pdf-blk { display: flow-root; }
 .pdf-head { padding-top: 40px; }
-.pdf-label { padding-top: 24px; }
+.pdf-label { padding-top: 24px; padding-bottom: 14px; }
 .pdf-cont .rpt-p { margin-bottom: 0; }
 .rpt-type-desc { font-size: 15px; line-height: 1.65; color: var(--rp-muted); word-break: keep-all; text-wrap: balance; margin: 0; }
 .rpt-divider-label { text-align: center; margin: 36px 0 -30px; }
@@ -295,6 +295,119 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .pdf-doc .rpt-timeline-wrap, .pdf-page .rpt-timeline-wrap { margin: 0; }
 .pdf-doc .rpt-timeline li, .pdf-page .rpt-timeline li { padding-bottom: 14px; }
 .pdf-doc .rpt-sum-headline, .pdf-page .rpt-sum-headline { font-size: 21px; }
+
+/* ── 글자 크기 기준 (웹 → PDF) ───────────────────────────────────────────────
+   제목(h2) 24 → 25 / 소제목(h3) 20 → 19 / 본문 18 → 17 / 강조상자 17 → 16.5 / 표 본문 16 → 15.5 / 표 머리글·라벨 15 → 14.5 /
+   표 설명·보조 줄 14.5 → 14 / 각주 13.5 → 13. 굵기: 제목 800 · 소제목 700 · 본문 400 · 표 머리글 700.
+   보조 글자도 --rp-muted(#5F5E55, 흰 바탕에서 대비 6:1 이상)보다 옅은 색은 쓰지 않는다. */
+
+/* ── 공통 사주표 (무료·전체·심화 웹 + PDF) ── */
+.saju-table { margin: 6px 0 4px; }
+.saju-pillars { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--rp-border); border-bottom: 1px solid var(--rp-border); margin: 0 0 22px; }
+.saju-col { text-align: center; padding: 18px 4px 16px; border-left: 1px solid var(--rp-border); }
+.saju-col:first-child { border-left: 0; }
+.saju-label { font-size: 14px; line-height: 1.4; color: var(--rp-muted); margin: 0 0 10px; }
+.saju-col.is-day .saju-label { color: var(--rp-green); font-weight: 700; }
+.saju-gan, .saju-ji { display: block; font-weight: 800; line-height: 1.1; font-family: 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; }
+.saju-gan { font-size: 34px; }
+.saju-ji { font-size: 28px; font-weight: 700; }
+.saju-ko { display: block; font-size: 14px; color: var(--rp-muted); margin: 3px 0 7px; }
+.saju-me { display: block; font-size: 13.5px; line-height: 1.4; color: var(--rp-green); margin-top: 8px; word-break: keep-all; }
+.saju-empty { display: block; font-size: 16px; color: var(--rp-muted); padding: 12px 0 28px; }
+.saju-day-note { font-size: 15px; line-height: 1.7; color: var(--rp-muted); word-break: keep-all; margin: 10px 0 0; }
+.elem-dist { margin: 4px 0 18px; }
+.elem-title { font-size: 16px; font-weight: 700; color: var(--rp-ink); margin: 0 0 4px; }
+.elem-note { font-size: 14px; line-height: 1.5; color: var(--rp-muted); margin: 0 0 12px; }
+.elem-grid { display: grid; grid-template-columns: 76px 1fr 40px; align-items: center; row-gap: 10px; column-gap: 12px; }
+.elem-name { font-size: 15px; font-weight: 600; white-space: nowrap; }
+.elem-bar { height: 10px; background: #E9E6D8; border-radius: 5px; position: relative; overflow: hidden; }
+.elem-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; }
+.elem-count { font-size: 15px; font-weight: 600; text-align: right; color: var(--rp-ink); }
+.saju-aside { margin-top: 20px; padding-left: 14px; border-left: 2px solid var(--rp-border); }
+.saju-aside-label { font-size: 14px; font-weight: 700; color: var(--rp-green); margin: 0 0 4px; }
+.saju-aside-text { font-size: 15px; line-height: 1.75; color: var(--rp-muted); margin: 0 0 3px; word-break: keep-all; }
+.saju-type-name { font-size: 18px; font-weight: 700; color: var(--rp-ink); margin: 0 0 2px; }
+
+/* ── 표 (최대 4열) ── */
+.rpt-table-wrap { margin: 22px 0 10px; }
+.rpt-table-title { font-size: 18px; line-height: 1.5; font-weight: 800; color: var(--rp-title); word-break: keep-all; margin: 0 0 10px; }
+.rpt-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 15.5px; line-height: 1.65; border: 1px solid var(--rp-border); }
+.rpt-table th { background: var(--rp-green); color: #fff; font-weight: 700; font-size: 14.5px; line-height: 1.4; text-align: left; padding: 11px 12px; border: 1px solid var(--rp-green); }
+.rpt-table td { padding: 11px 12px; border: 1px solid var(--rp-border); vertical-align: top; word-break: keep-all; color: var(--rp-ink); background: #fff; }
+.rpt-table tbody tr.rpt-row-even td { background: var(--rp-green-soft); }
+.rpt-table.cols-4 col:nth-child(1) { width: 17%; } .rpt-table.cols-4 col:nth-child(2) { width: 27%; } .rpt-table.cols-4 col:nth-child(3) { width: 28%; } .rpt-table.cols-4 col:nth-child(4) { width: 28%; }
+.rpt-table.cols-2 col:nth-child(1) { width: 24%; } .rpt-table.cols-2 col:nth-child(2) { width: 76%; }
+.rpt-table.cols-3 col:nth-child(1) { width: 21%; } .rpt-table.cols-3 col:nth-child(2) { width: 39.5%; } .rpt-table.cols-3 col:nth-child(3) { width: 39.5%; }
+.rpt-td-key { padding-left: 10px; padding-right: 8px; }
+.rpt-td-main { display: block; }
+.rpt-td-key .rpt-td-main { font-weight: 700; color: var(--rp-green); }
+.rpt-td-sub { display: block; font-size: 14px; line-height: 1.5; color: var(--rp-muted); margin-top: 3px; }
+.rpt-td-empty { color: var(--rp-muted); }
+.rpt-table-note { font-size: 14px; line-height: 1.6; color: var(--rp-muted); word-break: keep-all; margin: 8px 0 0; }
+/* 웹 모바일: 행을 카드로 보여 준다(칸 순서는 그대로, 머리글은 각 칸 앞 라벨로). PDF 문서(.pdf-stage)는 .rpt-page 밖이라 영향이 없다. */
+@media (max-width: 600px) {
+  .rpt-page .rpt-table, .rpt-page .rpt-table tbody, .rpt-page .rpt-table tr, .rpt-page .rpt-table td { display: block; width: 100%; }
+  .rpt-page .rpt-table { border: 0; }
+  .rpt-page .rpt-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .rpt-page .rpt-table tr { border: 1px solid var(--rp-border); border-radius: 10px; overflow: hidden; margin: 0 0 12px; background: #fff; }
+  .rpt-page .rpt-table td { border: 0; border-top: 1px solid var(--rp-border); padding: 11px 14px; font-size: 16px; }
+  .rpt-page .rpt-table td:first-child { border-top: 0; background: var(--rp-green); }
+  .rpt-page .rpt-table td:first-child .rpt-td-main { color: #fff; }
+  .rpt-page .rpt-table td:first-child .rpt-td-sub { color: #E4EEE4; }
+  .rpt-page .rpt-table td:first-child::before { display: none; }
+  .rpt-page .rpt-table td::before { content: attr(data-label); display: block; font-size: 13.5px; font-weight: 700; color: var(--rp-green); margin: 0 0 3px; }
+  .rpt-page .rpt-table tbody tr.rpt-row-even td:not(:first-child) { background: var(--rp-green-soft); }
+  .rpt-page .rpt-table colgroup { display: none; }
+  .saju-gan { font-size: 30px; }
+  .saju-ji { font-size: 25px; }
+}
+
+/* 빈 칸이 많은 표는 화면 크기와 상관없이 행별 카드로(웹·PDF 공통). 비어 있는 칸은 마크업에서 빠진다. */
+.rpt-as-cards .rpt-table, .rpt-as-cards .rpt-table tbody, .rpt-as-cards .rpt-table tr, .rpt-as-cards .rpt-table td { display: block; width: 100%; }
+.rpt-as-cards .rpt-table { border: 0 !important; }
+.rpt-as-cards .rpt-table thead, .rpt-as-cards .rpt-table colgroup { display: none !important; }
+.rpt-as-cards .rpt-table tr { border: 1px solid var(--rp-border); border-radius: 10px; overflow: hidden; margin: 0 0 10px; background: #fff; }
+.rpt-as-cards .rpt-table td { border: 0; border-top: 1px solid var(--rp-border); padding: 8px 14px; background: transparent; }
+.rpt-as-cards .rpt-table td:first-child { border-top: 0; background: var(--rp-green); }
+.rpt-as-cards .rpt-table td:first-child .rpt-td-main { color: #fff; }
+.rpt-as-cards .rpt-table td:first-child .rpt-td-sub { color: #E4EEE4; }
+.rpt-as-cards .rpt-table td:not(:first-child)::before { content: attr(data-label); display: block; font-size: 13.5px; font-weight: 700; color: var(--rp-green); margin: 0 0 1px; }
+.rpt-as-cards .rpt-table tr.rpt-row-even td:not(:first-child) { background: var(--rp-green-soft); }
+
+/* ── PDF 문서: 사주표·표·라벨을 인쇄 크기로 (본문 폭 666px 전체를 쓴다) ── */
+.pdf-doc .saju-table, .pdf-page .saju-table { margin: 4px 0 0; }
+.pdf-doc .saju-col, .pdf-page .saju-col { padding: 22px 6px 20px; }
+.pdf-doc .saju-label, .pdf-page .saju-label { font-size: 15px; margin-bottom: 12px; }
+.pdf-doc .saju-gan, .pdf-page .saju-gan { font-size: 46px; }
+.pdf-doc .saju-ji, .pdf-page .saju-ji { font-size: 38px; }
+.pdf-doc .saju-ko, .pdf-page .saju-ko { font-size: 15px; margin: 4px 0 9px; }
+.pdf-doc .saju-me, .pdf-page .saju-me { font-size: 14px; }
+.pdf-doc .saju-day-note, .pdf-page .saju-day-note { font-size: 16px; }
+.pdf-doc .elem-title, .pdf-page .elem-title { font-size: 17px; }
+.pdf-doc .elem-note, .pdf-page .elem-note { font-size: 14.5px; }
+.pdf-doc .elem-grid, .pdf-page .elem-grid { grid-template-columns: 96px 1fr 48px; row-gap: 12px; }
+.pdf-doc .elem-name, .pdf-page .elem-name, .pdf-doc .elem-count, .pdf-page .elem-count { font-size: 16.5px; }
+.pdf-doc .elem-bar, .pdf-page .elem-bar { height: 12px; border-radius: 6px; }
+.pdf-doc .saju-aside-label, .pdf-page .saju-aside-label { font-size: 14.5px; }
+.pdf-doc .saju-aside-text, .pdf-page .saju-aside-text { font-size: 15.5px; }
+.pdf-doc .saju-type-name, .pdf-page .saju-type-name { font-size: 19px; }
+.pdf-doc .rpt-table-wrap, .pdf-page .rpt-table-wrap { margin: 0 0 20px; }
+.pdf-doc .rpt-table-title, .pdf-page .rpt-table-title { font-size: 19px; }
+/* PDF: 긴 표는 행 단위로 쪽을 넘나든다. 이어지는 행(rpt-tchunk-cont)은 머리글·제목을 숨기고, 쪽 맨 위에 올 때만 다시 보여 준다(pdfExport 가 rpt-tchunk-head 를 붙임). */
+.pdf-doc .rpt-tchunk, .pdf-page .rpt-tchunk { margin-bottom: 0; }
+.pdf-doc .rpt-tchunk-last, .pdf-page .rpt-tchunk-last { margin-bottom: 20px; }
+.pdf-doc .rpt-tchunk-cont .rpt-table-title, .pdf-doc .rpt-tchunk-cont thead, .pdf-page .rpt-tchunk-cont .rpt-table-title, .pdf-page .rpt-tchunk-cont thead { display: none; }
+.pdf-doc .rpt-tchunk-cont .rpt-table, .pdf-page .rpt-tchunk-cont .rpt-table { border-top: 0; }
+.pdf-page .rpt-tchunk-cont.rpt-tchunk-head .rpt-table-title { display: block; }
+.pdf-page .rpt-tchunk-cont.rpt-tchunk-head thead { display: table-header-group; }
+.pdf-page .rpt-tchunk-cont.rpt-tchunk-head .rpt-table { border-top: 1px solid var(--rp-border); }
+.pdf-month-group { padding-bottom: 6px; }
+.pdf-month-group .rpt-h3 { margin-top: 20px; }
+.pdf-cont-label {
+  height: 34px; line-height: 33px; margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--rp-green);
+  border-bottom: 1px solid var(--rp-border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pdf-hero .rpt-eyebrow { letter-spacing: 0.08em; opacity: 0.92; }
 
 /* ── 항상 밝은 테마: 사이트는 라이트 전용이다. 브라우저·휴대폰이 다크모드(강제 다크 포함)여도 화면과 인쇄가 뒤집히지 않도록
    색 구성표를 라이트로 고정한다(index.html 의 meta color-scheme 과 같은 선언). ── */
@@ -376,6 +489,14 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   p, li { orphans: 3; widows: 3; }
   .rpt-compare { grid-template-columns: 1fr 1fr; }
   .rpt-card, .rpt-summary, img, svg { max-width: 100%; }
+  .rpt-table th { color: #1f5a3a !important; border: 1px solid #bdbdbd; border-bottom: 2pt solid #1f5a3a; }
+  .rpt-table td { border-color: #bdbdbd; }
+  .rpt-table thead { display: table-header-group; }
+  .rpt-table tr { break-inside: avoid; page-break-inside: avoid; }
+  .rpt-table-wrap { break-inside: avoid; page-break-inside: avoid; }
+  .rpt-table-title { color: #14301f; }
+  .saju-pillars { border-color: #8a8a8a; }
+  .saju-col { border-color: #bdbdbd; }
 }
 
 /* ── 내 사주 무료 결과 마지막 유료 안내(소개 + 펼침 상품 안내) ── */

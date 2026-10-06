@@ -75,12 +75,14 @@ test('이번 사례(1991-08-23 07:30): 쇠 3곳·흙 3곳, 일간 乙(나무), �
 })
 
 // ── 리포트 화면 ───────────────────────────────────────────────────────────────
-test('리포트: 01~06 구조 — 핵심 성향 → 사주 한눈에 → 이유 → 강점 → 주의 → 팁', () => {
+test('리포트: 핵심 성향 → 사주 한눈에(번호 없는 공통 정보) → 이유 → 강점 → 주의 → 팁, PART 1~5 연속', () => {
   const html = render(base())
   assert.deepStrictEqual(ids(html), ['core', 'saju', 'why', 'strength', 'habit', 'tip'])
   const titles = ['나의 핵심 성향', '내 사주 한눈에', '이런 성향이 나오는 이유', '나의 강점', '주의할 습관', '바로 실천할 팁']
   let last = -1
-  titles.forEach((t, i) => { const at = html.indexOf(t); assert.ok(at > last, t); last = at; assert.ok(html.includes(`>0${i + 1}<`), '번호 0' + (i + 1)) })
+  const partOf = [1, null, 2, 3, 4, 5]   // 사주표는 번호가 없고, 풀이 섹션만 PART 1부터 이어진다
+  titles.forEach((t, i) => { const at = html.indexOf(t); assert.ok(at > last, t); last = at; if (partOf[i]) assert.ok(html.includes(`>PART ${partOf[i]}<`), 'PART ' + partOf[i]) })
+  assert.ok(!html.includes('>PART 6<') && !/>0[1-6]</.test(html))
   assert.ok(html.includes('하늘님의 사주 리포트') && html.includes('1991년 8월 23일 · 양력 · 07:30') && html.includes('마이사주 · 내 사주 무료 결과'))
   // mock 시안의 안내 띠는 없다
   assert.ok(!/시안|mock|AI도 호출하지/.test(html))
@@ -98,7 +100,7 @@ test('리포트: 사주 원국(시·일·월·년 순)과 오행 분포, 일간,
   assert.ok(html.includes('나를 대표하는 글자') && html.includes('일간(나를 대표하는 글자)은 乙, 나무 기운이에요.'))
   assert.ok(html.includes('내 사주의 오행 분포') && html.includes('사주 8글자의 오행 구성을 보여주는 표예요.') && !html.includes('여덟 글자의 기운 분포'))
   const dist = html.slice(html.indexOf('data-element-distribution'), html.indexOf('일간(나를'))
-  assert.deepStrictEqual([...dist.matchAll(/text-align:right;font-weight:600">(\d)개<\/span>/g)].map((m) => m[1]), ['1', '1', '3', '3', '0'])
+  assert.deepStrictEqual([...dist.matchAll(/class="elem-count">(\d)개<\/span>/g)].map((m) => m[1]), ['1', '1', '3', '3', '0'])
   assert.ok(dist.includes('width:37.5%') && dist.includes('width:0%'))
   assert.ok(html.includes('비유로 보는 내 사주 유형') && html.includes('뚝심 승부사형') && html.includes('이런 이미지로 읽을 수 있어요: 느리지만 반드시 이긴다, 포기를 모르는 덩굴.'))
   // 이렇게 풀이한 이유 (옛 표현은 없다)
@@ -121,7 +123,7 @@ test('오행 분포: 서버가 계산한 8글자에서 합이 항상 8, 출생 �
     assert.deepStrictEqual(d.counts, sajuFacts(pillars).counts)
     const html = render(base({ pillars }))
     const dist = html.slice(html.indexOf('data-element-distribution'), html.indexOf('일간(나를'))
-    assert.deepStrictEqual([...dist.matchAll(/text-align:right;font-weight:600">(\d)개<\/span>/g)].map((m) => Number(m[1])), ['목', '화', '토', '금', '수'].map((e) => d.counts[e]))
+    assert.deepStrictEqual([...dist.matchAll(/class="elem-count">(\d)개<\/span>/g)].map((m) => Number(m[1])), ['목', '화', '토', '금', '수'].map((e) => d.counts[e]))
     assert.ok(!/점수|등급|좋|나쁜|길|흉|부족|과다/.test(dist.replace(/<[^>]+>/g, '')))
     assert.ok(!html.includes('운의 계절') && !html.includes('전성기'))
   }
@@ -149,7 +151,7 @@ test('리포트: 강점·주의는 문단별로 나뉘어 읽기 쉽게 보이�
 test('리포트: 비어 있는 섹션은 숨기고 번호는 보이는 섹션 기준으로 이어진다', () => {
   const noStrength = render(base({ strength: '' }))
   assert.deepStrictEqual(ids(noStrength), ['core', 'saju', 'why', 'habit', 'tip'])
-  assert.ok(!noStrength.includes('나의 강점') && noStrength.includes('>05<'))      // 팁이 05
+  assert.ok(!noStrength.includes('나의 강점') && noStrength.includes('>PART 4<') && !noStrength.includes('>PART 5<'))      // 팁이 PART 4
   const minimal = render(base({ why: '', strength: '', habit: '', tip: '' }))
   assert.deepStrictEqual(ids(minimal), ['core', 'saju'])
   assert.ok(minimal.includes('내 사주 한눈에') && minimal.includes('나의 핵심 성향'))
