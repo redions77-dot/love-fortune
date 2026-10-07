@@ -16,7 +16,7 @@ import { buildDeepFlowTable, buildDeepChoiceTable, buildDeepClosing } from './de
 import { summarizeSaju, summarizeMoney, summarizeGunghabFree, summarizeGunghabPaid } from './reportSummary.js'
 import { isAdminEntry } from './adminLink.js'
 import { emailPrefillFor, prefillSignature } from './emailPrefill.js'
-import { RELATION_OPTIONS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, SAJU_PAID_FREE_NOTE, SAJU_PAID_HIGHLIGHTS, SAJU_PAID_FACTS, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText } from './relations.js'
+import { RELATION_OPTIONS, RELATION_GROUPS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, SAJU_PAID_FREE_NOTE, SAJU_PAID_HIGHLIGHTS, SAJU_PAID_FACTS, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText } from './relations.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
 // 없으면 조용히 무시한다. 나중에 다른 분석 도구를 붙일 때도 호출부는 바꿀 필요 없이 이 함수만 확장하면 된다.
@@ -646,6 +646,7 @@ export default function App() {
   const [moreAnalysisOpen, setMoreAnalysisOpen] = useState(false)
 
   const [관계유형, set관계유형] = useState(() => _qs.get('rt') || '')
+  const [관계그룹, set관계그룹] = useState(() => RELATION_GROUPS.find(g => g.types.includes(_qs.get('rt')))?.key || '')
   const [관계역할, set관계역할] = useState(() => _qs.get('rr') || '')
   const [gunghabFreeText, setGunghabFreeText] = useState('')
   const [gunghabFreePhase, setGunghabFreePhase] = useState('input') // input | streaming | done | error
@@ -915,7 +916,7 @@ export default function App() {
     setIsLunar(false); setTimeHour(''); setTimeMin(''); setTimeAmPm('오전'); setTimeUnknown(false)
     setMbti(''); setBlood(''); setPhase('input'); setSajuData(null); setBaseText(''); setPaidText('')
     setIsBaseStreaming(false); setIsPaidStreaming(false); setIsPaid(false)
-    setGunghabStep(1); set관계유형(''); set관계역할(''); setGunghabFreeText(''); setGunghabFreePhase('input'); setGunghabFreeError(null); setShareDraft(null); setShowSajuStruct(false); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
+    setGunghabStep(1); set관계유형(''); set관계그룹(''); set관계역할(''); setGunghabFreeText(''); setGunghabFreePhase('input'); setGunghabFreeError(null); setShareDraft(null); setShowSajuStruct(false); setPartnerGender(''); setPartnerBirthYear(''); setPartnerBirthMonth(''); setPartnerBirthDay('')
     setPartnerIsLunar(false); setPartnerTimeHour(''); setPartnerTimeMin(''); setPartnerTimeAmPm('오전'); setPartnerTimeUnknown(false)
     setMyName(''); setPartnerName(''); setGunghabText(''); setIsGunghabStreaming(false); setGunghabSajuData(null)
     setGilil목적(''); setGililText(''); setIsGililStreaming(false); isPaidSectionRef.current = false
@@ -1458,21 +1459,39 @@ export default function App() {
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 100px', width: '100%', boxSizing: 'border-box', flex: 1 }}>
           {isStep0 && (
             <>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>어떤 관계인가요?</h2>
-              <p style={{ fontSize: 13, color: '#62616C', marginBottom: 24 }}>관계에 맞는 분석을 해드려요</p>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>두 분은 어떤 사이인가요?</h2>
+              <p style={{ fontSize: 13, color: '#62616C', marginBottom: 24 }}>관계에 따라 궁합을 다르게 풀어드려요</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {RELATION_OPTIONS.map(({ key: value, emoji, label, sub }) => (
+                {RELATION_GROUPS.map(({ key: value, emoji, label, sub, types }) => (
                   <button key={value}
-                    aria-pressed={관계유형 === value} style={{ position: 'relative', padding: '18px 20px', border: `2px solid ${관계유형 === value ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: 관계유형 === value ? '#F6F0F3' : '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.15s' }}
-                    onClick={() => { set관계유형(value); if (value !== '부모자녀') set관계역할('') }}><CheckMark on={관계유형 === value} />
+                    aria-pressed={관계그룹 === value} style={{ position: 'relative', padding: '18px 20px', border: `2px solid ${관계그룹 === value ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: 관계그룹 === value ? '#F6F0F3' : '#FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.15s' }}
+                    onClick={() => { set관계그룹(value); if (types.length === 1) { set관계유형(types[0]); set관계역할('') } else if (!types.includes(관계유형)) { set관계유형(''); set관계역할('') } }}><CheckMark on={관계그룹 === value} />
                     <span style={{ fontSize: 28 }}>{emoji}</span>
                     <div style={{ textAlign: 'left' }}>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: 관계유형 === value ? '#633B50' : '#24232B' }}>{label}</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 관계그룹 === value ? '#633B50' : '#24232B' }}>{label}</div>
                       <div style={{ fontSize: 12, color: '#62616C', marginTop: 2 }}>{sub}</div>
                     </div>
                   </button>
                 ))}
               </div>
+              {(() => {
+                const grp = RELATION_GROUPS.find(g => g.key === 관계그룹)
+                if (!grp || grp.types.length < 2) return null
+                return (
+                  <div style={{ marginTop: 16 }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>{grp.key === 'lover' ? '어떤 사이인가요?' : '어느 쪽에 가까운가요?'}</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      {RELATION_OPTIONS.filter(o => grp.types.includes(o.key)).map(({ key, label, sub }) => (
+                        <button key={key} aria-pressed={관계유형 === key} onClick={() => { set관계유형(key); if (key !== '부모자녀') set관계역할('') }} style={{ position: 'relative', padding: '14px 12px', border: '2px solid ' + (관계유형 === key ? '#633B50' : '#DEDFE5'), borderRadius: 10, background: 관계유형 === key ? '#F6F0F3' : '#FFFFFF', cursor: 'pointer', textAlign: 'left' }}>
+                          <CheckMark on={관계유형 === key} />
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 관계유형 === key ? '#633B50' : '#24232B' }}>{label}</div>
+                          <div style={{ fontSize: 12, color: '#62616C', marginTop: 2 }}>{sub}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
               {관계유형 === '부모자녀' && (
                 <div style={{ marginTop: 16 }}>
                   <p style={{ fontSize: 13, fontWeight: 700, color: '#633B50', marginBottom: 8 }}>내가 어느 쪽인가요?</p>
@@ -1844,7 +1863,7 @@ if (emailModal) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
               { key: 'saju', label: '내 사주', hook: '무료 요약: 핵심 성향 · 강점 1개 · 주의할 습관 1개 · 오늘 해볼 팁 1개', sub: '입력: 성별, 결혼 상태, 생년월일, 태어난 시간(모르면 "모름" 선택). 혈액형은 선택이에요.', btn: '내 사주 무료 요약 보기 →', onClick: goSaju },
-              { key: 'gunghab', label: '관계 궁합', hook: '무료 요약: 관계 한 줄 요약 · 핵심 3가지 · 잘 맞는 점과 조율할 점 · 바로 써볼 대화 문장', sub: '입력: 두 사람의 성별, 생년월일, 태어난 시간(모르면 "모름" 선택). 연인·부부·가족·친구·직장 동료 중 고를 수 있어요.', btn: '관계 궁합 무료 요약 보기 →', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형(''); set관계역할(''); setScreen('gunghab_input') } },
+              { key: 'gunghab', label: '관계 궁합', hook: '무료 요약: 관계 한 줄 요약 · 핵심 3가지 · 잘 맞는 점과 조율할 점 · 바로 써볼 대화 문장', sub: '입력: 두 사람의 성별, 생년월일, 태어난 시간(모르면 "모름" 선택). 연인·부부·가족·친구·직장 동료 중 고를 수 있어요.', btn: '관계 궁합 무료 요약 보기 →', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형(''); set관계그룹(''); set관계역할(''); setScreen('gunghab_input') } },
             ].map(({ key, label, hook, sub, btn, onClick }) => (
               <div key={key} onClick={onClick} style={{ ...cardStyle, minHeight: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.accent, marginBottom: 6 }}>무료 요약</div>

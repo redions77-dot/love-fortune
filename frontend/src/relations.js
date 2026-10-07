@@ -12,6 +12,13 @@ export const RELATION_OPTIONS = [
   { key: '친구', emoji: '👫', label: '친구', sub: '대화 코드와 편안한 거리' },
   { key: '직장동료', emoji: '🤝', label: '직장 동료·상사', sub: '일하는 방식과 소통 방법' },
 ]
+// 첫 선택 화면의 4개 묶음. types가 2개면 아래에 세부 선택(연인/부부, 부모·자녀/형제자매·기타)이 이어진다.
+export const RELATION_GROUPS = [
+  { key: 'lover', emoji: '💕', label: '연인·부부', sub: '서로 끌리는 방식과 어긋나는 지점', types: ['연인', '부부'] },
+  { key: 'family', emoji: '👨‍👩‍👧', label: '가족', sub: '가까울수록 부딪히는 이유와 맞는 거리', types: ['부모자녀', '형제가족'] },
+  { key: 'friend', emoji: '👫', label: '친구', sub: '잘 통하는 부분과 서운해지는 지점', types: ['친구'] },
+  { key: 'work', emoji: '🤝', label: '직장', sub: '함께 일할 때 맞는 방식과 부딪히는 지점', types: ['직장동료'] },
+]
 export const RELATION_ROLES = [
   { key: '부모', label: '내가 부모예요', sub: '상대는 자녀' },
   { key: '자녀', label: '내가 자녀예요', sub: '상대는 부모' },

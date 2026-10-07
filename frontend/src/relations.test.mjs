@@ -327,3 +327,10 @@ test('1,990원 안내 항목은 서버 유료 프롬프트의 실제 섹션 수�
   // 상품명은 정확히: 무료 풀이 / 전체 분석(1,990원) / 심화 분석(9,900원). ('기본 풀이'는 첫 화면에서 무료 풀이를 뜻하므로 1,990원 구간에는 쓰지 않는다)
   assert.ok(upsell.includes('여기까지가 전체 분석(1,990원)이에요') && upsell.includes('선택 · 별도 상품'))
 })
+
+test('첫 선택 화면은 4개 묶음이고 모든 관계 유형이 한 번씩 연결된다', async () => {
+  const { RELATION_GROUPS } = await import('./relations.js')
+  assert.deepStrictEqual(RELATION_GROUPS.map(g => g.label), ['연인·부부', '가족', '친구', '직장'])
+  assert.deepStrictEqual(RELATION_GROUPS.flatMap(g => g.types).sort(), RELATION_OPTIONS.map(o => o.key).sort())
+  assert.deepStrictEqual(RELATION_GROUPS.map(g => g.types.length), [2, 2, 1, 1])
+})
