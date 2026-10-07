@@ -8,6 +8,7 @@ import PaidIntro from './PaidIntro.jsx'
 import SajuReport from './SajuReport.jsx'
 import SajuTable from './SajuTable.jsx'
 import { SUBHEAD_EMOJIS } from './contentBlocks.js'
+import { FullSection } from './FullReport.jsx'
 import { ReportHero, ReportSection, ReportSummary, ReportTable, ClosingBlock, PdfSaveArea, CompareBlock, renderFormattedContent } from './reportBlocks.jsx'
 import { exportResultPDF } from './pdfExport.jsx'
 import { PRODUCT, productTitle, pdfFileName, birthMetaLine } from './reportMeta.js'
@@ -2131,7 +2132,7 @@ if (screen === 'result') {
   const saveResultPdf = () => savePdf({
     filename: useSajuReport ? pdfFileName(productKind, myName) : '마이사주_분석결과_' + (myName || '결과'),
     title: reportTitle, eyebrow: reportEyebrow, subtitle: reportSub, footerLabel: useSajuReport ? PRODUCT[productKind].label : '',
-    items: buildResultPdfItems({ useSajuReport, sajuSummary, coreSections: reportCoreSections, baseShown, paidSections: paidShown, moneySummary, sajuData, typeInfo: 리포트유형 }),
+    items: buildResultPdfItems({ full: productKind === 'full', useSajuReport, sajuSummary, coreSections: reportCoreSections, baseShown, paidSections: paidShown, moneySummary, sajuData, typeInfo: 리포트유형 }),
   })
   return (
     <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -2160,6 +2161,7 @@ if (screen === 'result') {
             actionsFailed={actionsFailed && !(myFree.actions && myFree.actions.length === 3) && !myFree.tip}
             onRetryActions={handleFreeAnalyze}
             typeInfo={리포트유형}
+            full={productKind === 'full'}
           />
         )}
 
@@ -2309,7 +2311,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
           <>
             <p className="rpt-kicker rpt-divider-label">✦ 전체 분석 결과 ✦</p>
             <ReportSummary data={moneySummary} />
-            {paidShown.map((sec, i) => <ReportSection key={i} title={sec.title} content={sec.content} part={corePartCount + i + 1} />)}
+            {paidShown.map((sec, i) => <FullSection key={i} title={sec.title} content={sec.content} part={corePartCount + i + 1} />)}
           </>
         )}
 

@@ -507,3 +507,71 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .rpt-paid-intro-btn { width: 100%; min-height: 52px; padding: 14px 18px; font-size: 17px; font-weight: 800; color: #fff; background: var(--rp-green); border: none; border-radius: 12px; cursor: pointer; word-break: keep-all; }
 .rpt-paid-intro #paid-product-area { text-align: left; }
 @media (min-width: 720px) { .rpt-paid-intro { padding: 32px 32px 28px; } .rpt-paid-intro-btn { max-width: 420px; } }
+
+/* ── 전체 분석(유료) 한눈에 보기 층 (.fa-*) ── 기존 초록·아이보리 변수만 쓴다. 무료·심화·궁합 화면에는 쓰이지 않는다. */
+.fa-units { margin: 4px 0 28px; }
+.fa-unit { margin: 0 0 16px; min-width: 0; }
+.fa-unit > * { min-width: 0; }
+.fa-label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; color: var(--rp-green); margin: 0 0 10px; word-break: keep-all; }
+.fa-card { background: #fff; border: 1px solid var(--rp-border); border-radius: 12px; padding: 18px 18px 16px; }
+.fa-keycard { background: var(--rp-green-soft); border: 1px solid var(--rp-green-line); border-radius: 12px; padding: 18px 20px; margin: 0 0 16px; }
+.fa-keycard-label { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; color: var(--rp-green); margin: 0 0 8px; word-break: keep-all; }
+.fa-keycard-text { font-size: 20px; line-height: 1.6; font-weight: 800; color: var(--rp-title); margin: 0; word-break: keep-all; }
+.fa-keycard-text + .fa-keycard-text { margin-top: 8px; }
+.fa-compare { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 0 0 16px; }
+.fa-cmp-col { border: 1px solid var(--rp-border); border-radius: 12px; padding: 14px 16px; background: #fff; min-width: 0; }
+.fa-good { border-top: 4px solid var(--rp-green-line); background: var(--rp-green-soft); }
+.fa-warn { border-top: 4px solid #D8BE8A; background: #F8F3E6; }
+.fa-cmp-label { font-size: 14px; font-weight: 700; color: var(--rp-green); margin: 0 0 6px; word-break: keep-all; }
+.fa-warn .fa-cmp-label { color: #7A5A12; }
+.fa-cmp-text { font-size: 17px; line-height: 1.75; color: var(--rp-ink); margin: 0; word-break: keep-all; }
+.fa-stages { list-style: none; margin: 0; padding: 0; }
+.fa-stage { display: block; padding: 12px 0 12px 16px; border-left: 3px solid var(--rp-green-line); margin-left: 4px; position: relative; }
+.fa-stage::before { content: ''; position: absolute; left: -8px; top: 18px; width: 13px; height: 13px; border-radius: 50%; background: var(--rp-green); border: 2px solid #fff; }
+.fa-stage + .fa-stage { margin-top: 2px; }
+.fa-stage-when { display: block; font-size: 15px; font-weight: 800; color: var(--rp-green); margin: 0 0 3px; word-break: keep-all; }
+.fa-stage-text { display: block; font-size: 17px; line-height: 1.7; color: var(--rp-ink); word-break: keep-all; }
+.fa-job { display: flex; gap: 14px; align-items: flex-start; }
+.fa-job-n { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; background: var(--rp-green); color: #fff; font-size: 16px; font-weight: 800; line-height: 34px; text-align: center; }
+.fa-job-body { min-width: 0; flex: 1; }
+.fa-job .fa-label { margin-bottom: 4px; }
+.fa-job-title { font-size: 19px; line-height: 1.5; font-weight: 800; color: var(--rp-title); margin: 0 0 6px; word-break: keep-all; }
+.fa-job-why { font-size: 17px; line-height: 1.7; color: var(--rp-ink); margin: 0; word-break: keep-all; }
+.fa-months { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.fa-month { border: 1px solid var(--rp-border); border-radius: 10px; padding: 10px 12px; background: var(--rp-bg); min-width: 0; }
+.fa-month-n { display: block; font-size: 13px; font-weight: 800; color: var(--rp-green); margin: 0 0 3px; }
+.fa-month-t { display: block; font-size: 15.5px; line-height: 1.55; color: var(--rp-ink); word-break: keep-all; }
+.fa-lucky { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.fa-lucky-item { border: 1px solid var(--rp-border); border-radius: 10px; padding: 12px 14px; background: var(--rp-bg); min-width: 0; }
+.fa-lucky-label { display: block; font-size: 13px; font-weight: 700; color: var(--rp-green); margin: 0 0 3px; }
+.fa-lucky-value { display: block; font-size: 17px; line-height: 1.55; font-weight: 700; color: var(--rp-ink); word-break: keep-all; }
+.fa-tags { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.fa-tag { font-size: 15px; font-weight: 700; color: var(--rp-green); background: var(--rp-green-soft); border: 1px solid var(--rp-green-line); border-radius: 999px; padding: 6px 14px; word-break: keep-all; }
+.fa-dash .saju-table { margin-top: 4px; }
+.fa-memo { font-size: 15px; font-weight: 800; letter-spacing: 0.04em; color: var(--rp-green); margin: 4px 0 14px; padding-bottom: 10px; border-bottom: 2px solid var(--rp-green); }
+.fa-list { margin: 0; padding: 0 0 0 22px; list-style: decimal; }
+.fa-card .fa-cmp-text + .fa-cmp-text { margin-top: 8px; }
+.fa-list li { font-size: 17px; line-height: 1.75; color: var(--rp-ink); margin: 0 0 8px; word-break: keep-all; }
+.fa-list li:last-child { margin-bottom: 0; }
+.fa-act-card { border-top: 4px solid var(--rp-green); }
+.fa-final { margin-bottom: 0; }
+.fa-summary .fa-compare { margin-top: 0; }
+.fa-acts { margin-top: 4px; }
+.fa-act-list { list-style: none; margin: 0; padding: 0; }
+.fa-act { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--rp-border); }
+.fa-act:first-child { border-top: 0; padding-top: 4px; }
+.fa-act-n { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; background: var(--rp-green); color: #fff; font-size: 15px; font-weight: 800; line-height: 30px; text-align: center; }
+.fa-act-t { min-width: 0; flex: 1; font-size: 18px; line-height: 1.6; font-weight: 700; color: var(--rp-ink); word-break: keep-all; padding-top: 2px; }
+@media (min-width: 600px) {
+  .fa-compare { grid-template-columns: 1fr 1fr; }
+  .fa-months { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fa-lucky { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.pdf-doc .fa-compare, .pdf-page .fa-compare { grid-template-columns: 1fr 1fr; }
+.pdf-doc .fa-months, .pdf-page .fa-months, .pdf-doc .fa-lucky, .pdf-page .fa-lucky { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pdf-doc .fa-cmp-text, .pdf-page .fa-cmp-text, .pdf-doc .fa-stage-text, .pdf-page .fa-stage-text, .pdf-doc .fa-job-why, .pdf-page .fa-job-why, .pdf-doc .fa-list li, .pdf-page .fa-list li { font-size: 16.5px; }
+.pdf-doc .fa-keycard-text, .pdf-page .fa-keycard-text { font-size: 20px; }
+.pdf-doc .fa-units, .pdf-page .fa-units { margin: 0; }
+.pdf-doc .fa-unit, .pdf-page .fa-unit { margin: 0 0 14px; }
+.pdf-doc .fa-card, .pdf-page .fa-card { margin: 0 0 14px; }
+.pdf-doc .fa-keycard, .pdf-page .fa-keycard { margin: 0 0 14px; }

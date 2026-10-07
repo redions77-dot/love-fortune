@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import { parseContentBlocks, stripMarker } from './contentBlocks.js'
 import { ContentBlock, SectionHead, ActionItem, ReportSummary, ReportTable, ClosingBlock, TimelineItem, StepItem, BRACKET_SECTIONS } from './reportBlocks.jsx'
 import SajuTable, { TypeInfoNote } from './SajuTable.jsx'
+import { FullDashboard, FullSummary, unitsForSection } from './FullReport.jsx'
 
 // ───────────────────────── "다운로드 PDF" (이미지 방식) ─────────────────────────
 // 화면을 통째로 캡처해 자르지 않는다. 결과 내용을 A4 전용 문서로 다시 그린 뒤(웹과 같은 본문 컴포넌트·CSS),
@@ -91,7 +92,8 @@ export function buildPdfPlan(items) {
       blk('', <img className="pdf-img" src={it.src} style={{ width: `min(100%, ${it.w}px)` }} alt="" />, { sec, group: `${sec}.0` })
     } else if (it.kind === 'saju') {
       sec++
-      blk('pdf-head', (
+      if (it.full) blk('pdf-head', <FullDashboard pillars={it.pillars} typeInfo={it.typeInfo} typeId={null} />, { sec, group: `${sec}.0` })
+      else blk('pdf-head', (
         <section aria-label="내 사주 한눈에">
           <h2 className="rpt-h2">내 사주 한눈에</h2>
           <SajuTable pillars={it.pillars} />
@@ -100,7 +102,8 @@ export function buildPdfPlan(items) {
       ), { sec, group: `${sec}.0` })
     } else if (it.kind === 'summary') {
       sec++
-      blk('pdf-summary', <ReportSummary data={it.data} />, { sec, group: `${sec}.0` })
+      if (it.full) blk('pdf-summary', <FullSummary data={it.data} />, { sec, group: `${sec}.0` })
+      else blk('pdf-summary', <ReportSummary data={it.data} />, { sec, group: `${sec}.0` })
     } else if (it.kind === 'table') {
       sec++
       const t = it.table
@@ -126,19 +129,28 @@ export function buildPdfPlan(items) {
       let head = stripMarker(it.title)
       const gid = () => `${sec}.${g}`
       blk('pdf-head', <SectionHead title={it.title} part={it.part} />, { sec, group: gid(), keep: true, groupHead: head })
+      // 전체 분석: 한눈에 보는 카드(각각 한 쪽 안에서 잘리지 않는 단위)를 본문 앞에 놓는다. 결론 페이지·태그가 본문을 완전히 대신할 때만 본문을 생략한다.
+      const fu = it.full ? unitsForSection(it.title, it.content) : { units: [], replaceBody: false }
+      if (fu.replaceBody && fu.units.length && it.kind === 'section') {
+        // 결론 페이지: 카드 전체를 한 덩어리로 놓아 제목·카드가 쪽 사이에서 갈라지지 않게 한다(통째로 다음 쪽으로 넘어간다)
+        blk('', <div className="fa-units">{fu.units.map((u) => <div key={u.key} className="fa-unit">{u.node}</div>)}</div>, { sec, group: `${sec}.o`, keepAll: true, groupHead: stripMarker(it.title) })
+        return
+      }
+      fu.units.forEach((u) => blk('', u.node, { sec, group: `${sec}.o`, groupHead: stripMarker(it.title) }))
+      if (fu.replaceBody) return
       const parsed = BRACKET_SECTIONS.has(it.title)
         ? it.content.split(/(\[.+?\]\n)/g).flatMap(part => {
             const m = part.match(/^\[(.+?)\]\n$/)
             return m ? [{ type: 'h3', text: '✦ ' + m[1] }] : parseContentBlocks(part)
           })
         : parseContentBlocks(it.content)
-      parsed.forEach(b => {
+      parsed.forEach((b, bi) => {
         if (b.type === 'h3') {
           g++; head = stripMarker(b.text).replace(/^✦\s*/, '')
           blk('', <ContentBlock b={b} />, { sec, group: gid(), keep: true, groupHead: head })
         } else if (b.type === 'p' || b.type === 'li') {
           const chunks = splitLongParagraph(b)
-          chunks.forEach((c, ci) => blk(ci < chunks.length - 1 ? 'pdf-cont' : '', <ContentBlock b={c} />, { sec, group: gid(), cont: ci < chunks.length - 1, groupHead: head }))
+          chunks.forEach((c, ci) => blk(ci < chunks.length - 1 ? 'pdf-cont' : '', <ContentBlock b={c} />, { sec, group: gid(), cont: ci < chunks.length - 1, groupHead: head, ...(it.full && titleLi(b, parsed[bi + 1]) && ci === chunks.length - 1 ? { keep: true } : {}) }))
         } else if (b.type === 'timeline') {
           const months = splitMonthGroups(b.items)
           if (months) {
@@ -162,6 +174,9 @@ export function buildPdfPlan(items) {
   })
   return plan
 }
+
+// 전체 분석: 직업 제목처럼 짧은 번호 줄('1. 품질관리·회계검토')은 바로 뒤 설명 문단과 같은 쪽에 둔다(제목만 쪽 아래에 남지 않게).
+const titleLi = (b, next) => b.type === 'li' && b.text.length <= 90 && /^\d+\./.test(b.text) && !!next && next.type === 'p'
 
 function measureTopSpace(el) {
   const cs = getComputedStyle(el)

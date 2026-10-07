@@ -5,13 +5,13 @@ const hasContent = (sec) => !!(sec && String(sec.content || '').trim())
 
 // 무료 핵심 풀이 / 전체 분석(무료 풀이 + 유료 풀이)
 // coreSections: 내 사주 리포트의 핵심 성향·이유·강점·주의·팁(내용 있는 것만).
-export function buildResultPdfItems({ useSajuReport, sajuSummary, coreSections = [], baseShown = [], paidSections = [], moneySummary, sajuData, typeInfo }) {
+export function buildResultPdfItems({ full = false, useSajuReport, sajuSummary, coreSections = [], baseShown = [], paidSections = [], moneySummary, sajuData, typeInfo }) {
   const paid = paidSections.filter(hasContent)
   const coreCount = useSajuReport ? coreSections.length : baseShown.length
   // 사주표는 번호 없는 공통 정보 영역이라 세 상품 모두 표지 바로 아래(심화와 같은 자리)에 둔다.
   return [
-    ...(sajuData?.사주 ? [{ kind: 'saju', pillars: sajuData.사주, typeInfo: useSajuReport ? typeInfo : undefined }] : []),
-    ...(sajuSummary ? [{ kind: 'summary', data: sajuSummary }] : []),
+    ...(sajuData?.사주 ? [{ kind: 'saju', pillars: sajuData.사주, typeInfo: useSajuReport ? typeInfo : undefined, ...(full && useSajuReport ? { full: true } : {}) }] : []),
+    ...(sajuSummary ? [{ kind: 'summary', data: sajuSummary, ...(full && useSajuReport ? { full: true } : {}) }] : []),
     ...(useSajuReport
       ? coreSections.map((sec, i) => (sec.actions ? { kind: 'actions', title: sec.title, actions: sec.actions, part: i + 1 } : { kind: 'section', ...sec, part: i + 1 }))
       : [
@@ -20,7 +20,7 @@ export function buildResultPdfItems({ useSajuReport, sajuSummary, coreSections =
         ]),
     ...(paid.length ? [{ kind: 'label', text: '✦ 전체 분석 결과 ✦' }] : []),
     ...(moneySummary ? [{ kind: 'summary', data: moneySummary }] : []),
-    ...paid.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: coreCount + i + 1 })),
+    ...paid.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: coreCount + i + 1, ...(full ? { full: true } : {}) })),
   ]
 }
 

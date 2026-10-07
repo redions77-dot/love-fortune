@@ -1,6 +1,7 @@
 import { sajuFacts } from './sajuFacts.js'
 import { ReportSummary, ActionList } from './reportBlocks.jsx'
 import SajuTable, { TypeInfoNote } from './SajuTable.jsx'
+import { FullDashboard, FullSummary } from './FullReport.jsx'
 
 // "내 사주 무료 결과" 리포트 — 기존 무료 풀이(핵심 성향·이유·강점·주의·팁)와 서버가 계산한 사주 데이터를 한 장의 글처럼 보여 준다.
 // 새 입력·새 결과 항목은 없다. 비어 있는 섹션은 숨기고 PART 번호는 실제로 보이는 풀이 섹션만 1부터 이어서 매긴다(사주표는 번호 없는 공통 정보 영역).
@@ -24,7 +25,7 @@ export function splitTip(t) {
 }
 
 // props: name, dateLine, pillars({년주,월주,일주,시주}), core({sentence,detail}), why, strength, habit, tip(문자열), typeInfo({name,desc}|null)
-export default function SajuReport({ name, dateLine, pillars, core, why, strength, habit, tip, actions, actionsFailed = false, onRetryActions, typeInfo, summary, headless = false }) {
+export default function SajuReport({ name, dateLine, pillars, core, why, strength, habit, tip, actions, actionsFailed = false, onRetryActions, typeInfo, summary, headless = false, full = false }) {
   const facts = sajuFacts(pillars)
   const tipParts = splitTip(tip)
   const whyParas = paragraphs(why)
@@ -53,7 +54,8 @@ export default function SajuReport({ name, dateLine, pillars, core, why, strengt
       )}
 
       {/* 핵심 요약: 아래 풀이에서 고른 문장만 모아 먼저 보여 준다(상세 풀이는 그대로 이어진다) */}
-      <ReportSummary data={summary} />
+      {full ? <FullDashboard pillars={pillars} typeInfo={typeInfo} /> : null}
+      {full ? <FullSummary data={summary} /> : <ReportSummary data={summary} />}
       <div style={{ height: summary ? 40 : 0 }} />
 
       {core && core.sentence && (
@@ -65,11 +67,11 @@ export default function SajuReport({ name, dateLine, pillars, core, why, strengt
         </section>
       )}
 
-      <section data-section="saju" style={{ marginTop: core && core.sentence ? 56 : 0 }}>
+      {!full && <section data-section="saju" style={{ marginTop: core && core.sentence ? 56 : 0 }}>
         <h2 className="rpt-h2" style={s.h2}>내 사주 한눈에</h2>
         <SajuTable pillars={pillars} />
         {typeInfo && <TypeInfoNote typeInfo={typeInfo} id="share-card" />}
-      </section>
+      </section>}
 
       {whyParas.length > 0 && (
         <section {...sec('why', blocks.indexOf('why'))}>
