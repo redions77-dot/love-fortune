@@ -1841,10 +1841,10 @@ if (emailModal) {
         {/* 첫 화면 */}
         <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: '24px 24px 36px', textAlign: 'center', boxSizing: 'border-box' }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>마이사주</p>
-          <h1 style={{ wordBreak: 'keep-all', fontSize: 34, fontWeight: 700, color: C.text, marginBottom: 14, lineHeight: 1.3, letterSpacing: '-0.02em' }}>나, 앞으로<br/>잘 풀릴까?</h1>
+          <h1 style={{ wordBreak: 'keep-all', fontSize: 34, fontWeight: 700, color: C.text, marginBottom: 14, lineHeight: 1.3, letterSpacing: '-0.02em' }}>내 사주,<br/>그래서 지금<br/>뭘 해야 할까?</h1>
           <p style={{ wordBreak: 'keep-all', fontSize: 16, color: C.text, lineHeight: 1.75, marginBottom: 28 }}>
-            <span style={{ display: 'block' }}>일도, 돈도, 사람 관계도.</span>
-            <span style={{ display: 'block', textWrap: 'balance' }}>내 사주에는 어떤 이야기가 담겨 있을까요?</span>
+            <span style={{ display: 'block' }}>사주풀이에서 끝내지 않고</span>
+            <span style={{ display: 'block' }}>지금 할 일 3가지까지.</span>
           </p>
           <button
             style={{ width: '100%', maxWidth: 360, minHeight: 52, padding: '14px 20px', fontSize: 16, fontWeight: 700, background: C.accent, color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', wordBreak: 'keep-all' }}
