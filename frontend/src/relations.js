@@ -97,8 +97,8 @@ export const SAJU_PAID = {
 
 // 내 사주 "자세한 풀이 살펴보기"에서 펼쳐지는 상품 안내용 요약. 위 SAJU_PAID.bundles 의 실제 항목 중 일·돈·관계에 해당하는 3개만 골라
 // "무엇이 더 구체적으로 풀리는지"를 짧게 설명한다. 설명은 해당 bundles[].desc 에 이미 있는 내용만 쓴다(새 기능·혜택·수치·확정 표현을 만들지 않는다).
-// 무료 풀이가 보여주는 범위는 parseMyFree 의 5개 섹션(핵심 성향·이유·강점·주의할 습관·실천 팁)이다. relations.test.mjs 가 항목 이름과 문구를 확인한다.
-export const SAJU_PAID_FREE_NOTE = '무료 풀이는 핵심 성향·강점·주의할 습관·실천 팁을 중심으로 보여드려요. 전체 분석은 이를 바탕으로 아래 주제를 더 구체적으로 풀어드려요.'
+// 무료 풀이가 보여주는 범위는 parseMyFree 의 5개 섹션(핵심 성향·이유·강점·주의할 습관·지금 당장 할 일 3가지)이다. relations.test.mjs 가 항목 이름과 문구를 확인한다.
+export const SAJU_PAID_FREE_NOTE = '무료 풀이는 핵심 성향·강점·주의할 습관·지금 당장 할 일 3가지를 중심으로 보여드려요. 전체 분석은 이를 바탕으로 아래 주제를 더 구체적으로 풀어드려요.'
 export const SAJU_PAID_HIGHLIGHTS = [
   { topic: '돈', bundle: '인생 재물운', text: '인생 단계별 돈의 흐름, 돈이 새는 패턴, 돈이 잘 모이는 조건을 따로 자세히 풀어드려요.' },
   { topic: '일', bundle: '직업과 커리어', text: '어울리는 직업과 능력이 살아나는 일 방식, 도약할 시기와 조심할 시기를 살펴봐요.' },
@@ -201,9 +201,35 @@ export function safeGunghabText(text, bars) {
     .map(t => '===' + t + '===' + String.fromCharCode(10) + m.get(t)).join(String.fromCharCode(10, 10))
 }
 
+// "지금 당장 할 일, 딱 3가지" 섹션: "1. 제목 / 방법 / 💬 문장(선택)" 덩어리 3개 → [{n, title, how, say}].
+// 정확히 3개가 아니면 [] (서버가 형식 검증을 통과한 것만 보내므로 정상 결과는 항상 3개다. 어긋나면 일부만 보이지 않게 통째로 숨긴다).
+// backend/freeActions.js 의 parseActions 와 같은 규칙이다(relations.test.mjs 가 같은 입력에서 같은 결과인지 확인한다).
+export const MY_ACTIONS_TITLE = '지금 당장 할 일, 딱 3가지'
+const ACTION_HEADER = /^\s*(?:([1-3])[.)．]|([①②③]))\s*(.+?)\s*$/
+const CIRCLED = { '①': 1, '②': 2, '③': 3 }
+export function parseMyActions(body) {
+  const items = []
+  let cur = null
+  for (const raw of String(body || '').split(/\r?\n/)) {
+    const line = raw.trim()
+    if (!line) continue
+    const h = line.match(ACTION_HEADER)
+    if (h && !line.startsWith('💬')) {
+      cur = { n: Number(h[1] || CIRCLED[h[2]]), title: h[3].replace(/^\*+|\*+$/g, '').trim(), how: '', say: '' }
+      items.push(cur)
+    } else if (cur) {
+      if (/^\[?\s*근거\s*[:：]/.test(line)) continue   // 검수용 근거 줄은 화면에 쓰지 않는다
+      if (line.startsWith('💬')) cur.say = line.replace(/^💬\s*/, '').replace(/^[\s"“”'‘’]+|[\s"“”'‘’]+$/g, '')
+      else cur.how = (cur.how ? cur.how + ' ' : '') + line.replace(/^[→▶·-]\s*/, '')
+    }
+  }
+  return items.length === 3 && items.every((it, i) => it.n === i + 1 && it.title && it.how) ? items : []
+}
+
 // 내 사주: 핵심 한 문장(첫 줄) + 생활 속 설명(나머지)
+// tip(바로 실천할 팁)은 예전에 만든 결과·저장된 결과를 읽기 위한 것이고, 새 결과는 actions(지금 당장 할 일, 딱 3가지)를 쓴다.
 export function parseMyFree(text) {
-  const m = resolveSections(text, ['핵심 한 문장', '이런 성향이 나오는 이유', '나의 강점', '주의할 습관', '바로 실천할 팁'])
+  const m = resolveSections(text, ['핵심 한 문장', '이런 성향이 나오는 이유', '나의 강점', '주의할 습관', '바로 실천할 팁', MY_ACTIONS_TITLE])
   const core = (m.get('핵심 한 문장') || '').split('\n').map(l => l.trim()).filter(Boolean)
   return {
     demo: m.get('예시 표시') || '',
@@ -213,6 +239,7 @@ export function parseMyFree(text) {
     strength: m.get('나의 강점') || '',
     habit: m.get('주의할 습관') || '',
     tip: m.get('바로 실천할 팁') || '',
+    actions: parseMyActions(m.get(MY_ACTIONS_TITLE)),
   }
 }
 

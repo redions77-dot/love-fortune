@@ -194,11 +194,31 @@ test('내 사주 무료 프롬프트: 강점·주의할 습관만 분량을 늘�
   assert.strictEqual((free.match(/\[사주 계산값\]에 없는 근거나 새로운 사주 이론은 더하지 마세요/g) || []).length, 2);
   assert.ok(free.includes('관계·일에서 나타날 수 있는 모습') && free.includes('이 성향이 지나칠 때 피곤해지거나 어려움이 생길 수 있는 상황'));
   // 기존 역할 분리 규칙은 유지: 강점에는 강점만, 주의에는 주의점만, 행동은 팁에만
-  assert.ok(free.includes('강점만 쓰세요') && free.includes('주의점만 쓰세요') && free.includes("행동 권유는 아래 '바로 실천할 팁'에만 쓰세요"));
+  assert.ok(free.includes('강점만 쓰세요') && free.includes('주의점만 쓰세요') && free.includes("행동 권유는 쓰지 마세요(행동은 이 풀이 뒤에 따로 정리돼요)"));
   // 다른 섹션 분량은 그대로
-  assert.ok(free.includes('(150~300자) 위 [사주 계산값]에서 가장 뚜렷한 근거 1~2개만 골라') && free.includes('(짧은 1~2문장)'));
+  assert.ok(free.includes('(150~300자) 위 [사주 계산값]에서 가장 뚜렷한 근거 1~2개만 골라'));
   assert.ok(!/\(100~200자\)/.test(free));
   // 분량이 늘어도 끊기지 않도록 출력 한도를 늘렸다 (무료 사주 호출만)
   assert.ok(src.includes('streamToClient(res, basePrompt, MODEL_FREE, 3600)'));
+  // 마지막 '지금 당장 할 일, 딱 3가지'는 앞 4개 섹션이 끝난 뒤 Sonnet 으로 따로 만든다
+  assert.ok(src.includes('const MODEL_ACTIONS = MODEL_PAID;') && src.includes("await writeActions(res, first.text, actionsInfoBlock, { married: maritalStatus === '기혼' })"));
   assert.ok(src.includes('streamToClient(res, childBasePrompt, MODEL_FREE, 2500)') && src.includes('streamToClient(res, nohuBasePrompt, MODEL_FREE, 2500)'));
+});
+
+test('내 사주 무료 프롬프트: 나이를 직접 부르는 표현 금지 + 이 프롬프트에 들어가는 기본 정보에서 "(현재 NN세)" 를 뺀다(다른 분석의 기본 정보는 그대로)', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, 'server.js'), 'utf8');
+  const free = src.slice(src.indexOf('const basePrompt'), src.indexOf('const paidOnlyPrompt'));
+  assert.ok(free.includes('"26세의 당신"처럼 나이를 직접 부르는 표현도 쓰지 마세요'));
+  assert.ok(free.includes("${infoBlock.replace(/ \\(현재 \\d+세\\)/, '')}"));
+  // 공용 기본 정보(infoBlock) 자체는 그대로다
+  assert.ok(src.includes('(현재 ${thisYear - year}세)'));
+  const stripped = '- 생년월일: 1981년 12월 21일 (현재 44세)'.replace(/ \(현재 \d+세\)/, '');
+  assert.strictEqual(stripped, '- 생년월일: 1981년 12월 21일');
+});
+
+test('내 사주 무료 프롬프트(Haiku): 입력에 없는 직업·팀·후배·자녀·배우자·연애·생활환경을 사실처럼 쓰지 않고 일반 상황으로 쓴다', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, 'server.js'), 'utf8');
+  const free = src.slice(src.indexOf('const basePrompt'), src.indexOf('const paidOnlyPrompt'));
+  assert.ok(free.includes('입력에 없는 직업·직장·조직·팀·후배·상사·자녀·배우자·연애 관계·구체적인 생활환경이나 역할'));
+  assert.ok(free.includes('"사람들과 함께 무언가를 할 때", "누군가를 도울 때", "일상에서"') && free.includes('사용자가 실제로 입력한 정보(성별·결혼 상태 등)는 쓸 수 있어요'));
 });

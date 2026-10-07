@@ -7,6 +7,7 @@ require('dotenv').config();
 const { installSecureApi } = require('./secure');
 const { buildAllowedOrigins } = require('./origins');
 const { deepYearContext } = require('./deepYear');
+const { ACTIONS_MARK, ACTIONS_MARK_RE, sectionBody, formatActions, extractActionsSection, parseActions, validateActions, repairActions, pickBestAttempt, buildActionsPrompt } = require('./freeActions');
 const { TIMING_RULES, DEEP_BIG_DECISION_LINE, PAID_CAUTION_HEADING } = require('./timingRules');
 const { TRUST_RULES, RELATIONS, normalizeRelation, calcRelationLevels, calcRelationBasis, buildBars, buildFreeGunghabPrompt, buildPaidGunghabPrompt } = require('./relations');
 
@@ -295,9 +296,54 @@ const 공통규칙 = `작성 규칙 (반드시 지킬 것):
 // 일괄 공감 문구가 들어 있는 규칙(2·7·13~15)과 MBTI를 억지로 끼워 넣게 하는 규칙(16)은 빼고 호칭·쉬운 말·표기·명식 정확성 규칙만 쓴다.
 const 공통규칙_담백 = 공통규칙.split(/\r?\n/).filter((l, i) => i === 0 || /^(1|4|6|10|10-1|10-2|12|17|18)\./.test(l)).join('\n')
 
+// 무료 내 사주의 "지금 당장 할 일, 딱 3가지"는 앞 4개 섹션(Haiku)이 끝난 뒤 Sonnet 으로 따로 만든다.
+// 검증은 hard(형식·안전)와 soft(품질·개인화 근거)로 나뉜다. 둘 다 통과하지 못하면 이 섹션만 최대 1회 다시 만든다(실패 이유를 알려 준다).
+// 2번 시도 후에도 soft 만 남으면 문제 있는 💬 문장만 빼고 고쳐서 보낸다(행동 3개는 그대로). hard 가 남거나 3개를 얻지 못하면
+// 섹션을 조용히 빼지 않고 actions_failed 를 보내 화면에서 "다시 만들기"를 보여 준다.
+const MODEL_ACTIONS = MODEL_PAID;
+async function writeActions(res, mainText, infoBlock, opts = {}) {
+  const sections = { core: sectionBody(mainText, '핵심 한 문장'), why: sectionBody(mainText, '이런 성향이 나오는 이유'), strength: sectionBody(mainText, '나의 강점'), habit: sectionBody(mainText, '주의할 습관') };
+  const fail = (why) => { console.error('[무료 행동 3가지] 최종 실패 — actions_failed 전송:', why); if (!res.destroyed) res.write(`data: ${JSON.stringify({ type: 'actions_failed' })}\n\n`); return false; };
+  if (!sections.strength || !sections.habit) return fail('앞 섹션(강점·주의할 습관)이 없어 만들 수 없음');
+  const show = (items) => formatActions(items);
+  let reasons = [];
+  const attempts = [];   // 3개가 읽힌 시도들(가장 나은 후보를 고르기 위해 모두 모은다)
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const msg = await anthropic.messages.create({ model: MODEL_ACTIONS, max_tokens: 1800, messages: [{ role: 'user', content: buildActionsPrompt({ infoBlock, sections, reasons }) }] });
+      console.log(`[AI] model=${MODEL_ACTIONS} 행동 3가지 시도 ${attempt} input_tokens=${msg.usage?.input_tokens} output_tokens=${msg.usage?.output_tokens}`);
+      const t = (msg.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+      const items = parseActions(extractActionsSection(ACTIONS_MARK_RE.test(t) ? t : ACTIONS_MARK + '\n' + t));
+      const check = validateActions(items, { sections, married: opts.married });
+      if (check.notes && check.notes.length) console.log(`[무료 행동 3가지] 시도 ${attempt} 참고(재생성 안 함):`, check.notes.join(' | '));
+      if (check.ok) {
+        res.write(`data: ${JSON.stringify({ text: `\n${ACTIONS_MARK}\n${show(items)}\n` })}\n\n`);
+        return true;
+      }
+      if (items.length === 3) attempts.push({ items, check });
+      reasons = check.reasons;
+      console.warn(`[무료 행동 3가지] 시도 ${attempt} 검증 실패(hard ${check.hard.length}, soft ${check.soft.length}):`, check.reasons.join(' | '));
+    } catch (e) {
+      console.error(`[무료 행동 3가지] 시도 ${attempt} 오류:`, e?.status, e?.message || e);
+    }
+  }
+  const best = pickBestAttempt(attempts);
+  if (best) {   // hard 는 통과, soft 만 남음 → 가장 나은 후보의 💬 문제만 고쳐서 보낸다
+    const fixed = repairActions(best.items);
+    if (validateActions(fixed).hard.length === 0) {
+      console.warn('[무료 행동 3가지] soft 만 남아 고쳐서 전송(repair)');
+      res.write(`data: ${JSON.stringify({ text: `\n${ACTIONS_MARK}\n${show(fixed)}\n` })}\n\n`);
+      return true;
+    }
+  }
+  return fail('hard 검증 실패 또는 생성 오류');
+}
+
+// 반환: { text: 전체 응답 }. 중간에 연결이 끊기면 undefined.
 async function streamToClient(res, prompt, model, maxTokens = 4000) {
   const maxRetries = NO_AI_RETRIES ? 1 : 3;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    let acc = '';
     try {
       const stream = await anthropic.messages.stream({
         model,
@@ -309,7 +355,7 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
         if (chunk.type === 'content_block_delta' && chunk.delta?.text) {
           // 모델 출력에 간혹 섞여 나오는 깨진 유니코드 대체 문자(U+FFFD)를 제거해 결과지에 □가 남지 않게 한다.
           const safeText = chunk.delta.text.replace(/�/g, '');
-          if (safeText) res.write(`data: ${JSON.stringify({ text: safeText })}\n\n`);
+          if (safeText) { acc += safeText; res.write(`data: ${JSON.stringify({ text: safeText })}\n\n`); }
         }
       }
       // 최소 진단 로그 — 사용자 이름/생년월일/본문 내용은 남기지 않는다.
@@ -323,7 +369,7 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
       } catch (logErr) {
         console.error('[AI] 진단 로그 기록 실패:', logErr.message);
       }
-      return;
+      return { text: acc };
     } catch (e) {
       const isOverloaded = e?.error?.error?.type === 'overloaded_error' || e?.status === 529;
       const isRateLimit = e?.status === 429;
@@ -506,6 +552,16 @@ ${factsBlock({ 년주, 월주, 일주, 시주: 시주 || '' })}
 ${규칙문}
 
 ${daeunBlock}`;
+    // "지금 당장 할 일, 딱 3가지"(Sonnet) 입력용: 필요한 사실만(이름·성별·결혼 상태·사주 계산값). 대운·긴 규칙문은 빼서 입력 토큰을 줄인다.
+    const actionsInfoBlock = `[기본 정보]
+- 이름: ${userName}
+- 성별: ${gender || '미입력'}
+- 결혼 상태: ${maritalStatus || '미입력'}
+
+[사주팔자]
+- 년주: ${년주} / 월주: ${월주} / 일주: ${일주} / 시주: ${시주 || '미입력'}
+
+${factsBlock({ 년주, 월주, 일주, 시주: 시주 || '' })}`;
 
 // ── 궁합 (무료 요약 / 유료 상세) ─────────────────────
   if (type === '궁합' || type === '궁합무료') {
@@ -1130,16 +1186,16 @@ ${DEEP_BIG_DECISION_LINE}
 읽는 사람이 "이거 나 얘기잖아?"라고 느낄 만큼 이 사람만의 특징을 정확하게 분석해주세요.
 현재는 2026년입니다.
 
-${infoBlock}
+${infoBlock.replace(/ \(현재 \d+세\)/, '')}
 
 ${공통규칙_담백}
 
-아래 5개 섹션만 작성하세요. 다른 섹션은 추가하지 마세요. 각 섹션은 ===섹션제목=== 형태로 구분하세요.
+아래 4개 섹션만 작성하세요. 다른 섹션은 추가하지 마세요. 각 섹션은 ===섹션제목=== 형태로 구분하세요.
 이 무료 풀이만으로 읽는 사람이 "나를 이해하는 데 도움이 됐다"고 느껴야 합니다. "더 알고 싶으면 결제" 같은 예고·유도 문장은 쓰지 마세요.
 
 [작성 원칙 — 다른 규칙과 충돌하면 이 원칙이 우선합니다]
 ${TRUST_RULES}
-- 이 무료 분석에서는 정확한 나이·연도·월 등 구체적인 시기 숫자는 쓰지 마세요. [기본 정보]와 [대운 정보]의 나이·연도는 내부 참고용입니다.
+- 이 무료 분석에서는 정확한 나이·연도·월 등 구체적인 시기 숫자는 쓰지 마세요. "26세의 당신"처럼 나이를 직접 부르는 표현도 쓰지 마세요. [기본 정보]와 [대운 정보]의 나이·연도는 내부 참고용입니다.
 - 한 단락 최대 3줄, 소제목은 📌로 구분하세요. 번호 목록(1. 2. 3.)은 쓰지 마세요. 단, 나의 강점·주의할 습관은 2~3개 문단으로 나누어 쓰고 문단 사이는 빈 줄로 구분하세요.
 - 점수·순위·퍼센트·"상위 몇 %" 같은 수치 평가는 쓰지 마세요.
 - 별명처럼 붙이는 유형 이름(예: ~형)은 쓰지 마세요.
@@ -1149,9 +1205,10 @@ ${TRUST_RULES}
 - [사주 계산값]이나 사용자가 직접 입력한 정보로 뒷받침되지 않는 성격·행동(예: 차분하다, 내향적이다, 활동적이다, 행동력이 좋다)은 사실처럼 쓰지 마세요. 입력한 MBTI는 사주 계산값과 충돌하거나 근거가 약하면 언급하지 않아도 돼요.
 - [사주 계산값]에 없는 오행·음양·상생상극은 새로 만들지 마세요. 오행 관계는 계산값에 적힌 것만 쓰고, 기운이 그렇다고 해서 성향이 '그래서 생긴다'고 단정하지 말고 "~로 읽을 수 있어요"로 쓰세요.
 - '계산값 → 표준 오행 관계 → 쉬운 설명'까지만 쓰세요. 그 관계에서 한 단계 더 추론한 비유·인과(예: '쇠가 도구로 작동한다', '압력이 성장에 도움이 된다')는 쓰지 말고, 구체적인 심리·행동(예: 범위를 넓히려 한다, 무게감을 느낀다)을 사실처럼 쓰지 마세요.
-- 입력하지 않은 직업·일·프로젝트·과거 경험은 가정하지 마세요. 장면은 누구나 일상에서 마주칠 수 있는 상황(부탁받을 때, 할 일을 정할 때, 메시지에 답할 때)으로 쓰세요.
-- 세 섹션의 내용이 겹치면 안 됩니다. 나의 강점에는 강점만, 주의할 습관에는 주의점만, 바로 실천할 팁에는 행동만 쓰세요.
-- 강점·주의할 습관·바로 실천할 팁은 서로 모순되면 안 됩니다. (예: 강점에서는 점검을 줄이라 하고 습관에서는 점검을 늘리라 하는 식으로 쓰지 마세요.)
+- 입력하지 않은 직업·일·프로젝트·과거 경험은 가정하지 마세요. 장면은 누구나 일상에서 겪는 상황 중에서, 위 [사주 계산값]에서 읽은 이 사람의 특징에 가장 잘 맞는 하나를 직접 고르세요(예: 돈 쓰기, 할 일 정하기, 약속 잡기, 집 정리, 식사, 쉬는 시간, 사람과 대화하기 — 이 예시에서 고르라는 뜻이 아니에요). 부탁받기·메시지 답장을 기본 장면처럼 되풀이하지 말고, 사람마다 다른 장면이 나와야 해요.
+- 입력에 없는 직업·직장·조직·팀·후배·상사·자녀·배우자·연애 관계·구체적인 생활환경이나 역할(교육하는 역할, 프로젝트 등)은 사실처럼 쓰지 마세요. "사람들과 함께 무언가를 할 때", "누군가를 도울 때", "일상에서"처럼 입력 없이도 성립하는 일반적인 상황으로 쓰세요. 사용자가 실제로 입력한 정보(성별·결혼 상태 등)는 쓸 수 있어요.
+- 섹션의 내용이 겹치면 안 됩니다. 나의 강점에는 강점만, 주의할 습관에는 주의점만 쓰세요. 무엇을 하라는 행동 권유는 이 풀이에 쓰지 마세요(행동은 이 풀이 뒤에 따로 정리돼요).
+- 강점과 주의할 습관은 서로 모순되면 안 됩니다. (예: 강점에서는 꼼꼼함이 큰 힘이라고 쓰고 주의할 습관에서는 꼼꼼함이 전혀 없다고 쓰는 식으로 쓰지 마세요.)
 
 ===핵심 한 문장===
 첫 줄: 오행·기운·일간 같은 전문용어 없이, 쉬운 생활 언어로 핵심 특징을 이름 없이 한 문장으로 쓰세요. 강점이나 특징 중심으로 균형 있게 쓰고, 단점이나 부정적인 결과로 시작하지 마세요. "~한 경향이 있어요"처럼 가능성으로 쓰세요.
@@ -1164,13 +1221,11 @@ ${TRUST_RULES}
 (200~330자, 2~3문단) 이 사주에서 읽히는 강점 딱 1개. 해석 → 생활에서 나타날 수 있는 모습 → 관계·일에서 나타날 수 있는 모습 순서로, 문단을 나누어 강점만 쓰세요. [사주 계산값]에 없는 근거나 새로운 사주 이론은 더하지 마세요. 주의점·부담·약점과 "~해보세요" 같은 행동 권유는 쓰지 마세요.
 
 ===주의할 습관===
-(200~330자, 2~3문단) 이 사주에서 나타나기 쉬운 습관 딱 1개. 흠이 아니라 '방향만 바꾸면 달라지는 것'으로, 해석 → 생활에서 나타날 수 있는 모습 → 이 성향이 지나칠 때 피곤해지거나 어려움이 생길 수 있는 상황 순서로, 문단을 나누어 주의점만 쓰세요. [사주 계산값]에 없는 근거나 새로운 사주 이론은 더하지 마세요. 해결 방법과 "~해보세요" 같은 행동 권유는 아래 '바로 실천할 팁'에만 쓰세요. 위 강점을 해치지 않는 방향이어야 해요.
+(200~330자, 2~3문단) 이 사주에서 나타나기 쉬운 습관 딱 1개. 흠이 아니라 '방향만 바꾸면 달라지는 것'으로, 해석 → 생활에서 나타날 수 있는 모습 → 이 성향이 지나칠 때 피곤해지거나 어려움이 생길 수 있는 상황 순서로, 문단을 나누어 주의점만 쓰세요. [사주 계산값]에 없는 근거나 새로운 사주 이론은 더하지 마세요. 해결 방법과 "~해보세요" 같은 행동 권유는 쓰지 마세요(행동은 이 풀이 뒤에 따로 정리돼요). 위 강점을 해치지 않는 방향이어야 해요. '나를 누르는 기운' 같은 관계를 "외부 사람의 요구·부탁·압박"으로 기계적으로 옮기지 마세요. 사주 구조 → 이 사람의 성향(결정하는 방식, 속도, 시작과 마무리, 확인하는 정도, 방식을 고수하거나 바꾸는 편, 쉬는 법, 쓰고 모으는 방식 등) → 생활에서 반복될 수 있는 습관 하나 순서로 이어 쓰세요. 계산값의 구조가 다르면 습관도 달라야 해요. 예컨대 결정을 오래 끄는 습관, 정한 방법을 계속 고수하는 습관, 시작은 많은데 마무리가 늦는 습관, 작은 것을 계속 다시 확인하는 습관, 한 가지에 몰입해 다른 것을 놓치는 습관, 쉬어야 할 때도 할 일을 만드는 습관 같은 방향이 있을 수 있어요. 이 예시는 억지로 하나씩 고르거나 그대로 쓰라는 뜻이 아니고, [사주 계산값]에서 근거가 읽힐 때만 쓰세요. 다양하게 쓰려고 사주에 없는 특징을 만들지 마세요.
 
-===바로 실천할 팁===
-(짧은 1~2문장) 바로 위 '주의할 습관'을 보완하는 구체적인 행동 딱 1개. 그 습관이 나타나는 일상 장면 하나를 골라, 오늘 바로 해볼 수 있게 언제·무엇을·어떻게 할지 구체적으로 쓰세요(입력하지 않은 일·프로젝트는 가정하지 마세요). "충분히 쉬세요", "긍정적으로 생각하세요"처럼 누구에게나 맞는 조언은 쓰지 마세요.
 
 [출력 완결 규칙]
-- 전체 응답은 완결된 문장으로 끝내고, 마지막 섹션(바로 실천할 팁)까지 반드시 작성하세요. 분량이 부족해질 것 같으면 앞부분 설명을 줄이세요.
+- 전체 응답은 완결된 문장으로 끝내고, 마지막 섹션(주의할 습관)까지 반드시 작성하세요. 분량이 부족해질 것 같으면 앞부분 설명을 줄이세요.
 `;
 
   // ── 유료 전용 프롬프트 ──────────────────────────────
@@ -1329,8 +1384,9 @@ ${getAgeBasedPaidSection(year, maritalStatus)}
 
   try {
     if (!isPaid) {
-      // 무료: haiku로 3섹션만
-      await streamToClient(res, basePrompt, MODEL_FREE, 3600);
+      // 무료: 앞 4개 섹션은 haiku, 마지막 "지금 당장 할 일, 딱 3가지"는 sonnet 으로 따로 만든다(검증 실패 시 그 섹션만 최대 1회 다시 생성).
+      const first = await streamToClient(res, basePrompt, MODEL_FREE, 3600);
+      if (first && !res.destroyed) await writeActions(res, first.text, actionsInfoBlock, { married: maritalStatus === '기혼' });
     } else {
       // 유료: 무료 재호출 없이 바로 paid_start → 유료 전용만 스트리밍
       // (무료 결과는 프론트에서 그대로 유지됨)

@@ -216,6 +216,26 @@ export function ClosingBlock({ closing }) {
 }
 
 // 핵심 요약 (인포그래픽): 핵심 한 문장 / 비교표 / 항목 목록 / 행동 강조상자. 값이 있는 것만 나온다.
+// 내 사주 무료 결과의 "지금 당장 할 일, 딱 3가지": 번호 · 제목 · 방법 · (있으면) 그대로 쓸 말. 화면과 PDF 가 같은 모양을 쓴다.
+export function ActionItem({ a, last = false }) {
+  const accent = 'var(--rp-green, #2F5D44)'
+  return (
+    <div data-action={a.n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '18px 0', borderTop: '1px solid var(--rp-border, #E4E1D4)', borderBottom: last ? '1px solid var(--rp-border, #E4E1D4)' : 'none' }}>
+      <span aria-hidden="true" style={{ flex: '0 0 auto', width: 32, height: 32, borderRadius: '50%', background: accent, color: '#fff', fontWeight: 800, fontSize: 16, lineHeight: '32px', textAlign: 'center' }}>{a.n}</span>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <p style={{ fontSize: 19, lineHeight: 1.5, fontWeight: 800, margin: '2px 0 8px', wordBreak: 'keep-all' }}>{a.title}</p>
+        <p style={{ fontSize: 17, lineHeight: 1.8, margin: 0, wordBreak: 'keep-all' }}>{a.how}</p>
+        {a.say ? (
+          <p style={{ margin: '12px 0 0', padding: '10px 14px', borderLeft: '4px solid ' + accent, background: 'var(--rp-green-soft, #EEF3EA)', borderRadius: 6, fontSize: 17, lineHeight: 1.7, fontWeight: 700, wordBreak: 'keep-all' }}>{'💬 "' + a.say + '"'}</p>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+export function ActionList({ actions }) {
+  return <div data-actions>{actions.map((a, i) => <ActionItem key={a.n} a={a} last={i === actions.length - 1} />)}</div>
+}
+
 export function ReportSummary({ data }) {
   if (!data) return null
   const singles = []
@@ -248,7 +268,14 @@ export function ReportSummary({ data }) {
           ))}
         </dl>
       ) : null}
-      {data.action ? (
+      {data.actionList ? (
+        <div className="rpt-callout" style={{ marginBottom: 0 }} data-summary-actions>
+          <p className="rpt-callout-head">{data.actionLabel}</p>
+          <ol style={{ margin: 0, paddingLeft: 24 }}>
+            {data.actionList.map((t, i) => <li key={i} className="rpt-p" style={{ marginBottom: i === data.actionList.length - 1 ? 0 : 6, fontWeight: 700, wordBreak: 'keep-all' }}>{t}</li>)}
+          </ol>
+        </div>
+      ) : data.action ? (
         <div className="rpt-callout" style={{ marginBottom: 0 }}>
           <p className="rpt-callout-head">{data.actionLabel}</p>
           <p className="rpt-p" style={{ marginBottom: 0 }}>{data.action}</p>

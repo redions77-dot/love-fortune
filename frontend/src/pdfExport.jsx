@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
 import { parseContentBlocks, stripMarker } from './contentBlocks.js'
-import { ContentBlock, SectionHead, ReportSummary, ReportTable, ClosingBlock, TimelineItem, StepItem, BRACKET_SECTIONS } from './reportBlocks.jsx'
+import { ContentBlock, SectionHead, ActionItem, ReportSummary, ReportTable, ClosingBlock, TimelineItem, StepItem, BRACKET_SECTIONS } from './reportBlocks.jsx'
 import SajuTable, { TypeInfoNote } from './SajuTable.jsx'
 
 // ───────────────────────── "다운로드 PDF" (이미지 방식) ─────────────────────────
@@ -116,6 +116,10 @@ export function buildPdfPlan(items) {
     } else if (it.kind === 'label') {
       sec++
       blk('pdf-head pdf-label', <p className="rpt-kicker" style={{ textAlign: 'center', marginBottom: 0 }}>{it.text}</p>, { sec, group: `${sec}.0`, keep: true })
+    } else if (it.kind === 'actions') {
+      sec++
+      blk('pdf-head', <SectionHead title={it.title} part={it.part} />, { sec, group: `${sec}.0`, keep: true, groupHead: stripMarker(it.title) })
+      it.actions.forEach((a, i) => blk('', <ActionItem a={a} last={i === it.actions.length - 1} />, { sec, group: `${sec}.0`, groupHead: stripMarker(it.title) }))
     } else if (it.kind === 'section') {
       sec++
       let g = 0

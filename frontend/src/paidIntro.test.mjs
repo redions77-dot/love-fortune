@@ -45,7 +45,7 @@ test('새 안내 문구에는 불안 자극·확정·수치·할인·마감 표�
   const all = [SAJU_PAID_FREE_NOTE, ...SAJU_PAID_HIGHLIGHTS.map(x => x.text), ...SAJU_PAID_FACTS.map(x => x.text)].join(' ')
   assert.ok(!FORBIDDEN.test(all), all.match(FORBIDDEN)?.[0])
   // 무료 풀이 설명은 실제 무료 섹션(핵심 성향·강점·주의할 습관·실천 팁)과 일치한다
-  assert.ok(['핵심 성향', '강점', '주의할 습관', '실천 팁'].every(k => SAJU_PAID_FREE_NOTE.includes(k)))
+  assert.ok(['핵심 성향', '강점', '주의할 습관', '지금 당장 할 일'].every(k => SAJU_PAID_FREE_NOTE.includes(k)))
 })
 
 test('접힌 상태: 소개 문구와 버튼만 보이고, 가격·결제 버튼은 아직 보이지 않는다', () => {

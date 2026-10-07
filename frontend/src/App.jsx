@@ -614,6 +614,7 @@ export default function App() {
   const [blood, setBlood] = useState(() => _qs.get('blood') || '')
   const [phase, setPhase] = useState('input')
   const [freeError, setFreeError] = useState(null)
+  const [actionsFailed, setActionsFailed] = useState(false)   // 무료 내 사주의 "지금 당장 할 일, 딱 3가지"를 서버가 끝내 만들지 못했을 때
   const freeInFlightRef = useRef(false)
   const [sajuData, setSajuData] = useState(null)
   const [baseText, setBaseText] = useState('')
@@ -746,7 +747,7 @@ export default function App() {
     if (step > 0) setStep(s => s - 1); else setScreen('landing')
   }
 
-  async function streamAnalyze({ body, onSaju, onGunghabSaju, onBaseText, onPaidText, onDone, onError }) {
+  async function streamAnalyze({ body, onSaju, onGunghabSaju, onBaseText, onPaidText, onDone, onError, onActionsFailed }) {
     const ctrl = new AbortController(); abortRef.current = ctrl
     const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal })
     if (!res.ok) { onError?.(`서버 오류가 발생했습니다 (${res.status})`); return }
@@ -763,6 +764,7 @@ export default function App() {
           else if (json.type === 'paid_start') isPaidSectionRef.current = true
           else if (json.type === 'done') { gotDone = true; onDone?.() }
           else if (json.type === 'free_ref') freeRefRef.current = json.id
+          else if (json.type === 'actions_failed') onActionsFailed?.()
           else if (json.type === 'gunghab_saju') onGunghabSaju?.(json)
           else if (json.error) onError?.(json.error)
           else if (json.text) { if (isPaidSectionRef.current) onPaidText?.(json.text); else onBaseText?.(json.text) }
@@ -777,7 +779,7 @@ export default function App() {
     if (freeInFlightRef.current) return // 진행 중 중복 요청 방지
     freeInFlightRef.current = true
     trackEvent('free_analysis_started', { service_type: serviceType })
-    setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null); setFreeError(null)
+    setPhase('streaming'); setBaseText(''); setPaidText(''); setSajuData(null); setFreeError(null); setActionsFailed(false)
     setIsBaseStreaming(true); isPaidSectionRef.current = false; setScreen('result'); freeRefRef.current = ''
     const apiType = serviceType === 'child' ? '자녀천명' : serviceType === '노후' ? '노후' : '기본'
     let failed = false
@@ -788,6 +790,7 @@ export default function App() {
         body: { gender, maritalStatus, birthdate, birthtime, mbti, blood, type: apiType, isPaid: false, isLunar, userName: myName },
         onSaju: (d) => { setSajuData(d) },
         onBaseText: (t) => setBaseText(prev => prev + t),
+        onActionsFailed: () => setActionsFailed(true),
         onPaidText: () => {},
         onDone: () => {
           if (failed) return
@@ -1861,7 +1864,7 @@ if (emailModal) {
           <h2 style={{ fontSize: 18, color: C.text, textAlign: 'center', marginBottom: 16, fontWeight: 700 }}>무엇을 알아볼까요?</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { key: 'saju', label: '내 사주', hook: '무료 요약: 핵심 성향 · 강점 1개 · 주의할 습관 1개 · 오늘 해볼 팁 1개', sub: '입력: 성별, 결혼 상태, 생년월일, 태어난 시간(모르면 "모름" 선택). 혈액형은 선택이에요.', btn: '내 사주 무료 요약 보기 →', onClick: goSaju },
+              { key: 'saju', label: '내 사주', hook: '무료 요약: 핵심 성향 · 강점 1개 · 주의할 습관 1개 · 지금 당장 할 일 3가지', sub: '입력: 성별, 결혼 상태, 생년월일, 태어난 시간(모르면 "모름" 선택). 혈액형은 선택이에요.', btn: '내 사주 무료 요약 보기 →', onClick: goSaju },
               { key: 'gunghab', label: '관계 궁합', hook: '무료 요약: 관계 한 줄 요약 · 핵심 3가지 · 잘 맞는 점과 조율할 점 · 바로 써볼 대화 문장', sub: '입력: 두 사람의 성별, 생년월일, 태어난 시간(모르면 "모름" 선택). 연인·부부·가족·친구·직장 동료 중 고를 수 있어요.', btn: '관계 궁합 무료 요약 보기 →', onClick: () => { setServiceType('gunghab'); setGunghabStep(0); set관계유형(''); set관계그룹(''); set관계역할(''); setScreen('gunghab_input') } },
             ].map(({ key, label, hook, sub, btn, onClick }) => (
               <div key={key} onClick={onClick} style={{ ...cardStyle, minHeight: 0 }}>
@@ -2120,8 +2123,10 @@ if (screen === 'result') {
     { title: '이런 성향이 나오는 이유', content: removeMarkers(myFree.why || '') },
     { title: '나의 강점', content: removeMarkers(myFree.strength || '') },
     { title: '주의할 습관', content: removeMarkers(myFree.habit || '') },
-    { title: '바로 실천할 팁', content: removeMarkers(myFree.tip || '') },
-  ].filter(s => s.content.trim()) : []
+    myFree.actions && myFree.actions.length === 3
+      ? { title: '지금 당장 할 일, 딱 3가지', actions: myFree.actions, content: '' }
+      : { title: '바로 실천할 팁', content: removeMarkers(myFree.tip || '') },   // 예전에 만든 결과·저장된 결과
+  ].filter(s => s.actions || s.content.trim()) : []
   const corePartCount = useSajuReport ? reportCoreSections.length : baseShown.length   // 웹·PDF 모두 PART 번호는 여기서 이어 붙인다(사주표는 번호 없음)
   const saveResultPdf = () => savePdf({
     filename: useSajuReport ? pdfFileName(productKind, myName) : '마이사주_분석결과_' + (myName || '결과'),
@@ -2151,6 +2156,9 @@ if (screen === 'result') {
             strength={removeMarkers(myFree.strength)}
             habit={removeMarkers(myFree.habit)}
             tip={removeMarkers(myFree.tip)}
+            actions={myFree.actions}
+            actionsFailed={actionsFailed && !(myFree.actions && myFree.actions.length === 3) && !myFree.tip}
+            onRetryActions={handleFreeAnalyze}
             typeInfo={리포트유형}
           />
         )}

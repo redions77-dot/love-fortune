@@ -133,21 +133,21 @@ test('유료 안내 묶음: 실제 유료 섹션만 약속하고, 모든 섹션�
   assert.strictEqual(R.RELATIONS.직장동료.paidTitle, '이 사람과 더 편하게 일하려면');
 });
 
-test('내 사주 무료 프롬프트: 균형 있는 첫 문장, 가정형 장면, 모순 금지, 계산값 근거, 해요체, 짧은 팁', () => {
+test('내 사주 무료 프롬프트: 균형 있는 첫 문장, 가정형 장면, 모순 금지, 계산값 근거, 해요체, 행동 3가지', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, 'server.js'), 'utf8');
   const free = src.slice(src.indexOf('const basePrompt'), src.indexOf('const paidOnlyPrompt'));
-  for (const t of ['핵심 한 문장', '이런 성향이 나오는 이유', '나의 강점', '주의할 습관', '바로 실천할 팁']) assert.ok(free.includes('===' + t + '==='), t);
+  for (const t of ['핵심 한 문장', '이런 성향이 나오는 이유', '나의 강점', '주의할 습관']) assert.ok(free.includes('===' + t + '==='), t);
+  // 행동 3가지는 이 프롬프트가 아니라 별도 Sonnet 호출(freeActions.js)이 맡는다
+  assert.ok(!free.includes('ACTIONS_RULES') && !free.includes('===지금 당장 할 일') && !free.includes('===바로 실천할 팁==='));
   const must = [
     '"상위 몇 %" 같은 수치 평가는 쓰지 마세요',
     '유형 이름(예: ~형)은 쓰지 마세요',
     '단점이나 부정적인 결과로 시작하지 마세요',
     '입력받지 않은 과거 경험을 실제 있었던 일처럼 쓰지 마세요',
     '누구에게나 해당하는 칭찬',
-    '강점·주의할 습관·바로 실천할 팁은 서로 모순되면 안 됩니다',
-    "바로 위 '주의할 습관'을 보완하는 구체적인 행동 딱 1개",
+    '강점과 주의할 습관은 서로 모순되면 안 됩니다',
     '[사주 계산값]에 없는 오행·음양·상생상극은 새로 만들지 마세요',
     '모든 문장은 해요체',
-    '(짧은 1~2문장)',
   ];
   for (const m of must) assert.ok(free.includes(m), m);
   assert.ok(src.includes('${factsBlock(') && src.includes('${규칙문}'));   // 계산값 표가 모든 개인 풀이 프롬프트에 들어간다
@@ -176,7 +176,7 @@ test('프롬프트: 이번 최종 확인에서 나온 문제(오행 비유·심�
   assert.match(R.RELATIONS.직장동료.tone, /존댓말 한 문장.*반말 절대 금지/);
   assert.match(R.RELATIONS.형제가족.tone, /존댓말/);
   // 내 사주 무료: 섹션이 겹치지 않고 팁이 우선
-  assert.ok(free.includes('강점만 쓰세요') && free.includes('주의점만 쓰세요') && free.includes('오늘 바로 해볼 수 있게 언제·무엇을·어떻게'));
+  assert.ok(free.includes('강점만 쓰세요') && free.includes('주의점만 쓰세요') && require('./freeActions').ACTIONS_RULES.includes('실제로 드러나는 순간을 먼저 잡고'));
   assert.ok(!/더 잘 쓰는 방법|줄여보는 방법/.test(free));
   assert.ok(free.includes('가정하지 마세요'));
 });

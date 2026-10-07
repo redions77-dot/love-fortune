@@ -1,5 +1,5 @@
 import { sajuFacts } from './sajuFacts.js'
-import { ReportSummary } from './reportBlocks.jsx'
+import { ReportSummary, ActionList } from './reportBlocks.jsx'
 import SajuTable, { TypeInfoNote } from './SajuTable.jsx'
 
 // "내 사주 무료 결과" 리포트 — 기존 무료 풀이(핵심 성향·이유·강점·주의·팁)와 서버가 계산한 사주 데이터를 한 장의 글처럼 보여 준다.
@@ -24,7 +24,7 @@ export function splitTip(t) {
 }
 
 // props: name, dateLine, pillars({년주,월주,일주,시주}), core({sentence,detail}), why, strength, habit, tip(문자열), typeInfo({name,desc}|null)
-export default function SajuReport({ name, dateLine, pillars, core, why, strength, habit, tip, typeInfo, summary, headless = false }) {
+export default function SajuReport({ name, dateLine, pillars, core, why, strength, habit, tip, actions, actionsFailed = false, onRetryActions, typeInfo, summary, headless = false }) {
   const facts = sajuFacts(pillars)
   const tipParts = splitTip(tip)
   const whyParas = paragraphs(why)
@@ -101,7 +101,21 @@ export default function SajuReport({ name, dateLine, pillars, core, why, strengt
         </section>
       )}
 
-      {tipParts.main && (
+      {actions && actions.length === 3 ? (
+        <div data-section="actions" className="rpt-callout" style={{ margin: '56px 0 40px', padding: '24px 22px' }}>
+          <p className="rpt-kicker" style={{ ...s.num, color: C.accent }}>{tipNum}</p>
+          <h2 className="rpt-h2" style={{ ...s.h2, marginBottom: 6 }}>지금 당장 할 일, 딱 3가지</h2>
+          <p style={{ fontSize: 15, lineHeight: 1.7, color: C.sub, margin: '0 0 6px', wordBreak: 'keep-all' }}>오늘~이번 주 안에 바로 해볼 수 있는 작은 행동이에요.</p>
+          <ActionList actions={actions} />
+        </div>
+      ) : actionsFailed ? (
+        <div data-section="actions-failed" role="alert" className="rpt-callout" style={{ margin: '56px 0 40px', padding: '24px 22px' }}>
+          <p className="rpt-kicker" style={{ ...s.num, color: C.accent }}>{tipNum}</p>
+          <h2 className="rpt-h2" style={{ ...s.h2, marginBottom: 8 }}>지금 당장 할 일, 딱 3가지</h2>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: C.sub, margin: '0 0 14px', wordBreak: 'keep-all' }}>이번에는 행동 3가지를 만들지 못했어요. 아래 버튼으로 다시 만들어 보세요.</p>
+          {onRetryActions ? <button type="button" onClick={onRetryActions} style={{ width: '100%', minHeight: 48, padding: '12px 16px', fontSize: 16, fontWeight: 700, background: C.accent, color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer' }}>다시 만들기</button> : null}
+        </div>
+      ) : tipParts.main && (
         <div data-section="tip" className="rpt-callout" style={{ margin: '56px 0 40px', padding: '24px 22px' }}>
           <p className="rpt-kicker" style={{ ...s.num, color: C.accent }}>{tipNum}</p>
           <h2 className="rpt-h2" style={{ ...s.h2, marginBottom: 12 }}>바로 실천할 팁</h2>

@@ -13,7 +13,7 @@ export function buildResultPdfItems({ useSajuReport, sajuSummary, coreSections =
     ...(sajuData?.사주 ? [{ kind: 'saju', pillars: sajuData.사주, typeInfo: useSajuReport ? typeInfo : undefined }] : []),
     ...(sajuSummary ? [{ kind: 'summary', data: sajuSummary }] : []),
     ...(useSajuReport
-      ? coreSections.map((sec, i) => ({ kind: 'section', ...sec, part: i + 1 }))
+      ? coreSections.map((sec, i) => (sec.actions ? { kind: 'actions', title: sec.title, actions: sec.actions, part: i + 1 } : { kind: 'section', ...sec, part: i + 1 }))
       : [
           { kind: 'card', selector: '[data-pdf-card="type"]' },
           ...baseShown.map((sec, i) => ({ kind: 'section', title: sec.title, content: sec.content, part: i + 1 })),

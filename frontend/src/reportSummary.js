@@ -27,10 +27,12 @@ export function summarizeSaju(myFree) {
   const headline = nonEmpty(takeSentences(myFree.sentence, 1, 220))
   const strength = takeSentences(myFree.strength, 1)
   const caution = takeSentences(myFree.habit, 1)
-  const action = takeSentences(myFree.tip, 1, 240)
+  // 새 결과: 행동 3개의 제목만(자세한 방법은 본문 마지막). 예전 결과: 팁의 첫 문장.
+  const actionList = myFree.actions && myFree.actions.length === 3 ? myFree.actions.map(a => a.title) : null
+  const action = actionList ? null : takeSentences(myFree.tip, 1, 240)
   const compare = strength && caution ? { left: { label: '강점', text: strength }, right: { label: '주의할 점', text: caution } } : null
-  if (!headline && !compare && !action) return null
-  return { kind: 'saju', title: '한눈에 보기', headline, compare, strengthOnly: !compare ? strength : null, cautionOnly: !compare ? caution : null, action, actionLabel: '지금 해볼 행동' }
+  if (!headline && !compare && !action && !actionList) return null
+  return { kind: 'saju', title: '한눈에 보기', headline, compare, strengthOnly: !compare ? strength : null, cautionOnly: !compare ? caution : null, action, actionList, actionLabel: actionList ? '지금 당장 할 일, 딱 3가지' : '지금 해볼 행동' }
 }
 
 // 관계 궁합 무료 결과(parseGunghabFree) → 잘 맞는 점 / 부딪히기 쉬운 점(= 조율할 점) / 바로 써볼 대화 방법
