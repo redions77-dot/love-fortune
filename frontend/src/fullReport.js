@@ -70,8 +70,13 @@ function career(groups) {
   if (jobG) {
     let cur = null
     for (const it of jobG.items) {
-      if (it.type === 'li' && /^\d+\./.test(it.text) && it.text.length <= 90) { cur = { n: Number(it.text.match(/^(\d+)/)[1]), title: it.text.replace(/^\d+\.\s*/, ''), why: '' }; jobs.push(cur) }
-      else if (cur && !cur.why) cur.why = pick(it.text, 1, 200) || ''
+      if (it.type === 'li' && /^\d+\./.test(it.text) && it.text.length <= 90) {
+        // 카드는 번호 + 직업명만. '직업명 — 설명' 꼴이면 앞부분만 쓰고 설명은 본문에만 둔다(원문 줄은 본문에 그대로).
+        const full = it.text.replace(/^\d+\.\s*/, '')
+        const name = full.split(/\s[—–]\s|\s-\s/)[0].trim()
+        cur = { n: Number(it.text.match(/^(\d+)/)[1]), title: name || full }
+        jobs.push(cur)
+      }
     }
   }
   const good = find(groups, /^잘\s*맞는.*환경/), bad = find(groups, /^덜\s*맞는.*환경/)
@@ -105,7 +110,7 @@ export function monthMap(timeline) {
     const m = String(timeline[i].lead || '').match(/(\d{1,2})월/)
     if (!m || Number(m[1]) !== i + 1) return null
     const t = clean(timeline[i].text)
-    const first = t.split(/[,，.!?。]\s*|\s[—–]\s/)[0].trim()
+    const first = t.split(/[,，.!?。]\s*|\s[—–]\s/)[0].trim()   // 문장 중간에서 자르지 않고, 첫 구절(쉼표·마침표 앞)을 통째로 쓴다
     if (!first) return null
     cells.push({ month: i + 1, phrase: first })
   }

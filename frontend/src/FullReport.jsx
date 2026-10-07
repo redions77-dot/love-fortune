@@ -94,7 +94,6 @@ export function overviewUnits(ov) {
         <div className="fa-job-body">
           <p className="fa-label">추천 직업 {j.n || i + 1}</p>
           <p className="fa-job-title">{j.title}</p>
-          {j.why ? <p className="fa-job-why">{j.why}</p> : null}
         </div>
       </div>
     )))

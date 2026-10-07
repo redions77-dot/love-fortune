@@ -87,7 +87,7 @@ test('職: 추천 직업 1/2/3 카드 + 환경 비교', () => {
   assert.strictEqual(ov.jobs.length, 3)
   assert.deepStrictEqual(ov.jobs.map((j) => j.n), [1, 2, 3])
   assert.strictEqual(ov.jobs[0].title, '품질관리·회계검토·계약관리')
-  assert.ok(ov.jobs[0].why.startsWith('기준을 적용해'))
+  assert.ok(ov.jobs.every((j) => j.why === undefined), '카드에는 긴 설명을 넣지 않는다')
   assert.ok(ov.compare.left.text.includes('혼자 집중') && ov.compare.right.text.includes('자주 바뀌고'))
 })
 
