@@ -80,7 +80,7 @@ test('버튼 클릭만으로 결제·풀이 생성이 시작되지 않는다: �
 })
 
 test('첫 화면: 소개 문장과 무료 안내가 새 문구로 바뀌고, 제목·버튼·기존 문구 정리가 맞다', () => {
-  assert.ok(app.includes('돈·일·관계, 지금 할 일 3가지까지.'))
+  assert.ok(app.includes('지금 당장 할 일, 딱 3가지.'))
   assert.ok(app.includes('기본 풀이는 무료로 볼 수 있어요.') && app.includes('더 자세한 풀이를 원할 때 유료 상품을 선택해주세요.'))
   // 제목과 메인 버튼 유지
   assert.ok(app.includes('사주는 알겠고,<br/>그래서 어쩌라고?') && app.includes('내 사주 무료로 보기 →') && app.includes('onClick={goSaju}'))
