@@ -1843,7 +1843,7 @@ if (emailModal) {
           <p style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>마이사주</p>
           <h1 style={{ wordBreak: 'keep-all', fontSize: 'clamp(27px, 8.4vw, 34px)', fontWeight: 700, color: C.text, marginBottom: 14, lineHeight: 1.3, letterSpacing: '-0.02em' }}>사주는 알겠고,<br/>그래서 어쩌라고?</h1>
           <p style={{ wordBreak: 'keep-all', fontSize: 16, color: C.text, lineHeight: 1.75, marginBottom: 28 }}>
-            <span style={{ display: 'block' }}>지금 할 일 3가지까지.</span>
+            <span style={{ display: 'block' }}>돈·일·관계, 지금 할 일 3가지까지.</span>
           </p>
           <button
             style={{ width: '100%', maxWidth: 360, minHeight: 52, padding: '14px 20px', fontSize: 16, fontWeight: 700, background: C.accent, color: '#FFFFFF', border: 'none', borderRadius: 12, cursor: 'pointer', wordBreak: 'keep-all' }}
