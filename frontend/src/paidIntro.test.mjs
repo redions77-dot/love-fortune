@@ -80,10 +80,10 @@ test('버튼 클릭만으로 결제·풀이 생성이 시작되지 않는다: �
 })
 
 test('첫 화면: 소개 문장과 무료 안내가 새 문구로 바뀌고, 제목·버튼·기존 문구 정리가 맞다', () => {
-  assert.ok(app.includes('사주풀이에서 끝내지 않고') && app.includes('지금 할 일 3가지까지.'))
+  assert.ok(app.includes('지금 할 일 3가지까지.'))
   assert.ok(app.includes('기본 풀이는 무료로 볼 수 있어요.') && app.includes('더 자세한 풀이를 원할 때 유료 상품을 선택해주세요.'))
   // 제목과 메인 버튼 유지
-  assert.ok(app.includes('내 사주,<br/>그래서 지금<br/>뭘 해야 할까?') && app.includes('내 사주 무료로 보기 →') && app.includes('onClick={goSaju}'))
+  assert.ok(app.includes('사주는 알겠고,<br/>그래서 어쩌라고?') && app.includes('내 사주 무료로 보기 →') && app.includes('onClick={goSaju}'))
   // 예전 소개 문장과 중복되던 하단 무료 안내는 정리됐다
   assert.ok(!app.includes('사주로 나를 이해하고,') && !app.includes('바로 써볼 말을 찾아보세요'))
   assert.ok(!app.includes('무료 요약은 결제 없이 볼 수 있어요. 더 깊은 상세 풀이는 요약을 본 뒤 선택할 수 있고, 유료(1,990원)예요.'))

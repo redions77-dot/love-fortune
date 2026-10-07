@@ -1841,9 +1841,8 @@ if (emailModal) {
         {/* 첫 화면 */}
         <div style={{ maxWidth: 480, width: '100%', margin: '0 auto', padding: '24px 24px 36px', textAlign: 'center', boxSizing: 'border-box' }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>마이사주</p>
-          <h1 style={{ wordBreak: 'keep-all', fontSize: 34, fontWeight: 700, color: C.text, marginBottom: 14, lineHeight: 1.3, letterSpacing: '-0.02em' }}>내 사주,<br/>그래서 지금<br/>뭘 해야 할까?</h1>
+          <h1 style={{ wordBreak: 'keep-all', fontSize: 'clamp(27px, 8.4vw, 34px)', fontWeight: 700, color: C.text, marginBottom: 14, lineHeight: 1.3, letterSpacing: '-0.02em' }}>사주는 알겠고,<br/>그래서 어쩌라고?</h1>
           <p style={{ wordBreak: 'keep-all', fontSize: 16, color: C.text, lineHeight: 1.75, marginBottom: 28 }}>
-            <span style={{ display: 'block' }}>사주풀이에서 끝내지 않고</span>
             <span style={{ display: 'block' }}>지금 할 일 3가지까지.</span>
           </p>
           <button
