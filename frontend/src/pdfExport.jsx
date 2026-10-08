@@ -134,10 +134,16 @@ export function buildPdfPlan(items) {
       if (fu.replaceBody && fu.units.length && it.kind === 'section') {
         // 결론 페이지: 카드마다 한 블록(각각 한 쪽 안에서 잘리지 않는 단위)으로 놓고 keepAll 로 묶어, 한 쪽에 들어가면 통째로 한 쪽에 모은다.
         // 제목+카드 전체가 한 쪽보다 길면 카드 사이에서 나누되, 제목과 첫 카드(머리글 한 줄 + 첫 카드)는 반드시 같은 쪽에 둔다(제목만 쪽 끝에 홀로 남지 않게).
-        fu.units.forEach((u, ui) => blk('', <div className="fa-units"><div className="fa-unit">{u.node}</div></div>, { sec, group: `${sec}.o`, keepAll: true, groupHead: stripMarker(it.title), ...(ui === 0 && fu.units.length > 1 ? { keep: true } : {}) }))
+        // 카드가 4장 이상이면 마지막 두 카드(행동 조언 + 마지막 한 문장)는 한 블록으로 묶어, 마지막 한 문장만 홀로 다음 쪽에 남지 않게 한다.
+        const tailStart = fu.units.length > 3 ? fu.units.length - 2 : fu.units.length
+        const cardChunks = [...fu.units.slice(0, tailStart).map((u) => [u]), ...(tailStart < fu.units.length ? [fu.units.slice(tailStart)] : [])]
+        cardChunks.forEach((chunk, ci) => blk('', <div className="fa-units">{chunk.map((u) => <div key={u.key} className="fa-unit">{u.node}</div>)}</div>, { sec, group: `${sec}.o`, keepAll: true, groupHead: stripMarker(it.title), ...(ci === 0 && cardChunks.length > 1 ? { keep: true } : {}) }))
         return
       }
-      fu.units.forEach((u) => blk('', u.node, { sec, group: `${sec}.o`, groupHead: stripMarker(it.title) }))
+      // 추천 직업 카드 1·2·3은 한 쪽에 함께 둔다(별도 묶음 + keepAll). 환경 비교 카드 등 나머지는 기존처럼 이어서 놓는다.
+      fu.units.forEach((u) => blk('', u.node, /^job\d/.test(u.key)
+        ? { sec, group: `${sec}.j`, keepAll: true, groupHead: stripMarker(it.title) }
+        : { sec, group: `${sec}.o`, groupHead: stripMarker(it.title) }))
       if (fu.replaceBody) return
       const parsed = BRACKET_SECTIONS.has(it.title)
         ? it.content.split(/(\[.+?\]\n)/g).flatMap(part => {

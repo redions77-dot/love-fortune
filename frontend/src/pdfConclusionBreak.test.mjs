@@ -69,3 +69,52 @@ test('전체가 한 쪽에 들어가면 예전처럼 한 쪽에 모은다', () =
   const pages = PDF.paginateBlocks(conclusionBlocks([70, 150, 100, 120, 90]), 0)
   assert.strictEqual(pages.length, 1)
 })
+
+// ── 職 · 직업과 커리어: 추천 직업 카드 1·2·3은 한 쪽에 함께 ──
+const JOB = `📌 이 사주에 맞는 직업
+1. 품질관리·회계검토·계약관리
+기준을 적용해 오류를 찾는 힘이 있어요.
+
+2. 교육기획·상담
+사람의 말을 오래 듣는 편이에요.
+
+3. 운영관리·일정조율
+여러 일을 순서대로 맞추는 감각이 있어요.
+
+📌 잘 맞는 업무 환경
+역할과 기준이 분명하고 혼자 집중할 시간이 있는 환경이에요.
+
+📌 덜 맞는 업무 환경
+기준이 자주 바뀌고 즉흥적인 요청이 많은 환경이에요.`
+const jobMeta = (full) => PDF.buildPdfPlan([{ kind: 'section', title: '職 · 직업과 커리어', content: JOB, part: 8, ...(full ? { full: true } : {}) }]).map((p) => p.meta)
+
+test('職: 직업 카드 3장은 별도 묶음(keepAll)으로 함께 다니고, 환경 비교 카드는 그 묶음에 넣지 않는다', () => {
+  const m = jobMeta(true)
+  const jobs = m.filter((x) => String(x.group).endsWith('.j'))
+  assert.strictEqual(jobs.length, 3)
+  assert.ok(jobs.every((x) => x.keepAll))
+  assert.ok(m.some((x) => String(x.group).endsWith('.o')), '환경 비교 카드는 기존 묶음')
+  assert.ok(jobMeta(false).every((x) => !String(x.group).endsWith('.j')), '전체 분석이 아니면 변화 없음')
+})
+
+test('職: 직업 카드 2장까지만 남는 쪽이면 제목과 카드 3장을 함께 다음 쪽으로 넘긴다', () => {
+  const job = (n) => block(150, { group: '9.j', keepAll: true })
+  const blocks = [block(600, { sec: 1, group: '1.0' }), block(90, { keep: true }), job(), job(), job(), block(190, { group: '9.o' }), block(60, { group: '9.0' })]
+  const pages = PDF.paginateBlocks(blocks, 0)   // 쪽 높이 983: 600+90+150+150 = 990 > 983 → 카드 3장 모두 다음 쪽
+  const p = (i) => pageOf(pages, i)
+  assert.strictEqual(p(1), p(2)); assert.strictEqual(p(2), p(3)); assert.strictEqual(p(3), p(4))
+  assert.notStrictEqual(p(0), p(1))
+})
+
+test('職: 카드 3장 뒤 환경·설명은 남는 공간이 없으면 다음 쪽으로 자연스럽게 넘어간다', () => {
+  const job = () => block(300, { group: '9.j', keepAll: true })
+  const blocks = [block(40, { keep: true }), job(), job(), job(), block(190, { group: '9.o' })]   // 40+900 = 940, 환경 190은 다음 쪽
+  const pages = PDF.paginateBlocks(blocks, 0)
+  assert.strictEqual(pageOf(pages, 0), pageOf(pages, 3))
+  assert.strictEqual(pageOf(pages, 4), pageOf(pages, 0) + 1)
+})
+
+test('결론: 카드가 4장 이상이면 마지막 두 카드(행동 조언 + 마지막 한 문장)는 한 블록', () => {
+  const m = metaOf(true)
+  assert.strictEqual(m.length, 5, '제목 + 카드 블록 4(마지막은 두 장)')
+})
