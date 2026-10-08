@@ -581,3 +581,7 @@ html.no-pull-refresh,
 html.no-pull-refresh body {
   overscroll-behavior-y: none;
 }
+/* 심화 분석 PDF만: 본문 글자 약 5% 확대(표 안 글자는 그대로) */
+.pdf-deep .rpt-p { font-size: 17.85px; }
+.pdf-deep .rpt-callout .rpt-p { font-size: 17.3px; }
+.pdf-deep .rpt-tl-text, .pdf-deep .rpt-step-text { font-size: 17.85px; }

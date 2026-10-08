@@ -15,6 +15,7 @@ import { PRODUCT, productTitle, pdfFileName, birthMetaLine } from './reportMeta.
 import { buildResultPdfItems, buildDeepPdfItems } from './pdfItems.js'
 import { buildDeepFlowTable, buildDeepChoiceTable, buildDeepClosing } from './deepTables.js'
 import { summarizeSaju, summarizeMoney, summarizeGunghabFree, summarizeGunghabPaid } from './reportSummary.js'
+import { stripStrayMarkdown } from './markdownStrip.js'
 import { isAdminEntry } from './adminLink.js'
 import { emailPrefillFor, prefillSignature } from './emailPrefill.js'
 import { rememberOrder as rememberStoredOrder, recallOrder as recallStoredOrder, markOrderPaid, forgetOrder, listRecoverable, recoveryOrder, paidResultActive, RESULT_SCREENS } from './orderRecovery.js'
@@ -1276,7 +1277,8 @@ export default function App() {
 
   // ── 심화 결과 ──
   if (screen === 'deep_result') {
-    const deepSections = parseSections(deepText)
+    const deepClean = stripStrayMarkdown(deepText)   // AI가 남긴 ** 강조 기호·--- 구분선 제거(문장은 그대로)
+    const deepSections = parseSections(deepClean)
     function sendDeepEmail() {
       if (!deepEmailInput.includes('@')) { alert('이메일 주소를 확인해주세요'); return }
       sendOrderEmail(paidOrdersRef.current.deep, deepEmailInput)
@@ -1294,8 +1296,8 @@ export default function App() {
     const deepSummaryIdx = deepShown.findIndex(sec => /종합s*흐름/.test(sec.title))   // 표는 종합 요약 바로 다음에 놓는다
     const saveDeepPdf = () => savePdf({
       filename: pdfFileName('deep', myName),
-      title: deepTitle, eyebrow: `마이사주 · ${PRODUCT.deep.label}`, subtitle: deepSubtitle, footerLabel: PRODUCT.deep.label,
-      items: buildDeepPdfItems({ sajuData, moneySummary: deepMoneySummary, sections: deepShown, fallbackText: removeMarkers(deepText), flowTable: deepFlowTable, choiceTable: deepChoiceTable, closing: deepClosing }),
+      docClass: 'pdf-deep', title: deepTitle, eyebrow: `마이사주 · ${PRODUCT.deep.label}`, subtitle: deepSubtitle, footerLabel: PRODUCT.deep.label,
+      items: buildDeepPdfItems({ sajuData, moneySummary: deepMoneySummary, sections: deepShown, fallbackText: removeMarkers(deepClean), flowTable: deepFlowTable, choiceTable: deepChoiceTable, closing: deepClosing }),
     })
     return (
       <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1378,7 +1380,7 @@ export default function App() {
             </div>
           )}
           {isDeepStreaming && deepText && (
-            <div className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(deepText)}<span style={{ opacity: 0.4 }}>▌</span></div>
+            <div className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(deepClean)}<span style={{ opacity: 0.4 }}>▌</span></div>
           )}
           {!isDeepStreaming && (() => {
             if (deepShown.length > 0) return (
@@ -1394,7 +1396,7 @@ export default function App() {
                 {deepClosing && <ClosingBlock closing={deepClosing} />}
               </>
             )
-            if (isDeepPaid && deepText.trim()) return <div className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(deepText)}</div>
+            if (isDeepPaid && deepText.trim()) return <div className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(deepClean)}</div>
             return null
           })()}
 

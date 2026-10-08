@@ -302,7 +302,7 @@ function PdfBlocks({ hero, plan }) {
 
 // items: { kind: 'card', selector } | { kind: 'saju', pillars, typeInfo } | { kind: 'summary', data } | { kind: 'table', table } | { kind: 'closing', closing }
 //      | { kind: 'label', text } | { kind: 'section', title, content, part }
-export async function exportResultPDF({ filename, eyebrow = 'MYSAJU REPORT', title, subtitle = '', footerLabel = '', items }) {
+export async function exportResultPDF({ filename, eyebrow = 'MYSAJU REPORT', title, subtitle = '', footerLabel = '', items, docClass = '' }) {
   await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => window.jspdf)
   await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', () => window.html2canvas)
   if (document.fonts) {
@@ -329,7 +329,7 @@ export async function exportResultPDF({ filename, eyebrow = 'MYSAJU REPORT', tit
   stage.style.colorScheme = 'light'   // 화면 테마와 무관하게 밝은 문서로 캡처한다 (index.css .pdf-stage 도 같은 값을 흰 바탕·진한 글자로 지정)
   document.body.appendChild(stage)
   const measure = document.createElement('div')
-  measure.className = 'pdf-measure pdf-doc'
+  measure.className = 'pdf-measure pdf-doc' + (docClass ? ' ' + docClass : '')
   stage.appendChild(measure)
   const root = createRoot(measure)
   try {
@@ -342,7 +342,7 @@ export async function exportResultPDF({ filename, eyebrow = 'MYSAJU REPORT', tit
     let heroH = 0
     if (heroEl) {
       const probe = document.createElement('div')
-      probe.className = 'pdf-doc'; probe.style.width = PDF_PAGE_W + 'px'
+      probe.className = 'pdf-doc' + (docClass ? ' ' + docClass : ''); probe.style.width = PDF_PAGE_W + 'px'
       probe.appendChild(heroEl.cloneNode(true)); stage.appendChild(probe)
       heroH = probe.getBoundingClientRect().height
       probe.remove()
@@ -357,7 +357,7 @@ export async function exportResultPDF({ filename, eyebrow = 'MYSAJU REPORT', tit
     const pageH = pdf.internal.pageSize.getHeight()
     for (let pi = 0; pi < pages.length; pi++) {
       const pageEl = document.createElement('div')
-      pageEl.className = 'pdf-page pdf-doc'
+      pageEl.className = 'pdf-page pdf-doc' + (docClass ? ' ' + docClass : '')
       if (pi === 0 && heroEl) pageEl.appendChild(heroEl.cloneNode(true))
       const body = document.createElement('div')
       body.className = 'pdf-body'
