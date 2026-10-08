@@ -132,8 +132,9 @@ export function buildPdfPlan(items) {
       // 전체 분석: 한눈에 보는 카드(각각 한 쪽 안에서 잘리지 않는 단위)를 본문 앞에 놓는다. 결론 페이지·태그가 본문을 완전히 대신할 때만 본문을 생략한다.
       const fu = it.full ? unitsForSection(it.title, it.content) : { units: [], replaceBody: false }
       if (fu.replaceBody && fu.units.length && it.kind === 'section') {
-        // 결론 페이지: 카드 전체를 한 덩어리로 놓아 제목·카드가 쪽 사이에서 갈라지지 않게 한다(통째로 다음 쪽으로 넘어간다)
-        blk('', <div className="fa-units">{fu.units.map((u) => <div key={u.key} className="fa-unit">{u.node}</div>)}</div>, { sec, group: `${sec}.o`, keepAll: true, groupHead: stripMarker(it.title) })
+        // 결론 페이지: 카드마다 한 블록(각각 한 쪽 안에서 잘리지 않는 단위)으로 놓고 keepAll 로 묶어, 한 쪽에 들어가면 통째로 한 쪽에 모은다.
+        // 제목+카드 전체가 한 쪽보다 길면 카드 사이에서 나누되, 제목과 첫 카드(머리글 한 줄 + 첫 카드)는 반드시 같은 쪽에 둔다(제목만 쪽 끝에 홀로 남지 않게).
+        fu.units.forEach((u, ui) => blk('', <div className="fa-units"><div className="fa-unit">{u.node}</div></div>, { sec, group: `${sec}.o`, keepAll: true, groupHead: stripMarker(it.title), ...(ui === 0 && fu.units.length > 1 ? { keep: true } : {}) }))
         return
       }
       fu.units.forEach((u) => blk('', u.node, { sec, group: `${sec}.o`, groupHead: stripMarker(it.title) }))
