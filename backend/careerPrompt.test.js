@@ -70,3 +70,18 @@ test('범위 제한: 한 단계 연결 허용은 이 섹션에만 적용하고 �
   assert.ok(!/server\.tmp|career-test|__runAnalysis|globalThis\.__stream/.test(server), '검증용 임시 코드가 섞이지 않았다');
   assert.ok(!career.includes('`') && !/\$\{(?!PAID_CAUTION_HEADING\})/.test(career), '템플릿 문자열을 깨는 기호가 없다');
 });
+
+test('직업 추천 수준: 가능성 중심·전문/운영 분야 우선·보조/단순 직종 금지·나이로 낮추지 않기·서로 다른 3개 분야', () => {
+  assert.ok(career.includes('[직업 추천의 수준과 관점') && career.includes('앞으로 발휘할 수 있는 가능성을 제시하는 것입니다'));
+  assert.ok(career.includes('현재 직업·소득·학력·자산·사회적 지위는 알 수 없으므로 추측하지 말고') && career.includes('타고난 능력의 한계로 읽지 마세요') && career.includes('본인 잘못으로 단정하지도 마세요'));
+  for (const f of ['전문직·전문 서비스', '기업 경영·사업 운영', '조직 관리·리더십', '금융·자산관리·부동산', '교육·연구·컨설팅', '기획·전략·브랜딩', '문화·예술·콘텐츠', '공공기관·사회공헌·복지사업 운영']) assert.ok(career.includes(f), f);
+  assert.ok(career.includes('모두에게 똑같이 쓰라는 뜻이 아니므로'));
+  for (const bad of ['"~보조"', '요양보호사·간병인', '청소·가사 도우미', '주방 보조·조리원']) assert.ok(career.includes(bad), bad);
+  assert.ok(career.includes('보조·단순 직무는 추천하지 마세요') && career.includes('"~보다" 식으로 끌어오지 말고'));
+  assert.ok(career.includes('나이를 이유로 직업의 수준을 낮추지 마세요') && career.includes('50대·60대 이상'));
+  assert.ok(career.includes('자격이 있다고 가정하지 말고'));
+  assert.ok(career.includes('서로 다른 분야로 고르세요') && career.includes('3가지는 서로 다른 분야여야 하고'));
+  assert.ok(career.includes('본문 설명의 업무 내용도 제목과 같은 수준으로'));
+  assert.ok(career.includes('새로 직업을 구해야 하는 사람이라는 전제를 두지 마세요') && career.includes('제2의 커리어'));
+  assert.ok(career.includes('과장된 칭찬이나 성공 보장은 하지 마세요') && career.includes('이런 일밖에 할 수 없다'));
+});
