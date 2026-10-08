@@ -17,6 +17,7 @@ import { buildDeepFlowTable, buildDeepChoiceTable, buildDeepClosing } from './de
 import { summarizeSaju, summarizeMoney, summarizeGunghabFree, summarizeGunghabPaid } from './reportSummary.js'
 import { isAdminEntry } from './adminLink.js'
 import { emailPrefillFor, prefillSignature } from './emailPrefill.js'
+import { rememberOrder as rememberStoredOrder, recallOrder as recallStoredOrder, markOrderPaid, forgetOrder, listRecoverable, recoveryOrder, paidResultActive, RESULT_SCREENS } from './orderRecovery.js'
 import { RELATION_OPTIONS, RELATION_GROUPS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, SAJU_PAID_FREE_NOTE, SAJU_PAID_HIGHLIGHTS, SAJU_PAID_FACTS, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText } from './relations.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
@@ -95,26 +96,14 @@ const BLOOD_LIST = ['A', 'B', 'O', 'AB']
 const STEPS = ['gender', 'marital', 'birthdate', 'birthtime', 'blood']
 // [보안] 운영자 여부는 서버 세션(HttpOnly 쿠키)으로만 판단한다. 관리자 비밀값은 프런트엔드에 두지 않는다.
 // 운영자 API(/api/admin/*)는 같은 도메인으로 요청한다 (운영: Vercel rewrite → 백엔드, 로컬: Vite 프록시).
-const ORDER_STORE_KEY = 'mysaju_orders'
 const ADMIN_HINT_KEY = 'mysaju_admin_hint'
-const ORDER_KEEP_MS = 2 * 24 * 60 * 60 * 1000
 
-// [보안] 주문 토큰은 모바일 결제 후 페이지가 다시 열려도 결제를 확인할 수 있도록 이 브라우저에만 보관한다.
-function rememberOrder(order) {
-  try {
-    const all = JSON.parse(localStorage.getItem(ORDER_STORE_KEY) || '{}')
-    const now = Date.now()
-    for (const [id, v] of Object.entries(all)) if (!v || now - (v.savedAt || 0) > ORDER_KEEP_MS) delete all[id]
-    all[order.orderId] = { orderToken: order.orderToken, product: order.product, savedAt: now }
-    localStorage.setItem(ORDER_STORE_KEY, JSON.stringify(all))
-  } catch {}
-}
-function recallOrder(orderId) {
-  try {
-    const v = orderId && JSON.parse(localStorage.getItem(ORDER_STORE_KEY) || '{}')[orderId]
-    return v ? { orderId, orderToken: v.orderToken, product: v.product } : null
-  } catch { return null }
-}
+// [보안] 주문 토큰은 모바일 결제 후 페이지가 다시 열려도 결제를 확인할 수 있도록, 그리고 결제한 결과를 다시 볼 수 있도록 이 브라우저에만 보관한다.
+// 결제 확인 전 주문은 2일, 결제가 확인된 주문은 30일 뒤 지운다. (orderRecovery.js)
+const orderStore = () => { try { return window.localStorage } catch { return { getItem: () => null, setItem: () => {} } } }
+const rememberOrder = (order) => rememberStoredOrder(orderStore(), order)
+const recallOrder = (orderId) => recallStoredOrder(orderStore(), orderId)
+
 async function readJson(res) { try { return await res.json() } catch { return {} } }
 
 // [보안] 결제 후 서버가 포트원 결제 내역(주문번호·상태·금액)을 확인한다. 일시적인 조회 실패만 재시도한다.
@@ -127,7 +116,7 @@ async function confirmPayment(order, impUid) {
       res = await fetch(`${API_URL}/api/orders/${encodeURIComponent(order.orderId)}/verify`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderToken: order.orderToken, impUid }) })
     } catch { continue }
     const json = await readJson(res)
-    if (res.ok && json.status === 'paid') return
+    if (res.ok && json.status === 'paid') { markOrderPaid(orderStore(), order.orderId); return }
     if (json.error) lastError = json.error
     if (res.status < 500) throw new Error(lastError)
   }
@@ -138,7 +127,7 @@ async function confirmPayment(order, impUid) {
 // 생성 중이면 이어서, 완료됐으면 저장된 결과를 처음부터 다시 보내준다. 연결이 끊기면 제한적으로 재시도한다.
 async function streamOrderAnalysis(order, { onEvent, onReset, signal }) {
   const delays = [0, 3000, 8000, 15000]
-  let lastError = null
+  let lastError = null, lastStatus = 0
   for (let attempt = 0; attempt < delays.length; attempt++) {
     if (delays[attempt]) await new Promise(r => setTimeout(r, delays[attempt]))
     if (attempt > 0) onReset?.()
@@ -146,6 +135,7 @@ async function streamOrderAnalysis(order, { onEvent, onReset, signal }) {
     try {
       const res = await fetch(`${API_URL}/api/orders/${encodeURIComponent(order.orderId)}/analysis`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderToken: order.orderToken }), signal })
       if (!res.ok) {
+        lastStatus = res.status
         lastError = (await readJson(res)).error || `서버 오류가 발생했습니다 (${res.status})`
         if (res.status < 500 && res.status !== 429) break
         continue
@@ -171,7 +161,7 @@ async function streamOrderAnalysis(order, { onEvent, onReset, signal }) {
     if (gotDone) return { ok: true }
     if (!retryable) break
   }
-  return { ok: false, error: lastError || '분석을 완료하지 못했어요. 잠시 후 다시 시도해주세요.' }
+  return { ok: false, status: lastStatus, error: lastError || '분석을 완료하지 못했어요. 잠시 후 다시 시도해주세요.' }
 }
 
 // [보안] 이메일은 서버가 저장한 결과로 서버가 만들어 보낸다. (주문 토큰 필요, 횟수 제한)
@@ -179,6 +169,18 @@ async function sendOrderEmail(order, email) {
   if (!order) throw new Error('발송 오류가 발생했습니다.')
   const res = await fetch(`${API_URL}/api/orders/${encodeURIComponent(order.orderId)}/email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderToken: order.orderToken, email }) })
   if (!res.ok) throw new Error((await readJson(res)).error || '발송 오류가 발생했습니다.')
+}
+
+// 이메일 입력란 아래 안내. 30일은 이 브라우저의 '다시 보기' 정보 보관 기간이며 서버의 결과 보관 기간이 아니다. (이메일 받기가 있는 화면에서만 쓴다)
+function RecoverNote() {
+  return <p style={{ fontSize: 12, color: '#8A8A93', lineHeight: 1.6, margin: '8px 0 0', wordBreak: 'keep-all' }}>결제한 결과는 이 기기의 같은 브라우저에서 30일 동안 다시 볼 수 있어요. 기기를 바꾸거나 브라우저 데이터를 삭제하면 다시 보기가 어려울 수 있으니, 이메일로도 받아두세요.</p>
+}
+
+// 결제 복구 중이면 실패를 화면 안내로, 아니면 기존처럼 알림으로 알린다. 성공 여부를 돌려준다.
+function settle(opts, failure) {
+  if (!failure) return true
+  if (opts.onFail) opts.onFail(failure[0], failure[1]); else alert(failure[0])
+  return false
 }
 
 const fullProductFor = (st) => st === 'child' ? 'full_child' : st === '노후' ? 'full_nohu' : 'full_saju'
@@ -673,6 +675,8 @@ export default function App() {
   const [gililText, setGililText] = useState('')
   const [isGililStreaming, setIsGililStreaming] = useState(false)
   const [gililData, setGililData] = useState(null)
+  const [selMonth, setSelMonth] = useState(0)   // 길일 결과 화면의 선택값 (훅은 화면 분기보다 위에 있어야 한다)
+  const [selDay, setSelDay] = useState(null)
 
   const [백년Name, set백년Name] = useState(() => _qs.get('hn') || '')
   const [백년BirthYear, set백년BirthYear] = useState(() => _qs.get('hby') || '')
@@ -706,6 +710,31 @@ export default function App() {
       .then(j => { setIsAdmin(!!j.admin); if (!j.admin) { try { localStorage.removeItem(ADMIN_HINT_KEY) } catch {} } })
       .catch(() => {})
   }, []) // eslint-disable-line
+
+  // ── 결제한 결과 다시 보기 ──
+  // 이 브라우저에 보관한 '결제 확인된' 주문으로 서버에 저장된 결과만 다시 받는다. (AI 재호출·재결제 없음, 무료 앞부분은 복원하지 않음)
+  const [recoverList, setRecoverList] = useState(() => listRecoverable(orderStore()))
+  const [recoverNotice, setRecoverNotice] = useState('')
+  const [recoveredFull, setRecoveredFull] = useState(false)   // 전체 분석을 '다시 보기'로 연 경우에만 결과 화면에 안내를 보여준다
+  const recoveringRef = useRef(false)
+  useEffect(() => { if (screen === 'landing') setRecoverList(listRecoverable(orderStore())) }, [screen])
+
+  // 결과 화면에서 아래로 당겨 새로고침되는 것을 막는다. (모바일 Chrome 등. 브라우저에 따라 효과가 다를 수 있다.)
+  useEffect(() => {
+    const on = RESULT_SCREENS.includes(screen)
+    document.documentElement.classList.toggle('no-pull-refresh', on)
+    return () => document.documentElement.classList.remove('no-pull-refresh')
+  }, [screen])
+
+  // 유료 결과가 화면에 있거나 만들어지는 중이면 새로고침·탭 닫기 전에 브라우저 확인창을 띄운다.
+  // (브라우저 정책상 화면을 한 번이라도 눌러본 뒤에만 뜨고, 문구는 바꿀 수 없으며, 모바일 브라우저는 무시하기도 한다.)
+  const protectPaidResult = paidResultActive({ screen, serviceType, isPaid, isPaidStreaming, deepText, isDeepStreaming, gunghabText, isGunghabStreaming, gililData, isGililStreaming, 백년Text, is백년Streaming })
+  useEffect(() => {
+    if (!protectPaidResult) return
+    const onBeforeUnload = (e) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [protectPaidResult])
 
   useEffect(() => {
     if (screen === 'result' && phase === 'done' && !isPaid && !freeResultViewedRef.current) {
@@ -844,7 +873,8 @@ export default function App() {
     }
   }
 
-  async function handlePaidAnalyze(order) {
+  async function handlePaidAnalyze(order, opts = {}) {
+    let failure = null
     paidOrdersRef.current.full = order
     const _baseAtStart = baseText
     setPaidText(''); setIsPaidStreaming(true); isPaidSectionRef.current = false
@@ -859,13 +889,15 @@ export default function App() {
           else if (json.text && !json.type) { if (isPaidSectionRef.current) setPaidText(prev => prev + json.text); else setBaseText(prev => prev + json.text) }
         },
       })
-      if (result.ok) clearPaymentReturnUrl(); else alert(result.error)
-    } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
-    setIsPaidStreaming(false); setIsPaid(true)
+      if (result.ok) clearPaymentReturnUrl(); else failure = [result.error, result.status]
+    } catch (e) { if (e.name !== 'AbortError') failure = ['서버에 연결할 수 없습니다.', 0] }
+    setIsPaidStreaming(false); if (!(failure && opts.onFail)) setIsPaid(true)
     // 결과 저장과 결제 전 입력 이메일로의 자동 발송은 서버가 생성 완료 후 처리한다.
+    return settle(opts, failure)
   }
 
-  async function handleDeepAnalyze(order) {
+  async function handleDeepAnalyze(order, opts = {}) {
+    let failure = null
     paidOrdersRef.current.deep = order
     setDeepText(''); setIsDeepStreaming(true)
     let fullDeepText = ''
@@ -879,10 +911,11 @@ export default function App() {
           else if (json.text) { fullDeepText += json.text; setDeepText(prev => prev + json.text) }
         },
       })
-      if (result.ok) clearPaymentReturnUrl(); else alert(result.error)
-    } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
+      if (result.ok) clearPaymentReturnUrl(); else failure = [result.error, result.status]
+    } catch (e) { if (e.name !== 'AbortError') failure = ['서버에 연결할 수 없습니다.', 0] }
     setIsDeepStreaming(false)
     if (fullDeepText.trim()) setIsDeepPaid(true)
+    return settle(opts, failure)
   }
 
   function requestPayWithEmail(productName, onConfirm) {
@@ -909,10 +942,36 @@ export default function App() {
     })
   }
 
+  async function recoverPaidResult(orderId) {
+    if (recoveringRef.current) return
+    const order = recoveryOrder(orderStore(), orderId)
+    if (!order) { forgetOrder(orderStore(), orderId); setRecoverList(listRecoverable(orderStore())); setRecoverNotice('이 기기에서 주문 정보를 찾을 수 없어요. 결제하셨다면 고객센터로 문의해주세요.'); return }
+    recoveringRef.current = true
+    setRecoverNotice('')
+    const { plan } = order
+    const target = { orderId: order.orderId, orderToken: order.orderToken, product: order.product }
+    const onFail = (msg, status) => {
+      if (status === 404) forgetOrder(orderStore(), orderId)
+      handleRestart()
+      setRecoverList(listRecoverable(orderStore()))
+      setRecoverNotice(status === 404
+        ? '이 기기에 저장된 주문 정보로는 결과를 찾을 수 없어요. 결제하셨다면 고객센터로 문의해주세요.'
+        : (msg || '결과를 불러오지 못했어요.') + ' 결제 내역은 그대로예요. 잠시 후 다시 눌러주세요.')
+    }
+    try {
+      if (plan.kind === 'full') { setRecoveredFull(true); setServiceType(plan.serviceType); setScreen('result'); await handlePaidAnalyze(target, { onFail }) }
+      else if (plan.kind === 'deep') { setScreen('deep_result'); await handleDeepAnalyze(target, { onFail }) }
+      else if (plan.kind === 'gunghab') { setServiceType('gunghab'); await handleGunghabAnalyze(target, { onFail }) }
+      else if (plan.kind === 'gilil') await handleGililAnalyze(target, { onFail })
+      else await handle백년Analyze(target, { onFail })
+    } finally { recoveringRef.current = false }
+  }
+
   function handleRestart() {
     const wasEmailSent = document.getElementById('result-email-input')?.dataset?.sent === 'true' || document.getElementById('gunghab-email-input')?.dataset?.sent === 'true'
     if (isPaid && !wasEmailSent) { const confirmed = window.confirm('📧 이메일로 결과를 받으셨나요?\n\n[취소] 돌아가서 이메일 받기\n[확인] 그냥 나가기'); if (!confirmed) return }
     abortRef.current?.abort()
+    setRecoveredFull(false)
     freeResultViewedRef.current = false
     setPreEmail(''); setEmailPrefill(null); setDeepAutoEmail(null)
     setScreen('landing'); setServiceType(null); setStep(0)
@@ -974,7 +1033,8 @@ export default function App() {
     })
   }
 
-  async function handleGunghabAnalyze(order) {
+  async function handleGunghabAnalyze(order, opts = {}) {
+    let failure = null
     paidOrdersRef.current.gunghab = order
     setGunghabText(''); setIsGunghabStreaming(true); setScreen('result')
     try {
@@ -984,23 +1044,27 @@ export default function App() {
         onReset: () => { setGunghabText('') },
         onEvent: (json) => { if (json.type === 'gunghab_saju') setGunghabSajuData(json); else if (json.text) setGunghabText(prev => prev + json.text) },
       })
-      if (result.ok) clearPaymentReturnUrl(); else alert(result.error)
-    } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
+      if (result.ok) clearPaymentReturnUrl(); else failure = [result.error, result.status]
+    } catch (e) { if (e.name !== 'AbortError') failure = ['서버에 연결할 수 없습니다.', 0] }
     setIsGunghabStreaming(false)
+    return settle(opts, failure)
   }
 
-  async function handleGililAnalyze(order) {
+  async function handleGililAnalyze(order, opts = {}) {
+    let failure = null
     paidOrdersRef.current.gilil = order
     setGililData(null); setIsGililStreaming(true); setScreen('gilil_result')
     try {
       const res = await fetch(`${API_URL}/api/orders/${encodeURIComponent(order.orderId)}/analysis`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderToken: order.orderToken }) })
       const data = await readJson(res)
-      if (data.success) { setGililData(data.data); clearPaymentReturnUrl() } else alert(data.error || '서버에 연결할 수 없습니다.')
-    } catch (e) { alert('서버에 연결할 수 없습니다.') }
+      if (data.success) { setGililData(data.data); clearPaymentReturnUrl() } else failure = [data.error || '서버에 연결할 수 없습니다.', res.status]
+    } catch (e) { failure = ['서버에 연결할 수 없습니다.', 0] }
     setIsGililStreaming(false)
+    return settle(opts, failure)
   }
 
-  async function handle백년Analyze(order) {
+  async function handle백년Analyze(order, opts = {}) {
+    let failure = null
     paidOrdersRef.current.baeknyeon = order
     set백년Text(''); setIs백년Streaming(true); setScreen('백년_result')
     try {
@@ -1010,9 +1074,10 @@ export default function App() {
         onReset: () => { set백년Text('') },
         onEvent: (json) => { if (json.text) set백년Text(prev => prev + json.text) },
       })
-      if (result.ok) clearPaymentReturnUrl(); else alert(result.error)
-    } catch (e) { if (e.name !== 'AbortError') alert('서버에 연결할 수 없습니다.') }
+      if (result.ok) clearPaymentReturnUrl(); else failure = [result.error, result.status]
+    } catch (e) { if (e.name !== 'AbortError') failure = ['서버에 연결할 수 없습니다.', 0] }
     setIs백년Streaming(false)
+    return settle(opts, failure)
   }
 
   // ── 100년 입력 ──
@@ -1131,7 +1196,7 @@ export default function App() {
         <div className="rpt-inner rpt-wrap" style={{ paddingTop: 28 }}>
           {is백년Streaming && yearBlocks.length === 0 && (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: '#5F5E55' }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: '#2F5D44' }}>{백년Name || ''}님의 100년 인생 꿀팁 생성 중...</p>
+              <p style={{ fontSize: 15, fontWeight: 600, color: '#2F5D44' }}>{백년Name ? `${백년Name}님의` : '나의'} 100년 인생 꿀팁을 불러오는 중...</p>
               <p style={{ fontSize: 13, marginTop: 8 }}>지금부터 100세까지 매년 분석 중이에요</p>
             </div>
           )}
@@ -1142,6 +1207,7 @@ export default function App() {
                 <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid #E4E1D4', borderRadius: 8, background: '#FFFFFF', color: '#22211C', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={백년EmailInput} onChange={e => set백년EmailInput(e.target.value)} />
                 <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={send백년Email}>발송</button>
               </div>
+              <RecoverNote />
             </div>
           )}
           {백년EmailSent && <p style={{ textAlign: 'center', fontSize: 13, color: '#2F5D44', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>}
@@ -1346,6 +1412,7 @@ export default function App() {
                     <input style={{ flex: 1, padding: '12px', fontSize: 14, border: '1px solid #E4E1D4', borderRadius: 8, background: '#FFFFFF', color: '#22211C', boxSizing: 'border-box' }} type="email" placeholder="이메일 주소" value={deepEmailInput} onChange={e => setDeepEmailInput(e.target.value)} />
                     <button style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, background: '#2F5D44', color: '#FFFFFF', border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={sendDeepEmail}>발송</button>
                   </div>
+                  <RecoverNote />
                 </div>
               ) : (
                 <p style={{ textAlign: 'center', fontSize: 13, color: '#2F5D44', marginBottom: 16 }}>✅ 이메일로 발송됐어요</p>
@@ -1362,12 +1429,10 @@ export default function App() {
   // ── 길일 결과 ──
   if (screen === 'gilil_result') {
     const months = gililData ? Object.values(gililData) : []
-    const [selMonth, setSelMonth] = useState(0)
-    const [selDay, setSelDay] = useState(null)
     const cur = months[selMonth]
     return (
       <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
-        <ReportHero eyebrow="MYSAJU REPORT · AUSPICIOUS DAYS" title={`${gilil목적} 길일 추천`} />
+        <ReportHero eyebrow="MYSAJU REPORT · AUSPICIOUS DAYS" title={`${gilil목적 ? gilil목적 + ' ' : ''}길일 추천`} />
         <div className="rpt-inner" style={{ paddingBottom: 100 }}>
           {isGililStreaming && <div style={{ textAlign: 'center', padding: '60px 0', color: '#5F5E55', fontSize: 14 }}>🔍 길일을 찾고 있어요...</div>}
           {!isGililStreaming && gililData && (
@@ -1734,6 +1799,7 @@ export default function App() {
                     finally { btn.textContent = '발송'; btn.disabled = false }
                   }}>발송</button>
               </div>
+              <RecoverNote />
             </div>
           </div>
         </div>
@@ -1859,6 +1925,29 @@ if (emailModal) {
             <p style={{ fontSize: 15, color: C.sub, lineHeight: 1.7, margin: 0, wordBreak: 'keep-all', textWrap: 'balance' }}>더 자세한 풀이를 원할 때 유료 상품을 선택해주세요.</p>
           </div>
         </div>
+
+        {/* 결제한 결과 다시 보기 — 이 기기에서 결제가 확인된 주문만. 토큰·이름·풀이 내용은 보여주지 않는다. */}
+        {(recoverList.length > 0 || recoverNotice) && (
+          <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 8px', width: '100%', boxSizing: 'border-box' }}>
+            {recoverNotice && <p role="alert" style={{ fontSize: 13, color: '#8A3B3B', background: '#FBF1F1', border: '1px solid #EBCFCF', borderRadius: 10, padding: '10px 12px', lineHeight: 1.6, margin: '0 0 8px', wordBreak: 'keep-all' }}>{recoverNotice}</p>}
+            {recoverList.length > 0 && (
+              <div style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 12, padding: '14px 14px 8px' }}>
+                <p style={{ fontSize: 15, fontWeight: 700, color: C.text, margin: 0 }}>결제한 결과 다시 보기</p>
+                <p style={{ fontSize: 12, color: C.sub, lineHeight: 1.6, margin: '4px 0 8px', wordBreak: 'keep-all' }}>이 기기에서 결제한 결과만 보여요. 가족·공용 기기라면 다 보신 뒤 ‘지우기’를 눌러주세요.</p>
+                {recoverList.map(r => (
+                  <div key={r.orderId} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderTop: `1px solid ${C.line}` }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: C.text, margin: 0, wordBreak: 'keep-all' }}>{r.label}</p>
+                      <p style={{ fontSize: 12, color: C.sub, margin: 0 }}>{r.when}</p>
+                    </div>
+                    <button onClick={() => recoverPaidResult(r.orderId)} style={{ minHeight: 40, padding: '0 14px', fontSize: 13, fontWeight: 700, background: C.accent, color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}>다시 보기</button>
+                    <button onClick={() => { if (window.confirm('이 기기에서 이 결과를 지울까요?\n지운 뒤에는 이 기기에서 다시 볼 수 없어요. (이메일로 받은 결과는 그대로예요)')) { forgetOrder(orderStore(), r.orderId); setRecoverList(listRecoverable(orderStore())) } }} style={{ minHeight: 40, padding: '0 8px', fontSize: 12, background: 'none', color: C.sub, border: 'none', textDecoration: 'underline', cursor: 'pointer' }}>지우기</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 메뉴 2개 — 메뉴 이름보다 얻는 도움을 먼저 설명 */}
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '8px 16px 32px', width: '100%', boxSizing: 'border-box' }}>
@@ -2309,6 +2398,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         {/* 유료 분석 아코디언 */}
         {!isPaidStreaming && paidShown.length > 0 && (
           <>
+            {recoveredFull && <p role="status" style={{ fontSize: 13, color: '#62616C', textAlign: 'center', margin: '0 0 12px', wordBreak: 'keep-all' }}>결제하신 유료 분석 내용을 다시 불러왔습니다.</p>}
             <p className="rpt-kicker rpt-divider-label">✦ 전체 분석 결과 ✦</p>
             <ReportSummary data={moneySummary} />
             {paidShown.map((sec, i) => <FullSection key={i} title={sec.title} content={sec.content} part={corePartCount + i + 1} />)}
@@ -2444,6 +2534,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
                   finally { btn.textContent = '발송'; btn.disabled = false }
                 }}>발송</button>
             </div>
+            <RecoverNote />
           </div>
       )}
 
