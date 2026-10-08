@@ -16,10 +16,12 @@ import { buildResultPdfItems, buildDeepPdfItems } from './pdfItems.js'
 import { buildDeepFlowTable, buildDeepChoiceTable, buildDeepClosing } from './deepTables.js'
 import { summarizeSaju, summarizeMoney, summarizeGunghabFree, summarizeGunghabPaid } from './reportSummary.js'
 import { stripStrayMarkdown } from './markdownStrip.js'
+import { cleanGunghabText, nameLabel, isDefaultName } from './gunghabText.js'
+import { isRealBirthDate, showBadDate, BAD_DATE_MESSAGE } from './birthDate.js'
 import { isAdminEntry } from './adminLink.js'
 import { emailPrefillFor, prefillSignature } from './emailPrefill.js'
 import { rememberOrder as rememberStoredOrder, recallOrder as recallStoredOrder, markOrderPaid, forgetOrder, listRecoverable, recoveryOrder, paidResultActive, RESULT_SCREENS } from './orderRecovery.js'
-import { RELATION_OPTIONS, RELATION_GROUPS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, SAJU_PAID_FREE_NOTE, SAJU_PAID_HIGHLIGHTS, SAJU_PAID_FACTS, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText } from './relations.js'
+import { RELATION_OPTIONS, RELATION_GROUPS, RELATION_ROLES, GUNGHAB_PAID, GUNGHAB_PRICE_TEXT, SAJU_PAID, SAJU_PAID_FREE_NOTE, SAJU_PAID_HIGHLIGHTS, SAJU_PAID_FACTS, parseGunghabFree, parseMyFree, buildShareText, safeGunghabText, dialogueRule } from './relations.js'
 
 // 공통 이벤트 트래킹 — 이미 연결된 도구(GA4 gtag, Meta Pixel fbq)가 있으면 그쪽으로 보내고,
 // 없으면 조용히 무시한다. 나중에 다른 분석 도구를 붙일 때도 호출부는 바꿀 필요 없이 이 함수만 확장하면 된다.
@@ -1001,7 +1003,7 @@ export default function App() {
     if (partnerTimeAmPm === '오후' && h !== 12) h += 12
     return `${String(h).padStart(2,'0')}:${String(partnerTimeMin).padStart(2,'0')}`
   })()
-  const partnerBirthdateValid = partnerBirthYear.length === 4 && Number(partnerBirthMonth) >= 1 && Number(partnerBirthMonth) <= 12 && Number(partnerBirthDay) >= 1 && Number(partnerBirthDay) <= 31
+  const partnerBirthdateValid = isRealBirthDate(partnerBirthYear, partnerBirthMonth, partnerBirthDay, { lunar: partnerIsLunar })
   const partnerBirthtimeValid = partnerTimeUnknown || (partnerTimeHour !== '' && partnerTimeMin !== '')
 
   // 관계 궁합 무료 풀이 — 결제 없이 요약·핵심 3가지·대화 문장까지 완결해서 보여준다.
@@ -1484,7 +1486,7 @@ export default function App() {
   if (screen === 'gunghab_input') {
     const isStep0 = gunghabStep === 0
     const isStep1 = gunghabStep === 1
-    const myBirthdateValid = birthYear.length === 4 && Number(birthMonth) >= 1 && Number(birthMonth) <= 12 && Number(birthDay) >= 1
+    const myBirthdateValid = isRealBirthDate(birthYear, birthMonth, birthDay, { lunar: isLunar })
     const myBirthtimeValid = timeUnknown || (timeHour !== '' && timeMin !== '')
     const canStep1Next = gender !== '' && myBirthdateValid && myBirthtimeValid
     const canStep2Next = partnerGender !== '' && partnerBirthdateValid && partnerBirthtimeValid
@@ -1591,6 +1593,7 @@ export default function App() {
               </div>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 12 }}>내 생년월일 · 시간</h2>
               <DateRow year={birthYear} setYear={setBirthYear} month={birthMonth} setMonth={setBirthMonth} day={birthDay} setDay={setBirthDay} lunar={isLunar} setLunar={setIsLunar} />
+              {showBadDate(birthYear, birthMonth, birthDay, { lunar: isLunar }) && <p role="alert" style={{ fontSize: 13, color: '#C53A3A', margin: '-4px 0 12px', wordBreak: 'keep-all' }}>{BAD_DATE_MESSAGE}</p>}
               <TimeSelector ampm={timeAmPm} setAmpm={setTimeAmPm} hour={timeHour} setHour={setTimeHour} min={timeMin} setMin={setTimeMin} unknown={timeUnknown} setUnknown={setTimeUnknown} />
             </>
           )}
@@ -1606,6 +1609,7 @@ export default function App() {
               </div>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#24232B', marginBottom: 12 }}>상대방 생년월일 · 시간</h2>
               <DateRow year={partnerBirthYear} setYear={setPartnerBirthYear} month={partnerBirthMonth} setMonth={setPartnerBirthMonth} day={partnerBirthDay} setDay={setPartnerBirthDay} lunar={partnerIsLunar} setLunar={setPartnerIsLunar} />
+              {showBadDate(partnerBirthYear, partnerBirthMonth, partnerBirthDay, { lunar: partnerIsLunar }) && <p role="alert" style={{ fontSize: 13, color: '#C53A3A', margin: '-4px 0 12px', wordBreak: 'keep-all' }}>{BAD_DATE_MESSAGE}</p>}
               <TimeSelector ampm={partnerTimeAmPm} setAmpm={setPartnerTimeAmPm} hour={partnerTimeHour} setHour={setPartnerTimeHour} min={partnerTimeMin} setMin={setPartnerTimeMin} unknown={partnerTimeUnknown} setUnknown={setPartnerTimeUnknown} />
             </>
           )}
@@ -1642,7 +1646,10 @@ export default function App() {
   // ── 관계 궁합 무료 결과 ──
   if (screen === 'gunghab_free') {
     const relLabel = gunghabSajuData?.relation?.label || RELATION_OPTIONS.find(o => o.key === 관계유형)?.label || '관계'
-    const parsed = gunghabFreePhase === 'done' ? parseGunghabFree(gunghabFreeText, gunghabSajuData?.bars) : null
+    // 결과 글 정리(** 제거·A님/B님·어색한 호칭)와 관계별 대화 문장 기준
+    const ghFree = cleanGunghabText(gunghabFreeText, { a: gunghabSajuData?.my?.name || myName, b: gunghabSajuData?.partner?.name || partnerName })
+    const ghRule = dialogueRule(gunghabSajuData?.relation?.key || 관계유형, gunghabSajuData?.relation?.role || 관계역할)
+    const parsed = gunghabFreePhase === 'done' ? parseGunghabFree(ghFree, gunghabSajuData?.bars, ghRule) : null
     const readable = parsed && (parsed.summary || parsed.good || parsed.tune)
     const paidInfo = GUNGHAB_PAID[관계유형]
     const card = { background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 14, padding: '20px 18px', marginTop: 28 }
@@ -1691,7 +1698,7 @@ export default function App() {
           )}
 
           {parsed && !readable && (
-            <p className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(safeGunghabText(gunghabFreeText, gunghabSajuData?.bars))}</p>
+            <p className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(safeGunghabText(ghFree, gunghabSajuData?.bars, ghRule))}</p>
           )}
 
           {readable && (
@@ -1740,11 +1747,14 @@ export default function App() {
 
   // ── 궁합 결과 ──
   if (screen === 'result' && serviceType === 'gunghab') {
-    const gunghabSections = parseSections(gunghabText)
+    const ghNames = { a: gunghabSajuData?.my?.name || myName, b: gunghabSajuData?.partner?.name || partnerName }
+    const ghText = cleanGunghabText(gunghabText, ghNames)   // ** 제거, A님/B님·어색한 호칭 정리(문장은 그대로)
+    const ghRule = dialogueRule(gunghabSajuData?.relation?.key || 관계유형, gunghabSajuData?.relation?.role || 관계역할)
+    const gunghabSections = parseSections(ghText)
     const gunghabTitle = (gunghabSajuData?.relation?.label || '관계') + ' 상세 풀이'
-    const gunghabSubtitle = gunghabSajuData?.my?.name && gunghabSajuData?.partner?.name ? gunghabSajuData.my.name + '님 · ' + gunghabSajuData.partner.name + '님' : ''
+    const gunghabSubtitle = gunghabSajuData?.my?.name && gunghabSajuData?.partner?.name && !(isDefaultName(gunghabSajuData.my.name, 'a') && isDefaultName(gunghabSajuData.partner.name, 'b')) ? nameLabel(gunghabSajuData.my.name, 'a') + ' · ' + nameLabel(gunghabSajuData.partner.name, 'b') : ''
     // 무료 요약에서 검증을 통과한 대화 문장이 있을 때만 '바로 써볼 대화 방법'으로 쓴다
-    const gunghabFreeLine = gunghabFreeText ? parseGunghabFree(gunghabFreeText, gunghabSajuData?.bars).line : ''
+    const gunghabFreeLine = gunghabFreeText ? parseGunghabFree(cleanGunghabText(gunghabFreeText, ghNames), gunghabSajuData?.bars, ghRule).line : ''
     const gunghabSummary = !isGunghabStreaming ? summarizeGunghabPaid(gunghabSections, gunghabFreeLine) : null
     const saveGunghabPdf = () => savePdf({
       filename: '마이사주_궁합분석_' + (myName || '결과'),
@@ -1765,7 +1775,7 @@ export default function App() {
             <div data-pdf-card="pair" className="rpt-card" style={{ padding: '22px 14px' }}>
               <p style={{ fontSize: 13, fontWeight: 600, color: '#2F5D44', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 10 }}>두 사람의 사주팔자</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {[{ label: gunghabSajuData.my.name + '님', data: gunghabSajuData.my }, { label: gunghabSajuData.partner.name + '님', data: gunghabSajuData.partner }].map(({ label, data }) => (
+                {[{ label: nameLabel(gunghabSajuData.my.name, 'a'), data: gunghabSajuData.my }, { label: nameLabel(gunghabSajuData.partner.name, 'b'), data: gunghabSajuData.partner }].map(({ label, data }) => (
                   <div key={label} style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 10, padding: '14px 10px' }}>
                     <p style={{ fontSize: 14, fontWeight: 700, color: '#2F5D44', textAlign: 'center', marginBottom: 8 }}>{label}</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -1781,7 +1791,7 @@ export default function App() {
               </div>
             </div>
           )}
-          {isGunghabStreaming && gunghabText && <div className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(gunghabText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
+          {isGunghabStreaming && gunghabText && <div className="rpt-stream" style={{ marginTop: 28 }}>{removeMarkers(ghText)}<span style={{ opacity: 0.4 }}>▌</span></div>}
           {isGunghabStreaming && !gunghabText && <div style={{ background: '#FFFFFF', border: '1px solid #E4E1D4', borderRadius: 12, padding: '24px 20px', marginBottom: 12 }}><div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>{[0,1,2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: '#2F5D44', animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />)}<span style={{ fontSize: 14, color: '#5F5E55', marginLeft: 8 }}>💕 두 사람의 궁합을 분석하고 있어요...</span></div></div>}
           {!isGunghabStreaming && <GunghabBars bars={gunghabSajuData?.bars} />}
           {!isGunghabStreaming && gunghabSections.map((sec, i) => <ReportSection key={i} title={sec.title} content={sec.content} part={i + 1} />)}

@@ -283,7 +283,7 @@ test('원문 대체 표시(파싱 실패 화면)에서도 검증에 실패한 �
   assert.ok(good.includes('먼저 말씀해 주실 수 있을까요?'))
   assert.strictEqual(safeGunghabText('제목 없는 원문입니다', dlgBars), '제목 없는 원문입니다')
   const app = readFileSync(new URL('./App.jsx', import.meta.url), 'utf8')
-  assert.ok(app.includes('removeMarkers(safeGunghabText(gunghabFreeText'))
+  assert.ok(app.includes('removeMarkers(safeGunghabText(ghFree,'))
   assert.ok(!app.includes('removeMarkers(gunghabFreeText)'))   // 원문을 그대로 그리는 경로가 남아 있지 않다
 })
 

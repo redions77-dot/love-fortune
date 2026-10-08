@@ -93,6 +93,7 @@ export function summarizeMoney(sections) {
 }
 
 // 관계 상세 풀이(유료): ✅ 소제목 → 잘 맞는 점, ⚠️ 소제목 → 부딪히기 쉬운 점. 대화 문장은 무료 요약에서 검증된 문장(line)이 있을 때만.
+// 유료 풀이는 ✅ 소제목을 따로 만들지 않아 비교 카드가 비는 일이 많다. 그럴 때는 '관계 총평' 섹션에서 한 줄 정리와 '이번 주에 해볼 행동'을 가져온다(새 문장을 만들지 않고 이미 나온 문장만).
 export function summarizeGunghabPaid(sections, freeLine) {
   const list = Array.isArray(sections) ? sections : []
   let good = null, tune = null
@@ -104,8 +105,35 @@ export function summarizeGunghabPaid(sections, freeLine) {
   }
   const line = freeLine ? clean(freeLine) : null
   const compare = good && tune ? { left: { label: '잘 맞는 점', text: good }, right: { label: '부딪히기 쉬운 점', text: tune } } : null
-  if (!compare && !line) return null
-  return { kind: 'gunghab', title: '한눈에 보기', headline: null, compare, strengthOnly: !compare ? good : null, cautionOnly: !compare ? tune : null, action: line, actionLabel: '바로 써볼 대화 방법' }
+  const wrap = !compare ? wrapUpOf(list) : null
+  if (!compare && !line && !wrap) return null
+  const action = line || wrap?.week || null
+  return { kind: 'gunghab', title: '한눈에 보기', headline: wrap?.headline || null, compare, strengthOnly: !compare ? good : null, cautionOnly: !compare ? tune : null, action, actionLabel: line ? '바로 써볼 대화 방법' : '이번 주에 해볼 행동' }
+}
+
+// '관계 총평' 섹션: 첫 문장 = 한 줄 정리, '이번 주'가 들어간 문단(또는 그 소제목 바로 아래 문단) = 이번 주에 해볼 행동.
+function wrapUpOf(sections) {
+  const sec = sections.find(x => /총평/.test(x.title || ''))
+  if (!sec) return null
+  const blocks = parseContentBlocks(sec.content)
+  const bodyOf = (b) => (b.type === 'callout' ? b.items?.[0]?.text : b.type === 'p' || b.type === 'li' ? b.text : null)
+  let week = null, weekIdx = -1
+  for (let i = 0; i < blocks.length && !week; i++) {
+    const b = blocks[i]
+    const mentions = /이번\s*주/.test(b.type === 'callout' ? (b.head || '') + ' ' + (b.items?.[0]?.text || '') : b.text || '')
+    if (!mentions) continue
+    const own = bodyOf(b)
+    let text = own && /이번\s*주/.test(own) ? own : null
+    if (!text) { const next = blocks[i + 1]; text = next ? bodyOf(next) : null; if (text) weekIdx = i + 1 }
+    if (text) { week = takeSentences(text, 2, 240); if (week && weekIdx < 0) weekIdx = i }
+  }
+  let headline = null
+  for (let i = 0; i < blocks.length && !headline; i++) {
+    if (i === weekIdx) continue
+    const text = bodyOf(blocks[i])
+    if (text) headline = takeSentences(text, 1, 220)
+  }
+  return headline || week ? { headline, week } : null
 }
 
 function firstByEmoji(blocks, emoji) {

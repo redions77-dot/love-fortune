@@ -132,12 +132,15 @@ function resolveSections(text, expected) {
 }
 // 대화 문장 검증 — backend/relations.js 의 validateDialogueLine 과 같은 규칙이다 (relations.test.mjs 가 서로 같은 결과를 내는지 확인한다).
 // 정확히 한 문장 + 존댓말일 때만 화면에 쓴다. 통과하지 못하면 문장을 고쳐 쓰지 않고 숨긴다.
-export function validateDialogueLine(line) {
+// 두 번째 인자(관계별 기준, dialogueRule 참고)가 없으면 예전과 똑같이 '정확히 한 문장 + 존댓말'이다.
+export function validateDialogueLine(line, rule = {}) {
+  const { casual = false, maxSentences = 1 } = rule
   const reasons = []
   const t = String(line || '').trim().replace(/^["“”']+|["“”']+$/g, '').trim()
   if (!t) return { ok: false, reasons: ['대화 문장이 비어 있음'] }
   const sentences = t.split(/(?<=[.?!])\s+/).map(x => x.trim()).filter(Boolean)
-  if (sentences.length !== 1) reasons.push('한 문장이 아님(' + sentences.length + '문장)')
+  if (sentences.length > maxSentences) reasons.push((maxSentences === 1 ? '한 문장이 아님(' : '문장이 너무 많음(') + sentences.length + '문장)')
+  if (casual) return { ok: reasons.length === 0, reasons }
   const POLITE = /(요|니다|니까|죠|세요|까요)$/
   const BANMAL = /(까|줄래|할래|볼래|보자|하자|해줘|줘|거야|같아|있어|없어|어|아|지|야|해)$/
   for (const x of sentences) {
@@ -152,7 +155,7 @@ const COMMENT_RE = /^해설\s*[:：]\s*/
 const TIP_RE = /^팁\s*[:：]\s*/
 
 // 바 3개의 해설/팁은 "해설:" "팁:" 줄에서 읽는다. 형식이 어긋나면 섹션 전체를 해설로 보여준다.
-export function parseGunghabFree(text, bars) {
+export function parseGunghabFree(text, bars, rule) {
   const m = resolveSections(text, ['한 줄 요약', '관계 요약', ...(bars || []).map(b => b.label), '잘 맞는 점', '조율할 점', '대화 문장'])
   const outBars = (bars || []).map((b) => {
     const body = m.get(b.label)
@@ -180,24 +183,31 @@ export function parseGunghabFree(text, bars) {
     good: m.get('잘 맞는 점') || '',
     tune: m.get('조율할 점') || '',
     // 검증을 통과한 대화 문장만 내보낸다. 실패하면 빈 값(화면에서 '이렇게 말해보세요' 카드가 사라진다). AI 재호출·문장 변환은 하지 않는다.
-    line: dialogueOrEmpty(m.get('대화 문장')),
-    lineRejected: !!(m.get('대화 문장') || '').trim() && !validateDialogueLine(m.get('대화 문장')).ok,
+    line: dialogueOrEmpty(m.get('대화 문장'), rule),
+    lineRejected: !!(m.get('대화 문장') || '').trim() && !validateDialogueLine(m.get('대화 문장'), rule).ok,
   }
 }
 
-function dialogueOrEmpty(raw) {
+// 관계별 대화 문장 기준. 연인·부부·친구 사이와 부모가 자녀에게 하는 말은 반말도 자연스러워 허용한다.
+// 형제자매·기타 가족, 직장, 자녀가 부모에게 하는 말은 계속 존댓말만 쓴다. 짧은 두 문장까지는 한 장면의 말로 보고 보여 준다.
+export function dialogueRule(relKey, role) {
+  const casual = relKey === '연인' || relKey === '부부' || relKey === '친구' || (relKey === '부모자녀' && role === '부모')
+  return { casual, maxSentences: 2 }
+}
+
+function dialogueOrEmpty(raw, rule) {
   const t = (raw || '').trim()
-  return t && validateDialogueLine(t).ok ? t : ''
+  return t && validateDialogueLine(t, rule).ok ? t : ''
 }
 
 // 파싱이 안 되어 원문을 그대로 보여주는 경우에도 검증에 실패한 대화 문장은 빼고 보여준다.
-export function safeGunghabText(text, bars) {
+export function safeGunghabText(text, bars, rule) {
   const raw = String(text || '')
   if (!raw.includes('===')) return raw
   const expected = ['한 줄 요약', '관계 요약', ...(bars || []).map(b => b.label), '잘 맞는 점', '조율할 점', '대화 문장']
   const m = resolveSections(raw, expected)
   if (!m.size) return raw
-  return expected.filter(t => m.has(t) && !(t === '대화 문장' && !dialogueOrEmpty(m.get(t))))
+  return expected.filter(t => m.has(t) && !(t === '대화 문장' && !dialogueOrEmpty(m.get(t), rule)))
     .map(t => '===' + t + '===' + String.fromCharCode(10) + m.get(t)).join(String.fromCharCode(10, 10))
 }
 
