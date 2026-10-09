@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { API_URL } from './apiConfig.js'
+import ShareCta from './ShareCta.jsx'
 import { PAYMENT_CONFIG, isAnalyticsHost } from './paymentConfig.js'
 import GunghabBars from './GunghabBars.jsx'
 import ShareModal from './ShareModal.jsx'
@@ -1425,6 +1426,7 @@ export default function App() {
               <button style={{ width: '100%', padding: '13px', fontSize: 14, background: 'none', border: '1px solid #E4E1D4', borderRadius: 10, cursor: 'pointer', color: '#5F5E55', marginTop: 10 }} onClick={handleRestart}>처음으로 돌아가기</button>
             </div>
           )}
+          {isDeepPaid && !isDeepStreaming && deepText.trim() !== '' && <ShareCta />}
         </div>
       </div>
     )
@@ -2566,6 +2568,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
 
     </div>
     {!isPaid && !isBaseStreaming && !isPaidStreaming && phase !== 'error' && (baseText || paidText) && <PdfSaveArea onSave={saveResultPdf} />}
+    {!isBaseStreaming && !isPaidStreaming && phase !== 'error' && (isPaid ? (baseText + paidText).trim() !== '' : phase === 'done') && <ShareCta />}
       </div>
       {phase === 'done' && !isPaid && !isPaidStreaming && serviceType !== 'saju' && (
         <div className="no-print" style={{
