@@ -1112,7 +1112,7 @@ export default function App() {
           {!백년TimeUnknown && (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <select style={{ flex: 1, padding: '14px 8px', fontSize: 15, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B' }} value={백년TimeAmPm} onChange={e => set백년TimeAmPm(e.target.value)}>
-                <option value="오전">오전</option><option value="오후">오후</option>
+                <option value="오전">오전 · 12시=자정(밤 12시)</option><option value="오후">오후 · 12시=정오(낮 12시)</option>
               </select>
               <input style={{ flex: 1, padding: '14px 8px', fontSize: 18, fontWeight: 700, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="시" min="1" max="12" value={백년TimeHour} onChange={e => set백년TimeHour(e.target.value.slice(0,2))} />
               <span style={{ color: '#62616C', fontSize: 18 }}>:</span>
@@ -1505,7 +1505,7 @@ export default function App() {
             </div>
             <p style={{ fontSize: 12, fontWeight: 600, color: '#633B50', marginBottom: 8 }}>시 선택</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
-              {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => <button key={h} aria-pressed={hour === String(h)} style={{ position: 'relative', padding: '12px 4px', fontSize: 14, fontWeight: hour === String(h) ? 700 : 400, border: `1px solid ${hour === String(h) ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: hour === String(h) ? '#F6F0F3' : '#FFFFFF', color: hour === String(h) ? '#633B50' : '#62616C', cursor: 'pointer', textAlign: 'center' }} onClick={() => setHour(String(h))}><CheckMark on={hour === String(h)} />{h}시</button>)}
+              {[1,2,3,4,5,6,7,8,9,10,11,12].map(h => <button key={h} aria-pressed={hour === String(h)} style={{ position: 'relative', padding: '12px 4px', fontSize: 14, fontWeight: hour === String(h) ? 700 : 400, border: `1px solid ${hour === String(h) ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: hour === String(h) ? '#F6F0F3' : '#FFFFFF', color: hour === String(h) ? '#633B50' : '#62616C', cursor: 'pointer', textAlign: 'center' }} onClick={() => setHour(String(h))}><CheckMark on={hour === String(h)} />{h}시{h === 12 && <span style={{ display: 'block', fontSize: 11, marginTop: 4 }}>{ampm === '오전' ? '자정(밤 12시)' : '정오(낮 12시)'}</span>}</button>)}
             </div>
             <p style={{ fontSize: 12, fontWeight: 600, color: '#633B50', marginBottom: 8 }}>분 선택</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
@@ -2143,7 +2143,7 @@ if (screen === 'input') {
                     <button key={h}
                       aria-pressed={timeHour === String(h)}
                       style={{ position: 'relative', padding: '18px 4px', fontSize: 17, fontWeight: timeHour === String(h) ? 700 : 400, border: `2px solid ${timeHour === String(h) ? '#633B50' : '#DEDFE5'}`, borderRadius: 12, background: timeHour === String(h) ? '#F6F0F3' : '#FFFFFF', color: timeHour === String(h) ? '#633B50' : '#62616C', cursor: 'pointer' }}
-                      onClick={() => setTimeHour(String(h))}><CheckMark on={timeHour === String(h)} />{h}시</button>
+                      onClick={() => setTimeHour(String(h))}><CheckMark on={timeHour === String(h)} />{h}시{h === 12 && <span style={{ display: 'block', fontSize: 11, marginTop: 4 }}>{timeAmPm === '오전' ? '자정(밤 12시)' : '정오(낮 12시)'}</span>}</button>
                   ))}
                 </div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: '#633B50', marginBottom: 12 }}>분 선택</p>
