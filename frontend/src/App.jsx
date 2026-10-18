@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { API_URL } from './apiConfig.js'
 import ShareCta from './ShareCta.jsx'
+import TruncatedNotice from './TruncatedNotice.jsx'
 import { PAYMENT_CONFIG, isAnalyticsHost } from './paymentConfig.js'
 import GunghabBars from './GunghabBars.jsx'
 import ShareModal from './ShareModal.jsx'
@@ -136,7 +137,7 @@ async function streamOrderAnalysis(order, { onEvent, onReset, signal }) {
   for (let attempt = 0; attempt < delays.length; attempt++) {
     if (delays[attempt]) await new Promise(r => setTimeout(r, delays[attempt]))
     if (attempt > 0) onReset?.()
-    let gotDone = false, retryable = true
+    let gotDone = false, retryable = true, truncated = false
     try {
       const res = await fetch(`${API_URL}/api/orders/${encodeURIComponent(order.orderId)}/analysis`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderToken: order.orderToken }), signal })
       if (!res.ok) {
@@ -156,6 +157,7 @@ async function streamOrderAnalysis(order, { onEvent, onReset, signal }) {
           if (json.error) { lastError = json.error; if (json.retryable === false) retryable = false; continue }
           if (json.type === 'job_status') continue
           if (json.type === 'done') gotDone = true
+          if (json.type === 'truncated') truncated = true
           onEvent(json)
         }
       }
@@ -163,7 +165,7 @@ async function streamOrderAnalysis(order, { onEvent, onReset, signal }) {
       if (e.name === 'AbortError') throw e
       lastError = '서버에 연결할 수 없습니다.'
     }
-    if (gotDone) return { ok: true }
+    if (gotDone) return { ok: true, truncated }
     if (!retryable) break
   }
   return { ok: false, status: lastStatus, error: lastError || '분석을 완료하지 못했어요. 잠시 후 다시 시도해주세요.' }
@@ -529,7 +531,7 @@ function AdminPanel({ onAuthChange, onExit, entry = false }) {
                   <div key={o.id} style={boxStyle}>
                     <p style={{ fontSize: 13, color: '#62616C', marginBottom: 6 }}>{o.productName} · {Number(o.amount).toLocaleString('ko-KR')}원{o.isComp ? ' · 운영자' : ''} · {new Date(o.createdAt).toLocaleString('ko-KR')}</p>
                     <p style={{ fontSize: 12, color: '#62616C', marginBottom: 6, wordBreak: 'break-all' }}>주문번호 {o.id}</p>
-                    <p style={{ fontSize: 13, color: '#24232B' }}>{o.userName || '이름 없음'} · {o.status === 'paid' ? '결제 확인' : '결제 대기'} · {jobLabel[o.jobStatus] || '생성 전'}{o.hasEmail ? '' : ' · 이메일 없음'}</p>
+                    <p style={{ fontSize: 13, color: '#24232B' }}>{o.userName || '이름 없음'} · {o.status === 'paid' ? '결제 확인' : '결제 대기'} · {o.jobTruncated ? '결과 잘림(다시 생성 필요)' : (jobLabel[o.jobStatus] || '생성 전')}{o.hasEmail ? '' : ' · 이메일 없음'}</p>
                     {!o.hasEmail && o.product !== 'gilil' && o.status === 'paid' && o.jobStatus !== 'generating' && (
                       <input style={{ ...inputStyle, width: '100%', marginTop: 10 }} type="email" placeholder="결과를 받을 고객 이메일" value={orderEmail[o.id] || ''} onChange={e => setOrderEmail(prev => ({ ...prev, [o.id]: e.target.value }))} />
                     )}
@@ -538,12 +540,12 @@ function AdminPanel({ onAuthChange, onExit, entry = false }) {
                         {orderStatus[o.id] === 'working' ? '확인 중...' : '💳 포트원 결제 확인'}
                       </button>
                     )}
-                    {o.status === 'paid' && o.product !== 'gilil' && o.jobStatus !== 'done' && o.jobStatus !== 'generating' && (
+                    {o.status === 'paid' && o.product !== 'gilil' && (o.jobStatus !== 'done' || o.jobTruncated) && o.jobStatus !== 'generating' && (
                       <button style={{ ...primaryBtn, width: '100%', padding: '10px', fontSize: 13, marginTop: 10 }} disabled={orderStatus[o.id] === 'working' || orderStatus[o.id] === 'regenerate:ok'} onClick={() => orderAction(o, 'regenerate')}>
                         {orderStatus[o.id] === 'regenerate:ok' ? '✅ 재생성 시작 (완료 후 이메일 발송)' : orderStatus[o.id] === 'working' ? '요청 중...' : '🔁 결과 다시 생성하기'}
                       </button>
                     )}
-                    {o.status === 'paid' && o.product !== 'gilil' && o.jobStatus === 'done' && (
+                    {o.status === 'paid' && o.product !== 'gilil' && o.jobStatus === 'done' && !o.jobTruncated && (
                       <button style={{ ...primaryBtn, width: '100%', padding: '10px', fontSize: 13, marginTop: 10 }} disabled={orderStatus[o.id] === 'working' || orderStatus[o.id] === 'send:ok'} onClick={() => orderAction(o, 'send')}>
                         {orderStatus[o.id] === 'send:ok' ? '✅ 발송 완료' : orderStatus[o.id] === 'working' ? '발송 중...' : '📧 결과 이메일 발송'}
                       </button>
@@ -635,6 +637,7 @@ export default function App() {
   const [isBaseStreaming, setIsBaseStreaming] = useState(false)
   const [isPaid, setIsPaid] = useState(false)
   const [isDeepPaid, setIsDeepPaid] = useState(false)
+  const [resultTruncated, setResultTruncated] = useState(false)   // 결과가 출력 한도로 잘렸을 때 안내를 보인다
   const [showSajuStruct, setShowSajuStruct] = useState(false) // '내 사주 구성 보기' 접기/펼치기
   const [emailModal, setEmailModal] = useState(null)
   const [pdfCapturing, setPdfCapturing] = useState(false)
@@ -889,6 +892,7 @@ export default function App() {
     setPaidText(''); setIsPaidStreaming(true); isPaidSectionRef.current = false
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
+      setResultTruncated(false)
       const result = await streamOrderAnalysis(order, {
         signal: ctrl.signal,
         onReset: () => { setPaidText(''); setBaseText(_baseAtStart); isPaidSectionRef.current = false },
@@ -898,7 +902,7 @@ export default function App() {
           else if (json.text && !json.type) { if (isPaidSectionRef.current) setPaidText(prev => prev + json.text); else setBaseText(prev => prev + json.text) }
         },
       })
-      if (result.ok) clearPaymentReturnUrl(); else failure = [result.error, result.status]
+      if (result.ok) { clearPaymentReturnUrl(); if (result.truncated) setResultTruncated(true) } else failure = [result.error, result.status]
     } catch (e) { if (e.name !== 'AbortError') failure = ['서버에 연결할 수 없습니다.', 0] }
     setIsPaidStreaming(false); if (!(failure && opts.onFail)) setIsPaid(true)
     // 결과 저장과 결제 전 입력 이메일로의 자동 발송은 서버가 생성 완료 후 처리한다.
@@ -912,6 +916,7 @@ export default function App() {
     let fullDeepText = ''
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
+      setResultTruncated(false)
       const result = await streamOrderAnalysis(order, {
         signal: ctrl.signal,
         onReset: () => { fullDeepText = ''; setDeepText('') },
@@ -920,7 +925,7 @@ export default function App() {
           else if (json.text) { fullDeepText += json.text; setDeepText(prev => prev + json.text) }
         },
       })
-      if (result.ok) clearPaymentReturnUrl(); else failure = [result.error, result.status]
+      if (result.ok) { clearPaymentReturnUrl(); if (result.truncated) setResultTruncated(true) } else failure = [result.error, result.status]
     } catch (e) { if (e.name !== 'AbortError') failure = ['서버에 연결할 수 없습니다.', 0] }
     setIsDeepStreaming(false)
     if (fullDeepText.trim()) setIsDeepPaid(true)
@@ -1048,12 +1053,13 @@ export default function App() {
     setGunghabText(''); setIsGunghabStreaming(true); setScreen('result')
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
+      setResultTruncated(false)
       const result = await streamOrderAnalysis(order, {
         signal: ctrl.signal,
         onReset: () => { setGunghabText('') },
         onEvent: (json) => { if (json.type === 'gunghab_saju') setGunghabSajuData(json); else if (json.text) setGunghabText(prev => prev + json.text) },
       })
-      if (result.ok) clearPaymentReturnUrl(); else failure = [result.error, result.status]
+      if (result.ok) { clearPaymentReturnUrl(); if (result.truncated) setResultTruncated(true) } else failure = [result.error, result.status]
     } catch (e) { if (e.name !== 'AbortError') failure = ['서버에 연결할 수 없습니다.', 0] }
     setIsGunghabStreaming(false)
     return settle(opts, failure)
@@ -1078,12 +1084,13 @@ export default function App() {
     set백년Text(''); setIs백년Streaming(true); setScreen('백년_result')
     try {
       const ctrl = new AbortController(); abortRef.current = ctrl
+      setResultTruncated(false)
       const result = await streamOrderAnalysis(order, {
         signal: ctrl.signal,
         onReset: () => { set백년Text('') },
         onEvent: (json) => { if (json.text) set백년Text(prev => prev + json.text) },
       })
-      if (result.ok) clearPaymentReturnUrl(); else failure = [result.error, result.status]
+      if (result.ok) { clearPaymentReturnUrl(); if (result.truncated) setResultTruncated(true) } else failure = [result.error, result.status]
     } catch (e) { if (e.name !== 'AbortError') failure = ['서버에 연결할 수 없습니다.', 0] }
     setIs백년Streaming(false)
     return settle(opts, failure)
@@ -1204,6 +1211,7 @@ export default function App() {
       <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
         <ReportHero eyebrow="MYSAJU REPORT · 100 YEARS" title="100년 사주 인생 꿀팁" sub={백년Name ? `${백년Name}님 · ${백년BirthYear}년생` : ''} />
         <div className="rpt-inner rpt-wrap" style={{ paddingTop: 28 }}>
+          {resultTruncated && <TruncatedNotice />}
           {is백년Streaming && yearBlocks.length === 0 && (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: '#5F5E55' }}>
               <p style={{ fontSize: 15, fontWeight: 600, color: '#2F5D44' }}>{백년Name ? `${백년Name}님의` : '나의'} 100년 인생 꿀팁을 불러오는 중...</p>
@@ -1313,6 +1321,7 @@ export default function App() {
       <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
         <ReportHero eyebrow={`마이사주 · ${PRODUCT.deep.label}`} title={deepTitle} sub={deepSubtitle} />
         <div id="deep-result-content" className="rpt-inner rpt-wrap">
+          {resultTruncated && <TruncatedNotice />}
   {/* 공통 사주표 (무료·전체·심화 같은 모양) */}
   {sajuData?.사주 && (
     <section className="rpt-section" style={{ marginTop: 28 }}>
@@ -1779,6 +1788,7 @@ export default function App() {
       <div className="rpt-page">
         <ReportHero eyebrow="MYSAJU REPORT · RELATIONSHIP" title={gunghabTitle} sub={gunghabSubtitle} />
         <div id="gunghab-result-content" className="rpt-inner rpt-wrap">
+          {resultTruncated && <TruncatedNotice />}
           <ReportSummary data={gunghabSummary} />
           {gunghabSajuData && (
             <div data-pdf-card="pair" className="rpt-card" style={{ padding: '22px 14px' }}>
@@ -2249,6 +2259,7 @@ if (screen === 'result') {
     <div className="rpt-page" style={{ display: 'flex', flexDirection: 'column' }}>
       <ReportHero eyebrow={reportEyebrow} title={reportTitle} sub={reportSub} />
       <div id="result-content" className="rpt-inner rpt-wrap">
+        {resultTruncated && <TruncatedNotice />}
 
         {/* 예시 응답으로 화면을 볼 때만 나타나는 표시 (실제 AI 풀이에는 없음) */}
         {myFree && !isBaseStreaming && myFree.demo && (
