@@ -369,6 +369,9 @@ async function streamToClient(res, prompt, model, maxTokens = 4000) {
         console.log(`[AI] model=${model} max_tokens=${maxTokens} stop_reason=${finalMessage?.stop_reason} input_tokens=${usage.input_tokens} output_tokens=${usage.output_tokens}`);
         if (finalMessage?.stop_reason === 'max_tokens') {
           console.warn(`[AI] 응답이 max_tokens(${maxTokens})에 도달해 잘렸을 수 있습니다. model=${model}`);
+          // 잘린 결과를 정상 완료와 구분할 수 있게 이벤트로 알린다(알 수 없는 type 은 기존 화면이 무시한다).
+          if (!res.destroyed) res.write(`data: ${JSON.stringify({ type: 'truncated' })}\n\n`);
+          return { text: acc, truncated: true };
         }
       } catch (logErr) {
         console.error('[AI] 진단 로그 기록 실패:', logErr.message);

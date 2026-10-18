@@ -26,6 +26,8 @@ const PRODUCTS = Object.freeze({
 const PAID_ONLY_ANALYSIS_TYPES = new Set(['궁합', '100년꿀팁', '심화', '길일']);
 
 const GILIL_PURPOSES = ['이사', '계약', '개업', '결혼', '수술', '시험'];
+const JOB_TRUNCATED = 'truncated';          // done 이지만 max_tokens 로 잘린 결과 (analysis_jobs.last_error)
+const JOB_REGENERATING = 'regenerating';    // 잘린 결과를 다시 만드는 중: 새 결과가 나올 때까지 기존 부분 결과를 보존
 const MAX_JOB_ATTEMPTS = 3;          // 실패 후 자동 재시도 허용 횟수 (쿨다운 이후 다시 3회)
 const RETRY_COOLDOWN_MINUTES = 30;
 const LEASE_SECONDS = 90;            // 생성 중 작업의 임대 시간 (하트비트로 연장)
@@ -722,7 +724,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
   }
 
   // ── 생성 작업 (중복 실행 방지) ──
-  async function claimJob(orderId, { force = false } = {}) {
+  async function claimJob(orderId, { force = false, fromTruncated = false } = {}) {
     const { rows } = await pool.query(
       `INSERT INTO analysis_jobs (order_id, status, attempts, runner_id, lease_until, started_at, updated_at)
        VALUES ($1, 'generating', 1, $2, NOW() + make_interval(secs => $5), NOW(), NOW())
@@ -731,11 +733,14 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
          attempts = CASE WHEN $4 OR (analysis_jobs.status = 'failed' AND analysis_jobs.updated_at < NOW() - make_interval(mins => $6))
                          THEN 1 ELSE analysis_jobs.attempts + 1 END,
          runner_id = $2, lease_until = NOW() + make_interval(secs => $5), started_at = NOW(), updated_at = NOW(),
-         events = NULL, result_text = NULL, last_error = NULL
+         events = CASE WHEN analysis_jobs.last_error IN ('${JOB_TRUNCATED}', '${JOB_REGENERATING}') THEN analysis_jobs.events ELSE NULL END,
+         result_text = CASE WHEN analysis_jobs.last_error IN ('${JOB_TRUNCATED}', '${JOB_REGENERATING}') THEN analysis_jobs.result_text ELSE NULL END,
+         last_error = CASE WHEN analysis_jobs.last_error IN ('${JOB_TRUNCATED}', '${JOB_REGENERATING}') THEN '${JOB_REGENERATING}' ELSE NULL END
        WHERE (analysis_jobs.status = 'failed' AND ($4 OR analysis_jobs.attempts < $3 OR analysis_jobs.updated_at < NOW() - make_interval(mins => $6)))
           OR (analysis_jobs.status = 'generating' AND analysis_jobs.lease_until < NOW())
+          OR ($7 AND analysis_jobs.status = 'done' AND analysis_jobs.last_error = '${JOB_TRUNCATED}')
        RETURNING attempts`,
-      [orderId, RUNNER_ID, MAX_JOB_ATTEMPTS, force, LEASE_SECONDS, RETRY_COOLDOWN_MINUTES]
+      [orderId, RUNNER_ID, MAX_JOB_ATTEMPTS, force, LEASE_SECONDS, RETRY_COOLDOWN_MINUTES, fromTruncated]
     );
     return rows[0] || null;
   }
@@ -746,7 +751,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
   // 고객 연결이 끊겨도 생성은 끝까지 진행된다. (새로고침 후 같은 결과를 다시 받기 위해)
   function createJobSink(live) {
     const sink = {
-      destroyed: false, writableEnded: false, headersSent: true, sawDone: false, sawError: false,
+      destroyed: false, writableEnded: false, headersSent: true, sawDone: false, sawError: false, sawTruncated: false,
       setHeader() {}, flushHeaders() {}, on() { return sink; },
       status() { return sink; },
       json(obj) { sink.write(`data: ${JSON.stringify({ error: obj?.error || '분석 중 오류가 발생했습니다.' })}\n\n`); sink.end(); },
@@ -755,7 +760,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
         if (text.startsWith(':')) return true; // keepalive 주석은 기록하지 않음
         for (const line of text.split('\n')) {
           if (!line.startsWith('data: ')) continue;
-          try { const j = JSON.parse(line.slice(6)); if (j.type === 'done') sink.sawDone = true; if (j.error) sink.sawError = true; } catch {}
+          try { const j = JSON.parse(line.slice(6)); if (j.type === 'done') sink.sawDone = true; if (j.type === 'truncated') sink.sawTruncated = true; if (j.error) sink.sawError = true; } catch {}
         }
         live.events.push(text);
         for (const r of live.listeners) if (!r.writableEnded && !r.destroyed) r.write(text);
@@ -783,14 +788,20 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       try {
         if (ok) {
           await pool.query(
-            `UPDATE analysis_jobs SET status = 'done', events = $2::jsonb, result_text = $3, finished_at = NOW(), updated_at = NOW(), lease_until = NULL
+            // 토큰 한도(max_tokens)로 끝나 잘린 결과는 done 이지만 last_error='truncated' 로 구분해 부분 결과를 그대로 보존한다(스키마 변경 없음).
+            `UPDATE analysis_jobs SET status = 'done', events = $2::jsonb, result_text = $3, last_error = $5, finished_at = NOW(), updated_at = NOW(), lease_until = NULL
              WHERE order_id = $1 AND runner_id = $4`,
-            [order.id, JSON.stringify(live.events), textsFromEvents(live.events).all, RUNNER_ID]
+            [order.id, JSON.stringify(live.events), textsFromEvents(live.events).all, RUNNER_ID, sink.sawTruncated ? JOB_TRUNCATED : null]
           );
         } else {
           if (!sink.sawError) sink.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
           await pool.query(
-            `UPDATE analysis_jobs SET status = 'failed', last_error = $2, events = NULL, finished_at = NOW(), updated_at = NOW(), lease_until = NULL
+            // 잘린 결과를 다시 만드는 중(last_error='regenerating')에 실패하면 새 결과가 없으므로 기존 부분 결과를 그대로 되돌려 둔다.
+            `UPDATE analysis_jobs SET
+               status = CASE WHEN last_error = '${JOB_REGENERATING}' THEN 'done' ELSE 'failed' END,
+               last_error = CASE WHEN last_error = '${JOB_REGENERATING}' THEN '${JOB_TRUNCATED}' ELSE $2 END,
+               events = CASE WHEN last_error = '${JOB_REGENERATING}' THEN events ELSE NULL END,
+               finished_at = NOW(), updated_at = NOW(), lease_until = NULL
              WHERE order_id = $1 AND runner_id = $3`,
             [order.id, errCode, RUNNER_ID]
           );
@@ -802,13 +813,15 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       for (const r of live.listeners) if (!r.writableEnded) r.end();
       liveJobs.delete(order.id);
       console.log(`[JOB] order=${order.id} product=${order.product} result=${ok ? 'done' : 'failed'}`);
-      if (ok) await afterJobDone(order, live.events, { emailAfter, emailVariant });
+      if (ok) await afterJobDone(order, live.events, { emailAfter, emailVariant, truncated: sink.sawTruncated });
     })();
     return live;
   }
 
   // 생성 완료 후: 결제 전에 받은 이메일이 있으면 결과를 저장하고, 기존처럼 자동 발송 상품이면 메일을 보낸다.
-  async function afterJobDone(order, events, { emailAfter, emailVariant }) {
+  async function afterJobDone(order, events, { emailAfter, emailVariant, truncated = false }) {
+    // 잘린 결과는 정상 완료로 보지 않는다: 결과 보관(results)과 자동 메일을 하지 않는다. 운영자가 다시 생성한 뒤 발송한다.
+    if (truncated) { console.warn(`[JOB] 잘린 결과라 저장·자동 발송을 생략 order=${order.id}`); return; }
     try {
       const { rows } = await pool.query('SELECT email FROM orders WHERE id = $1', [order.id]);
       const email = rows[0]?.email;
@@ -937,6 +950,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     if (PRODUCTS[order.product].kind === 'gilil') return res.status(400).json({ error: '이메일 발송을 지원하지 않는 상품입니다.' });
     const job = await getJob(order.id);
     if (job?.status !== 'done') return res.status(409).json({ error: '결과가 아직 준비되지 않았어요.' });
+    if (job.last_error === JOB_TRUNCATED) return res.status(409).json({ error: '결과가 끝까지 만들어지지 않아 메일로 보내지 못했어요. 고객센터로 문의해주세요.', code: 'result_truncated' });
     const mail = buildOrderMail(order, job.events, 'manual');
     const sent = await sendWithQuota({ orderId: order.id, to, subject: mail.subject, html: mail.html });
     if (!sent.ok) return mailFailure(res, sent.reason);
@@ -978,13 +992,13 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     if (!byEmail && !orderId) return res.status(400).json({ error: '이메일 주소 또는 주문번호를 확인해주세요.' });
     const { rows } = await pool.query(
       `SELECT o.id, o.product, o.amount, o.status, o.is_comp, o.paid_at, o.created_at, o.input->>'userName' AS user_name, o.input->>'myName' AS my_name, (o.email IS NOT NULL) AS has_email,
-              j.status AS job_status, j.attempts AS job_attempts, j.updated_at AS job_updated_at
+              j.status AS job_status, j.attempts AS job_attempts, j.updated_at AS job_updated_at, (j.status = 'done' AND j.last_error = 'truncated') AS job_truncated
        FROM orders o LEFT JOIN analysis_jobs j ON j.order_id = o.id
        WHERE ${byEmail ? 'o.email = $1' : 'o.id = $1'} ORDER BY o.created_at DESC LIMIT 50`, [byEmail ? email : orderId]
     );
     res.json({ success: true, orders: rows.map((r) => ({
       id: r.id, product: r.product, productName: PRODUCTS[r.product]?.name || r.product, amount: r.amount, status: r.status, isComp: r.is_comp,
-      paidAt: r.paid_at, createdAt: r.created_at, userName: r.user_name || r.my_name || '', hasEmail: r.has_email, jobStatus: r.job_status, jobAttempts: r.job_attempts, jobUpdatedAt: r.job_updated_at,
+      paidAt: r.paid_at, createdAt: r.created_at, userName: r.user_name || r.my_name || '', hasEmail: r.has_email, jobStatus: r.job_status, jobTruncated: !!r.job_truncated, jobAttempts: r.job_attempts, jobUpdatedAt: r.job_updated_at,
     })) });
   }));
 
@@ -1027,6 +1041,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     if (PRODUCTS[order.product].kind === 'gilil') return res.status(400).json({ error: '이메일 발송을 지원하지 않는 상품입니다.' });
     const job = await getJob(order.id);
     if (job?.status !== 'done') return res.status(409).json({ error: '결과가 아직 준비되지 않았어요.' });
+    if (job.last_error === JOB_TRUNCATED) return res.status(409).json({ error: '잘린 결과라 발송하지 않았어요. 먼저 결과를 다시 생성해주세요.', code: 'result_truncated' });
     if (!(await attachAdminEmail(order, req.body?.email))) return res.status(400).json({ error: '이메일 주소를 확인해주세요.' });
     if (!order.email) return res.status(400).json({ error: '받을 이메일 주소를 입력해주세요.' });
     const mail = buildOrderMail(order, job.events, 'manual');
@@ -1046,8 +1061,9 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     if (PRODUCTS[order.product].kind === 'gilil') return res.status(400).json({ error: '재생성이 필요 없는 상품입니다.' });
     if (liveJobs.has(order.id)) return res.status(409).json({ error: '이미 생성 중입니다.' });
     const job = await getJob(order.id);
-    if (job?.status === 'done') return res.status(409).json({ error: '이미 완료된 주문입니다.' });
-    if (!(await claimJob(order.id, { force: true }))) return res.status(409).json({ error: '이미 생성 중입니다.' });
+    const wasTruncated = job?.status === 'done' && job.last_error === JOB_TRUNCATED;
+    if (job?.status === 'done' && !wasTruncated) return res.status(409).json({ error: '이미 완료된 주문입니다.' });
+    if (!(await claimJob(order.id, { force: true, fromTruncated: wasTruncated }))) return res.status(409).json({ error: '이미 생성 중입니다.' });
     startJob(order, { emailAfter: !!order.email, emailVariant: 'manual' });
     console.log(`[ADMIN] 주문 재생성 시작 order=${order.id}`);
     res.status(202).json({ success: true, emailed: !!order.email });
@@ -1063,13 +1079,14 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
 
   // 무료 분석 응답을 그대로 흘려보내면서 본문을 모아 두었다가, 완료되면 free_ref 이벤트로 참조 ID를 준다.
   function createFreeTee(res) {
-    let collected = '', sawDone = false, sawError = false;
+    let collected = '', sawDone = false, sawError = false, sawTruncated = false;
     const capture = (chunk) => {
       for (const line of String(chunk).split('\n')) {
         if (!line.startsWith('data: ')) continue;
         try {
           const j = JSON.parse(line.slice(6));
           if (j.type === 'done') sawDone = true;
+          else if (j.type === 'truncated') sawTruncated = true;
           else if (j.error) sawError = true;
           else if (j.type === 'score' || (!j.type && typeof j.text === 'string')) collected += j.text || '';
         } catch {}
@@ -1079,7 +1096,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       get(target, prop) {
         if (prop === 'write') return (chunk, ...rest) => { capture(chunk); return target.write(chunk, ...rest); };
         if (prop === 'end') return (...args) => {
-          if (args.length || !sawDone || sawError || !collected.trim() || target.writableEnded) return target.end(...args);
+          if (args.length || !sawDone || sawError || sawTruncated || !collected.trim() || target.writableEnded) return target.end(...args);
           const id = randomToken(18);
           ensureSchema()
             .then(() => pool.query('INSERT INTO free_results (id, result_text) VALUES ($1, $2)', [id, collected.slice(0, 40000)]))
