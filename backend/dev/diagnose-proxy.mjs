@@ -37,7 +37,8 @@ async function main() {
   const idx = appended.indexOf(myIp);
   if (idx === -1) {
     console.log('내 공인 IP 가 덧붙은 목록에 없습니다. IPv6/IPv4 가 다르거나 중간 프록시가 다른 주소를 쓰는 경우입니다.');
-    console.log('덧붙은 목록(오른쪽 끝이 앱 바로 앞 프록시):', appended.join(' , '));
+    // IP·헤더 값은 출력하지 않는다(채팅·로그 노출 방지). 개수와 주소 종류만 알려 준다.
+    console.log(`덧붙은 주소 ${appended.length}개 (IPv4 ${appended.filter((a) => !a.includes(':')).length}개, IPv6 ${appended.filter((a) => a.includes(':')).length}개). 내가 쓴 주소가 IPv6 인지 IPv4 인지 확인하세요.`);
     console.log('--my-ip 로 실제 연결에 쓰인 주소(IPv4/IPv6)를 지정해 다시 실행하세요. 확정하지 않습니다.');
     process.exitCode = 1; return;
   }
