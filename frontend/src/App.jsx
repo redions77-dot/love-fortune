@@ -1266,6 +1266,7 @@ export default function App() {
             <input style={{ width: 52, flexShrink: 0, padding: '16px 4px', fontSize: 18, fontWeight: 700, border: '1px solid #DEDFE5', borderRadius: 10, background: '#FFFFFF', color: '#24232B', textAlign: 'center', boxSizing: 'border-box' }} type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0,2))} />
             <span style={{ fontSize: 14, color: '#62616C' }}>일</span>
           </div>
+          {showBadDate(birthYear, birthMonth, birthDay, { lunar: isLunar }) && <p role="alert" style={{ fontSize: 13, color: '#C53A3A', textAlign: 'center', wordBreak: 'keep-all' }}>{BAD_DATE_MESSAGE}</p>}
           {birthdateValid && <p style={{ fontSize: 13, color: '#633B50', textAlign: 'center', fontWeight: 600 }}>✓ {birthYear}년 {birthMonth}월 {birthDay}일</p>}
         </div>
         <div style={{ position: 'fixed', bottom: 0, background: '#F4F5F7', borderTop: '1px solid #DEDFE5', padding: '12px 16px 24px', display: 'flex', gap: 10, maxWidth: 480, width: '100%', left: '50%', transform: 'translateX(-50%)', boxSizing: 'border-box', zIndex: 100 }}>
