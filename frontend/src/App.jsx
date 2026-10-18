@@ -19,6 +19,7 @@ import { summarizeSaju, summarizeMoney, summarizeGunghabFree, summarizeGunghabPa
 import { stripStrayMarkdown } from './markdownStrip.js'
 import { cleanGunghabText, nameLabel, isDefaultName } from './gunghabText.js'
 import { isRealBirthDate, showBadDate, BAD_DATE_MESSAGE } from './birthDate.js'
+import { splitBirthtime } from './paymentReturn.js'
 import { isAdminEntry } from './adminLink.js'
 import { emailPrefillFor, prefillSignature } from './emailPrefill.js'
 import { rememberOrder as rememberStoredOrder, recallOrder as recallStoredOrder, markOrderPaid, forgetOrder, listRecoverable, recoveryOrder, paidResultActive, RESULT_SCREENS } from './orderRecovery.js'
@@ -567,6 +568,10 @@ export default function App() {
   const _adminEntry = isAdminEntry(window.location.pathname)   // 관리자 전용 주소(즐겨찾기)로 들어왔는가
   const _mobilePayment = _qs.get('payment')
   const _impSuccess = _qs.get('imp_success')
+  // 모바일 결제 복귀 주소의 출생 시각(24시간제)을 입력 화면 상태로 되돌린다. 주소에 해당 항목이 있을 때만 적용한다.
+  const _myTime = splitBirthtime(_qs.get('bt'))
+  const _partnerTime = splitBirthtime(_qs.get('pbt'))
+  const _hundredTime = splitBirthtime(_qs.get('hbt'))
 
   useEffect(() => {
     const ping = () => fetch(`${API_URL}/ping`).catch(() => {})
@@ -613,11 +618,11 @@ export default function App() {
   const [birthMonth, setBirthMonth] = useState(() => _qs.get('bm') || '')
   const [birthDay, setBirthDay] = useState(() => _qs.get('bd') || '')
   const [isLunar, setIsLunar] = useState(() => _qs.get('il') === '1')
-  const [timeHour, setTimeHour] = useState('')
-  const [timeMin, setTimeMin] = useState('')
-  const [timeAmPm, setTimeAmPm] = useState('오전')
-  const [timeUnknown, setTimeUnknown] = useState(false)
-  const [mbti, setMbti] = useState('')
+  const [timeHour, setTimeHour] = useState(() => (_qs.has('bt') ? _myTime.hour : ''))
+  const [timeMin, setTimeMin] = useState(() => (_qs.has('bt') ? _myTime.min : ''))
+  const [timeAmPm, setTimeAmPm] = useState(() => (_qs.has('bt') ? _myTime.ampm : '오전'))
+  const [timeUnknown, setTimeUnknown] = useState(() => _qs.has('bt') && _myTime.unknown)
+  const [mbti, setMbti] = useState(() => _qs.get('mbti') || '')
   const [blood, setBlood] = useState(() => _qs.get('blood') || '')
   const [phase, setPhase] = useState('input')
   const [freeError, setFreeError] = useState(null)
@@ -666,9 +671,9 @@ export default function App() {
   const [partnerBirthMonth, setPartnerBirthMonth] = useState(() => _qs.get('pbm') || '')
   const [partnerBirthDay, setPartnerBirthDay] = useState(() => _qs.get('pbd') || '')
   const [partnerIsLunar, setPartnerIsLunar] = useState(() => _qs.get('pil') === '1')
-  const [partnerTimeHour, setPartnerTimeHour] = useState(() => _qs.get('pth') || '')
-  const [partnerTimeMin, setPartnerTimeMin] = useState(() => _qs.get('ptm') || '')
-  const [partnerTimeAmPm, setPartnerTimeAmPm] = useState(() => _qs.get('ptap') || '오전')
+  const [partnerTimeHour, setPartnerTimeHour] = useState(() => _qs.get('pth') || (_qs.has('pbt') ? _partnerTime.hour : ''))
+  const [partnerTimeMin, setPartnerTimeMin] = useState(() => _qs.get('ptm') || (_qs.has('pbt') ? _partnerTime.min : ''))
+  const [partnerTimeAmPm, setPartnerTimeAmPm] = useState(() => _qs.get('ptap') || (_qs.has('pbt') ? _partnerTime.ampm : '오전'))
   const [partnerTimeUnknown, setPartnerTimeUnknown] = useState(() => _qs.get('ptu') === '1')
   const [myName, setMyName] = useState(() => _qs.get('mn') || '')
   const [partnerName, setPartnerName] = useState(() => _qs.get('pn') || '')
@@ -686,11 +691,11 @@ export default function App() {
   const [백년BirthYear, set백년BirthYear] = useState(() => _qs.get('hby') || '')
   const [백년BirthMonth, set백년BirthMonth] = useState(() => _qs.get('hbm') || '')
   const [백년BirthDay, set백년BirthDay] = useState(() => _qs.get('hbd') || '')
-  const [백년IsLunar, set백년IsLunar] = useState(false)
-  const [백년TimeHour, set백년TimeHour] = useState(() => _qs.get('hth') || '')
-  const [백년TimeMin, set백년TimeMin] = useState(() => _qs.get('htm') || '')
-  const [백년TimeAmPm, set백년TimeAmPm] = useState('오전')
-  const [백년TimeUnknown, set백년TimeUnknown] = useState(false)
+  const [백년IsLunar, set백년IsLunar] = useState(() => _qs.get('hil') === '1')
+  const [백년TimeHour, set백년TimeHour] = useState(() => (_qs.has('hbt') ? _hundredTime.hour : (_qs.get('hth') || '')))
+  const [백년TimeMin, set백년TimeMin] = useState(() => (_qs.has('hbt') ? _hundredTime.min : (_qs.get('htm') || '')))
+  const [백년TimeAmPm, set백년TimeAmPm] = useState(() => (_qs.has('hbt') ? _hundredTime.ampm : '오전'))
+  const [백년TimeUnknown, set백년TimeUnknown] = useState(() => _qs.has('hbt') && _hundredTime.unknown)
   const [백년Text, set백년Text] = useState('')
   const [is백년Streaming, setIs백년Streaming] = useState(false)
   const [백년Email, set백년Email] = useState('')
@@ -1136,7 +1141,7 @@ export default function App() {
     function doPay() {
       startCheckout({
         product: 'baeknyeon', input: { gender: 백년Gender, birthdate: 백년Birthdate, birthtime: 백년Birthtime, userName: 백년Name }, buyerName: 백년Name || '고객',
-        redirectParams: { payment: '백년', hn: 백년Name, hby: 백년BirthYear, hbm: 백년BirthMonth, hbd: 백년BirthDay, hth: 백년TimeHour || '', htm: 백년TimeMin || '' },
+        redirectParams: { payment: '백년', hn: 백년Name, hby: 백년BirthYear, hbm: 백년BirthMonth, hbd: 백년BirthDay, hbt: 백년Birthtime || '', hil: 백년IsLunar ? '1' : '0' },
         onPaid: (order) => handle백년Analyze(order),
       })
     }
