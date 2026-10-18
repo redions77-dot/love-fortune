@@ -498,7 +498,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       return { input };
     }
     if (product.kind === 'baeknyeon') {
-      const input = { gender: str(r.gender, 10), birthdate: dateStr(r.birthdate), birthtime: timeStr(r.birthtime), userName: str(r.userName, 30) };
+      const input = { gender: str(r.gender, 10), birthdate: dateStr(r.birthdate), birthtime: timeStr(r.birthtime), isLunar: bool(r.isLunar), userName: str(r.userName, 30) };
       if (!input.birthdate) return { error: '생년월일을 입력해주세요.' };
       return { input };
     }
@@ -527,7 +527,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       };
     }
     if (product.kind === 'baeknyeon') {
-      return { gender: i.gender || '미입력', birthdate: i.birthdate, birthtime: i.birthtime, type: '100년꿀팁', isPaid: true, isLunar: false, userName: i.userName };
+      return { gender: i.gender || '미입력', birthdate: i.birthdate, birthtime: i.birthtime, type: '100년꿀팁', isPaid: true, isLunar: !!i.isLunar, userName: i.userName };
     }
     return null;
   }
@@ -1019,7 +1019,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     return true;
   }
 
-  return { PAID_ONLY_ANALYSIS_TYPES, rejectPaidWithoutOrder, createFreeTee, allowFreeAnalyze };
+  return { PAID_ONLY_ANALYSIS_TYPES, rejectPaidWithoutOrder, createFreeTee, allowFreeAnalyze, analysisBodyFor };
 }
 
 module.exports = { installSecureApi, adminSessionHours, ADMIN_SESSION_HOURS, ADMIN_REMEMBER_HOURS, PRODUCTS, PAID_ONLY_ANALYSIS_TYPES, parseSections, textsFromEvents, buildOrderMail, escapeHtml };

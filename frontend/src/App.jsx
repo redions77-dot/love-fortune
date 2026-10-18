@@ -1140,7 +1140,7 @@ export default function App() {
   if (screen === '백년_payment') {
     function doPay() {
       startCheckout({
-        product: 'baeknyeon', input: { gender: 백년Gender, birthdate: 백년Birthdate, birthtime: 백년Birthtime, userName: 백년Name }, buyerName: 백년Name || '고객',
+        product: 'baeknyeon', input: { gender: 백년Gender, birthdate: 백년Birthdate, birthtime: 백년Birthtime, isLunar: 백년IsLunar, userName: 백년Name }, buyerName: 백년Name || '고객',
         redirectParams: { payment: '백년', hn: 백년Name, hby: 백년BirthYear, hbm: 백년BirthMonth, hbd: 백년BirthDay, hbt: 백년Birthtime || '', hil: 백년IsLunar ? '1' : '0' },
         onPaid: (order) => handle백년Analyze(order),
       })
