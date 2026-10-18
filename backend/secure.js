@@ -9,6 +9,7 @@ const fs = require('fs');
 const http = require('http');
 const https = require('https');
 const { normalizeRelation } = require('./relations');
+const { pickClientIp, parseHops } = require('./clientIp');
 
 // 가격·상품명은 서버에서만 정한다. (쿠폰 할인은 운영에 아직 없으므로 적용하지 않는다)
 const PRODUCTS = Object.freeze({
@@ -45,9 +46,10 @@ function safeEqualHex(a, b) {
   return ba.length > 0 && ba.length === bb.length && crypto.timingSafeEqual(ba, bb);
 }
 
+// 요청 제한용 IP. X-Forwarded-For 맨 앞 값은 위조할 수 있어, 신뢰하는 프록시 수(TRUST_PROXY_HOPS)만큼 오른쪽에서 센 값을 쓴다.
+const TRUST_PROXY_HOPS = parseHops(process.env.TRUST_PROXY_HOPS);
 function clientIp(req) {
-  const xff = req.get('x-forwarded-for');
-  return (xff ? xff.split(',')[0].trim() : req.socket?.remoteAddress) || 'unknown';
+  return pickClientIp({ peer: req.socket?.remoteAddress, xff: req.get('x-forwarded-for'), hops: TRUST_PROXY_HOPS });
 }
 
 function parseCookies(header) {
