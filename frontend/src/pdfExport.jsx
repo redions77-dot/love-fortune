@@ -32,11 +32,14 @@ const LAST_PAGE_MIN = 0.35    // 마지막 쪽이 이 비율 미만이면 앞 �
 const PREV_PAGE_MIN = 0.40    // 옮기고 나서도 앞 쪽은 이 비율 이상 차 있어야 한다
 const TABLE_HEAD_H = 90     // 이어지는 표 행이 쪽 맨 위에 올 때 다시 붙는 제목 + 머리글 높이(index.css .rpt-table-title + th)
 
-function loadScriptOnce(src, check) {
+// integrity 를 주면 버전 고정된 CDN 파일의 변조·교체를 브라우저가 막는다(해시는 cdnjs 공식 SRI 값).
+function loadScriptOnce(src, check, integrity) {
   if (check()) return Promise.resolve()
   return new Promise((resolve, reject) => {
     const s = document.createElement('script')
-    s.src = src; s.onload = resolve; s.onerror = () => reject(new Error(src.split('/').pop() + ' 로드 실패'))
+    s.src = src
+    if (integrity) { s.integrity = integrity; s.crossOrigin = 'anonymous' }
+    s.onload = resolve; s.onerror = () => reject(new Error(src.split('/').pop() + ' 로드 실패'))
     document.head.appendChild(s)
   })
 }
@@ -303,8 +306,8 @@ function PdfBlocks({ hero, plan }) {
 // items: { kind: 'card', selector } | { kind: 'saju', pillars, typeInfo } | { kind: 'summary', data } | { kind: 'table', table } | { kind: 'closing', closing }
 //      | { kind: 'label', text } | { kind: 'section', title, content, part }
 export async function exportResultPDF({ filename, eyebrow = 'MYSAJU REPORT', title, subtitle = '', footerLabel = '', items, docClass = '' }) {
-  await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => window.jspdf)
-  await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', () => window.html2canvas)
+  await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', () => window.jspdf, 'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==')
+  await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', () => window.html2canvas, 'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==')
   if (document.fonts) {
     try {
       await Promise.all([['400 17px', '가나다라마바사'], ['700 19px', '가나다라마바사'], ['800 25px', '가나다라마바사'], ['800 46px', '甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥']].map(([f, t]) => document.fonts.load(f + ' Pretendard', t)))
