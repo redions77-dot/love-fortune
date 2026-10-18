@@ -383,7 +383,8 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
   const RECONCILE_BATCH = 20;
   const RECONCILE_GAP_MS = 250;
   const RECONCILE_MAX_LOOKUP_FAILURES = 3;
-  const RECONCILE_HOLD_MS = 6 * 60 * 60 * 1000;
+  const RECONCILE_HOLD_MS = 6 * 60 * 60 * 1000;           // 결제 검증 불일치 등 사람이 봐야 하는 건
+  const RECONCILE_LOOKUP_RETRY_MS = 3 * 60 * 60 * 1000;   // 결제사 조회 실패(일시 장애 가능)
   const heldUntil = new Map();   // orderId → 다시 확인해도 되는 시각
   let reconciling = false;
   const sleep = (ms) => (ms > 0 ? new Promise((r) => setTimeout(r, ms)) : Promise.resolve());
@@ -414,6 +415,8 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
               lookupFailures = 0;
             } catch (e) {   // 조회 실패·시간 초과·불명확한 응답: 미결제로 보지 않고 삭제를 보류한다
               lookupFailures++; stats.held++;
+              // 일시 장애일 수 있어 잠시 뒤 다시 확인하되, 계속 실패하는 주문이 오래된 순서로 앞을 막지 않도록 일정 시간 건너뛴다.
+              heldUntil.set(row.id, Date.now() + RECONCILE_LOOKUP_RETRY_MS);
               console.warn(`[PAY] 만료 주문 결제 조회 실패 order=${row.id} code=${e.code || 'error'}`);
               if (lookupFailures >= RECONCILE_MAX_LOOKUP_FAILURES) { stats.skipped = 'lookup_failures'; break; }
               await sleep(gapMs);

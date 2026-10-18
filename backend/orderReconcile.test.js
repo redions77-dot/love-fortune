@@ -128,6 +128,19 @@ test('조회 실패가 연속되면 그 실행을 멈춘다(결제사 장애 시
   const r = await run(env);
   assert.equal(r.skipped, 'lookup_failures'); assert.equal(env.calls.portone.length, 3); assert.equal(env.db.size, 10);
 });
+test('계속 조회에 실패하는 주문이 오래된 순서로 앞을 막지 않는다(다음 실행은 건너뛰고 나머지를 처리)', async () => {
+  const bad = new Set(['o0', 'o1', 'o2']);
+  const env = makeEnv({
+    orders: Array.from({ length: 6 }, (_, i) => ({ id: 'o' + i })),
+    lookup: (id) => { if (bad.has(id)) throw Object.assign(new Error('x'), { code: 'portone_unavailable' }); return none; },
+  });
+  const r1 = await run(env);
+  assert.equal(r1.skipped, 'lookup_failures'); assert.deepEqual(env.calls.portone, ['o0', 'o1', 'o2']);
+  const r2 = await run(env);
+  assert.deepEqual(env.calls.portone.slice(3), ['o3', 'o4', 'o5'], '앞서 실패한 3건은 다시 조회하지 않고 나머지를 확인한다');
+  assert.equal(r2.deleted, 3);
+  assert.equal([...env.db.keys()].sort().join(), 'o0,o1,o2', '조회에 실패한 주문은 지우지 않는다');
+});
 test('한 주문의 오류가 나머지 정리를 멈추지 않는다', async () => {
   const env = makeEnv({ orders: [{ id: 'bad' }, { id: 'good' }], lookup: () => none, failDeleteFor: 'bad' });
   const r = await run(env);
