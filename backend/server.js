@@ -7,6 +7,8 @@ require('dotenv').config();
 const { installSecureApi } = require('./secure');
 const { buildAllowedOrigins } = require('./origins');
 const { parseFreeAnalysisBody } = require('./freeInput');
+const { installProxyDiag } = require('./proxyDiag');
+const { parseHops } = require('./clientIp');
 const { deepYearContext } = require('./deepYear');
 const { ACTIONS_MARK, ACTIONS_MARK_RE, sectionBody, formatActions, extractActionsSection, parseActions, validateActions, repairActions, pickBestAttempt, buildActionsPrompt } = require('./freeActions');
 const { TIMING_RULES, DEEP_BIG_DECISION_LINE, PAID_CAUTION_HEADING } = require('./timingRules');
@@ -1415,6 +1417,8 @@ res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
   res.end();
 }
 
+if (!process.env.TRUST_PROXY_HOPS) console.warn('[설정] TRUST_PROXY_HOPS 미설정: 기본값 1을 사용합니다. 배포 환경의 프록시 단수를 관측해 확인한 값으로 설정하세요(backend/dev/diagnose-proxy.mjs).');
+installProxyDiag({ app, hops: parseHops(process.env.TRUST_PROXY_HOPS) });   // PROXY_DIAG_TOKEN 이 있는 테스트 서버에서만 응답
 const secureApi = installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins: ALLOWED_ORIGINS });
 
 // 무료 분석만 처리한다. 유료 분석은 결제가 확인된 주문으로만 /api/orders/:id/analysis 에서 생성한다.

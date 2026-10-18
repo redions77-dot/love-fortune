@@ -4,7 +4,7 @@
 //   TRUST_PROXY_HOPS=0  헤더를 무시하고 연결 상대(소켓) 주소를 쓴다.
 //   TRUST_PROXY_HOPS=1  (기본) 앱 바로 앞 프록시 1개가 XFF 끝에 클라이언트 주소를 붙인다.
 //   TRUST_PROXY_HOPS=2  앞에 프록시가 2단(예: CDN → 로드밸런서)이면 오른쪽에서 2번째 값이 클라이언트 주소다.
-// 실제 배포 환경의 프록시 단수는 backend/dev/check-proxy-hops.mjs 로 테스트 서버에서 확인한 값으로 설정한다.
+// 실제 배포 환경의 프록시 단수는 backend/dev/diagnose-proxy.mjs 로 테스트 서버에서 관측해 근거 있게 설정한다.
 const net = require('net');
 
 const DEFAULT_HOPS = 1;
@@ -29,4 +29,18 @@ function pickClientIp({ peer, xff, hops }) {
   return net.isIP(picked) ? picked : fallback;
 }
 
-module.exports = { pickClientIp, parseHops, DEFAULT_HOPS };
+// 사설·루프백·링크로컬·CGNAT 주소인가. 선택된 값이 이런 주소면 프록시 내부 주소가 골라진 것일 수 있다(단수가 너무 작음).
+const nonPublic = new net.BlockList();
+for (const [a, p] of [['10.0.0.0', 8], ['172.16.0.0', 12], ['192.168.0.0', 16], ['127.0.0.0', 8], ['169.254.0.0', 16], ['100.64.0.0', 10], ['0.0.0.0', 8]]) nonPublic.addSubnet(a, p, 'ipv4');
+for (const [a, p] of [['fc00::', 7], ['fe80::', 10]]) nonPublic.addSubnet(a, p, 'ipv6');
+nonPublic.addAddress('::1', 'ipv6');
+const isPublicIp = (ip) => { const v = net.isIP(ip); return v !== 0 && !nonPublic.check(ip, v === 6 ? 'ipv6' : 'ipv4'); };
+
+// 진단용: 서버가 실제로 받은 연결 상대·XFF 목록과 선택된 주소. (호출자 자신의 요청 정보만 돌려준다)
+function describeClientIp({ peer, xff, hops }) {
+  const list = String(xff || '').split(',').map(normalize).filter(Boolean);
+  const selected = pickClientIp({ peer, xff, hops });
+  return { peer: normalize(peer) || 'unknown', xff: list, hops, selected, selectedIsPublic: isPublicIp(selected) };
+}
+
+module.exports = { pickClientIp, parseHops, describeClientIp, isPublicIp, DEFAULT_HOPS };
