@@ -751,7 +751,7 @@ export default function App() {
   const progress = (step / STEPS.length) * 100
 
   const birthdate = (birthYear.length === 4 && birthMonth && birthDay) ? `${birthYear}-${String(birthMonth).padStart(2,'0')}-${String(birthDay).padStart(2,'0')}` : ''
-  const birthdateValid = birthYear.length === 4 && Number(birthMonth) >= 1 && Number(birthMonth) <= 12 && Number(birthDay) >= 1 && Number(birthDay) <= 31
+  const birthdateValid = isRealBirthDate(birthYear, birthMonth, birthDay, { lunar: isLunar })
   const birthtime = timeUnknown ? '' : (() => {
     if (!timeHour || !timeMin) return ''
     let h = Number(timeHour)
@@ -992,7 +992,7 @@ export default function App() {
   }
 
   const 백년Birthdate = (백년BirthYear.length === 4 && 백년BirthMonth && 백년BirthDay) ? `${백년BirthYear}-${String(백년BirthMonth).padStart(2,'0')}-${String(백년BirthDay).padStart(2,'0')}` : ''
-  const 백년BirthdateValid = 백년BirthYear.length === 4 && Number(백년BirthMonth) >= 1 && Number(백년BirthMonth) <= 12 && Number(백년BirthDay) >= 1 && Number(백년BirthDay) <= 31
+  const 백년BirthdateValid = isRealBirthDate(백년BirthYear, 백년BirthMonth, 백년BirthDay, { lunar: 백년IsLunar })
   const 백년Birthtime = 백년TimeUnknown ? '' : (() => { if (!백년TimeHour || !백년TimeMin) return ''; let h = Number(백년TimeHour); if (백년TimeAmPm === '오전' && h === 12) h = 0; if (백년TimeAmPm === '오후' && h !== 12) h += 12; return `${String(h).padStart(2,'0')}:${String(백년TimeMin).padStart(2,'0')}` })()
   const 백년BirthtimeValid = 백년TimeUnknown || (백년TimeHour !== '' && 백년TimeMin !== '')
 
@@ -1104,6 +1104,7 @@ export default function App() {
           </div>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: '#24232B', marginBottom: 6 }}>생년월일을 알려주세요</h2>
           <DateRow year={백년BirthYear} setYear={set백년BirthYear} month={백년BirthMonth} setMonth={set백년BirthMonth} day={백년BirthDay} setDay={set백년BirthDay} lunar={백년IsLunar} setLunar={set백년IsLunar} />
+          {showBadDate(백년BirthYear, 백년BirthMonth, 백년BirthDay, { lunar: 백년IsLunar }) && <p role="alert" style={{ fontSize: 13, color: '#C53A3A', margin: '-4px 0 12px', wordBreak: 'keep-all' }}>{BAD_DATE_MESSAGE}</p>}
           {백년BirthdateValid && <p style={{ fontSize: 13, color: '#633B50', fontWeight: 600, marginBottom: 20 }}>✓ {백년BirthYear}년 {백년BirthMonth}월 {백년BirthDay}일</p>}
           <h2 style={{ fontSize: 16, fontWeight: 700, color: '#24232B', marginTop: 8, marginBottom: 6 }}>태어난 시간을 알려주세요</h2>
           <button aria-pressed={백년TimeUnknown} style={{ position: 'relative', width: '100%', padding: '12px', fontSize: 13, border: `1px solid ${백년TimeUnknown ? '#633B50' : '#DEDFE5'}`, borderRadius: 10, background: 백년TimeUnknown ? '#F6F0F3' : '#FFFFFF', color: 백년TimeUnknown ? '#633B50' : '#62616C', cursor: 'pointer', marginBottom: 10 }} onClick={() => set백년TimeUnknown(v => !v)}><CheckMark on={백년TimeUnknown} />
@@ -2109,6 +2110,7 @@ if (screen === 'input') {
                 type="number" inputMode="numeric" placeholder="일" value={birthDay} onChange={e => setBirthDay(e.target.value.slice(0,2))} />
               <span style={{ fontSize: 18, color: '#62616C', fontWeight: 600 }}>일</span>
             </div>
+            {showBadDate(birthYear, birthMonth, birthDay, { lunar: isLunar }) && <p role="alert" style={{ fontSize: 13, color: '#C53A3A', margin: '-4px 0 12px', wordBreak: 'keep-all' }}>{BAD_DATE_MESSAGE}</p>}
             {birthdateValid && (
               <p style={{ fontSize: 16, color: '#633B50', textAlign: 'center', fontWeight: 700, marginTop: 8 }}>
                 ✓ {birthYear}년 {birthMonth}월 {birthDay}일 {isLunar ? '(음력)' : '(양력)'}
