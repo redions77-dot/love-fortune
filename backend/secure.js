@@ -274,6 +274,8 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
   const adminAuthFailLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 30 });
   const orderCreateLimiter = createLimiter({ windowMs: 10 * 60 * 1000, max: 20 });
   const orderAuthFailLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 30 });
+  // 무료 분석은 요청마다 AI를 부르므로 IP당 10분에 20회까지만 받는다(주문 생성 제한과 같은 수준).
+  const freeAnalyzeLimiter = createLimiter({ windowMs: 10 * 60 * 1000, max: 20 });
 
   // ── 스키마 ── (빈 DB에서 server.js의 results 생성과 동시에 실행되면 실패할 수 있어, 실패 시 다음 요청에서 다시 시도)
   const createSchema = () => pool.query(`
@@ -1003,7 +1005,19 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     });
   }
 
-  return { PAID_ONLY_ANALYSIS_TYPES, rejectPaidWithoutOrder, createFreeTee };
+  // 무료 분석 요청 제한. 허용이면 true, 초과면 429 응답을 보내고 false.
+  function allowFreeAnalyze(req, res) {
+    const ip = clientIp(req);
+    if (freeAnalyzeLimiter.limited(ip)) {
+      res.setHeader('Retry-After', String(freeAnalyzeLimiter.retryAfterSec(ip)));
+      res.status(429).json({ error: '요청이 너무 많아요. 잠시 후 다시 시도해주세요.' });
+      return false;
+    }
+    freeAnalyzeLimiter.hit(ip);
+    return true;
+  }
+
+  return { PAID_ONLY_ANALYSIS_TYPES, rejectPaidWithoutOrder, createFreeTee, allowFreeAnalyze };
 }
 
 module.exports = { installSecureApi, adminSessionHours, ADMIN_SESSION_HOURS, ADMIN_REMEMBER_HOURS, PRODUCTS, PAID_ONLY_ANALYSIS_TYPES, parseSections, textsFromEvents, buildOrderMail, escapeHtml };
