@@ -1425,6 +1425,7 @@ app.post('/api/analyze', async (req, res) => {
     // AI를 부르기 전에 필드 타입을 확인한다. 문자열이 아니어야 할 값(숫자·객체 등)이 오면 4xx로 끝낸다.
     const parsed = parseFreeAnalysisBody(body);
     if (!parsed.ok) return res.status(parsed.status).json({ error: parsed.error });
+    if (!secureApi.allowFreeAnalyze(req, res)) return;
     await runAnalysis({ ...parsed.value, isPaid: false }, secureApi.createFreeTee(res));
   } catch (e) {
     // async 핸들러의 예외는 Express 4가 잡지 못해 프로세스가 종료될 수 있으므로 여기서 끝낸다.

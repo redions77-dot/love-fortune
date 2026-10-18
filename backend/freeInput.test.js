@@ -32,3 +32,21 @@ test('isLunar 는 불린으로 정규화한다', () => {
   assert.equal(parseFreeAnalysisBody({ ...base, isLunar: 'true' }).value.isLunar, true);
   assert.equal(parseFreeAnalysisBody({ ...base, isLunar: 'false' }).value.isLunar, false);
 });
+
+test('F: 날짜·시각 형식 검증 — 없는 날짜·잘못된 시각은 400, 정상·윤년·음력 30일은 통과', () => {
+  const p = (o) => parseFreeAnalysisBody({ ...base, ...o });
+  for (const bad of ['abc', '1990-5-5', '1990-02-30', '1999-02-29', '1990-04-31', '1899-01-01', '2999-01-01', '1990-13-01']) {
+    assert.equal(p({ birthdate: bad }).ok, false, bad);
+  }
+  assert.equal(p({ birthdate: '2000-02-29' }).ok, true);
+  assert.equal(p({ birthdate: '1990-02-30', isLunar: true }).ok, true);
+  assert.equal(p({ birthtime: '24:00' }).ok, false);
+  assert.equal(p({ birthtime: '12:60' }).ok, false);
+  for (const good of ['0:00', '00:00', '12:00', '23:59', '']) assert.equal(p({ birthtime: good }).ok, true, good);
+  assert.equal(p({ type: '궁합무료', partnerBirthdate: '1991-02-30' }).ok, false);
+});
+test('F: 긴 문자열은 최대 길이로 잘라서 쓴다', () => {
+  const r = parseFreeAnalysisBody({ ...base, userName: 'a'.repeat(500), previousText: 'b'.repeat(50000) });
+  assert.equal(r.value.userName.length, 30);
+  assert.equal(r.value.previousText.length, 12000);
+});
