@@ -256,7 +256,20 @@ function createPortoneClient() {
     return json.response;
   }
 
+  // 삭제 판단용 엄격한 조회: 포트원이 "그 주문번호의 결제 없음"을 분명히 답한 경우(HTTP 404 + code -1)만 { found: false }.
+  // 200 이지만 code≠0 이거나 본문이 비어 있는 등 불명확한 응답은 "없음"으로 단정하지 않고 예외로 돌려 삭제를 보류하게 한다.
+  async function findPaidStrict(merchantUid) {
+    const token = await accessToken();
+    const { status, json } = await httpJson(`${base()}/payments/find/${encodeURIComponent(merchantUid)}/paid`, { headers: { Authorization: token } });
+    if (status === 401) { cached = null; throw fail('portone_auth_failed'); }
+    if (status === 404) { if (json && json.code === -1 && !json.response) return { found: false }; throw fail('portone_ambiguous'); }
+    if (status !== 200 || !json) throw fail('portone_unavailable');
+    if (json.code === 0 && json.response) return { found: true, payment: json.response };
+    throw fail('portone_ambiguous');
+  }
+
   return {
+    findPaidStrict,
     // 결제 건이 없으면 null, 조회 자체가 실패하면 예외(재시도 가능)
     getPayment: (impUid) => getJson(`/payments/${encodeURIComponent(impUid)}`),
     // 주문번호(merchant_uid)로 결제 완료 건 조회 — 고객이 결제 직후 창을 닫은 경우 운영자가 확인할 때 사용
@@ -265,11 +278,11 @@ function createPortoneClient() {
 }
 
 // ── 메인 ──────────────────────────────────────────────
-function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins }) {
+function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins, portone: portoneOverride }) {
   const RUNNER_ID = crypto.randomBytes(8).toString('hex');
   const liveJobs = new Map(); // orderId → { events, listeners, finished }
   const mailer = createMailer();
-  const portone = createPortoneClient();
+  const portone = portoneOverride || createPortoneClient();
 
   const adminLoginIpLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 5 });
   const adminLoginGlobalLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 30 });
@@ -351,15 +364,85 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
   };
   ensureSchema().catch(() => setTimeout(() => ensureSchema().catch(() => {}), 2000));
 
-  // 오래된 임시 데이터 정리 (무료 결과 24시간, 미결제 주문 7일, 만료 세션, 발송 기록 7일)
+  // 오래된 임시 데이터 정리 (무료 결과 24시간, 만료 세션, 발송 기록 7일). 미결제 주문(7일)은 결제사에 먼저 확인한 뒤에만 지운다.
   const cleanup = () => ensureSchema().then(() => pool.query(`
     DELETE FROM free_results WHERE created_at < NOW() - INTERVAL '24 hours';
-    DELETE FROM orders WHERE status = 'pending' AND created_at < NOW() - INTERVAL '7 days';
     DELETE FROM admin_sessions WHERE expires_at < NOW();
     DELETE FROM email_sends WHERE created_at < NOW() - INTERVAL '7 days';
-  `)).catch((e) => console.error('[DB] 정리 작업 실패:', e.message));
+  `)).then(() => reconcileExpiredPending()).catch((e) => console.error('[DB] 정리 작업 실패:', e.message));
   setTimeout(cleanup, 5000).unref?.();
   setInterval(cleanup, 60 * 60 * 1000).unref?.();
+
+  // ── 7일 지난 미결제(pending) 주문 정리: 삭제 전에 결제사에서 실제 결제 여부를 확인한다 ──
+  // 고객이 결제 직후 창을 닫으면 결제는 됐는데 주문은 pending 으로 남는다. 이를 그대로 지우면 운영자 확인(/api/admin/orders/:id/verify)도 불가능해진다.
+  //  - 결제 완료가 확인되면: 기존 결제 검증(applyVerifiedPayment: 주문번호·금액·통화·중복 방지)을 거쳐 paid 로 복구하고 지우지 않는다.
+  //    (생성·메일 발송은 여기서 시작하지 않는다. 고객이 결과를 열거나 운영자가 발송/재생성한다.)
+  //  - 결제사가 "결제 없음"을 분명히 답한 주문만 지운다. 조회 실패·시간 초과·불명확한 응답·검증 불일치는 지우지 않고 보류한다.
+  //  - 한 번에 최대 RECONCILE_BATCH 건만, 호출 사이 간격을 두고 확인하며, 연속 조회 실패가 이어지면 이번 실행을 멈춘다.
+  //  - 같은 프로세스·여러 인스턴스의 동시 실행은 DB advisory lock 으로 막는다. 보류한 주문은 일정 시간 다시 조회하지 않는다.
+  const RECONCILE_BATCH = 20;
+  const RECONCILE_GAP_MS = 250;
+  const RECONCILE_MAX_LOOKUP_FAILURES = 3;
+  const RECONCILE_HOLD_MS = 6 * 60 * 60 * 1000;
+  const heldUntil = new Map();   // orderId → 다시 확인해도 되는 시각
+  let reconciling = false;
+  const sleep = (ms) => (ms > 0 ? new Promise((r) => setTimeout(r, ms)) : Promise.resolve());
+
+  async function reconcileExpiredPending({ batch = RECONCILE_BATCH, gapMs = RECONCILE_GAP_MS } = {}) {
+    const stats = { checked: 0, recovered: 0, deleted: 0, held: 0, skipped: null };
+    if (reconciling) { stats.skipped = 'in_process'; return stats; }
+    reconciling = true;
+    let client;
+    try {
+      client = await pool.connect();
+      const lock = await client.query('SELECT pg_try_advisory_lock(hashtext($1)) AS ok', ['orders:reconcile']);
+      if (!lock.rows[0]?.ok) { stats.skipped = 'locked'; return stats; }
+      try {
+        const now = Date.now();
+        for (const [id, until] of heldUntil) if (until <= now) heldUntil.delete(id);
+        const { rows } = await pool.query(
+          `SELECT id, amount FROM orders WHERE status = 'pending' AND created_at < NOW() - INTERVAL '7 days' AND id <> ALL($2::text[]) ORDER BY created_at LIMIT $1`,
+          [batch, [...heldUntil.keys()]]
+        );
+        let lookupFailures = 0;
+        for (const row of rows) {
+          stats.checked++;
+          try {
+            let found;
+            try {
+              found = await portone.findPaidStrict(row.id);
+              lookupFailures = 0;
+            } catch (e) {   // 조회 실패·시간 초과·불명확한 응답: 미결제로 보지 않고 삭제를 보류한다
+              lookupFailures++; stats.held++;
+              console.warn(`[PAY] 만료 주문 결제 조회 실패 order=${row.id} code=${e.code || 'error'}`);
+              if (lookupFailures >= RECONCILE_MAX_LOOKUP_FAILURES) { stats.skipped = 'lookup_failures'; break; }
+              await sleep(gapMs);
+              continue;
+            }
+            if (found.found) {
+              const r = await applyVerifiedPayment({ id: row.id, amount: row.amount }, found.payment);
+              if (r.status === 200) { stats.recovered++; console.log(`[PAY] 만료 대상 주문의 결제를 확인해 복구 order=${row.id}`); }
+              else { stats.held++; heldUntil.set(row.id, Date.now() + RECONCILE_HOLD_MS); console.warn(`[PAY] 만료 대상 주문의 결제 검증 보류 order=${row.id} code=${r.body?.code || r.status} (운영자 확인 필요)`); }
+            } else {
+              const del = await pool.query(`DELETE FROM orders WHERE id = $1 AND status = 'pending'`, [row.id]);
+              stats.deleted += del.rowCount || 0;
+            }
+          } catch (e) {   // 주문별 오류가 전체 정리를 멈추지 않게 한다
+            stats.held++; heldUntil.set(row.id, Date.now() + RECONCILE_HOLD_MS);
+            console.error(`[PAY] 만료 주문 처리 오류 order=${row.id}`, e.code || e.message);
+          }
+          await sleep(gapMs);
+        }
+      } finally {
+        await client.query('SELECT pg_advisory_unlock(hashtext($1))', ['orders:reconcile']).catch(() => {});
+      }
+    } finally {
+      client?.release();
+      reconciling = false;
+    }
+    if (stats.checked) console.log(`[PAY] 만료 주문 정리 확인=${stats.checked} 복구=${stats.recovered} 삭제=${stats.deleted} 보류=${stats.held}${stats.skipped ? ' 중단=' + stats.skipped : ''}`);
+    return stats;
+  }
 
   // 생성 중인 작업의 임대 시간을 연장한다.
   setInterval(() => {
@@ -1019,7 +1102,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     return true;
   }
 
-  return { PAID_ONLY_ANALYSIS_TYPES, rejectPaidWithoutOrder, createFreeTee, allowFreeAnalyze, analysisBodyFor };
+  return { PAID_ONLY_ANALYSIS_TYPES, rejectPaidWithoutOrder, createFreeTee, allowFreeAnalyze, analysisBodyFor, reconcileExpiredPending };
 }
 
-module.exports = { installSecureApi, adminSessionHours, ADMIN_SESSION_HOURS, ADMIN_REMEMBER_HOURS, PRODUCTS, PAID_ONLY_ANALYSIS_TYPES, parseSections, textsFromEvents, buildOrderMail, escapeHtml };
+module.exports = { installSecureApi, createPortoneClient, adminSessionHours, ADMIN_SESSION_HOURS, ADMIN_REMEMBER_HOURS, PRODUCTS, PAID_ONLY_ANALYSIS_TYPES, parseSections, textsFromEvents, buildOrderMail, escapeHtml };
