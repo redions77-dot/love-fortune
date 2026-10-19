@@ -41,10 +41,17 @@ test('Vercel 설정: 관리자 전용 경로가 앱으로 연결되고, 기존 a
     try { return (await import(pathToFileURL(here('../node_modules/.cache/admin-entry-test/vercel.mjs')).href + '?t=' + Math.random())).config } finally { process.env = saved }
   }
   return cfg({ VERCEL_ENV: 'production' }).then((c) => {
-    assert.deepStrictEqual(c.rewrites, [
-      { source: '/admin-bomgyeol-2027', destination: '/index.html' },
-      { source: '/api/admin/:path*', destination: 'https://love-fortune.onrender.com/api/admin/:path*' },
-    ])
+    assert.strictEqual(c.rewrites.length, 2)
+    assert.deepStrictEqual(c.rewrites[0], { source: '/admin-bomgyeol-2027', destination: '/index.html' })
+    // 관리자 API 프록시: 목적지는 기존 그대로이고, 백엔드가 "우리 Vercel을 거친 요청"임을 확인할 수 있도록 증표 헤더를 설정한다.
+    const admin = c.rewrites[1]
+    assert.strictEqual(admin.dest, 'https://love-fortune.onrender.com/api/admin/$1')
+    assert.ok(new RegExp(admin.src).test('/api/admin/session') && new RegExp(admin.src).test('/api/admin/orders/search'))
+    assert.deepStrictEqual(admin.transforms, [{
+      type: 'request.headers', op: 'set', target: { key: 'x-mysaju-edge-key' }, args: '$ADMIN_EDGE_KEY', env: ['ADMIN_EDGE_KEY'],
+    }])
+    // 설정 파일에는 비밀값 자체가 없고(환경변수 이름만 참조), 클라이언트가 보낸 같은 이름의 헤더는 set 으로 덮어써진다.
+    assert.ok(!JSON.stringify(c).includes('edge-key-secret'))
     assert.strictEqual(c.buildCommand, 'node node_modules/vite/bin/vite.js build')
     assert.strictEqual(c.installCommand, 'rm -rf node_modules && npm install')
   })

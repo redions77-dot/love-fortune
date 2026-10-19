@@ -31,6 +31,9 @@ export const config: VercelConfig = {
   rewrites: [
     // 관리자 전용 주소(즐겨찾기용)도 앱이 열리게 한다. 경로 자체는 비밀이 아니며 권한은 서버 세션에서만 나온다.
     routes.rewrite('/admin-bomgyeol-2027', '/index.html'),
-    ...(target ? [routes.rewrite('/api/admin/:path*', `${target}/api/admin/:path*`)] : []),
+    // 관리자 API 프록시: 백엔드로 넘길 때 x-mysaju-edge-key 헤더를 "설정(덮어쓰기)"한다. 값은 Vercel 환경변수 ADMIN_EDGE_KEY 에서 요청 시점에 채워지므로
+    // 설정 파일·저장소에는 비밀값이 없고, 클라이언트가 같은 이름의 헤더를 보내도 덮어써진다. 백엔드는 이 값이 맞는 요청만 "우리 Vercel 프로젝트를 거친 요청"으로 본다.
+    // (ADMIN_EDGE_KEY 가 비어 있으면 빈 값이 설정되어 백엔드가 증표로 인정하지 않는다 = 기존 동작으로 안전하게 되돌아간다.)
+    ...(target ? [routes.rewrite('/api/admin/:path*', `${target}/api/admin/:path*`, { requestHeaders: { 'x-mysaju-edge-key': '$ADMIN_EDGE_KEY' } })] : []),
   ],
 }

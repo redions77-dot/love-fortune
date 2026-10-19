@@ -6,6 +6,21 @@
 //   TRUST_PROXY_HOPS=2  앞에 프록시가 2단(예: CDN → 로드밸런서)이면 오른쪽에서 2번째 값이 클라이언트 주소다.
 // 실제 배포 환경의 프록시 단수는 backend/dev/diagnose-proxy.mjs 로 테스트 서버에서 관측해 근거 있게 설정한다.
 const net = require('net');
+const crypto = require('crypto');
+
+// ── 관리자 프록시 증표 ──
+// Vercel 을 거치는 /api/admin/* 는 Vercel 이 X-Forwarded-For 를 항상 덮어쓰지 않아(관측: 클라이언트가 보낸 값이 남는 경우가 있음)
+// 위치 기반으로도 클라이언트 IP 를 신뢰할 수 없다. 대신 Vercel 라우트 transform 이 요청마다 "설정(덮어쓰기)"하는 비밀 헤더로
+// "우리 Vercel 프로젝트를 거친 요청"임만 증명하고, 이 경우 IP 기반 제한은 쓰지 않는다(전역 제한만 적용).
+const ADMIN_EDGE_HEADER = 'x-mysaju-edge-key';
+const EDGE_KEY_MIN_LENGTH = 32;
+function isEdgeVerified(supplied, expected) {
+  const key = String(expected || '');
+  if (key.length < EDGE_KEY_MIN_LENGTH || typeof supplied !== 'string' || !supplied) return false;
+  const a = crypto.createHash('sha256').update(supplied).digest();
+  const b = crypto.createHash('sha256').update(key).digest();
+  return crypto.timingSafeEqual(a, b);
+}
 
 const DEFAULT_HOPS = 1;
 const MAX_HOPS = 5;
@@ -43,4 +58,4 @@ function describeClientIp({ peer, xff, hops }) {
   return { peer: normalize(peer) || 'unknown', xff: list, hops, selected, selectedIsPublic: isPublicIp(selected) };
 }
 
-module.exports = { pickClientIp, parseHops, describeClientIp, isPublicIp, DEFAULT_HOPS };
+module.exports = { pickClientIp, parseHops, describeClientIp, isPublicIp, isEdgeVerified, ADMIN_EDGE_HEADER, DEFAULT_HOPS };

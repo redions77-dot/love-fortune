@@ -9,7 +9,7 @@ const fs = require('fs');
 const http = require('http');
 const https = require('https');
 const { normalizeRelation } = require('./relations');
-const { pickClientIp, parseHops } = require('./clientIp');
+const { pickClientIp, parseHops, isEdgeVerified, ADMIN_EDGE_HEADER } = require('./clientIp');
 
 // 가격·상품명은 서버에서만 정한다. (쿠폰 할인은 운영에 아직 없으므로 적용하지 않는다)
 const PRODUCTS = Object.freeze({
@@ -499,15 +499,19 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     return rows[0] || null;
   }
 
+  // 관리자 요청의 IP 제한 키. Vercel 관리자 프록시를 거친 요청(증표 헤더 일치)은 클라이언트 IP를 신뢰할 방법이 없으므로(X-Forwarded-For 를 클라이언트가 채울 수 있음)
+  // IP 키를 쓰지 않고(null) 전역 제한만 적용한다. 증표가 없는 요청(Render 직접 접속)은 기존처럼 TRUST_PROXY_HOPS 기준 IP로 제한한다.
+  const adminLimiterIp = (req) => (isEdgeVerified(req.get(ADMIN_EDGE_HEADER), process.env.ADMIN_EDGE_KEY) ? null : clientIp(req));
+
   const requireAdmin = withSchema(async (req, res, next) => {
-    const ip = clientIp(req);
-    if (adminAuthFailLimiter.limited(ip)) {
+    const ip = adminLimiterIp(req);
+    if (ip && adminAuthFailLimiter.limited(ip)) {
       res.setHeader('Retry-After', String(adminAuthFailLimiter.retryAfterSec(ip)));
       return res.status(429).json({ error: '요청이 너무 많아요. 잠시 후 다시 시도해주세요.' });
     }
     if (req.method !== 'GET' && !originAllowed(req)) return res.status(403).json({ error: '허용되지 않은 요청입니다.' });
     const session = await currentAdminSession(req);
-    if (!session) { adminAuthFailLimiter.hit(ip); return res.status(401).json({ error: '운영자 인증이 필요합니다.' }); }
+    if (!session) { if (ip) adminAuthFailLimiter.hit(ip); return res.status(401).json({ error: '운영자 인증이 필요합니다.' }); }
     req.adminSession = session;
     next();
   });
@@ -516,20 +520,21 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     if (!originAllowed(req)) return res.status(403).json({ error: '허용되지 않은 요청입니다.' });
     const fingerprint = adminTokenFingerprint();
     if (!fingerprint) return res.status(503).json({ error: '운영자 인증이 설정되지 않았습니다.' });
-    const ip = clientIp(req);
-    if (adminLoginIpLimiter.limited(ip) || adminLoginGlobalLimiter.limited('all')) {
-      res.setHeader('Retry-After', String(Math.max(adminLoginIpLimiter.retryAfterSec(ip), adminLoginGlobalLimiter.retryAfterSec('all'))));
+    const ip = adminLimiterIp(req);
+    if ((ip && adminLoginIpLimiter.limited(ip)) || adminLoginGlobalLimiter.limited('all')) {
+      res.setHeader('Retry-After', String(Math.max(ip ? adminLoginIpLimiter.retryAfterSec(ip) : 0, adminLoginGlobalLimiter.retryAfterSec('all'))));
       return res.status(429).json({ error: '로그인 시도가 너무 많아요. 잠시 후 다시 시도해주세요.' });
     }
     const supplied = typeof req.body?.token === 'string' ? req.body.token : '';
     const ok = supplied.length > 0 && safeEqualHex(sha256Hex(supplied), sha256Hex(process.env.ADMIN_TOKEN));
     if (!ok) {
-      adminLoginIpLimiter.hit(ip); adminLoginGlobalLimiter.hit('all');
+      if (ip) adminLoginIpLimiter.hit(ip);
+      adminLoginGlobalLimiter.hit('all');
       console.warn('[ADMIN] 로그인 실패');
       await new Promise((r) => setTimeout(r, 300));
       return res.status(401).json({ error: '인증에 실패했습니다.' });
     }
-    adminLoginIpLimiter.reset(ip);
+    if (ip) adminLoginIpLimiter.reset(ip);
     const hours = adminSessionHours(req.body);
     const sid = randomToken(32);
     await pool.query(
