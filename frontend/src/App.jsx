@@ -21,6 +21,7 @@ import { stripStrayMarkdown } from './markdownStrip.js'
 import { cleanGunghabText, nameLabel, isDefaultName } from './gunghabText.js'
 import { isRealBirthDate, showBadDate, BAD_DATE_MESSAGE } from './birthDate.js'
 import { splitBirthtime } from './paymentReturn.js'
+import { analyzeHttpErrorMessage } from './analyzeError.js'
 import { isAdminEntry } from './adminLink.js'
 import { emailPrefillFor, prefillSignature } from './emailPrefill.js'
 import { rememberOrder as rememberStoredOrder, recallOrder as recallStoredOrder, markOrderPaid, forgetOrder, listRecoverable, recoveryOrder, paidResultActive, RESULT_SCREENS } from './orderRecovery.js'
@@ -792,7 +793,7 @@ export default function App() {
   async function streamAnalyze({ body, onSaju, onGunghabSaju, onBaseText, onPaidText, onDone, onError, onActionsFailed }) {
     const ctrl = new AbortController(); abortRef.current = ctrl
     const res = await fetch(`${API_URL}/api/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal })
-    if (!res.ok) { onError?.(`서버 오류가 발생했습니다 (${res.status})`); return }
+    if (!res.ok) { onError?.(analyzeHttpErrorMessage(res.status, res.status === 429 ? (await readJson(res)).error : '')); return }
     const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = ''; let gotDone = false
     while (true) {
       const { done, value } = await reader.read(); if (done) break
