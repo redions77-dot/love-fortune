@@ -9,6 +9,8 @@ const fs = require('fs');
 const http = require('http');
 const https = require('https');
 const { normalizeRelation } = require('./relations');
+const { SUCCESS_CHILD, SUCCESS_CONSENT_VERSION, isProductOrderable } = require('./successChild');
+const { renderSuccessChildMail, reportFromEvents } = require('./successChildReport');
 
 // 가격·상품명은 서버에서만 정한다. (쿠폰 할인은 운영에 아직 없으므로 적용하지 않는다)
 const PRODUCTS = Object.freeze({
@@ -19,10 +21,23 @@ const PRODUCTS = Object.freeze({
   gunghab:    { amount: 1990,  name: '마이사주 궁합 분석',          kind: 'gunghab',   analysisType: '궁합',     prefix: 'gunghab', autoEmail: false, resultType: 'gunghab' },
   gilil:      { amount: 9900,  name: '마이사주 길일 추천',          kind: 'gilil',                               prefix: 'gilil' },
   baeknyeon:  { amount: 99000, name: '마이사주 100년 사주 인생 꿀팁', kind: 'baeknyeon', analysisType: '100년꿀팁', prefix: 'baek',    autoEmail: false, resultType: '100년꿀팁' },
+  // 우리 아이 성공사주 — 가격·이름은 successChild.js 한 곳에서 정한다. SUCCESS_CHILD_ENABLED=1 이 아니면 주문을 받지 않는다(isProductOrderable).
+  success_child: { amount: SUCCESS_CHILD.amount, name: SUCCESS_CHILD.name, kind: 'personal', analysisType: SUCCESS_CHILD.analysisType, prefix: 'success', autoEmail: true, resultType: 'success_child', emailLabel: '🌟 ' + SUCCESS_CHILD.reportName },
 });
 
+// 무료 체험 코드: 12자, 헷갈리는 글자(0·O·1·I) 제외, 표시는 MS-XXXX-XXXX-XXXX. 사용자가 접두어·하이픈·공백 없이 입력해도 같은 코드로 본다.
+const TRIAL_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const TRIAL_CODE_LEN = 12;
+const TRIAL_PREFIX = 'MS';
+function normalizeTrialCode(value) {
+  let s = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (s.length === TRIAL_CODE_LEN + TRIAL_PREFIX.length && s.startsWith(TRIAL_PREFIX)) s = s.slice(TRIAL_PREFIX.length);
+  return s.length === TRIAL_CODE_LEN && [...s].every((c) => TRIAL_ALPHABET.includes(c)) ? s : '';
+}
+
 // 주문 없이 /api/analyze로 요청하면 거부할 유료 전용 분석 유형
-const PAID_ONLY_ANALYSIS_TYPES = new Set(['궁합', '100년꿀팁', '심화', '길일']);
+const PAID_ONLY_ANALYSIS_TYPES = new Set(['궁합', '100년꿀팁', '심화', '길일', SUCCESS_CHILD.analysisType]);
+
 
 const GILIL_PURPOSES = ['이사', '계약', '개업', '결혼', '수술', '시험'];
 const JOB_TRUNCATED = 'truncated';          // done 이지만 max_tokens 로 잘린 결과 (analysis_jobs.last_error)
@@ -177,6 +192,12 @@ function buildOrderMail(order, events, variant) {
   const product = PRODUCTS[order.product];
   const input = order.input || {};
   const { base, paid, all } = textsFromEvents(events);
+  if (order.product === SUCCESS_CHILD.key) {
+    // 우리 아이 성공운명서: 결과 모델(success_report)로 결과지 디자인 그대로 메일을 만든다. 모델이 없으면 기존 표준 양식으로 보낸다.
+    const report = reportFromEvents(events);
+    const name = input.userName || '';
+    if (report) return { subject: name ? `${product.emailLabel} - ${name}님의 결과` : `${product.emailLabel}가 도착했습니다`, html: renderSuccessChildMail(report), resultText: all, userName: name };
+  }
   if (product.kind === 'personal' && product.analysisType !== '심화') {
     const name = input.userName || '';
     const resultText = base + '\n' + paid;
@@ -229,7 +250,15 @@ function createMailer() {
 }
 
 // ── 포트원(아임포트 v1) 결제 조회 ───────────────────────
+// 테스트 거래(include_sandbox) 조회 허용 여부. 운영에서는 항상 false.
+function sandboxLookupEnabled() {
+  return process.env.PORTONE_INCLUDE_SANDBOX === 'true' && process.env.MYSAJU_TEST_ENV === '1' && process.env.NODE_ENV !== 'production';
+}
 function createPortoneClient() {
+  if (process.env.PORTONE_INCLUDE_SANDBOX === 'true') {
+    if (sandboxLookupEnabled()) console.warn('[PAY] 테스트 거래 조회 모드(include_sandbox) 켜짐 — 테스트 환경 전용');
+    else console.warn('[PAY] PORTONE_INCLUDE_SANDBOX 는 테스트 환경(MYSAJU_TEST_ENV=1, NODE_ENV≠production)에서만 적용됩니다. 무시합니다.');
+  }
   let cached = null; // { token, expiresAt }
   const base = () => (process.env.PORTONE_API_BASE || 'https://api.iamport.kr').replace(/\/$/, '');
   const fail = (code) => Object.assign(new Error(code), { code });
@@ -246,7 +275,12 @@ function createPortoneClient() {
     return token;
   }
 
-  async function getJson(path) {
+  // 테스트 채널(sandbox) 거래 조회: 기본은 꺼짐. 테스트 환경 표시(MYSAJU_TEST_ENV=1)가 있고 NODE_ENV 가 production 이 아닐 때만 켜진다.
+  // 운영 서버는 이 변수들을 설정하지 않으므로 조회 주소가 종전과 같다. (포트원 V1 조회 API 의 include_sandbox 파라미터)
+  const sandboxQuery = (path) => (sandboxLookupEnabled() ? path + (path.includes('?') ? '&' : '?') + 'include_sandbox=true' : path);
+
+  async function getJson(rawPath) {
+    const path = sandboxQuery(rawPath);
     const token = await accessToken();
     const { status, json } = await httpJson(`${base()}${path}`, { headers: { Authorization: token } });
     if (status === 401) { cached = null; throw fail('portone_auth_failed'); }
@@ -260,7 +294,7 @@ function createPortoneClient() {
   // 200 이지만 code≠0 이거나 본문이 비어 있는 등 불명확한 응답은 "없음"으로 단정하지 않고 예외로 돌려 삭제를 보류하게 한다.
   async function findPaidStrict(merchantUid) {
     const token = await accessToken();
-    const { status, json } = await httpJson(`${base()}/payments/find/${encodeURIComponent(merchantUid)}/paid`, { headers: { Authorization: token } });
+    const { status, json } = await httpJson(`${base()}${sandboxQuery(`/payments/find/${encodeURIComponent(merchantUid)}/paid`)}`, { headers: { Authorization: token } });
     if (status === 401) { cached = null; throw fail('portone_auth_failed'); }
     if (status === 404) { if (json && json.code === -1 && !json.response) return { found: false }; throw fail('portone_ambiguous'); }
     if (status !== 200 || !json) throw fail('portone_unavailable');
@@ -268,8 +302,19 @@ function createPortoneClient() {
     throw fail('portone_ambiguous');
   }
 
+  // 결제 전액 취소(환불). 금액은 호출한 쪽이 서버 주문 기록에서 읽어 넘긴다. 취소됨(cancelled)으로 확인될 때만 성공이다.
+  async function cancelPayment({ impUid, merchantUid, amount, reason }) {
+    const token = await accessToken();
+    const { status, json } = await httpJson(`${base()}/payments/cancel`, { method: 'POST', headers: { Authorization: token }, body: { imp_uid: impUid, merchant_uid: merchantUid, amount, checksum: amount, reason } });
+    if (status === 401) { cached = null; throw fail('portone_auth_failed'); }
+    if (status !== 200 || !json) throw fail('portone_unavailable');
+    if (json.code !== 0 || !json.response || json.response.status !== 'cancelled') throw fail('portone_cancel_rejected');
+    return json.response;
+  }
+
   return {
     findPaidStrict,
+    cancelPayment,
     // 결제 건이 없으면 null, 조회 자체가 실패하면 예외(재시도 가능)
     getPayment: (impUid) => getJson(`/payments/${encodeURIComponent(impUid)}`),
     // 주문번호(merchant_uid)로 결제 완료 건 조회 — 고객이 결제 직후 창을 닫은 경우 운영자가 확인할 때 사용
@@ -350,6 +395,22 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       created_at TIMESTAMP DEFAULT NOW()
     );
     ALTER TABLE results ADD COLUMN IF NOT EXISTS order_id TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_status TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_reason TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_started_at TIMESTAMPTZ;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMPTZ;
+    ALTER TABLE analysis_jobs ADD COLUMN IF NOT EXISTS notice_sent_at TIMESTAMPTZ;
+    -- 무료 체험 일회용 코드. 코드 원문은 저장하지 않고 해시만 둔다. used_at 이 채워지면 다시 쓸 수 없고, 이메일 해시는 한 번만 허용한다.
+    CREATE TABLE IF NOT EXISTS trial_codes (
+      code_hash TEXT PRIMARY KEY,
+      label TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ,
+      used_at TIMESTAMPTZ,
+      order_id TEXT UNIQUE,
+      email_hash TEXT
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_trial_codes_email ON trial_codes(email_hash) WHERE email_hash IS NOT NULL;
   `).then(() => console.log('[DB] orders / analysis_jobs / admin_sessions 테이블 준비 완료'));
   let schemaPromise = null;
   const ensureSchema = () => {
@@ -622,21 +683,35 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     const productKey = typeof req.body?.product === 'string' ? req.body.product : '';
     const product = PRODUCTS[productKey];
     if (!product) return res.status(400).json({ error: '지원하지 않는 상품입니다.' });
+    if (!isProductOrderable(productKey)) return res.status(400).json({ error: '지원하지 않는 상품입니다.' });   // 출시 전 상품은 존재 자체를 알리지 않는다
     const email = req.body?.email ? String(req.body.email).trim() : '';
     if (email && !isValidEmail(email)) return res.status(400).json({ error: '이메일 주소를 확인해주세요.' });
+    // 우리 아이 성공사주 일반 구매: 결과를 받을 이메일과 결제 전 안내 확인이 필요하다(운영자 무료 주문은 제외).
+    const isSuccessSale = productKey === SUCCESS_CHILD.key && !comp;
+    if (isSuccessSale && !email) return res.status(400).json({ error: '결과를 받을 이메일 주소를 입력해주세요.', code: 'email_required' });
+    if (isSuccessSale && req.body?.consent !== true) return res.status(400).json({ error: '결제 전 안내를 확인하고 체크해주세요.', code: 'consent_required' });
     const built = await buildOrderInput(productKey, req.body?.input);
     if (built.error) return res.status(400).json({ error: built.error });
+    if (isSuccessSale) built.input.consent = { at: new Date().toISOString(), version: SUCCESS_CONSENT_VERSION };   // 어떤 안내를 확인하고 결제했는지 남긴다
+    if (productKey === SUCCESS_CHILD.key) {
+      // 대운 방향(성별)과 계산 가능한 생년월일은 결제 전에 확인한다. 결제 뒤에 계산이 실패하는 주문을 만들지 않는다.
+      if (built.input.gender !== '남성' && built.input.gender !== '여성') return res.status(400).json({ error: '성별을 선택해주세요.' });
+      const by = Number(String(built.input.birthdate).slice(0, 4));
+      if (!(by >= 1920 && by <= new Date().getFullYear())) return res.status(400).json({ error: '생년월일을 확인해주세요.' });
+    }
+
+    const amount = product.amount;   // 주문 금액은 항상 서버가 정한 판매가다(클라이언트가 보낸 금액·코드는 쓰지 않는다)
 
     const orderId = `${product.prefix}_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
     const orderToken = randomToken(32);
     await pool.query(
       `INSERT INTO orders (id, product, amount, token_hash, input, email, status, is_comp, paid_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [orderId, productKey, product.amount, sha256Hex(orderToken), JSON.stringify(built.input), email || null,
+      [orderId, productKey, amount, sha256Hex(orderToken), JSON.stringify(built.input), email || null,
         comp ? 'paid' : 'pending', !!comp, comp ? new Date() : null]
     );
     if (comp) console.log(`[ADMIN] 결제 없는 운영자 주문 생성 order=${orderId} product=${productKey}`);
-    res.status(201).json({ orderId, orderToken, product: productKey, amount: product.amount, name: product.name, status: comp ? 'paid' : 'pending' });
+    res.status(201).json({ orderId, orderToken, product: productKey, amount, name: product.name, status: comp ? 'paid' : 'pending' });
   }
 
   app.post('/api/orders', withSchema(async (req, res) => {
@@ -718,8 +793,131 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       throw e;
     }
     console.log(`[PAY] 결제 확인 완료 order=${order.id} product=${order.product}`);
+    if (order.product === SUCCESS_CHILD.key) await kickoffSuccessJob(order.id);   // 고객이 결제 직후 창을 닫아도 결과 생성과 이메일 발송이 진행되게 한다
     return { status: 200, body: { status: 'paid' } };
   }
+
+  // 우리 아이 성공사주: 결제가 확인되면 서버가 바로 결과 생성을 시작한다. 이미 만들어졌거나 만드는 중이면 아무것도 하지 않는다. 화면이 열려 있으면 같은 작업에 이어 붙는다.
+  // 실패해도 결제 확인 결과에는 영향이 없다(고객이 결과를 열면 기존 경로가 다시 시도한다).
+  async function kickoffSuccessJob(orderId) {
+    try {
+      if (liveJobs.has(orderId)) return;
+      const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+      const order = rows[0];
+      if (!order || order.product !== SUCCESS_CHILD.key || order.status !== 'paid' || !order.email || order.refund_status === 'done') return;
+      if (await claimJob(order.id)) startJob(order);
+    } catch (e) {
+      console.error(`[JOB] 서버 시작 실패 order=${orderId}`, e.code || e.message);
+    }
+  }
+
+  // ── 무료 체험(일회용 코드) ──
+  // 운영자가 코드를 발급하고(/api/admin/trial-codes), 체험자는 결제 화면에서 그 코드를 입력한다. 유효하면 결제 없이(0원) 유료와 같은 전체 결과지를 받는다.
+  // 코드는 원문을 저장하지 않고 해시만 둔다. 한 번 쓰면 다시 쓸 수 없고, 같은 이메일로는 한 번만 받을 수 있다. 할인코드·쿠폰 같은 금액 할인 기능은 없다.
+  const trialFailLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 10 });
+  const TRIAL_INVALID = '사용할 수 없는 코드예요. 코드를 다시 확인해 주세요. 이미 사용했거나 기간이 지난 코드라면 운영자에게 문의해 주세요.';
+  const trialHash = (raw) => sha256Hex('trial:' + raw);
+  const formatTrialCode = (raw) => TRIAL_PREFIX + '-' + raw.match(/.{4}/g).join('-');
+  const randomCodeBody = () => Array.from({ length: TRIAL_CODE_LEN }, () => TRIAL_ALPHABET[crypto.randomInt(TRIAL_ALPHABET.length)]).join('');
+  const trialChecksOut = (res, ip) => {
+    if (trialFailLimiter.limited(ip)) { res.status(429).json({ error: '요청이 너무 많아요. 잠시 후 다시 시도해주세요.' }); return false; }
+    return true;
+  };
+
+  // 화면에서 "코드가 맞는지, 최종 금액이 0원인지"를 보여 주기 위한 확인(코드를 사용 처리하지 않는다). 출시 전(스위치 꺼짐)에는 항상 '사용할 수 없음'.
+  app.post('/api/trial/check', withSchema(async (req, res) => {
+    const ip = clientIp(req);
+    if (!trialChecksOut(res, ip)) return;
+    const code = normalizeTrialCode(req.body?.code);
+    if (!isProductOrderable(SUCCESS_CHILD.key) || !code) { trialFailLimiter.hit(ip); return res.status(400).json({ error: TRIAL_INVALID, code: 'trial_invalid' }); }
+    const { rows } = await pool.query('SELECT 1 FROM trial_codes WHERE code_hash = $1 AND used_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())', [trialHash(code)]);
+    if (!rows[0]) { trialFailLimiter.hit(ip); return res.status(400).json({ error: TRIAL_INVALID, code: 'trial_invalid' }); }
+    res.json({ valid: true, amount: 0, listAmount: PRODUCTS[SUCCESS_CHILD.key].amount });
+  }));
+
+  // 코드 사용 + 무료 주문 생성은 한 트랜잭션이다. 서버가 코드를 다시 검증하므로 화면에서 보낸 금액이나 표시는 믿지 않는다.
+  app.post('/api/trial/redeem', withSchema(async (req, res) => {
+    const ip = clientIp(req);
+    if (!trialChecksOut(res, ip)) return;
+    if (!isProductOrderable(SUCCESS_CHILD.key)) return res.status(400).json({ error: '지원하지 않는 상품입니다.' });
+    const email = req.body?.email ? String(req.body.email).trim() : '';
+    if (!isValidEmail(email)) return res.status(400).json({ error: '결과를 받을 이메일 주소를 입력해주세요.', code: 'email_required' });
+    if (req.body?.consent !== true) return res.status(400).json({ error: '안내를 확인하고 체크해주세요.', code: 'consent_required' });
+    const built = await buildOrderInput(SUCCESS_CHILD.key, req.body?.input);
+    if (built.error) return res.status(400).json({ error: built.error });
+    if (built.input.gender !== '남성' && built.input.gender !== '여성') return res.status(400).json({ error: '성별을 선택해주세요.' });
+    const by = Number(String(built.input.birthdate).slice(0, 4));
+    if (!(by >= 1920 && by <= new Date().getFullYear())) return res.status(400).json({ error: '생년월일을 확인해주세요.' });
+    const code = normalizeTrialCode(req.body?.code);
+    if (!code) { trialFailLimiter.hit(ip); return res.status(400).json({ error: TRIAL_INVALID, code: 'trial_invalid' }); }
+    built.input.consent = { at: new Date().toISOString(), version: SUCCESS_CONSENT_VERSION };
+    built.input.trial = true;   // 무료 체험 주문 표시(후기의 "무료 체험" 표시와 관리자 확인에 쓴다)
+    const product = PRODUCTS[SUCCESS_CHILD.key];
+    const orderId = `${product.prefix}_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+    const orderToken = randomToken(32);
+    const client = await pool.connect();
+    let done = false;
+    try {
+      await client.query('BEGIN');
+      const claim = await client.query(
+        `UPDATE trial_codes SET used_at = NOW(), email_hash = $2
+         WHERE code_hash = $1 AND used_at IS NULL AND (expires_at IS NULL OR expires_at > NOW()) RETURNING code_hash`,
+        [trialHash(code), sha256Hex(email.toLowerCase())]);
+      if (claim.rowCount !== 1) { await client.query('ROLLBACK'); trialFailLimiter.hit(ip); return res.status(400).json({ error: TRIAL_INVALID, code: 'trial_invalid' }); }
+      await client.query(
+        `INSERT INTO orders (id, product, amount, token_hash, input, email, status, is_comp, paid_at)
+         VALUES ($1, $2, 0, $3, $4, $5, 'paid', TRUE, NOW())`,
+        [orderId, SUCCESS_CHILD.key, sha256Hex(orderToken), JSON.stringify(built.input), email]);
+      await client.query('UPDATE trial_codes SET order_id = $2 WHERE code_hash = $1', [trialHash(code), orderId]);
+      await client.query('COMMIT');
+      done = true;
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
+      if (e.code === '23505') return res.status(409).json({ error: '이 이메일로는 이미 무료 체험을 이용했어요.', code: 'trial_email_used' });
+      throw e;
+    } finally {
+      client.release();
+    }
+    if (done) {
+      console.log(`[TRIAL] 무료 체험 주문 생성 order=${orderId}`);
+      await kickoffSuccessJob(orderId);   // 화면을 닫아도 서버가 결과 생성과 이메일 발송을 이어간다(유료 주문과 같은 경로)
+      res.status(201).json({ orderId, orderToken, product: SUCCESS_CHILD.key, amount: 0, name: product.name, status: 'paid', trial: true });
+    }
+  }));
+
+  // 운영자: 코드 발급(원문은 이 응답에서 한 번만 보여 주고 서버에는 해시만 남긴다) / 현황 / 목록(코드 원문 없음)
+  const TRIAL_STATUS_SQL = `CASE WHEN used_at IS NOT NULL THEN 'used' WHEN expires_at IS NOT NULL AND expires_at < NOW() THEN 'expired' ELSE 'unused' END`;
+  app.post('/api/admin/trial-codes', requireAdmin, withSchema(async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const count = Math.floor(Number(req.body?.count));
+    if (!Number.isFinite(count) || count < 1 || count > 100) return res.status(400).json({ error: '발급 수는 1~100 사이로 입력해주세요.' });
+    const label = str(req.body?.label, 40);
+    const days = req.body?.expiresDays === undefined ? 30 : Math.floor(Number(req.body.expiresDays));
+    if (!Number.isFinite(days) || days < 1 || days > 180) return res.status(400).json({ error: '유효 기간은 1~180일 사이로 입력해주세요.' });
+    const codes = [];
+    while (codes.length < count) {
+      const raw = randomCodeBody();
+      const ins = await pool.query(`INSERT INTO trial_codes (code_hash, label, expires_at) VALUES ($1, $2, NOW() + make_interval(days => $3)) ON CONFLICT (code_hash) DO NOTHING`, [trialHash(raw), label, days]);
+      if (ins.rowCount === 1) codes.push(formatTrialCode(raw));
+    }
+    console.log(`[ADMIN] 무료 체험 코드 발급 count=${count} label=${label}`);
+    res.status(201).json({ success: true, codes, expiresDays: days, label });
+  }));
+  app.post('/api/admin/trial-codes/summary', requireAdmin, withSchema(async (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const { rows } = await pool.query(`SELECT label, ${TRIAL_STATUS_SQL} AS status, COUNT(*)::int AS n FROM trial_codes GROUP BY label, status ORDER BY label`);
+    const groups = {};
+    for (const r of rows) { const g = (groups[r.label] = groups[r.label] || { label: r.label, issued: 0, used: 0, expired: 0, unused: 0 }); g.issued += r.n; g[r.status] += r.n; }
+    res.json({ success: true, groups: Object.values(groups) });
+  }));
+  app.post('/api/admin/trial-codes/list', requireAdmin, withSchema(async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const label = typeof req.body?.label === 'string' ? req.body.label.trim().slice(0, 40) : null;
+    const { rows } = await pool.query(
+      `SELECT LEFT(code_hash, 8) AS id, label, ${TRIAL_STATUS_SQL} AS status, created_at, expires_at, used_at, order_id
+       FROM trial_codes WHERE ($1::text IS NULL OR label = $1) ORDER BY created_at, code_hash LIMIT 500`, [label]);
+    res.json({ success: true, codes: rows.map((r) => ({ id: r.id, label: r.label, status: r.status, createdAt: r.created_at, expiresAt: r.expires_at, usedAt: r.used_at, orderId: r.order_id })) });
+  }));
 
   // ── 생성 작업 (중복 실행 방지) ──
   async function claimJob(orderId, { force = false, fromTruncated = false } = {}) {
@@ -812,6 +1010,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       liveJobs.delete(order.id);
       console.log(`[JOB] order=${order.id} product=${order.product} result=${ok ? 'done' : 'failed'}`);
       if (ok) await afterJobDone(order, live.events, { emailAfter, emailVariant, truncated: sink.sawTruncated });
+      else if (order.product === SUCCESS_CHILD.key) await noticeFailure(order).catch((e) => console.error('[OPS] 실패 안내 처리 오류:', e.message));
     })();
     return live;
   }
@@ -824,6 +1023,10 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       const { rows } = await pool.query('SELECT email FROM orders WHERE id = $1', [order.id]);
       const email = rows[0]?.email;
       if (!email) return;
+      if (order.product === SUCCESS_CHILD.key) {   // 환불이 끝난 주문에는 결과를 보내지 않는다
+        const refunded = await pool.query('SELECT refund_status FROM orders WHERE id = $1', [order.id]);
+        if (refunded.rows[0]?.refund_status === 'done') return;
+      }
       const mail = buildOrderMail(order, events, emailVariant);
       await saveResultRow(order, email, mail);
       if (emailAfter) {
@@ -866,6 +1069,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     const { order, error } = await authorizeOrder(req);
     if (!order) return orderAuthError(res, error);
     if (order.status !== 'paid') return res.status(402).json({ error: '결제 확인이 필요해요.', code: 'payment_required' });
+    if (order.refund_status === 'done') return res.status(410).json({ error: '환불이 완료된 주문입니다.', code: 'refunded' });
     const product = PRODUCTS[order.product];
     if (product.kind === 'gilil') return res.json({ success: true, data: computeGilil(order.input.purpose) });
 
@@ -1120,7 +1324,150 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     return true;
   }
 
-  return { PAID_ONLY_ANALYSIS_TYPES, rejectPaidWithoutOrder, createFreeTee, allowFreeAnalyze, analysisBodyFor, reconcileExpiredPending };
+  // ── 우리 아이 성공사주: 결제 후 생성 실패 안내 · 자동 재생성 · 환불 ──
+  // 원칙: 검사를 통과하지 못한 글은 고객에게 보내지 않는다. 고객은 "결제했는데 아무 일도 없는" 상태를 겪지 않는다.
+  //  1) 생성이 실패하면 고객에게 한 번 안내 메일을 보낸다(결제 접수·재작성 중·환불 방법).
+  //  2) 서버가 일정 간격으로 다시 생성한다(주문당 claim 총 MAX_JOB_ATTEMPTS 회, 즉 자동 재시도 최대 2회). 비용 상한: 주문당 전체 생성 최대 9회.
+  //  3) 모두 실패하면 운영자에게 알린다(주문번호만, ADMIN_ALERT_EMAIL 이 있을 때 메일, 항상 로그).
+  //  4) 고객은 생성에 성공하기 전에는 언제든 전액 환불을 요청할 수 있다. SUCCESS_AUTO_REFUND_HOURS 가 켜져 있으면 그 시간이 지나도 전달하지 못한 주문은 자동 전액 환불한다(기본 꺼짐).
+  // 환불은 포트원 취소 API 만 쓰고, 금액은 서버 주문 기록(paid_amount)에서 읽는다. 결제사에 이미 취소된 건은 다시 취소하지 않는다.
+  const OPS_RETRY_AFTER_MIN = 10;
+  const OPS_SWEEP_MS = 5 * 60 * 1000;
+  const REFUND_STALE_MIN = 10;
+  const autoRefundHours = () => { const h = Number(process.env.SUCCESS_AUTO_REFUND_HOURS); return Number.isFinite(h) && h > 0 ? h : 0; };
+  const alerted = new Set();
+
+  const opsMailShell = (title, bodyHtml) => `<div style="font-family:'Malgun Gothic',sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#2a2a2a;line-height:1.75"><h2 style="font-size:18px;margin:0 0 14px">${title}</h2>${bodyHtml}<p style="color:#888;font-size:12px;margin-top:22px">문의: 이메일 redions77@naver.com · 카카오톡 오픈채팅 open.kakao.com/me/mysajushop (환불정책과 같은 연락처)</p></div>`;
+  const failureNoticeMail = (order) => ({
+    subject: `[마이사주] ${SUCCESS_CHILD.reportName}를 아직 준비 중입니다`,
+    html: opsMailShell('결과지를 아직 완성하지 못했습니다',
+      `<p>${order.is_comp ? '무료 체험 신청은 정상 접수되었습니다.' : '결제는 정상 접수되었습니다.'} 결과지를 작성하는 과정에서 품질 검사를 통과하지 못해, 다시 작성하고 있습니다.</p>
+       <p><b>24시간 안에 이 이메일 주소로 보내 드립니다.</b> 입력하신 정보를 다시 쓰실 필요는 없습니다.</p>
+       ${order.is_comp ? '<p>기다리는 동안 궁금한 점은 아래 문의처로 연락해 주세요.</p>' : '<p>기다리지 않고 환불을 원하시면, 결제하신 화면의 <b>전액 환불 요청</b> 버튼을 누르시거나 아래 문의처로 연락해 주세요. 결과지를 받기 전에는 전액 환불해 드립니다.</p>'}
+       <p style="color:#666;font-size:13px">주문번호 ${order.id}</p>`),
+  });
+  const refundDoneMail = (order) => ({
+    subject: `[마이사주] ${SUCCESS_CHILD.reportName} 결제가 취소(전액 환불)되었습니다`,
+    html: opsMailShell('결제가 취소되었습니다',
+      `<p>${SUCCESS_CHILD.reportName} 결제 ${Number(order.paid_amount).toLocaleString('ko-KR')}원이 전액 취소되었습니다. 결과지를 완성해 드리지 못해 죄송합니다.</p>
+       <p>카드사에 따라 취소 내역이 확인되기까지 며칠 걸릴 수 있습니다.</p>
+       <p style="color:#666;font-size:13px">주문번호 ${order.id}</p>`),
+  });
+  async function sendOpsMail(to, mail) {
+    try { await mailer.send({ to, subject: mail.subject, html: mail.html }); return true; }
+    catch (e) { console.error('[OPS] 안내 메일 발송 실패:', e.message); return false; }
+  }
+
+  // 생성 실패 안내(주문당 1번). 먼저 표시를 남겨 중복 발송을 막고, 발송에 실패하면 표시를 되돌려 다음 점검에서 다시 보낸다.
+  async function noticeFailure(order) {
+    if (!order?.email) return false;
+    const claim = await pool.query(`UPDATE analysis_jobs SET notice_sent_at = NOW() WHERE order_id = $1 AND status = 'failed' AND notice_sent_at IS NULL RETURNING order_id`, [order.id]);
+    if (!claim.rows[0]) return false;
+    const ok = await sendOpsMail(order.email, failureNoticeMail(order));
+    if (!ok) await pool.query(`UPDATE analysis_jobs SET notice_sent_at = NULL WHERE order_id = $1`, [order.id]).catch(() => {});
+    return ok;
+  }
+
+  // 전액 환불. 같은 주문을 동시에 두 번 처리하지 않도록 DB 에서 먼저 선점한다(중간에 멈춘 건은 REFUND_STALE_MIN 분 뒤 다시 시도, 결제사에서 이미 취소된 건은 취소를 반복하지 않고 기록만 맞춘다).
+  async function refundSuccessOrder(orderId, { reason = 'customer_request', allowDelivered = false } = {}) {
+    const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+    const order = rows[0];
+    if (!order || order.product !== SUCCESS_CHILD.key) return { ok: false, status: 404, code: 'not_found' };
+    if (order.status !== 'paid' || order.is_comp) return { ok: false, status: 409, code: 'not_refundable' };
+    if (order.refund_status === 'done') return { ok: true, already: true, status: 200 };
+    if (!order.imp_uid || !(Number(order.paid_amount) > 0)) return { ok: false, status: 409, code: 'no_payment' };
+    const job = await getJob(order.id);
+    if (!allowDelivered && job?.status === 'done' && job.last_error !== JOB_TRUNCATED) return { ok: false, status: 409, code: 'already_delivered' };
+    if (!allowDelivered && (liveJobs.has(order.id) || (job?.status === 'generating' && job.lease_until && new Date(job.lease_until) > new Date()))) return { ok: false, status: 409, code: 'generating' };
+    const claim = await pool.query(
+      `UPDATE orders SET refund_status = 'processing', refund_reason = $2, refund_started_at = NOW()
+       WHERE id = $1 AND (refund_status IS NULL OR refund_status = 'failed' OR (refund_status = 'processing' AND refund_started_at < NOW() - make_interval(mins => $3)))
+       RETURNING id`, [order.id, String(reason).slice(0, 60), REFUND_STALE_MIN]);
+    if (!claim.rows[0]) return { ok: false, status: 409, code: 'refund_in_progress' };
+    try {
+      const pay = await portone.getPayment(order.imp_uid);
+      if (!pay) throw Object.assign(new Error('payment_not_found'), { code: 'payment_not_found' });
+      if (pay.merchant_uid !== order.id || Number(pay.amount) !== Number(order.paid_amount)) throw Object.assign(new Error('payment_mismatch'), { code: 'payment_mismatch' });
+      if (pay.status !== 'cancelled') {
+        if (pay.status !== 'paid') throw Object.assign(new Error('payment_not_paid'), { code: 'payment_not_paid' });
+        await portone.cancelPayment({ impUid: order.imp_uid, merchantUid: order.id, amount: Number(order.paid_amount), reason: '결과지를 전달하지 못해 전액 환불' });
+      }
+      await pool.query(`UPDATE orders SET refund_status = 'done', refunded_at = NOW() WHERE id = $1`, [order.id]);
+      console.log(`[OPS] 전액 환불 완료 order=${order.id} reason=${reason}`);
+      if (order.email) await sendOpsMail(order.email, refundDoneMail(order));
+      return { ok: true, status: 200 };
+    } catch (e) {
+      await pool.query(`UPDATE orders SET refund_status = 'failed' WHERE id = $1`, [order.id]).catch(() => {});
+      console.error(`[OPS] 환불 실패 order=${order.id} code=${e.code || e.message}`);
+      return { ok: false, status: 502, code: 'refund_failed' };
+    }
+  }
+  const REFUND_MESSAGES = {
+    not_found: ['주문 정보를 확인할 수 없어요.', 404],
+    not_refundable: ['환불할 수 없는 주문입니다.', 409],
+    no_payment: ['결제 내역을 확인할 수 없어요. 고객센터로 문의해 주세요.', 409],
+    already_delivered: ['결과지가 이미 전달되어 바로 환불할 수 없어요. 고객센터로 문의해 주세요.', 409],
+    generating: ['결과지를 작성하고 있어요. 잠시 뒤에 다시 시도해 주세요.', 409],
+    refund_in_progress: ['환불을 처리하고 있어요. 잠시 뒤에 확인해 주세요.', 409],
+    refund_failed: ['환불 처리에 실패했어요. 잠시 뒤에 다시 시도하거나 고객센터로 문의해 주세요.', 502],
+  };
+  const refundReply = (res, r) => r.ok
+    ? res.json({ status: 'refunded', already: !!r.already })
+    : res.status(REFUND_MESSAGES[r.code]?.[1] || 409).json({ error: REFUND_MESSAGES[r.code]?.[0] || '환불을 처리하지 못했어요.', code: r.code });
+
+  // 고객: 결과지를 받기 전이면 전액 환불 요청(주문 토큰으로 본인 확인)
+  app.post('/api/orders/:id/refund', withSchema(async (req, res) => {
+    const { order, error } = await authorizeOrder(req);
+    if (!order) return orderAuthError(res, error);
+    if (order.product !== SUCCESS_CHILD.key) return res.status(400).json({ error: '환불을 요청할 수 없는 상품입니다.' });
+    refundReply(res, await refundSuccessOrder(order.id, { reason: 'customer_request' }));
+  }));
+  // 운영자: 전달 여부와 관계없이 전액 환불(확인 표시 필요)
+  app.post('/api/admin/orders/:id/refund', requireAdmin, withSchema(async (req, res) => {
+    if (req.body?.confirm !== true) return res.status(400).json({ error: '환불하려면 확인 표시(confirm: true)가 필요해요.' });
+    const r = await refundSuccessOrder(String(req.params.id), { reason: 'admin', allowDelivered: true });
+    if (r.ok) console.log(`[ADMIN] 환불 order=${req.params.id}`);
+    refundReply(res, r);
+  }));
+
+  // 주기 점검: 실패 안내 메일 · 자동 재생성 · 운영자 알림 · (켜져 있을 때) 자동 환불. 서버 재시작 후에도 DB 상태만 보고 이어서 처리한다.
+  async function successOpsTick() {
+    const stats = { notices: 0, retries: 0, refunds: 0, alerts: 0 };
+    const { rows } = await pool.query(
+      `SELECT o.id, o.email, o.is_comp, o.paid_at, o.paid_amount, j.status AS job_status, j.attempts, j.updated_at AS job_updated_at, j.lease_until, j.notice_sent_at
+       FROM orders o LEFT JOIN analysis_jobs j ON j.order_id = o.id
+       WHERE o.product = $1 AND o.status = 'paid' AND o.email IS NOT NULL
+         AND (o.refund_status IS NULL OR o.refund_status IN ('failed', 'processing'))
+         AND (j.order_id IS NULL OR j.status <> 'done')
+       ORDER BY o.paid_at LIMIT 50`, [SUCCESS_CHILD.key]);
+    const now = Date.now();
+    for (const r of rows) {
+      if (liveJobs.has(r.id)) continue;
+      const paidMin = r.paid_at ? (now - new Date(r.paid_at).getTime()) / 60000 : 0;
+      const idleMin = r.job_updated_at ? (now - new Date(r.job_updated_at).getTime()) / 60000 : paidMin;
+      const leaseExpired = r.job_status === 'generating' && r.lease_until && new Date(r.lease_until).getTime() < now;
+      if (r.job_status === 'failed' && !r.notice_sent_at && await noticeFailure({ id: r.id, email: r.email, is_comp: r.is_comp })) stats.notices++;
+      const stuck = !r.job_status ? paidMin >= 3 : leaseExpired || (r.job_status === 'failed' && Number(r.attempts) < MAX_JOB_ATTEMPTS && idleMin >= OPS_RETRY_AFTER_MIN);
+      if (stuck) { await kickoffSuccessJob(r.id); stats.retries++; continue; }
+      if (r.job_status === 'failed' && Number(r.attempts) >= MAX_JOB_ATTEMPTS && !alerted.has(r.id)) {
+        alerted.add(r.id); stats.alerts++;
+        console.error(`[OPS] 자동 재생성을 모두 소진했습니다. 운영자 확인 필요 order=${r.id}`);
+        if (process.env.ADMIN_ALERT_EMAIL) await sendOpsMail(process.env.ADMIN_ALERT_EMAIL, { subject: '[마이사주] 성공사주 생성 실패 — 확인 필요', html: opsMailShell('생성 실패', `<p>자동 재생성을 모두 소진했습니다. 주문번호: ${r.id}</p>`) });
+      }
+      const hours = autoRefundHours();
+      if (hours && !r.is_comp && paidMin >= hours * 60 && r.job_status !== 'generating') {
+        const rr = await refundSuccessOrder(r.id, { reason: 'auto_timeout' });
+        if (rr.ok) stats.refunds++;
+      }
+    }
+    return stats;
+  }
+  if (process.env.SUCCESS_OPS_SWEEP !== '0') {
+    setTimeout(() => successOpsTick().catch((e) => console.error('[OPS] 점검 실패:', e.message)), 60 * 1000).unref?.();
+    setInterval(() => successOpsTick().catch((e) => console.error('[OPS] 점검 실패:', e.message)), OPS_SWEEP_MS).unref?.();
+  }
+
+  return { PAID_ONLY_ANALYSIS_TYPES, rejectPaidWithoutOrder, createFreeTee, allowFreeAnalyze, analysisBodyFor, reconcileExpiredPending, successOpsTick, refundSuccessOrder };
 }
 
-module.exports = { installSecureApi, createPortoneClient, adminSessionHours, ADMIN_SESSION_HOURS, ADMIN_REMEMBER_HOURS, PRODUCTS, PAID_ONLY_ANALYSIS_TYPES, parseSections, textsFromEvents, buildOrderMail, escapeHtml };
+module.exports = { sandboxLookupEnabled, installSecureApi, createPortoneClient, adminSessionHours, ADMIN_SESSION_HOURS, ADMIN_REMEMBER_HOURS, PRODUCTS, PAID_ONLY_ANALYSIS_TYPES, parseSections, textsFromEvents, buildOrderMail, escapeHtml };

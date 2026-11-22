@@ -43,6 +43,7 @@ test('Vercel 설정: 관리자 전용 경로가 앱으로 연결되고, 기존 a
   return cfg({ VERCEL_ENV: 'production' }).then((c) => {
     assert.deepStrictEqual(c.rewrites, [
       { source: '/admin-bomgyeol-2027', destination: '/index.html' },
+      { source: '/success-saju', destination: '/index.html' },   // 우리 아이 성공사주 판매 주소(숨김 출시, 홈 연결 없음)
       { source: '/api/admin/:path*', destination: 'https://love-fortune.onrender.com/api/admin/:path*' },
     ])
     assert.strictEqual(c.buildCommand, 'node node_modules/vite/bin/vite.js build')

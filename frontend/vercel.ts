@@ -31,6 +31,8 @@ export const config: VercelConfig = {
   rewrites: [
     // 관리자 전용 주소(즐겨찾기용)도 앱이 열리게 한다. 경로 자체는 비밀이 아니며 권한은 서버 세션에서만 나온다.
     routes.rewrite('/admin-bomgyeol-2027', '/index.html'),
+    // '우리 아이 성공사주' 판매 주소. 홈에는 연결하지 않고 이 주소로만 먼저 연다(숨김 출시).
+    routes.rewrite('/success-saju', '/index.html'),
     ...(target ? [routes.rewrite('/api/admin/:path*', `${target}/api/admin/:path*`)] : []),
   ],
 }

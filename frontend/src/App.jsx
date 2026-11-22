@@ -607,6 +607,8 @@ export default function App() {
     if (_mobilePayment === 'deep' && _impSuccess === 'true') return 'deep_result'
     if (_mobilePayment === 'gilil' && _impSuccess === 'true') return 'gilil_result'
     if (_mobilePayment === '백년' && _impSuccess === 'true') return '백년_result'
+    // 다른 판매 화면(/success-saju)의 푸터에서 기존 정책 화면을 주소로 바로 연다(?policy=terms|privacy|refund). 그 밖의 값은 무시한다.
+    if (['terms', 'privacy', 'refund'].includes(_qs.get('policy'))) return _qs.get('policy')
     return 'landing'
   })
   const [serviceType, setServiceType] = useState(() => {
@@ -2621,7 +2623,7 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
     <div style={{ maxWidth: 480, margin: '0 auto' }}>
       <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#633B50', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
       <h1 style={{ fontSize: 22, fontWeight: 800, color: '#24232B', marginBottom: 4 }}>환불정책</h1>
-      <p style={{ fontSize: 13, color: '#62616C', marginBottom: 32 }}>시행일: 2026년 6월 21일</p>
+      <p style={{ fontSize: 13, color: '#62616C', marginBottom: 32 }}>시행일: 2026년 11월 13일</p>
 
       <div style={{ background: '#F6F0F3', border: '1px solid #DEDFE5', borderRadius: 12, padding: '16px 18px', marginBottom: 28 }}>
         <p style={{ fontSize: 14, color: '#633B50', fontWeight: 700, marginBottom: 6 }}>⚠️ 구매 전 꼭 확인해주세요</p>
@@ -2640,10 +2642,11 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
         <p style={{ marginBottom: 8 }}>다음의 경우에 한해 환불 신청을 검토합니다.</p>
         <p style={{ marginBottom: 8 }}>① 결제는 완료되었으나 서비스 시스템 오류로 인해 콘텐츠가 전혀 생성·제공되지 않은 경우</p>
         <p style={{ marginBottom: 8 }}>② 동일한 정보로 중복 결제가 발생한 경우 (중복분에 한해 환불)</p>
-        <p style={{ marginBottom: 24 }}>③ 기타 회사의 귀책사유로 서비스 이용이 불가한 경우</p>
+        <p style={{ marginBottom: 8 }}>③ 기타 회사의 귀책사유로 서비스 이용이 불가한 경우</p>
+        <p style={{ marginBottom: 24 }}>④ 결과지가 결제 전 표시·광고된 내용과 다르게 제공된 경우 (「전자상거래법」 제17조 제3항에 따라 제공받은 날부터 3개월 이내, 그 사실을 안 날부터 30일 이내에 신청할 수 있습니다)</p>
 
         <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제4조 (환불 신청 방법)</p>
-        <p style={{ marginBottom: 8 }}>환불 신청은 결제일로부터 7일 이내에 아래 방법으로 요청하시기 바랍니다.</p>
+        <p style={{ marginBottom: 8 }}>환불 신청(제3조 ①~③)은 결제일로부터 7일 이내에, ④는 위 법정 기간 이내에 아래 방법으로 요청하시기 바랍니다.</p>
         <p style={{ marginBottom: 8 }}>· 카카오톡 오픈채팅: <span style={{ color: '#633B50' }}>open.kakao.com/me/mysajushop</span></p>
         <p style={{ marginBottom: 8 }}>· 이메일: <span style={{ color: '#633B50' }}>redions77@naver.com</span></p>
         <p style={{ marginBottom: 24 }}>· 요청 시 포함 사항: 결제일시, 결제금액, 환불 사유 및 증빙자료</p>
@@ -2705,22 +2708,33 @@ const 일주키 = 일주원문[0] + 일주원문[2]  // "辛" + "亥" = "辛亥"
       <div style={{ maxWidth: 480, margin: '0 auto' }}>
         <button onClick={() => setScreen('landing')} style={{ fontSize: 14, color: '#633B50', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 24, padding: 0 }}>← 돌아가기</button>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#24232B', marginBottom: 4 }}>개인정보처리방침</h1>
-        <p style={{ fontSize: 13, color: '#62616C', marginBottom: 32 }}>시행일: 2026년 6월 21일</p>
+        <p style={{ fontSize: 13, color: '#62616C', marginBottom: 32 }}>시행일: 2026년 11월 13일</p>
         <div style={{ fontSize: 14, color: '#24232B', lineHeight: 2.2 }}>
           <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제1조 (수집하는 개인정보)</p>
           <p style={{ marginBottom: 8 }}>회사는 서비스 제공을 위해 다음 정보를 수집합니다.</p>
           <p style={{ marginBottom: 8 }}>· 필수: 생년월일, 태어난 시간(선택), 성별</p>
-          <p style={{ marginBottom: 24 }}>· 선택: 이름, 이메일 주소, MBTI, 혈액형</p>
+          <p style={{ marginBottom: 8 }}>· 선택: 이름, 이메일 주소, MBTI, 혈액형</p>
+          <p style={{ marginBottom: 24 }}>· 「우리 아이 성공사주」 구매 시: 이메일 주소는 필수입니다(결과지 발송 및 재열람). 아이의 성별, 생년월일, 태어난 시간(선택), 이름(선택)은 보호자(법정대리인)가 대신 입력합니다.</p>
           <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제2조 (수집 목적)</p>
           <p style={{ marginBottom: 8 }}>· 사주 분석 콘텐츠 생성 및 제공</p>
           <p style={{ marginBottom: 8 }}>· 이메일 입력 시: 분석 결과 발송 및 재열람 서비스 제공</p>
           <p style={{ marginBottom: 24 }}>· 결제 처리 (KG이니시스를 통해 처리되며, 카드 정보는 회사가 저장하지 않습니다)</p>
           <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제3조 (보유 및 이용 기간)</p>
-          <p style={{ marginBottom: 24 }}>수집된 생년월일, 분석 결과 등 입력 정보는 재열람 서비스 제공 및 서비스 품질 향상을 위해 저장될 수 있습니다. 이메일 주소는 결과 재조회를 위한 식별자로 사용됩니다. 이용자가 열람·삭제를 요청하는 경우 지체 없이 파기합니다.</p>
+          <p style={{ marginBottom: 8 }}>수집된 생년월일, 분석 결과 등 입력 정보는 재열람 서비스 제공 및 서비스 품질 향상을 위해 저장될 수 있습니다. 이메일 주소는 결과 재조회를 위한 식별자로 사용됩니다. 이용자가 열람·삭제를 요청하는 경우 지체 없이 파기합니다.</p>
+          <p style={{ marginBottom: 24 }}>「우리 아이 성공사주」의 결과지와 사주 원문(아이의 성별·생년월일·태어난 시간·이름 및 결과 내용)은 결제 후 1년간 보관한 뒤 파기합니다. 결제 금액·결제 일시·주문번호·결제 번호·이메일 등 거래 기록은 「전자상거래 등에서의 소비자보호에 관한 법률」에 따라 5년간 보관합니다. 보관 기간 전이라도 열람·삭제를 요청하시면 지체 없이 처리합니다.</p>
           <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제4조 (제3자 제공)</p>
           <p style={{ marginBottom: 24 }}>회사는 이용자의 개인정보를 결제 처리(KG이니시스) 외 제3자에게 제공하지 않습니다.</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제4조의2 (AI 처리 위탁 및 국외 이전)</p>
+          <p style={{ marginBottom: 8 }}>· 이전받는 자: Anthropic, PBC (미국) · 개인정보 문의: privacy@anthropic.com (anthropic.com/legal/privacy)</p>
+          <p style={{ marginBottom: 8 }}>· 이전 항목: 「우리 아이 성공사주」는 성별, 생년월일, 태어난 시간(선택)만 전달하며 이름과 이메일은 전달하지 않습니다. 그 밖의 서비스는 이용자가 해당 서비스에 입력한 정보(이름, MBTI, 혈액형 등)가 분석을 위해 전달될 수 있습니다.</p>
+          <p style={{ marginBottom: 8 }}>· 이전 일시·방법: 분석을 요청할 때마다 정보통신망을 통해 암호화되어 전달됩니다.</p>
+          <p style={{ marginBottom: 8 }}>· 이용 목적: AI 해석 문장 생성</p>
+          <p style={{ marginBottom: 8 }}>· 보유·이용 기간: Anthropic은 API로 전달된 입력과 출력을 원칙적으로 30일 이내 삭제하며(이용정책 위반 조사·법령상 의무 등 예외가 있습니다), 기본적으로 모델 학습에 사용하지 않습니다. 회사도 이 정보를 학습 목적으로 제공하지 않습니다.</p>
+          <p style={{ marginBottom: 24 }}>· 거부 방법: 국외 이전을 원하지 않으시면 결제 전에 서비스 이용을 중단해 주세요. 이전이 이루어지지 않으면 결과지를 작성할 수 없습니다.</p>
           <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제5조 (이용자 권리)</p>
           <p style={{ marginBottom: 24 }}>이용자는 개인정보 열람·삭제를 요청할 수 있습니다. 문의는 redions77@naver.com으로 연락해 주세요.</p>
+          <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제5조의2 (만 14세 미만 아동의 개인정보)</p>
+          <p style={{ marginBottom: 24 }}>「우리 아이 성공사주」는 보호자(법정대리인)가 아이의 정보를 입력하고 결제하는 서비스입니다. 보호자는 결제 전 확인 단계에서 아이 정보의 처리에 동의합니다. 만 14세 미만 아동의 법정대리인은 아동의 개인정보 열람·정정·삭제·처리정지를 요청할 수 있으며, 문의는 redions77@naver.com으로 연락해 주세요.</p>
           <p style={{ fontWeight: 700, color: '#633B50', fontSize: 15, marginBottom: 8 }}>제6조 (개인정보보호책임자)</p>
           <p style={{ marginBottom: 24 }}>· 성명: 손영주 · 이메일: redions77@naver.com</p>
           <div style={{ borderTop: '1px solid #DEDFE5', paddingTop: 24, marginTop: 8 }}>

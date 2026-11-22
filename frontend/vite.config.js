@@ -10,7 +10,7 @@ export default defineConfig({
   plugins: [
     react(),
     // index.html 의 분석 도구 허용 도메인을 src/hosts.js 에서 채운다.
-    { name: 'inject-production-hosts', transformIndexHtml: (html) => html.replace('__PRODUCTION_HOSTS__', JSON.stringify(PRODUCTION_HOSTS)) },
+    { name: 'inject-production-hosts', transformIndexHtml: (html) => html.split('__PRODUCTION_HOSTS__').join(JSON.stringify(PRODUCTION_HOSTS)) },
   ],
   build: {
     rollupOptions: {

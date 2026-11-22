@@ -11,6 +11,9 @@ const { deepYearContext } = require('./deepYear');
 const { ACTIONS_MARK, ACTIONS_MARK_RE, sectionBody, formatActions, extractActionsSection, parseActions, validateActions, repairActions, pickBestAttempt, buildActionsPrompt } = require('./freeActions');
 const { TIMING_RULES, DEEP_BIG_DECISION_LINE, PAID_CAUTION_HEADING } = require('./timingRules');
 const { TRUST_RULES, RELATIONS, normalizeRelation, calcRelationLevels, calcRelationBasis, buildBars, buildFreeGunghabPrompt, buildPaidGunghabPrompt } = require('./relations');
+const { buildSuccessChildFacts } = require('./successChild');
+const { generateSuccessChild, SUCCESS_CHILD_MAX_TOKENS } = require('./successChildPrompt');
+const { buildSuccessChildReport } = require('./successChildReport');
 
 const BASE_ALLOWED_ORIGINS = [
   'http://localhost:5173',
@@ -499,6 +502,51 @@ async function runAnalysis(body, res) {
 
   const saju = calcSaju(birthdate, birthtime, isLunar);
   const { year, month, day, 일주, 년주, 월주, 시주, 년천간index } = saju;
+
+  // ── 우리 아이 성공사주 ──
+  // 음력 입력은 위 calcSaju가 양력으로 바꿔 둔 year/month/day를 쓴다. 서버 계산값(childCalc)만 AI에 넘기고,
+  // AI 결과는 출력 검사(successChildPrompt)를 통과한 것만 고객에게 보낸다. 검사 때문에 다시 쓰는 것은 최대 1회다.
+  // 다른 상품과 달리 생성 중인 글을 바로 흘려 보내지 않는다(검사 전 문장이 고객 화면·이메일에 남지 않도록 한 번에 보낸다).
+  if (type === '성공사주') {
+    let facts;
+    try {
+      facts = buildSuccessChildFacts({ gender, solarDate: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`, birthtime });
+    } catch (e) {
+      console.error('[성공사주 계산 오류]', e?.message || e);
+      if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: '생년월일과 성별을 확인해주세요.' })}\n\n`);
+      return res.end();
+    }
+    try {
+      const callModel = async (prompt) => {
+        const msg = await anthropic.messages.create({ model: MODEL_PAID, max_tokens: SUCCESS_CHILD_MAX_TOKENS, messages: [{ role: 'user', content: prompt }] });
+        // 최소 진단 로그 — 이름·생년월일·본문은 남기지 않는다.
+        console.log(`[AI] model=${MODEL_PAID} max_tokens=${SUCCESS_CHILD_MAX_TOKENS} stop_reason=${msg.stop_reason} input_tokens=${msg.usage?.input_tokens} output_tokens=${msg.usage?.output_tokens}`);
+        return { text: (msg.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').replace(/�/g, ''), truncated: msg.stop_reason === 'max_tokens' };
+      };
+      // 검사에 걸린 문장 몇 개만 같은 뜻으로 고쳐 쓰는 작은 호출(입력값·전체 결과지는 보내지 않는다).
+      const callRepair = async (prompt) => {
+        const msg = await anthropic.messages.create({ model: MODEL_PAID, max_tokens: 1500, messages: [{ role: 'user', content: prompt }] });
+        console.log(`[AI] repair stop_reason=${msg.stop_reason} input_tokens=${msg.usage?.input_tokens} output_tokens=${msg.usage?.output_tokens}`);
+        return { text: (msg.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('') };
+      };
+      const out = await generateSuccessChild({ facts, callModel, callRepair, log: (m) => console.log(m) });
+      if (!out.ok) {
+        console.error('[성공사주] 검사를 통과한 결과를 만들지 못했습니다:', (out.reasons || []).join(' | '));
+        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
+        return res.end();
+      }
+      // 화면·이메일이 같이 쓰는 결과 모델(AI 해석 + 서버 계산값)을 먼저 보내고, 원문 텍스트는 저장·재조회용으로 함께 보낸다.
+      const report = buildSuccessChildReport(out.text, facts, { name: userName });
+      res.write(`data: ${JSON.stringify({ type: 'success_report', report })}\n\n`);
+      res.write(`data: ${JSON.stringify({ text: out.text })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+    } catch (e) {
+      console.error('[성공사주 오류]', e?.status, e?.message || e);
+      if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: '분석 중 오류가 발생했습니다.' })}\n\n`);
+    }
+    return res.end();
+  }
+  // ── /성공사주 ──
 
   // 대운 계산
   const daeunInfo = getDaeun(year, month, day, gender, 년천간index, 월주)
