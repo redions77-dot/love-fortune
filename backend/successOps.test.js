@@ -67,7 +67,7 @@ maybe('생성이 실패하면 고객에게 안내 메일이 한 번만 가고, �
     assert.ok(await waitFor(async () => (await env.job(o.id))?.status === 'failed'), '첫 생성 실패');
     assert.ok(await waitFor(() => env.mails().length >= 1));
     const notice = env.mails()[0];
-    assert.equal(notice.to, 'buyer@example.com'); assert.match(notice.subject, /아직 준비 중/); assert.match(notice.html, /24시간 안에/); assert.match(notice.html, /전액 환불/);
+    assert.equal(notice.to, 'buyer@example.com'); assert.match(notice.subject, /아직 준비 중/); assert.match(notice.html, /내 결과지 다시 보기/); assert.match(notice.html, /전액 환불/);
     await env.api.successOpsTick();
     assert.equal(env.mails().length, 1, '안내 메일은 주문당 한 번');
     assert.equal(env.state.runs, 1, '간격(10분) 전에는 다시 생성하지 않는다');

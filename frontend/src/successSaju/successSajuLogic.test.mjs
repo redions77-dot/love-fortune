@@ -79,7 +79,7 @@ test('모바일 결제 복귀 주소: 성공사주 주문번호만 인정하고,
 })
 
 test('고객 문구: 다·나·까 문체, 환불·보장 안내, 100,000원·다음 장 문구 없음', () => {
-  assert.equal(PRODUCT_NAME, '우리 아이 성공사주')
+  assert.equal(PRODUCT_NAME, '우리 아이 성공운명서')
   assert.equal(REPORT_NAME, '우리 아이 성공운명서')
   assert.equal(CONSENT_LINES.length, 5)
   assert.ok(CONSENT_LINES.some((t) => t.includes('환불')) && CONSENT_LINES.some((t) => t.includes('보장하거나 예측하지 않습니다')))
@@ -118,7 +118,7 @@ test('결과 화면: 비교 박스·예시 목록·한 줄 요약·장면·잠�
   const jsx = fs.readFileSync(path.join(here, 'SuccessReport.jsx'), 'utf8')
   const css = fs.readFileSync(path.join(here, 'successSaju.css'), 'utf8')
   for (const s of ['r.hero.compare', 'ss-compare', 's.bullets', 'ss-ex', 's.oneLine', 'ss-one', 'p.scene', 's.todo', 'ss-todo', 'r.periodsNote', 's.locked', 'r.periodsLocked', 's.previewCut']) assert.ok(jsx.includes(s), s)
-  const added = css.slice(css.indexOf('/* 공부 vs 사업 비교 박스'))
+  const added = css.slice(css.indexOf('/* 공부 vs 사업 비교 박스'), css.indexOf('/* ── 판매 화면(첫 화면'))   // 결과지 스타일만 검사한다(판매 화면은 기존 홈페이지 색을 그대로 쓴다)
   assert.ok(added.length > 200)
   assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(added), '추가한 스타일은 색을 변수로만 쓴다')
 })

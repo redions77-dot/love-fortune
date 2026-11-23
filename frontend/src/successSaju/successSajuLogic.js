@@ -3,12 +3,14 @@
 
 export const SUCCESS_PATH = '/success-saju'
 export const PRODUCT_KEY = 'success_child'
-export const PRODUCT_NAME = '우리 아이 성공사주'
+export const PRODUCT_NAME = '우리 아이 성공운명서'
 export const REPORT_NAME = '우리 아이 성공운명서'
 export const LIST_AMOUNT = 50000   // 판매가(표시용). 서버가 만든 주문 금액이 최종 기준이다.
 export const MIN_BIRTH_YEAR = 1920
 
 export const isSuccessSajuPath = (pathname) => String(pathname || '').replace(/\/+$/, '') === SUCCESS_PATH
+// 홈(/)도 이 판매 화면을 연다. 주소에 값(?policy=… 정책 화면, 기존 결제 복귀 등)이 붙어 있으면 기존 앱이 처리한다.
+export const isSuccessHome = (pathname, search) => isSuccessSajuPath(pathname) || (String(pathname || '').replace(/\/+$/, '') === '' && String(search || '').replace(/^\?/, '') === '')
 
 export const formatWon = (n) => `${Number(n).toLocaleString('ko-KR')}원`
 
@@ -36,7 +38,7 @@ export function validateForm({ gender, birthdate, birthtime, timeUnknown, email 
   if (gender !== '남성' && gender !== '여성') e.gender = '성별을 선택해 주세요.'
   if (!isValidDateStr(birthdate, today)) e.birthdate = `${MIN_BIRTH_YEAR}년 이후의 올바른 생년월일을 입력해 주세요.`
   if (!timeUnknown && String(birthtime || '').trim() && !isValidTimeStr(birthtime)) e.birthtime = '출생 시간을 다시 확인해 주세요.'
-  if (!isValidEmail(email)) e.email = '결과지를 받을 이메일 주소를 입력해 주세요.'
+  if (!isValidEmail(email)) e.email = '인증에 쓸 이메일 주소를 입력해 주세요.'
   return e
 }
 
@@ -75,7 +77,7 @@ export const AI_NOTICE_LANDING = '결과지의 해석 문장은 생성형 AI가 
 export const AI_NOTICE_CONSENT = '이 결과지의 해석 문장은 생성형 AI가 작성합니다. 입력하신 성별·생년월일·태어난 시간(이름과 이메일은 제외)이 AI 처리를 위해 미국의 AI 서비스 제공사(Anthropic)로 국외 이전됩니다.'
 
 export const CONSENT_LINES = [
-  '결제가 확인되면 결과지가 바로 작성되며, 보통 1~2분 걸립니다. 결과지는 입력하신 이메일로도 발송됩니다.',
+  '결제가 확인되면 결과지가 바로 작성되며, 보통 1~2분 걸립니다. 결과지는 이 화면에서 바로 확인하며, 이메일로는 발송되지 않습니다. 나중에는 홈페이지의 ‘내 결과지 다시 보기’에서 이메일 인증 후 무료로 다시 볼 수 있습니다.',
   AI_NOTICE_CONSENT,
   '결과지는 결제 즉시 작성되는 디지털 콘텐츠로, 작성이 시작되면 청약철회가 제한됩니다. 다만 시스템 오류로 결과지가 제공되지 않은 경우, 중복 결제, 표시·광고와 다르게 제공된 경우 등 법령이 정한 사유에는 환불됩니다.',
   '이 결과지는 전통 명리학의 해석이며, 합격·직업·소득·재산·사업 성공을 보장하거나 예측하지 않습니다.',

@@ -9,12 +9,12 @@ const at = (iso) => new Date(iso + 'T12:00:00+09:00');   // KST 정오 기준 '�
 const facts = (opts = {}) => buildSuccessChildFacts({ gender: '남성', solarDate: '2012-07-14', birthtime: '20:30', now: at('2026-11-12'), ...opts });
 
 test('상품 정책: 이름·가격(50,000원 단일)이 서버 상수로 고정된다', () => {
-  assert.strictEqual(SUCCESS_CHILD.name, '우리 아이 성공사주');
+  assert.strictEqual(SUCCESS_CHILD.name, '우리 아이 성공운명서');
   assert.strictEqual(SUCCESS_CHILD.reportName, '우리 아이 성공운명서');
   assert.strictEqual(SUCCESS_CHILD.amount, 50000);
   const p = PRODUCTS.success_child;
   assert.strictEqual(p.amount, 50000);
-  assert.strictEqual(p.name, '우리 아이 성공사주');
+  assert.strictEqual(p.name, '우리 아이 성공운명서');
   assert.strictEqual(p.analysisType, '성공사주');
   assert.strictEqual(p.kind, 'personal');
   assert.match(p.emailLabel, /우리 아이 성공운명서/);

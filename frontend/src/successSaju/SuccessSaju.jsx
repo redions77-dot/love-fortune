@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './successSaju.css'
 import SuccessReport from './SuccessReport.jsx'
+import Reopen from './Reopen.jsx'
+import { ReviewsSection, ReviewForm } from './Reviews.jsx'
 import { BUSINESS_LINES, POLICY_LINKS, CUSTOMER_CONTACT_URL } from './businessInfo.js'
 import sampleReport from './sampleReport.js'
 import { PAYMENT_CONFIG } from '../paymentConfig.js'
@@ -31,7 +33,7 @@ function SaleFooter() {
 }
 
 export default function SuccessSaju() {
-  const [screen, setScreen] = useState('landing')   // landing | form | confirm | working | result | sample
+  const [screen, setScreen] = useState('landing')   // landing | form | confirm | working | result | sample | reopen
   const [form, setForm] = useState({ gender: '', birthdate: '', birthtime: '', timeUnknown: false, userName: '', email: '' })
   const [errors, setErrors] = useState({})
   const [code, setCode] = useState('')
@@ -44,7 +46,7 @@ export default function SuccessSaju() {
   const [workError, setWorkError] = useState('')
   const [report, setReport] = useState(null)
   const [orderId, setOrderId] = useState('')
-  const [emailedTo, setEmailedTo] = useState('')
+  const [reviewAuth, setReviewAuth] = useState(null)   // 후기 작성 본인 확인: { orderId, orderToken } 또는 { orderId, sessionToken }
   const [hasLast, setHasLast] = useState(false)
   const retryRef = useRef(null)
   const confirmedRef = useRef(false)
@@ -86,7 +88,7 @@ export default function SuccessSaju() {
       setStage('generating')
       const r = await fetchReport(order)
       if (!r.ok) throw new Error(r.error)
-      setReport(r.report); setScreen('result'); setHasLast(true)
+      setReport(r.report); setReviewAuth({ orderId: order.orderId, orderToken: order.orderToken }); setScreen('result'); setHasLast(true)
     } catch (e) {
       setPaidFailed(confirmedRef.current || !impUid)
       setWorkError(e.message || '처리 중 오류가 발생했습니다.')
@@ -125,7 +127,7 @@ export default function SuccessSaju() {
     catch (e) { setPayError(e.message); setPaying(false); return }
     setPaying(false)
     rememberOrder(store(), order); markOrderPaid(store(), order.orderId); writeLast(order.orderId, true)
-    confirmedRef.current = true; setTrialOrder(true); setEmailedTo(form.email.trim())
+    confirmedRef.current = true; setTrialOrder(true)
     finishOrder(order, null)
   }
 
@@ -143,7 +145,6 @@ export default function SuccessSaju() {
     if (!isSameAmount(price.amount, order.amount)) { setPayError(`결제 금액이 화면과 다릅니다(${formatWon(order.amount)}). 화면을 새로고침한 뒤 다시 진행해 주세요.`); setPaying(false); return }
     if (!window.IMP) { setPayError('결제 모듈을 불러오지 못했습니다. 새로고침한 뒤 다시 시도해 주세요.'); setPaying(false); return }
     confirmedRef.current = false
-    setEmailedTo(form.email.trim())
     const IMP = window.IMP; IMP.init(PAYMENT_CONFIG.code)
     IMP.request_pay({
       ...(PAYMENT_CONFIG.channelKey ? { channelKey: PAYMENT_CONFIG.channelKey } : { pg: 'html5_inicis' }), pay_method: 'card', merchant_uid: order.orderId, name: order.name, amount: order.amount,
@@ -169,9 +170,13 @@ export default function SuccessSaju() {
   // ── 결과지 ──
   if (screen === 'result' && report) return (
     <div className="ss-root">
-      {emailedTo && <div className="ss-banner">결과지는 {emailedTo} 로도 발송됩니다.</div>}
       <SuccessReport report={report} />
+      {reviewAuth && <ReviewForm auth={reviewAuth} />}
+      <div className="ss-page ss-bottom-cta"><button type="button" className="ss-ghost" onClick={() => { setReport(null); setScreen('landing') }}>처음으로</button></div>
     </div>
+  )
+  if (screen === 'reopen') return (
+    <Reopen onBack={goLanding} onOpen={(rep, info) => { setReport(rep); setReviewAuth({ orderId: info.orderId, sessionToken: info.sessionToken }); setScreen('result') }} />
   )
   if (screen === 'sample') return (
     <div className="ss-root">
@@ -184,16 +189,16 @@ export default function SuccessSaju() {
 
   // ── 작성 중 / 오류 ──
   if (screen === 'working') return (
-    <div className="ss-root"><div className="ss-page">
+    <div className="ss-root ss-moms"><div className="ss-page">
       <div className="ss-work">
         {!workError ? (<>
           <div className="ss-spin" aria-hidden="true" />
           <h2>{stage === 'confirming' ? '결제를 확인하고 있습니다' : '결과지를 작성하고 있습니다'}</h2>
           <p>{stage === 'confirming' ? '잠시만 기다려 주세요.' : '보통 1~2분 걸립니다.'}</p>
-          <p>이 화면을 닫아도 결과지는 입력하신 이메일로 발송됩니다.</p>
+          <p>결과지는 이 화면에 바로 표시됩니다. 닫으셨다면 홈페이지의 ‘내 결과지 다시 보기’에서 이메일 인증 후 확인하실 수 있습니다.</p>
         </>) : paidFailed && !/환불이 완료/.test(workError) ? (<>
           <h2>결과지를 아직 완성하지 못했습니다</h2>
-          <p>{trialOrder ? '무료 체험 신청은 정상 접수되었고' : '결제는 정상 접수되었고'}, 결과지를 다시 작성하고 있습니다. 24시간 안에 입력하신 이메일로 보내 드립니다. 입력하신 정보를 다시 쓰실 필요는 없습니다.</p>
+          <p>{trialOrder ? '무료 체험 신청은 정상 접수되었고' : '결제는 정상 접수되었고'}, 결과지를 다시 작성하고 있습니다. 완성되면 홈페이지의 ‘내 결과지 다시 보기’에서 입력하신 이메일로 인증하고 확인하실 수 있습니다. 입력하신 정보를 다시 쓰실 필요는 없습니다.</p>
           {!trialOrder && <p>기다리지 않고 환불을 원하시면 아래 버튼으로 전액 환불받으실 수 있습니다.</p>}
           {refundMsg && <p>{refundMsg}</p>}
           {!trialOrder && !/접수되었습니다/.test(refundMsg) && <button type="button" className="ss-ghost" disabled={refunding} onClick={doRefund}>{refunding ? '환불 요청 중…' : '전액 환불 요청'}</button>}
@@ -212,7 +217,7 @@ export default function SuccessSaju() {
 
   // ── 입력 ──
   if (screen === 'form') return (
-    <div className="ss-root"><div className="ss-page">
+    <div className="ss-root ss-moms"><div className="ss-page">
       <div className="ss-head"><button type="button" onClick={goLanding}>← 처음</button><h1>우리 아이 정보 입력</h1></div>
       <div className="ss-block">
         <div className="ss-field">
@@ -238,10 +243,10 @@ export default function SuccessSaju() {
           <input id="ss-name" className="ss-input" type="text" maxLength={30} value={form.userName} onChange={(e) => set('userName', e.target.value)} />
         </div>
         <div className="ss-field">
-          <label htmlFor="ss-email">결과지를 받을 이메일</label>
+          <label htmlFor="ss-email">이메일 <span className="opt">결과지 다시 보기 인증에 사용</span></label>
           <input id="ss-email" className="ss-input" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
           {errors.email && <p className="ss-err">{errors.email}</p>}
-          <p className="ss-note">결과지가 이 이메일로 발송됩니다. 주소를 정확히 입력해 주세요.</p>
+          <p className="ss-note">결과지는 이메일로 발송되지 않고 화면에서 바로 보여 드립니다. 나중에 다시 볼 때 이 이메일로 인증하니 주소를 정확히 입력해 주세요.</p>
         </div>
         <button type="button" className="ss-cta" onClick={toConfirm}>다음</button>
       </div>
@@ -251,7 +256,7 @@ export default function SuccessSaju() {
 
   // ── 결제 전 확인 ──
   if (screen === 'confirm') return (
-    <div className="ss-root"><div className="ss-page">
+    <div className="ss-root ss-moms"><div className="ss-page">
       <div className="ss-head"><button type="button" onClick={() => setScreen('form')}>← 수정</button><h1>결제 전 확인</h1></div>
       <div className="ss-block">
         <div className="ss-card">
@@ -260,7 +265,7 @@ export default function SuccessSaju() {
             <div><span>성별</span><span>{form.gender === '남성' ? '남자' : '여자'}</span></div>
             <div><span>생년월일시</span><span>{birthSummary(form)}</span></div>
             {form.userName.trim() && <div><span>아이 이름</span><span>{form.userName.trim()}</span></div>}
-            <div><span>결과 이메일</span><span>{form.email.trim()}</span></div>
+            <div><span>인증 이메일</span><span>{form.email.trim()}</span></div>
           </div>
         </div>
 
@@ -293,9 +298,10 @@ export default function SuccessSaju() {
 
   // ── 판매 첫 화면 ──
   return (
-    <div className="ss-root"><div className="ss-page">
+    <div className="ss-root ss-moms"><div className="ss-page">
       <header className="ss-land">
-        <p className="ss-kicker">{PRODUCT_NAME}</p>
+        <p className="ss-kicker">대치동 엄마의 고민노트</p>
+        <p className="ss-prodname">{PRODUCT_NAME}</p>
         <h1>우리 애, 공부로 성공할까?<br />사업으로 성공할까?</h1>
         <p className="sub">공부운 · 직업운 · 사업운 · 재물운 · 시기별 운</p>
         <p className="desc">생년월일시로 읽는 우리 아이의 개인 사주 해석</p>
@@ -309,15 +315,18 @@ export default function SuccessSaju() {
       </div>
       <div className="ss-block">
         <div className="ss-card ss-price">
+          <p className="cap" style={{ margin: 0 }}>출시 기념가</p>
           <div className="amt">{formatWon(LIST_AMOUNT)}</div>
-          <p className="cap">공부·직업·사업·재물·시기별 운까지 자세히 살펴봅니다. 결제가 확인되면 결과지 작성을 시작하며, 완성된 결과지는 이메일로도 받아보실 수 있습니다.</p>
+          <p className="cap">공부·직업·사업·재물·시기별 운까지 자세히 살펴봅니다. 결제가 확인되면 결과지 작성을 시작하며, 완성된 결과지는 이 화면에서 바로 확인하며, 나중에 ‘내 결과지 다시 보기’에서 무료로 다시 볼 수 있습니다.</p>
           <p className="cafe">출시 기념가입니다. 무료 체험 코드를 받으신 분은 결제 단계에서 코드를 입력해 주세요.</p>
         </div>
         <div style={{ height: 14 }} />
         <button type="button" className="ss-cta" onClick={() => setScreen('form')}>내 아이 결과지 받기</button>
         <button type="button" className="ss-ghost" onClick={() => setScreen('sample')}>결과지 샘플 보기 (가상 인물)</button>
-        {hasLast && <button type="button" className="ss-ghost" onClick={reopenLast}>결제한 결과지 다시 보기</button>}
+        <button type="button" className="ss-ghost" onClick={() => setScreen('reopen')}>내 결과지 다시 보기</button>
+        {hasLast && <button type="button" className="ss-ghost" onClick={reopenLast}>이 기기에서 만든 결과지 바로 열기</button>}
       </div>
+      <ReviewsSection />
       <div className="ss-notice"><ul>{LANDING_NOTICES.map((t) => <li key={t}>{t}</li>)}</ul></div>
       <SaleFooter />
     </div></div>

@@ -76,7 +76,8 @@ async function makeEnv() {
     const v = await post('/api/my-results/verify', { email, code }); assert.equal(v.status, 200, JSON.stringify(v.json));
     return v.json.sessionToken;
   }
-  return { api, post, mails, otpMails, lastCode, order, job, done, buyPaid, buyTrial, verified, db, state, close: () => { server.close(); for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k]; Object.assign(process.env, saved); } };
+  const get = async (p) => { const r = await fetch(base + p); return { status: r.status, json: await r.json() }; };
+  return { base, cookie: () => cookie, get, api, post, mails, otpMails, lastCode, order, job, done, buyPaid, buyTrial, verified, db, state, close: () => { server.close(); for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k]; Object.assign(process.env, saved); } };
 }
 
 maybe('신규 고객: 결제 후 결과지는 서버에 주문과 연결해 저장되고 홈페이지에서 바로 열리며, 결과지 이메일은 발송되지 않는다', async () => {
@@ -225,5 +226,47 @@ maybe('생성이 지연된 뒤 완성되면 결과 내용이 없는 "준비 완�
     assert.ok(!/성공운명서 결과|결론|report/.test(ready.html.replace(/우리 아이 성공운명서/g, '')) , '결과 내용이 들어 있지 않다');
     const s = await env.verified('late@example.com');
     assert.equal((await env.post('/api/my-results/open', { sessionToken: s, orderId: p.id })).status, 200);
+  } finally { env.close(); }
+});
+
+maybe('후기 게시판: 성공운명서 주문만 작성(구매 인증·무료 체험 구분), 주문당 1건, 승인된 실제 후기만 공개, 연락처 차단, 환불 주문 차단', async () => {
+  const env = await makeEnv();
+  try {
+    const p = await env.buyPaid('rv@example.com'); const t = await env.buyTrial('rvfree@example.com');
+    assert.ok(await env.done(p.id)); assert.ok(await env.done(t.id));
+    const body = { nickname: '엄마A', concern: 'study', rating: 5, content: '아이 공부 방법을 정리하는 데 도움이 되었어요. 읽을 내용이 많았습니다.' };
+    // 본인 확인 없이는 작성 불가
+    assert.equal((await env.post('/api/reviews', { ...body, orderId: p.id })).status, 404, '본인 확인 없이는 작성 불가');
+    assert.equal((await env.post('/api/reviews', { ...body, orderId: p.id, orderToken: 'wrong' })).status, 404);
+    // 빈 목록: 예시·가짜 후기 없음
+    assert.equal((await env.get('/api/reviews')).json.total, 0);
+    const chk = await env.post('/api/reviews/check', { orderId: p.id, orderToken: p.token }); assert.equal(chk.json.kind, 'paid'); assert.equal(chk.json.alreadyReviewed, false);
+    assert.equal((await env.post('/api/reviews/check', { orderId: t.id, orderToken: t.token })).json.kind, 'trial');
+    // 연락처·너무 짧은 글 차단
+    assert.equal((await env.post('/api/reviews', { ...body, orderId: p.id, orderToken: p.token, content: '문의는 010-1234-5678 로 주세요 정말 좋았어요 감사해요' })).status, 400);
+    assert.equal((await env.post('/api/reviews', { ...body, orderId: p.id, orderToken: p.token, content: '짧아요' })).status, 400);
+    // 작성: 구매(주문 토큰), 체험(이메일 인증 열람 토큰)
+    assert.equal((await env.post('/api/reviews', { ...body, orderId: p.id, orderToken: p.token })).status, 201);
+    assert.equal((await env.post('/api/reviews', { ...body, orderId: p.id, orderToken: p.token })).status, 409, '주문당 1건');
+    const sess = await env.verified('rvfree@example.com');
+    assert.equal((await env.post('/api/reviews', { ...body, nickname: '엄마B', rating: null, orderId: t.id, sessionToken: sess })).status, 201);
+    const sessOther = await env.verified('rv@example.com');
+    assert.equal((await env.post('/api/reviews/check', { orderId: t.id, sessionToken: sessOther })).status, 404, '다른 이메일의 열람 토큰으로는 남의 주문 후기를 쓸 수 없다');
+    // 승인 전에는 공개되지 않는다 → 운영자가 승인한 것만 공개
+    assert.equal((await env.get('/api/reviews')).json.total, 0);
+    const adm = await fetch(env.base + '/api/admin/reviews', { headers: { Origin: 'https://admin.test', Cookie: env.cookie() } }).then((r) => r.json());
+    assert.equal(adm.reviews.length, 2);
+    const paidRv = adm.reviews.find((r) => r.nickname === '엄마A');
+    assert.equal((await env.post(`/api/admin/reviews/${paidRv.id}/status`, { status: 'published' }, { admin: true })).status, 200);
+    const pub = (await env.get('/api/reviews')).json;
+    assert.equal(pub.total, 1); assert.equal(pub.reviews[0].usageKind, 'paid'); assert.equal(pub.reviews[0].nickname, '엄마A');
+    assert.ok(!('orderId' in pub.reviews[0]) && !JSON.stringify(pub).includes('rv@example.com'), '공개 목록에 주문번호·이메일 없음');
+    const tr = adm.reviews.find((r) => r.nickname === '엄마B'); assert.equal(tr.usageKind, 'trial');
+    await env.post(`/api/admin/reviews/${tr.id}/status`, { status: 'published' }, { admin: true });
+    assert.deepEqual((await env.get('/api/reviews')).json.reviews.map((r) => r.usageKind).sort(), ['paid', 'trial']);
+    // 환불된 주문은 새 후기를 쓸 수 없다
+    const q = await env.buyPaid('rv2@example.com'); assert.ok(await env.done(q.id));
+    await env.db.query("UPDATE orders SET refund_status = 'done' WHERE id = $1", [q.id]);
+    assert.equal((await env.post('/api/reviews/check', { orderId: q.id, orderToken: q.token })).status, 404);
   } finally { env.close(); }
 });

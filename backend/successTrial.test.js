@@ -118,7 +118,7 @@ maybe('체험 코드: 확인(0원 표시) → 사용(결제 없이 무료 주문
     assert.equal(o.input.trial, true); assert.equal(o.input.consent.version.startsWith('success-checkout'), true);
     assert.ok(await waitFor(async () => (await env.job(r.json.orderId))?.status === 'done'), '유료와 같은 경로로 결과 생성');
     assert.equal(env.state.runs, 1); assert.equal(env.state.bodies[0].type, '성공사주'); assert.equal(env.state.bodies[0].birthdate, '2012-07-14');
-    assert.ok(await waitFor(() => env.mails().length >= 1), '결과 메일 발송'); assert.equal(env.mails()[0].to, 'tester@example.com');
+    assert.equal(env.mails().length, 0, '결과지는 이메일로 보내지 않는다(홈페이지에서 열람)');
     // 결과는 주문 토큰이 있어야 열린다(다른 주문 토큰으로는 안 열림)
     const mine = await env.post(`/api/orders/${r.json.orderId}/analysis`, { orderToken: r.json.orderToken }); assert.equal(mine.status, 200); assert.match(mine.text, /"type":"done"/);
     assert.equal((await env.post(`/api/orders/${r.json.orderId}/analysis`, { orderToken: 'wrong' })).status, 404);

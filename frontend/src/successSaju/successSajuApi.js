@@ -95,3 +95,26 @@ export async function requestRefund(order) {
   if (res.ok && json.status === 'refunded') return { ok: true }
   return { ok: false, error: json.error || '환불을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.' }
 }
+
+// ── 내 결과지 다시 보기(이메일 인증). 서버가 저장한 결과지를 그대로 보여 주며 AI를 다시 실행하거나 결제를 받지 않는다. ──
+async function callJson(path, body, fail) {
+  let res
+  try { res = await post(path, body) } catch { throw new Error('서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.') }
+  const json = await readJson(res)
+  if (!res.ok) { const e = new Error(json.error || fail); e.code = json.code; e.status = res.status; throw e }
+  return json
+}
+export const requestResultCode = (email) => callJson('/api/my-results/request', { email }, '인증번호를 보내지 못했습니다. 잠시 후 다시 시도해 주세요.')
+export const verifyResultCode = (email, code) => callJson('/api/my-results/verify', { email, code }, '인증번호가 맞지 않거나 만료되었습니다.')
+export const listMyResults = (sessionToken) => callJson('/api/my-results/list', { sessionToken }, '결과지 목록을 불러오지 못했습니다.')
+export const openMyResult = (sessionToken, orderId) => callJson('/api/my-results/open', { sessionToken, orderId }, '결과지를 불러오지 못했습니다.')
+
+// ── 후기 게시판(승인된 실제 후기만 공개) ──
+export async function fetchReviews(offset = 0) {
+  const res = await fetch(`${API_URL}/api/reviews?limit=10&offset=${offset}`)
+  const json = await readJson(res)
+  if (!res.ok || !json.success) throw new Error('load')
+  return json
+}
+export const checkReviewEligibility = (auth) => callJson('/api/reviews/check', auth, '후기 작성 자격을 확인하지 못했습니다.')
+export const submitReview = (auth, review) => callJson('/api/reviews', { ...auth, ...review }, '후기를 보내지 못했습니다. 잠시 후 다시 시도해 주세요.')

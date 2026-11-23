@@ -9,14 +9,14 @@ const { renderPlainBlocks } = require('./successChildPlain');
 
 const SUCCESS_CHILD = Object.freeze({
   key: 'success_child',
-  name: '우리 아이 성공사주',
+  name: '우리 아이 성공운명서',
   reportName: '우리 아이 성공운명서',
   amount: 50000,       // 일반 판매가 (서버만 정한다)
   analysisType: '성공사주',
 });
 
 // 결제 전 안내 문구 버전(주문에 함께 기록해 어떤 안내를 확인하고 결제했는지 남긴다). 문구를 바꾸면 이 값도 바꾼다.
-const SUCCESS_CONSENT_VERSION = 'success-checkout-2026-11-v3';
+const SUCCESS_CONSENT_VERSION = 'success-checkout-2026-11-v4';
 
 // 출시 안전 스위치: SUCCESS_CHILD_ENABLED=1 일 때만 주문을 받는다. (기본 꺼짐 — 운영에 코드가 먼저 올라가도 판매되지 않는다)
 const isProductOrderable = (productKey, env = process.env) => productKey !== SUCCESS_CHILD.key || env.SUCCESS_CHILD_ENABLED === '1';

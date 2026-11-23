@@ -11,6 +11,7 @@ const https = require('https');
 const { normalizeRelation } = require('./relations');
 const { SUCCESS_CHILD, SUCCESS_CONSENT_VERSION, isProductOrderable } = require('./successChild');
 const { renderSuccessChildMail, reportFromEvents } = require('./successChildReport');
+const { installReviews, REVIEWS_SCHEMA_SQL } = require('./reviews');
 
 // 가격·상품명은 서버에서만 정한다. (쿠폰 할인은 운영에 아직 없으므로 적용하지 않는다)
 const PRODUCTS = Object.freeze({
@@ -411,6 +412,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       email_hash TEXT
     );
     CREATE UNIQUE INDEX IF NOT EXISTS uq_trial_codes_email ON trial_codes(email_hash) WHERE email_hash IS NOT NULL;
+    ${REVIEWS_SCHEMA_SQL}
     -- 내 결과지 다시 보기: 이메일 인증번호(해시+솔트만 저장, 유효시간·시도 횟수 제한)와 인증 후 열람 토큰(해시만 저장, 짧은 유효시간)
     CREATE TABLE IF NOT EXISTS result_otps (
       id BIGSERIAL PRIMARY KEY,
@@ -1039,6 +1041,9 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     if (!report) return res.status(409).json({ error: '결과지를 만들고 있습니다. 잠시 뒤에 다시 확인해 주세요.', code: 'not_ready' });
     res.json({ ok: true, report, kind: order.is_comp ? 'trial' : 'paid', orderId: order.id });
   }));
+
+  // 후기 게시판(love-fortune-moms 코드 재사용): 성공운명서 주문만 작성 가능, 승인된 후기만 공개
+  installReviews({ app, pool, withSchema, requireAdmin, clientIp, createLimiter, safeEqualHex, getSessionEmail: resultSessionEmail });
 
   // ── 생성 작업 (중복 실행 방지) ──
   async function claimJob(orderId, { force = false, fromTruncated = false } = {}) {
