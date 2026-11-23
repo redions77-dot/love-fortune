@@ -303,6 +303,7 @@ export default function SuccessSaju() {
         <p className="ss-kicker">대치동 엄마의 고민노트</p>
         <p className="ss-prodname">{PRODUCT_NAME}</p>
         <h1>우리 애, 공부로 성공할까?<br />사업으로 성공할까?</h1>
+        <img className="ss-cover" src="/success-report-cover.jpg" alt="우리 아이 성공운명서 책 표지" width="960" height="640" />
         <p className="sub">공부운 · 직업운 · 사업운 · 재물운 · 시기별 운</p>
         <p className="desc">생년월일시로 읽는 우리 아이의 개인 사주 해석</p>
       </header>

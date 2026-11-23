@@ -198,11 +198,13 @@
   --hero:#F4F5F7; --hero-ink:#24232B; --hero-muted:#62616C; --hero-line:#DEDFE5; --hero-gold:#633B50;
   --danger:#8A3B3B; --serif:var(--sans);
 }
-.ss-moms .ss-land { background:var(--paper); text-align:center; padding:32px 24px 8px; }
-.ss-moms .ss-land .ss-kicker { font-family:var(--sans); font-size:16px; font-weight:700; letter-spacing:0; color:#633B50; margin:0 0 6px; }
-.ss-moms .ss-prodname { font-size:13px; color:var(--muted); margin:0 0 16px; }
-.ss-moms .ss-land h1 { font-family:var(--sans); font-size:clamp(26px, 7.6vw, 32px); letter-spacing:-.02em; color:var(--ink); }
-.ss-moms .ss-land .sub { font-family:var(--sans); font-weight:700; color:var(--ink); }
+.ss-moms .ss-land { background:#19372e; color:#fffaf0; text-align:center; padding:32px 24px 24px; }
+.ss-moms .ss-land .ss-kicker { font-family:var(--sans); font-size:16px; font-weight:700; letter-spacing:0; color:#f0cd89; margin:0 0 6px; }
+.ss-moms .ss-prodname { font-size:13px; color:#e0eadf; margin:0 0 16px; }
+.ss-moms .ss-land h1 { font-family:var(--sans); font-size:clamp(26px, 7.6vw, 32px); letter-spacing:-.02em; color:inherit; }
+.ss-moms .ss-cover { display:block; width:100%; height:auto; margin:0 auto 16px; border-radius:14px; }
+.ss-moms .ss-land .sub { font-family:var(--sans); font-weight:700; color:inherit; }
+.ss-moms .ss-land .desc { color:#e0eadf; }
 .ss-moms .ss-cta { background:#633B50; color:#FFFFFF; border-radius:12px; min-height:52px; margin-top:0; }
 .ss-moms .ss-cta.gold { background:#633B50; color:#FFFFFF; }
 .ss-moms .ss-ghost { color:var(--muted); border-radius:10px; background:var(--card); }
