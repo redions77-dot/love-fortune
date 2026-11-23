@@ -22,7 +22,7 @@ const PRODUCTS = Object.freeze({
   gilil:      { amount: 9900,  name: '마이사주 길일 추천',          kind: 'gilil',                               prefix: 'gilil' },
   baeknyeon:  { amount: 99000, name: '마이사주 100년 사주 인생 꿀팁', kind: 'baeknyeon', analysisType: '100년꿀팁', prefix: 'baek',    autoEmail: false, resultType: '100년꿀팁' },
   // 우리 아이 성공사주 — 가격·이름은 successChild.js 한 곳에서 정한다. SUCCESS_CHILD_ENABLED=1 이 아니면 주문을 받지 않는다(isProductOrderable).
-  success_child: { amount: SUCCESS_CHILD.amount, name: SUCCESS_CHILD.name, kind: 'personal', analysisType: SUCCESS_CHILD.analysisType, prefix: 'success', autoEmail: true, resultType: 'success_child', emailLabel: '🌟 ' + SUCCESS_CHILD.reportName },
+  success_child: { amount: SUCCESS_CHILD.amount, name: SUCCESS_CHILD.name, kind: 'personal', analysisType: SUCCESS_CHILD.analysisType, prefix: 'success', autoEmail: false, resultType: 'success_child', emailLabel: '🌟 ' + SUCCESS_CHILD.reportName },
 });
 
 // 무료 체험 코드: 12자, 헷갈리는 글자(0·O·1·I) 제외, 표시는 MS-XXXX-XXXX-XXXX. 사용자가 접두어·하이픈·공백 없이 입력해도 같은 코드로 본다.
@@ -411,6 +411,24 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       email_hash TEXT
     );
     CREATE UNIQUE INDEX IF NOT EXISTS uq_trial_codes_email ON trial_codes(email_hash) WHERE email_hash IS NOT NULL;
+    -- 내 결과지 다시 보기: 이메일 인증번호(해시+솔트만 저장, 유효시간·시도 횟수 제한)와 인증 후 열람 토큰(해시만 저장, 짧은 유효시간)
+    CREATE TABLE IF NOT EXISTS result_otps (
+      id BIGSERIAL PRIMARY KEY,
+      email TEXT NOT NULL,
+      salt TEXT NOT NULL,
+      code_hash TEXT NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL,
+      used_at TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS idx_result_otps_email ON result_otps(email, id DESC);
+    CREATE TABLE IF NOT EXISTS result_sessions (
+      token_hash TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL
+    );
   `).then(() => console.log('[DB] orders / analysis_jobs / admin_sessions 테이블 준비 완료'));
   let schemaPromise = null;
   const ensureSchema = () => {
@@ -430,6 +448,8 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     DELETE FROM free_results WHERE created_at < NOW() - INTERVAL '24 hours';
     DELETE FROM admin_sessions WHERE expires_at < NOW();
     DELETE FROM email_sends WHERE created_at < NOW() - INTERVAL '7 days';
+    DELETE FROM result_otps WHERE expires_at < NOW() - INTERVAL '1 day';
+    DELETE FROM result_sessions WHERE expires_at < NOW();
   `)).then(() => reconcileExpiredPending()).catch((e) => console.error('[DB] 정리 작업 실패:', e.message));
   setTimeout(cleanup, 5000).unref?.();
   setInterval(cleanup, 60 * 60 * 1000).unref?.();
@@ -919,6 +939,107 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     res.json({ success: true, codes: rows.map((r) => ({ id: r.id, label: r.label, status: r.status, createdAt: r.created_at, expiresAt: r.expires_at, usedAt: r.used_at, orderId: r.order_id })) });
   }));
 
+  // ── 내 결과지 다시 보기(이메일 인증) ──
+  // 결과지는 주문과 연결해 서버에 저장되어 있다(analysis_jobs.events). 결제(또는 무료 체험) 때 입력한 이메일로 일회용 인증번호를 받아 본인 확인을 한 뒤,
+  // 그 이메일의 주문만 목록으로 보여 주고 저장된 결과지를 다시 보여 준다. AI를 다시 실행하지 않고, 이메일 주소만으로는 아무것도 보여 주지 않는다. 회원가입은 없다.
+  const OTP_TTL_MIN = 10;              // 인증번호 유효시간
+  const OTP_MAX_ATTEMPTS = 5;          // 한 번호당 입력 시도 횟수(넘으면 그 번호는 폐기)
+  const OTP_COOLDOWN_SEC = 60;         // 같은 이메일 재요청 간격
+  const OTP_MAX_PER_HOUR = 5;          // 같은 이메일 시간당 발송 횟수
+  const RESULT_SESSION_MIN = 30;       // 인증 후 열람 유지 시간
+  const reopenRequestLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 20 });
+  const reopenFailLimiter = createLimiter({ windowMs: 15 * 60 * 1000, max: 20 });
+  const normEmail = (v) => String(v || '').trim().toLowerCase();
+  const otpHash = (email, code, salt) => sha256Hex(`otp:${email}:${code}:${salt}`);
+  const OTP_FAIL_MESSAGE = '인증번호가 맞지 않거나 만료되었습니다. 새 인증번호를 요청해 주세요.';
+  const SITE_URL = (process.env.PUBLIC_SITE_URL || 'https://www.mysaju.shop').replace(/\/$/, '');
+  const otpMail = (code) => ({
+    subject: `[마이사주] 결과지 확인 인증번호 ${code}`,
+    html: opsMailShell('결과지 확인 인증번호', `<p>아래 인증번호를 홈페이지에 입력해 주세요. <b>${OTP_TTL_MIN}분 안에</b> 입력하셔야 합니다.</p><p style="font-size:28px;letter-spacing:6px;font-weight:700;margin:16px 0">${code}</p><p style="color:#666;font-size:13px">본인이 요청하지 않았다면 이 메일을 무시해 주세요. 인증번호를 다른 사람에게 알려 주지 마세요.</p>`),
+  });
+  const readyNoticeMail = () => ({
+    subject: `[마이사주] ${SUCCESS_CHILD.reportName}가 준비되었습니다`,
+    html: opsMailShell('결과지가 준비되었습니다', `<p>요청하신 결과지가 완성되었습니다. 홈페이지의 <b>내 결과지 다시 보기</b>에서 결제(또는 무료 체험) 때 입력하신 이메일로 인증하시면 바로 확인하실 수 있습니다.</p><p><a href="${SITE_URL}/success-saju">${SITE_URL}/success-saju</a></p><p style="color:#666;font-size:13px">이 메일에는 결과지 내용이 들어 있지 않습니다.</p>`),
+  });
+  const reopenableWhere = `o.product = $2 AND o.status = 'paid' AND o.refund_status IS DISTINCT FROM 'done'`;
+
+  // 1) 인증번호 요청: 그 이메일의 결과지가 있는 경우에만 번호를 보낸다. 있든 없든 같은 응답을 준다(이메일 존재 여부를 알려 주지 않는다).
+  app.post('/api/my-results/request', withSchema(async (req, res) => {
+    const ip = clientIp(req);
+    if (reopenRequestLimiter.limited(ip)) return res.status(429).json({ error: '요청이 너무 많아요. 잠시 후 다시 시도해주세요.' });
+    reopenRequestLimiter.hit(ip);
+    const email = normEmail(req.body?.email);
+    if (!isValidEmail(email)) return res.status(400).json({ error: '이메일 주소를 확인해 주세요.' });
+    const generic = { ok: true, expiresInMin: OTP_TTL_MIN, message: `입력하신 이메일로 결과지 내역이 있으면 인증번호를 보냈습니다. ${OTP_TTL_MIN}분 안에 입력해 주세요. 메일이 오지 않으면 구매(체험) 때 입력한 이메일이 맞는지 확인하고, 1분 뒤 다시 요청해 주세요.` };
+    const has = await pool.query(`SELECT 1 FROM orders o WHERE lower(o.email) = $1 AND ${reopenableWhere} LIMIT 1`, [email, SUCCESS_CHILD.key]);
+    if (!has.rows[0]) return res.json(generic);
+    const recent = (await pool.query(
+      `SELECT COUNT(*) FILTER (WHERE created_at > NOW() - interval '1 hour')::int AS hour, COUNT(*) FILTER (WHERE created_at > NOW() - make_interval(secs => $2))::int AS cool FROM result_otps WHERE email = $1`,
+      [email, OTP_COOLDOWN_SEC])).rows[0];
+    if (recent.hour >= OTP_MAX_PER_HOUR || recent.cool > 0) return res.json(generic);
+    const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+    const salt = randomToken(8);
+    const ins = await pool.query(`INSERT INTO result_otps (email, salt, code_hash, expires_at) VALUES ($1, $2, $3, NOW() + make_interval(mins => $4)) RETURNING id`, [email, salt, otpHash(email, code, salt), OTP_TTL_MIN]);
+    const mail = otpMail(code);
+    if (!(await sendOpsMail(email, mail))) await pool.query('DELETE FROM result_otps WHERE id = $1', [ins.rows[0].id]).catch(() => {});
+    res.json(generic);
+  }));
+
+  // 2) 인증번호 확인: 번호당 시도 횟수를 DB에서 먼저 올려 동시에 여러 번 넣어 보는 것도 막는다. 맞으면 일정 시간만 쓰는 열람 토큰(해시로만 저장)을 준다.
+  app.post('/api/my-results/verify', withSchema(async (req, res) => {
+    const ip = clientIp(req);
+    if (reopenFailLimiter.limited(ip)) return res.status(429).json({ error: '시도가 너무 많아요. 잠시 후 다시 시도해주세요.' });
+    const email = normEmail(req.body?.email);
+    const code = String(req.body?.code || '').replace(/\D/g, '');
+    if (!isValidEmail(email) || code.length !== 6) { reopenFailLimiter.hit(ip); return res.status(400).json({ error: OTP_FAIL_MESSAGE }); }
+    const cur = (await pool.query(`SELECT id, salt, code_hash FROM result_otps WHERE email = $1 AND used_at IS NULL AND expires_at > NOW() AND attempts < $2 ORDER BY id DESC LIMIT 1`, [email, OTP_MAX_ATTEMPTS])).rows[0];
+    if (!cur) { reopenFailLimiter.hit(ip); return res.status(400).json({ error: OTP_FAIL_MESSAGE }); }
+    const bumped = await pool.query(`UPDATE result_otps SET attempts = attempts + 1 WHERE id = $1 AND used_at IS NULL AND attempts < $2 RETURNING attempts`, [cur.id, OTP_MAX_ATTEMPTS]);
+    if (!bumped.rows[0]) { reopenFailLimiter.hit(ip); return res.status(400).json({ error: OTP_FAIL_MESSAGE }); }
+    if (!safeEqualHex(cur.code_hash, otpHash(email, code, cur.salt))) { reopenFailLimiter.hit(ip); return res.status(400).json({ error: OTP_FAIL_MESSAGE }); }
+    const used = await pool.query('UPDATE result_otps SET used_at = NOW() WHERE id = $1 AND used_at IS NULL RETURNING id', [cur.id]);
+    if (!used.rows[0]) return res.status(400).json({ error: OTP_FAIL_MESSAGE });
+    const token = randomToken(32);
+    await pool.query(`INSERT INTO result_sessions (token_hash, email, expires_at) VALUES ($1, $2, NOW() + make_interval(mins => $3))`, [sha256Hex(token), email, RESULT_SESSION_MIN]);
+    res.json({ ok: true, sessionToken: token, expiresInMin: RESULT_SESSION_MIN });
+  }));
+
+  async function resultSessionEmail(req) {
+    const token = typeof req.body?.sessionToken === 'string' ? req.body.sessionToken : '';
+    if (token.length < 20 || token.length > 120) return null;
+    const { rows } = await pool.query('SELECT email FROM result_sessions WHERE token_hash = $1 AND expires_at > NOW()', [sha256Hex(token)]);
+    return rows[0]?.email || null;
+  }
+  const sessionExpired = (res) => res.status(401).json({ error: '인증이 만료되었습니다. 다시 인증해 주세요.', code: 'session_expired' });
+
+  // 3) 인증한 이메일의 결과지 목록(그 이메일로 결제·체험한 주문만, 환불된 주문 제외)
+  app.post('/api/my-results/list', withSchema(async (req, res) => {
+    const ip = clientIp(req);
+    if (reopenFailLimiter.limited(ip)) return res.status(429).json({ error: '요청이 너무 많아요. 잠시 후 다시 시도해주세요.' });
+    const email = await resultSessionEmail(req);
+    if (!email) { reopenFailLimiter.hit(ip); return sessionExpired(res); }
+    const { rows } = await pool.query(
+      `SELECT o.id, o.is_comp, o.paid_at, o.input, j.status AS job_status FROM orders o LEFT JOIN analysis_jobs j ON j.order_id = o.id
+       WHERE lower(o.email) = $1 AND ${reopenableWhere} ORDER BY o.paid_at DESC NULLS LAST LIMIT 20`, [email, SUCCESS_CHILD.key]);
+    res.json({ ok: true, results: rows.map((r) => ({ orderId: r.id, kind: r.is_comp ? 'trial' : 'paid', paidAt: r.paid_at, ready: r.job_status === 'done', status: r.job_status || 'pending', gender: r.input?.gender || '', birthdate: r.input?.birthdate || '', userName: r.input?.userName || '' })) });
+  }));
+
+  // 4) 저장된 결과지 열기(AI를 다시 실행하지 않는다). 인증한 이메일과 주문의 이메일이 같을 때만 연다.
+  app.post('/api/my-results/open', withSchema(async (req, res) => {
+    const ip = clientIp(req);
+    if (reopenFailLimiter.limited(ip)) return res.status(429).json({ error: '요청이 너무 많아요. 잠시 후 다시 시도해주세요.' });
+    const email = await resultSessionEmail(req);
+    if (!email) { reopenFailLimiter.hit(ip); return sessionExpired(res); }
+    const orderId = String(req.body?.orderId || '').slice(0, 64);
+    const { rows } = await pool.query(`SELECT o.* FROM orders o WHERE o.id = $1 AND lower(o.email) = $3 AND ${reopenableWhere}`, [orderId, SUCCESS_CHILD.key, email]);
+    const order = rows[0];
+    if (!order) { reopenFailLimiter.hit(ip); return res.status(404).json({ error: '결과지를 찾을 수 없어요.' }); }
+    const job = await getJob(order.id);
+    const report = job?.status === 'done' ? reportFromEvents(job.events) : null;
+    if (!report) return res.status(409).json({ error: '결과지를 만들고 있습니다. 잠시 뒤에 다시 확인해 주세요.', code: 'not_ready' });
+    res.json({ ok: true, report, kind: order.is_comp ? 'trial' : 'paid', orderId: order.id });
+  }));
+
   // ── 생성 작업 (중복 실행 방지) ──
   async function claimJob(orderId, { force = false, fromTruncated = false } = {}) {
     const { rows } = await pool.query(
@@ -1026,6 +1147,10 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
       if (order.product === SUCCESS_CHILD.key) {   // 환불이 끝난 주문에는 결과를 보내지 않는다
         const refunded = await pool.query('SELECT refund_status FROM orders WHERE id = $1', [order.id]);
         if (refunded.rows[0]?.refund_status === 'done') return;
+      }
+      if (order.product === SUCCESS_CHILD.key) {   // 생성이 지연돼 준비 중 안내를 받은 고객에게만, 결과 내용이 없는 준비 완료 알림을 보낸다
+        const n = await pool.query('SELECT notice_sent_at FROM analysis_jobs WHERE order_id = $1', [order.id]);
+        if (n.rows[0]?.notice_sent_at) await sendOpsMail(email, readyNoticeMail());
       }
       const mail = buildOrderMail(order, events, emailVariant);
       await saveResultRow(order, email, mail);
@@ -1147,6 +1272,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     const { order, error } = await authorizeOrder(req);
     if (!order) return orderAuthError(res, error);
     if (order.status !== 'paid') return res.status(402).json({ error: '결제 확인이 필요해요.' });
+    if (order.product === SUCCESS_CHILD.key) return res.status(400).json({ error: '이 결과지는 이메일로 보내지 않습니다. 홈페이지의 내 결과지 다시 보기에서 확인해 주세요.', code: 'email_disabled' });
     const to = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
     if (!isValidEmail(to)) return res.status(400).json({ error: '이메일 주소를 확인해주세요.' });
     if (PRODUCTS[order.product].kind === 'gilil') return res.status(400).json({ error: '이메일 발송을 지원하지 않는 상품입니다.' });
@@ -1342,7 +1468,7 @@ function installSecureApi({ app, pool, runAnalysis, computeGilil, allowedOrigins
     subject: `[마이사주] ${SUCCESS_CHILD.reportName}를 아직 준비 중입니다`,
     html: opsMailShell('결과지를 아직 완성하지 못했습니다',
       `<p>${order.is_comp ? '무료 체험 신청은 정상 접수되었습니다.' : '결제는 정상 접수되었습니다.'} 결과지를 작성하는 과정에서 품질 검사를 통과하지 못해, 다시 작성하고 있습니다.</p>
-       <p><b>24시간 안에 이 이메일 주소로 보내 드립니다.</b> 입력하신 정보를 다시 쓰실 필요는 없습니다.</p>
+       <p><b>결과지가 완성되면 홈페이지의 내 결과지 다시 보기에서 확인하실 수 있습니다.</b> 입력하신 정보를 다시 쓰실 필요는 없습니다.</p>
        ${order.is_comp ? '<p>기다리는 동안 궁금한 점은 아래 문의처로 연락해 주세요.</p>' : '<p>기다리지 않고 환불을 원하시면, 결제하신 화면의 <b>전액 환불 요청</b> 버튼을 누르시거나 아래 문의처로 연락해 주세요. 결과지를 받기 전에는 전액 환불해 드립니다.</p>'}
        <p style="color:#666;font-size:13px">주문번호 ${order.id}</p>`),
   });
